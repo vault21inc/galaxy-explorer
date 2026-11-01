@@ -110,6 +110,8 @@ To change a decision, edit its entry, keep the old text on a `Superseded:` line,
 - **X2 Who maintains the code.** Mostly AI coding agents. The owner is a software developer with 25 years of experience who is new to three.js. The code must therefore be readable, extensible and maintainable, with 3D math and shaders explained in comments. See [AGENTS.md](../../AGENTS.md).
 - **X3 Tools.** Docker and Node.js are installed.
 - **X4 Repository.** Set up git and a private GitHub repository first (M0-T1).
+  - Done 2026-11-01: [vault21inc/galaxy-explorer](https://github.com/vault21inc/galaxy-explorer), private.
+  - Commits use the account's GitHub noreply address (`24880568+vault21inc@users.noreply.github.com`), set in the repository's local git config. That keeps real email addresses out of the history if the repository goes public.
 - **X5 Hosting.** Lean. Budget is not a concern yet. Local content moves to production through export and import (M8-T8).
 - **X6 Stack and plan format.** Confirmed:
   - The TypeScript stack.

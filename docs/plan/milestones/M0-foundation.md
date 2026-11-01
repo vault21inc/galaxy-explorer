@@ -27,10 +27,10 @@
   - a short root `README.md`: what the project is, how to run it (filled in by later tasks), and a link to `docs/plan/README.md`.
 - Make the first commit with the existing `docs/`, `AGENTS.md` and `CLAUDE.md`.
 - `gh repo create galaxy-explorer --private --source . --push`.
-- Optional, if the GitHub plan allows it on private repos: protect `main` (require PRs and green CI).
+- Optional, if the GitHub plan allows it on private repos: protect `main` (require PRs and green CI). This waits until M0-T7, when there are CI checks to require.
 
 **Done when:**
-- [ ] The repository exists on GitHub, is private, and has `main` pushed.
+- [x] The repository exists on GitHub, is private, and has `main` pushed: [vault21inc/galaxy-explorer](https://github.com/vault21inc/galaxy-explorer), 2026-11-01.
 - [ ] `git status` is clean after `pnpm install` in later tasks; the ignore rules are correct.
 
 ### M0-T2 Workspace scaffold

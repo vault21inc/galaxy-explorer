@@ -7,6 +7,7 @@ Galaxy Explorer is a universe-agnostic 3D galaxy builder. The owner builds galax
 1. Read `docs/plan/README.md`, then your task in `docs/plan/milestones/Mx-*.md`, then the sections listed under "Read first".
 2. Check `docs/plan/decisions.md`. Don't silently contradict a decision. If the plan is wrong or ambiguous, stop and ask; or, if the fix is clear, change the plan in the same PR and say so in the PR description.
 3. Keep to one task, one branch and one PR. Name the branch `m2-t4-camera-bindings`. Commit messages start with the task ID, for example `M2-T4: resolve bindings per platform`.
+4. Commits use the email `24880568+vault21inc@users.noreply.github.com`, set in the repository's local git config. In a fresh clone, run `git config user.email 24880568+vault21inc@users.noreply.github.com` before your first commit.
 
 ## Commands
 
