@@ -1,0 +1,27 @@
+# Dependencies and build output
+node_modules/
+dist/
+.turbo/
+*.tsbuildinfo
+
+# Environment files (keep the documented example)
+.env
+.env.*
+!.env.example
+
+# Local data: database dumps, uploaded media in development
+.data/
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# Personal Claude Code settings
+.claude/settings.local.json
+
+# OS and editor files
+.DS_Store
+.idea/
+*.log
