@@ -82,7 +82,7 @@
 
 **Where:** `apps/web/src/render/pins/`, `src/render/icons/`, the settings page.
 
-- **Choose the icon set** for categories and pins, then record the choice as D-20 in decisions.md:
+- **Choose the icon set** for categories and pins, then record the choice as a new D-entry in decisions.md:
   - Lucide (ISC): already used in the UI, generic;
   - game-icons.net (CC BY 3.0): thematic, and needs an attribution line on the site.
 
@@ -188,4 +188,4 @@
 ## Milestone acceptance
 
 - [ ] All tasks are checked off; CI is green; `v0.1.0-poc` is tagged.
-- [ ] The decision log is updated: D-20 (icon set), plus anything tuned or changed.
+- [ ] The decision log records the icon set, plus anything tuned or changed.

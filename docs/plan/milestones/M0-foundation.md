@@ -49,8 +49,15 @@
 - Use the latest stable versions of every tool at this point, and pin them: exact versions in `package.json`, `packageManager` set for pnpm.
 
 **Done when:**
-- [ ] `pnpm install && pnpm check` passes.
-- [ ] An import from `@ge/db` inside `apps/web` fails lint. Prove it with a lint-rule test or a fixture file excluded from the build.
+- [x] `pnpm install && pnpm check` passes.
+- [x] An import from `@ge/db` inside `apps/web` fails lint. Prove it with a lint-rule test or a fixture file excluded from the build.
+
+**Notes (done 2026-11-01):**
+- Tool versions are pinned once, in the `catalog:` section of `pnpm-workspace.yaml` (D-20). TypeScript is 6.0.3, not 7, because typescript-eslint doesn't support TypeScript 7 yet.
+- `pnpm check` also runs `prettier --check`. Prettier skips Markdown, so the plan's tables aren't re-padded.
+- Vitest is installed in every package and runs with `--passWithNoTests` until a package has tests.
+- The layering table lives in `packages/config/workspace.js`, and `packages/config/test/layers.test.js` checks every row (44 cases). An `@ge/db` import in `apps/web` makes `pnpm lint` exit with code 1.
+- Internal packages export TypeScript source and have no build step (D-21).
 
 ### M0-T3 Local database
 
@@ -130,8 +137,8 @@
 
 **What:** the test runners and a GitHub Actions pipeline.
 
-- Vitest:
-  - a unit project per package;
+- Vitest (installed in every package since M0-T2):
+  - unit tests per package, as now;
   - an `integration` project for db and api using `TEST_DATABASE_URL` and the M0-T5 harness.
 - Playwright:
   - projects `chromium` and `webkit`;

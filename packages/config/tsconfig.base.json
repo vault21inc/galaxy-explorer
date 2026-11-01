@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+
+    // Packages export TypeScript source and are compiled by their consumer (Vite, Vitest, the
+    // API's bundler), so resolve imports like a bundler and never emit from tsc.
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+
+    // Type-only imports must say so, and only syntax that can be erased is allowed (no enums,
+    // namespaces or constructor parameter properties), so any tool can strip the types.
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "erasableSyntaxOnly": true,
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+
+    // Packages opt in to ambient types they need, e.g. ["node"].
+    "types": []
+  }
+}

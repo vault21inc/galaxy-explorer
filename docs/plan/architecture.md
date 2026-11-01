@@ -36,18 +36,23 @@ galaxy-explorer/
 └─ docs/            plan/, perf/ (measurement reports), api/ (LLM guide, M7), ops/ (runbooks, M8)
 ```
 
-Dependency rules. A lint rule enforces them (`import/no-restricted-paths` or an equivalent):
+Dependency rules. `packages/config/workspace.js` holds this table as data. ESLint turns it into `no-restricted-imports` errors, and `packages/config/test/layers.test.js` checks every row:
 
 | Package | May import | Must not import |
 |---|---|---|
-| `domain` | zod, small pure libraries | db, api, web, React, three |
-| `db` | domain, drizzle | api, web |
-| `api` | domain, db | web, api-client |
-| `api-client` | generated types only | everything else |
-| `web` | domain, api-client | db, api |
+| `domain` | zod, small pure libraries | db, api, web, api-client, mcp, React, three, Node built-ins (it runs in the browser too) |
+| `db` | domain, drizzle | api, web, api-client, mcp |
+| `api` | domain, db | web, api-client, mcp |
+| `api-client` | generated types only | every other workspace package |
+| `web` | domain, api-client | db, api, mcp |
 | `mcp` | domain, api-client | db, api, web |
+| `config` | ESLint, typescript-eslint, Prettier | every workspace package |
 
-Packages are imported by name (`@ge/domain`), never by relative paths across package boundaries.
+Packages are imported by name (`@ge/domain`), never by relative paths across package boundaries. The same lint rule rejects relative paths into `apps/` or `packages/`.
+
+**Internal packages export TypeScript source.** `domain`, `db` and `api-client` have no build step. Their `exports` point at `src/index.ts`, and whatever runs them compiles them: Vite, Vitest, or the API's bundler.
+
+Turborepo's `lint`, `typecheck` and `test` tasks depend on a no-op `transit` task. Changing a package therefore invalidates the cached results of every package that depends on it, while the tasks still run in parallel.
 
 ## 3. Registries: the DRY core
 
