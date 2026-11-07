@@ -19,7 +19,7 @@ These are created in M0. M0-T8 makes this list match reality.
 | `pnpm dev` | API and web app in watch mode (web on http://localhost:5173) |
 | `pnpm check` | format check, lint, typecheck and unit tests; **must pass before you finish** |
 | `pnpm format` | format code with Prettier (Markdown is left alone) |
-| `pnpm test:integration` | API and DB tests against the test Postgres |
+| `pnpm test:integration` | API and DB tests (`*.int.test.ts`) against the test Postgres; unit tests are `*.test.ts` |
 | `pnpm test:e2e` | Playwright end-to-end tests |
 | `pnpm db:migrate` / `pnpm db:reset` | apply migrations / drop, migrate and seed the demo data |
 | `pnpm db:seed demo` / `pnpm db:seed stress` | seed the demo universe / the 5,000-object performance map |

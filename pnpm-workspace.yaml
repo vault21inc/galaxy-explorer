@@ -7,7 +7,9 @@ catalog:
   '@eslint/js': 10.0.1
   '@types/node': 26.6.6
   eslint: 10.14.0
+  '@types/pg': 8.23.1
   globals: 17.13.0
+  pg: 8.23.1
   prettier: 3.9.10
   turbo: 2.11.10
   # typescript-eslint 8 supports TypeScript below 6.1, so TypeScript 7 (the native port) waits for it.
@@ -15,6 +17,7 @@ catalog:
   typescript-eslint: 8.72.1
   vite: 8.3.5
   vitest: 5.0.5
+  zod: 4.6.7
 
 # Record exact versions when dependencies are added.
 savePrefix: ''

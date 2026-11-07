@@ -203,4 +203,6 @@ To change a decision, edit its entry, keep the old text on a `Superseded:` line,
   - pnpm's default one-day minimum release age stays on as a supply-chain safeguard. A version published in the last 24 hours can't be pinned yet.
 - **D-21 Internal packages export TypeScript source.**
   - domain, db and api-client have no build step; whatever runs them compiles them.
+  - The API runs its TypeScript directly with Node's built-in type stripping (M0-T4), so code uses only erasable syntax and relative imports end in `.ts`.
+  - Node refuses to strip types from files inside `node_modules`. The production image (M8-T4) must therefore keep the workspace layout, or bundle the API.
   - Turborepo's `transit` task keeps cached results correct across packages ([architecture.md §2](architecture.md#2-packages-and-layering)).

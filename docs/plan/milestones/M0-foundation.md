@@ -98,9 +98,17 @@
 - `GET /api/health` returns `{ data: { status: 'ok', db: 'ok' | 'down', version } }` and checks the database with `select 1`.
 
 **Done when:**
-- [ ] Integration test: health returns 200 with `db: 'ok'` against the test database.
-- [ ] An unknown route returns 404 problem+json.
-- [ ] The OpenAPI document validates (`@apidevtools/swagger-parser` in a test) and lists `/api/health`.
+- [x] Integration test: health returns 200 with `db: 'ok'` against the test database.
+- [x] An unknown route returns 404 problem+json.
+- [x] The OpenAPI document validates (`@apidevtools/swagger-parser` in a test) and lists `/api/health`.
+
+**Notes (done 2026-11-07):**
+- **Running TypeScript:** `pnpm dev` runs the API with `node --watch src/main.ts` and Node's built-in type stripping, so there's no build step or `tsx`. Relative imports therefore spell out `.ts` (`allowImportingTsExtensions` in the base tsconfig).
+- **Health when the database is down:** `/api/health` returns **503** with `status: 'degraded'` and `db: 'down'`, so uptime monitors and deploy checks see the failure.
+- **Database pool:** `createPool()` and `pingDatabase()` live in `@ge/db`, so the API never imports the `pg` driver directly. M0-T5 builds Drizzle on top of them.
+- **Config:** a bad value stops startup with every problem listed. With `GE_AUTH_MODE=none`, `GE_HOST` must be a loopback address. A new `GE_LOG_LEVEL` variable defaults to `info`.
+- **Test layout:** `*.test.ts` files are unit tests (`pnpm test`); `*.int.test.ts` files are integration tests (`pnpm test:integration`). Both use the shared Vitest config in `@ge/config/vitest`, which reads `TEST_DATABASE_URL` from `.env`.
+- **Verified live in the browser:** `/api/health` reports `ok`, an unknown route gets the 404 problem document, and `/api/docs` shows Swagger UI.
 
 ### M0-T5 DB package, migrations and test databases
 

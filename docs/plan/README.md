@@ -136,4 +136,5 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-01:** plan written from the planning Q&A ([decisions.md](decisions.md)).
 - **2026-11-01:** M0-T1 done: the private repository [vault21inc/galaxy-explorer](https://github.com/vault21inc/galaxy-explorer) holds the plan.
 - **2026-11-01:** M0-T2 done: the pnpm and Turborepo workspace, shared configs, stub packages, and layering enforced by lint.
-- **2026-11-07:** M0-T3 done: dev and test Postgres 18 in Docker on ports 5442 and 5443. Next: **M0-T4**, the API skeleton.
+- **2026-11-07:** M0-T3 done: dev and test Postgres 18 in Docker on ports 5442 and 5443.
+- **2026-11-07:** M0-T4 done: the Fastify API on port 3100 with config validation, problem+json errors, OpenAPI docs at `/api/docs` and `/api/health`. Next: **M0-T5**, Drizzle and migrations.

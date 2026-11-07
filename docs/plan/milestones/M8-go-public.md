@@ -73,7 +73,7 @@
 ### M8-T4 Production build and containers
 
 - Multi-stage Dockerfiles:
-  - `api`: Node LTS slim, running as a non-root user with a read-only filesystem except the media volume;
+  - `api`: Node LTS slim, running as a non-root user with a read-only filesystem except the media volume. The API runs TypeScript through Node's type stripping, which refuses files inside `node_modules`, so copy the workspace as is or bundle the API (D-21);
   - `web`: builds static files into a Caddy image or a shared volume;
   - `migrate`: a one-off container running `db:migrate`;
   - `backup`: see M8-T7.

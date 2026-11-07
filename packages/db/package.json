@@ -10,14 +10,17 @@
   "scripts": {
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --project unit --passWithNoTests",
+    "test:integration": "vitest run --project integration"
   },
   "dependencies": {
-    "@ge/domain": "workspace:*"
+    "@ge/domain": "workspace:*",
+    "pg": "catalog:"
   },
   "devDependencies": {
     "@ge/config": "workspace:*",
     "@types/node": "catalog:",
+    "@types/pg": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
