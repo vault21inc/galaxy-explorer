@@ -62,13 +62,29 @@
 - `resolveAppearance({ baseType, subtypeDefaults, overrides, view })` (data-model §6).
 
 **Done when:**
-- [ ] Invariant tests pass:
+- [x] Invariant tests pass:
   - every `explorableAs` is a view level;
   - every entry in `parents` is a base type or `'map'`;
   - plurals are unique;
   - relation endpoints name existing kinds;
   - every config resource has a schema.
-- [ ] `resolveAppearance` precedence is tested (type ← subtype ← object, per view).
+- [x] `resolveAppearance` precedence is tested (type ← subtype ← object, per view).
+
+**Notes (done 2026-11-07):**
+- **Registries** live in `packages/domain/src/registry/`. Each `define…` function keeps literal types, so `entityKinds.celestial_object.plural` is `'objects'`; a type-level test checks this.
+  - Object types carry a label, an icon key (Lucide names until the icon set is chosen in M6) and a default appearance with at least a color.
+  - Planets and moons default to `showOrbit: true`; systems get a higher label priority.
+  - The colors and sizes are starting points for M2 and M5.
+- **Entity kinds have `contentFields`** (an event's `dateText` and `dateSort`), which `redactEntity` nulls while a whole entity is hidden. The `form` hints shown in architecture §3.1 wait for the editor in M3. `route` isn't registered (M4).
+- **Extension schemas** use the API's camelCase field names. A field the database fills by default (`x`, `appearance`, `explorable`, …) is optional on create.
+- **`schemasFor(kind)` and `configSchemasFor(resource)`** derive `{ create, update, read }`:
+  - **create** is strict, so unknown fields are rejected;
+  - **update** is the create fields, all optional, plus `version`. It never fills in defaults, so a PATCH can't reset a field it didn't mention;
+  - **read** has every field, plus `id`, `kind`, `universeId`, `mapId` (null for characters), `namePlain`, `clonedFromEntityId`, `version` and ISO timestamps.
+  - Config resources follow the same pattern, without a version or timestamps, because their tables have neither (data-model §3.5).
+- **Documents** follow data-model §4 in Zod 4 syntax: `z.url()`, `z.uuid()`, `z.int()`, and `z.partialRecord` over the view levels for per-view values. `FIELD_VALUE_TYPES` is read from the `FieldValue` union, so the two can't drift apart.
+- **`resolveAppearance`** merges nested settings field by field and replaces lists (palettes) whole. It returns the merged appearance and the size in the view's unit, or null where the type isn't drawn as a body.
+- **Additional invariant tests:** sizes are for real view levels; region types, and only they, have no body size; view-level subjects and `explorableAs` agree in both directions; content fields exist in their extension; plurals are unique across entity kinds and config resources together, and URL-safe.
 
 ### M1-T3 Schema migration
 

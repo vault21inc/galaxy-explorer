@@ -143,4 +143,5 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-07:** M0-T7 done: Playwright e2e tests (Chromium and WebKit; idle = 0 frames, axe clean) and GitHub Actions CI on every push to `main`, plus Dependabot.
 - **2026-11-07:** M0-T8 done: `AGENTS.md` commands checked and a commit message checklist added, the reference machine and first baseline in [docs/perf/README.md](../perf/README.md), and the README's getting-started section rewritten.
 - **2026-11-07:** **M0 complete.**
-- **2026-11-07:** M1-T1 done: ids, colors, units, `RichText`, plain-text extraction, Markdown and HTML inline spoilers, `RICH_TEXT_POLICY` and spoiler redaction in `@ge/domain`. Next: **M1-T2**, registries and document schemas.
+- **2026-11-07:** M1-T1 done: ids, colors, units, `RichText`, plain-text extraction, Markdown and HTML inline spoilers, `RICH_TEXT_POLICY` and spoiler redaction in `@ge/domain`.
+- **2026-11-07:** M1-T2 done: the registries (view levels, object types, entity kinds, relation types, config resources), the jsonb document schemas, `schemasFor` and `resolveAppearance`. Next: **M1-T3**, the schema migration.
