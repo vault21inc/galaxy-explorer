@@ -134,4 +134,5 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 ## Status
 
 - **2026-11-01:** plan written from the planning Q&A ([decisions.md](decisions.md)).
-- **2026-11-01:** M0-T1 done: the private repository [vault21inc/galaxy-explorer](https://github.com/vault21inc/galaxy-explorer) holds the plan. Next: **M0-T2**, the workspace scaffold.
+- **2026-11-01:** M0-T1 done: the private repository [vault21inc/galaxy-explorer](https://github.com/vault21inc/galaxy-explorer) holds the plan.
+- **2026-11-01:** M0-T2 done: the pnpm and Turborepo workspace, shared configs, stub packages, and layering enforced by lint. Next: **M0-T3**, the local database.

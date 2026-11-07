@@ -17,7 +17,8 @@ These are created in M0. M0-T8 makes this list match reality.
 |---|---|
 | `pnpm db:up` / `pnpm db:down` | start or stop the dev and test Postgres containers |
 | `pnpm dev` | API and web app in watch mode (web on http://localhost:5173) |
-| `pnpm check` | lint, typecheck and unit tests; **must pass before you finish** |
+| `pnpm check` | format check, lint, typecheck and unit tests; **must pass before you finish** |
+| `pnpm format` | format code with Prettier (Markdown is left alone) |
 | `pnpm test:integration` | API and DB tests against the test Postgres |
 | `pnpm test:e2e` | Playwright end-to-end tests |
 | `pnpm db:migrate` / `pnpm db:reset` | apply migrations / drop, migrate and seed the demo data |
@@ -70,7 +71,7 @@ Details are in rendering.md §2.
 - **Comment the why.** The owner is an experienced developer who is new to three.js. Explain every non-obvious piece of 3D math, shader code and camera logic in plain words, and link the relevant section of `docs/plan/rendering.md`.
 - Rendering tunables go in `apps/web/src/render/tuning.ts`, with units and comments, not as inline magic numbers.
 - Prefer small files (under about 300 lines), one component per file, and clear names over cleverness.
-- Add a dependency only when it removes real work, and mention it in the PR.
+- Add a dependency only when it removes real work, and mention it in the PR. Pin it exactly. A tool used by several packages gets its version once, in the `catalog:` section of `pnpm-workspace.yaml`.
 
 ### Testing
 

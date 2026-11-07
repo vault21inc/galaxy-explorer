@@ -1,0 +1,23 @@
+{
+  "name": "@ge/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The viewer and editor: React, React Three Fiber and the three views.",
+  "scripts": {
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@ge/api-client": "workspace:*",
+    "@ge/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@ge/config": "workspace:*",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

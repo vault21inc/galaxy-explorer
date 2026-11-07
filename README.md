@@ -12,9 +12,17 @@ A browser app for building and exploring galaxies from any fictional universe, s
 
 ## Getting started
 
-Setup instructions arrive with the workspace scaffold (M0-T2 to M0-T6).
-
 Prerequisites:
-- Node.js, at the version in `.nvmrc`
-- pnpm
-- Docker
+- Node.js, at the version in `.nvmrc` (26)
+- pnpm, through Corepack: `corepack enable` once; the version comes from `package.json`
+- Docker, from M0-T3 onward
+
+```bash
+pnpm install
+```
+
+```bash
+pnpm check
+```
+
+`pnpm check` runs the format check, lint, typecheck and unit tests across the workspace. The database, API and web app are added in M0-T3 to M0-T6.
