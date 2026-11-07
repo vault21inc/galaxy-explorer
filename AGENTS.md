@@ -89,7 +89,7 @@ Details are in rendering.md §2.
 
 ### Testing
 
-- Unit-test pure logic. Integration-test the API and DB against real Postgres; don't mock the database. `withTestDb` from `@ge/db/testing` gives each test a fresh, migrated database. Write Playwright e2e tests for user flows.
+- Unit-test pure logic. Integration-test the API and DB against real Postgres; don't mock the database. `withTestDb` from `@ge/db/testing` gives each test a fresh, migrated database. Writes need `withBatch`; tests about constraints rather than history can pass `{ ambientBatch: true }` instead. Write Playwright e2e tests for user flows.
 - Verify 3D behavior through `window.__GE_TEST__` (rendering.md §14), not pixel guesses.
 - A new entity kind or settings resource must pass the generic contract suite **without new per-kind test code**.
 

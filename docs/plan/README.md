@@ -145,4 +145,5 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-07:** **M0 complete.**
 - **2026-11-07:** M1-T1 done: ids, colors, units, `RichText`, plain-text extraction, Markdown and HTML inline spoilers, `RICH_TEXT_POLICY` and spoiler redaction in `@ge/domain`.
 - **2026-11-07:** M1-T2 done: the registries (view levels, object types, entity kinds, relation types, config resources), the jsonb document schemas, `schemasFor` and `resolveAppearance`.
-- **2026-11-07:** M1-T3 done: the full schema except routes, citations and auth, in one migration with deferrable foreign keys, plus constraint and registry-consistency tests. Next: **M1-T4**, the audit trigger, batches and revert.
+- **2026-11-07:** M1-T3 done: the full schema except routes, citations and auth, in one migration with deferrable foreign keys, plus constraint and registry-consistency tests.
+- **2026-11-07:** M1-T4 done: the audit trigger on every content table, `withBatch`, `revertBatch` (undo, and redo as the revert of a revert, with conflict detection), `AUDITED_TABLES` and `CLONE_SPEC`. Next: **M1-T5**, the entity service and rules.
