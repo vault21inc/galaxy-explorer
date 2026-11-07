@@ -50,7 +50,7 @@
   - It takes the minimal shapes it needs, so the M1-T6 read types pass straight in.
 - **`redactMap` and `redactUniverse`** cover the map flag and the map and universe texts.
 - **`RICH_TEXT_POLICY`** is data, plus `isAllowedLinkUrl` (http, https, mailto, site-relative; never `//host`, `/\host` or `javascript:`) and `isAllowedImageSource` (`/media/` only). The sanitizers themselves come in M1-T5.
-- **New dependencies:** unified, remark-parse, remark-gfm, micromark-util-chunked / classify-character / resolve-all / character, htmlparser2, domhandler, dom-serializer and zod. Their types come from @types/mdast, mdast-util-from-markdown and micromark-util-types. The package still bundles for the browser with no Node imports.
+- **New dependencies:** unified, remark-parse, remark-gfm, micromark-util-chunked / classify-character / resolve-all, htmlparser2, domhandler and zod. Their types come from @types/mdast, mdast-util-from-markdown and micromark-util-types. The package still bundles for the browser with no Node imports.
 
 ### M1-T2 Registries and document schemas
 

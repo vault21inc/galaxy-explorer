@@ -443,18 +443,12 @@ importers:
 
   packages/domain:
     dependencies:
-      dom-serializer:
-        specifier: 3.1.1
-        version: 3.1.1
       domhandler:
         specifier: 6.0.1
         version: 6.0.1
       htmlparser2:
         specifier: 12.0.0
         version: 12.0.0
-      micromark-util-character:
-        specifier: 2.1.1
-        version: 2.1.1
       micromark-util-chunked:
         specifier: 2.0.1
         version: 2.0.1
