@@ -9,26 +9,35 @@ Galaxy Explorer is a universe-agnostic 3D galaxy builder. The owner builds galax
 3. Work directly on `main`, one task at a time, with no task branches or PRs (D-22). A task is one commit, or a few if that reads better.
    - Commit messages start with the task ID, for example `M2-T4: resolve bindings per platform`.
    - The message body says what changed and how you verified it. Anything the plan asks to "report" (performance numbers, manual checks, new dependencies) goes there too.
-   - Run `pnpm check` and the relevant integration and e2e suites before every commit: `main` must always pass. Then push.
+   - Run `pnpm check` and the relevant integration and e2e suites before every commit: `main` must always pass. Then push, and check that CI passes.
+   - Use the commit message checklist below.
 4. Commits use the email `24880568+vault21inc@users.noreply.github.com`, set in the repository's local git config. In a fresh clone, run `git config user.email 24880568+vault21inc@users.noreply.github.com` before your first commit.
 
 ## Commands
 
-These are created in M0. M0-T8 makes this list match reality.
+Run from the repository root. Each one listed here exists and runs; the last table lists the commands later tasks add.
 
 | Command | Does |
 |---|---|
-| `pnpm db:up` / `pnpm db:down` | start or stop the dev and test Postgres containers |
-| `pnpm dev` | API and web app in watch mode (web on http://localhost:5173) |
-| `pnpm check` | format check, lint, typecheck and unit tests; **must pass before you finish** |
-| `pnpm format` | format code with Prettier (Markdown is left alone) |
+| `pnpm db:up` / `pnpm db:down` | start or stop the dev (127.0.0.1:5442) and test (127.0.0.1:5443) Postgres containers |
+| `pnpm db:psql` | open `psql` on the dev database |
+| `pnpm dev` | the API (http://127.0.0.1:3100) and the web app (http://localhost:5173) in watch mode |
+| `pnpm check` | format check, lint, typecheck and unit tests; **must pass before you commit** |
+| `pnpm format` / `pnpm format:check` | format code with Prettier / only check it (Markdown is left alone) |
+| `pnpm lint` / `pnpm typecheck` / `pnpm test` | the parts of `pnpm check`, one at a time |
 | `pnpm test:integration` | API and DB tests (`*.int.test.ts`) against the test Postgres; unit tests are `*.test.ts` |
 | `pnpm test:e2e` | Playwright end-to-end tests in Chromium and WebKit (`-- --project=chromium` for one browser). They build the web app with the test hooks and start their own API on port 3101, using the `ge_e2e` database on the test server. Install the browsers once with `pnpm --filter @ge/web exec playwright install chromium webkit` |
-| `pnpm db:migrate` / `pnpm db:reset` | apply migrations / drop, migrate and seed the demo data (local databases only; seeding arrives in M1-T11) |
+| `pnpm build` | production build of the web app into `apps/web/dist` |
+| `pnpm db:migrate` / `pnpm db:reset` | apply migrations / drop, create and migrate the dev database (local databases only) |
 | `pnpm db:generate` | generate a migration from `packages/db/src/schema` with drizzle-kit; add `--custom` for an empty one to write by hand |
-| `pnpm db:seed demo` / `pnpm db:seed stress` | seed the demo universe / the 5,000-object performance map |
-| `pnpm api:generate` | regenerate `packages/api-client` from the API's OpenAPI document |
-| `pnpm perf` | local performance run on the owner's Mac (rendering tasks) |
+
+Added by later tasks; update this file when you add one:
+
+| Command | Does | Added in |
+|---|---|---|
+| `pnpm db:seed demo` / `pnpm db:seed stress` | seed the demo universe / the 5,000-object performance map; `db:reset` then seeds too | M1-T11 |
+| `pnpm api:generate` | regenerate `packages/api-client` from the API's OpenAPI document | M1-T10 |
+| `pnpm perf` | scripted performance run on the owner's Mac, checked against the budgets ([docs/perf/README.md](docs/perf/README.md)) | M2-T8 |
 
 ## Non-negotiables
 
@@ -87,6 +96,20 @@ Details are in rendering.md §2.
 
 - Say "event", never "scene", in UI text, API names and docs. three.js's `Scene` class in code is fine.
 - The three levels are the galaxy view, system view and orbit view.
+
+## Commit message checklist
+
+With no pull requests (D-22), the commit message is where a task is explained. The first line is `Mx-Ty: what changed`, in the imperative. The body covers, where they apply:
+
+- [ ] **Task:** the task ID, and which "Done when" items this commit meets (they're checked off in the milestone file too).
+- [ ] **Changes:** what changed and why, briefly, including anything that differs from the plan.
+- [ ] **Tests:** which tests were added or updated, and which suites you ran.
+- [ ] **Performance** (rendering tasks): draw calls and median and p95 frame times, before and after, and the machine they're from ([docs/perf/README.md](docs/perf/README.md)).
+- [ ] **Dependencies:** each one added, with its version and why.
+- [ ] **Docs:** which plan docs or `AGENTS.md` sections were updated.
+- [ ] **Decisions:** any D-entry added or changed in `decisions.md`.
+
+End with the `Co-Authored-By:` line if an agent wrote the change.
 
 ## Definition of done
 

@@ -125,7 +125,6 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 | Item | Needed by | Owner |
 |---|---|---|
 | 3–6 reference screenshots in `docs/design/references/` (Sins of a Solar Empire, Mass Effect galaxy map, anything else) | M2-T3 | owner |
-| Reference machine details (Mac model, chip, display) in `docs/perf/README.md` | M0-T8 | owner |
 | Adjusting the input bindings after trying them | end of M2 | owner + agent |
 | Icon set for categories and pins (Lucide or game-icons.net) | M6-T4 | owner |
 | License for the code, and a fan-site disclaimer text | before M8 | owner |
@@ -141,4 +140,5 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-07:** work moves straight to `main` (D-22).
 - **2026-11-07:** M0-T5 done: Drizzle, `pnpm db:migrate` and `db:reset`, and `withTestDb`, which gives each integration test its own migrated database.
 - **2026-11-07:** M0-T6 done: the web app on port 5173 with an on-demand canvas, a 5,000-star placeholder sky, the `?perf=1` HUD and `window.__GE_TEST__`. Idle renders 0 frames.
-- **2026-11-07:** M0-T7 done: Playwright e2e tests (Chromium and WebKit; idle = 0 frames, axe clean) and GitHub Actions CI on every push to `main`, plus Dependabot. Next: **M0-T8**, agent docs, the commit checklist and the performance baseline on the owner's Mac.
+- **2026-11-07:** M0-T7 done: Playwright e2e tests (Chromium and WebKit; idle = 0 frames, axe clean) and GitHub Actions CI on every push to `main`, plus Dependabot.
+- **2026-11-07:** M0-T8 done: `AGENTS.md` commands checked and a commit message checklist added, the reference machine and first baseline in [docs/perf/README.md](../perf/README.md), and the README's getting-started section rewritten.

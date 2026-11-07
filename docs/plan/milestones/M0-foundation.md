@@ -251,7 +251,20 @@
   - the baseline numbers for the empty canvas from the HUD.
 
 **Done when:**
-- [ ] The files are committed, and `AGENTS.md` commands all run.
+- [x] The files are committed, and `AGENTS.md` commands all run.
+
+**Notes (done 2026-11-07):**
+- **Commands in `AGENTS.md`:**
+  - Every command in the main table was run and works. `pnpm db:psql` is interactive, so the `psql` command it wraps was checked instead.
+  - The table now also lists `db:psql`, `build`, `format:check` and the separate lint, typecheck and test commands.
+  - Commands that don't exist yet (`db:seed`, `api:generate`, `perf`) moved to their own table, with the task that adds each.
+- **The commit message checklist** is in `AGENTS.md`, under "Commit message checklist".
+- **`docs/perf/README.md`** records the reference machine (MacBook Pro 16", M4 Max, 128 GB, macOS 26.6.2, Chrome 156, Safari 26.6.2), how to read the HUD and take a manual baseline, and the first baseline.
+  - **Empty canvas, Chrome, external 240 Hz display:** 0 frames idle; 238 fps while moving, with 4.2 / 4.7 ms median / p95 between frames; 1 draw call.
+  - The machine details came from `system_profiler`. The owner took the numbers from the HUD.
+- **The main display runs at 240 Hz,** so the app renders 240 fps while the camera moves: four times the 60 fps budget, and four times the GPU work of a 60 Hz screen. Idle is unaffected. Whether to cap the frame rate while moving is noted for M2-T8.
+- **Not yet measured:** Safari and the built-in display, which rendering.md §2 names as the reference. They're due by M2-T8.
+- **The README's getting-started section** was rewritten, as the owner asked: what to install, first-time setup, running and stopping the app, the HUD, the test commands, ports and troubleshooting.
 
 ---
 
