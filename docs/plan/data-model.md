@@ -29,7 +29,7 @@ Auth (M8): users, sessions, api_tokens
 - **Primary keys:** `uuid` with `default uuidv7()`, which is built into Postgres 18 and gives time-ordered ids. Link tables use composite primary keys.
 - **Bookkeeping columns:** `created_at` and `updated_at` (`timestamptz not null default now()`) and `version integer not null default 1` on universes, maps and entities. Updates set `updated_at = now()` and `version = version + 1`.
 - **Same-map integrity:** map-scoped tables carry `map_id`, and every reference between map-scoped rows is a composite foreign key `(x_id, map_id)`. This makes it impossible to put a planet from map A into a system in map B, or to cross maps when cloning. Referenced tables declare `unique (entity_id, map_id)` (or `unique (id, map_id)`) for this purpose.
-- **Deferrable foreign keys:** foreign keys are `deferrable initially immediate`. Revert and clone run with `set constraints all deferred`, so row order inside them doesn't matter. Unique constraints stay non-deferrable, because foreign keys must target them.
+- **Deferrable foreign keys:** foreign keys are `deferrable initially immediate`. Revert and clone run with `set constraints all deferred`, so row order inside them doesn't matter. Unique constraints stay non-deferrable, because foreign keys must target them. Drizzle can't declare deferrable keys, so the Drizzle schema has none: every foreign key is written in SQL at the end of its migration ([packages/db/migrations/README.md](../../packages/db/migrations/README.md)), and a test checks they're all deferrable.
 - **Enumerations** are `text` columns with `check (… in (…))` constraints, generated from the registries. Adding a value is a migration plus a registry entry, and the consistency tests keep them in sync.
 - **jsonb** holds only the Zod-validated documents in §4. The API validates every jsonb write with the schema named in the column comment. Nothing that is joined, filtered or referenced lives in jsonb.
 - **Slugs:** `^[a-z0-9]+(-[a-z0-9]+)*$`. **Colors:** `^#[0-9a-f]{6}$` (lower-case hex).
@@ -61,7 +61,7 @@ create table maps (                                 -- one galaxy at one point i
   description         jsonb,                        -- RichText
   sort_key            numeric not null default 0,   -- order in the map switcher, e.g. by era
   galaxy_settings     jsonb not null default '{}',  -- GalaxySettings (procedural background)
-  underlay_asset_id   uuid references assets on delete set null,
+  underlay_asset_id   uuid references assets on delete restrict, -- §11: an asset in use can't be deleted
   underlay            jsonb,                        -- Underlay (reference image placement, edit mode only)
   cloned_from_map_id  uuid references maps on delete set null,
   is_spoiler          boolean not null default false,
@@ -196,11 +196,13 @@ create table entity_locations (                       -- where a place or event 
   foreign key (place_id, map_id) references entities (id, map_id) on delete cascade deferrable,
   check (case mode
     when 'surface' then object_id is not null and lat_deg is not null and lon_deg is not null
-                        and place_id is null and x is null
-    when 'object'  then object_id is not null and lat_deg is null and place_id is null and x is null
+                        and place_id is null and x is null and y is null and z is null
+    when 'object'  then object_id is not null and lat_deg is null and lon_deg is null
+                        and place_id is null and x is null and y is null and z is null
     when 'space'   then x is not null and y is not null and z is not null
-                        and lat_deg is null and place_id is null
-    when 'place'   then place_id is not null and object_id is null and lat_deg is null and x is null
+                        and lat_deg is null and lon_deg is null and place_id is null
+    when 'place'   then place_id is not null and object_id is null and lat_deg is null
+                        and lon_deg is null and x is null and y is null and z is null
   end)
 );
 create index entity_locations_object_idx on entity_locations (object_id);
@@ -648,5 +650,5 @@ Deletes are hard deletes: the change log keeps everything needed to revert them.
 - **Migrations:**
   - Drizzle generates the table DDL.
   - Triggers, functions, `nulls not distinct` indexes, `on delete set null (col)` and other constructs Drizzle can't express go in custom SQL migrations (`drizzle-kit generate --custom`).
-  - Never edit a migration once it has been applied anywhere; add a new one. Each task adds at most one migration.
+  - Never edit a migration once it has been applied anywhere; add a new one. Each task adds at most one migration: the generated SQL plus, at the end of the same file, the hand-written parts (foreign keys, special indexes, triggers).
   - CI applies all migrations to an empty database and then runs the consistency tests.

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { HexColor } from '../colors.ts';
 import { Uuid } from '../ids.ts';
+import { FIELD_KEY_PATTERN } from '../patterns.ts';
 import { RichText } from '../richtext/schema.ts';
 import { Appearance } from '../schemas/appearance.ts';
 import { FIELD_VALUE_TYPES } from '../schemas/field-value.ts';
@@ -61,7 +62,7 @@ export const fieldDefinitionSchema = z.object({
   /** Stable key, such as 'population'. */
   key: z
     .string()
-    .regex(/^[a-z][a-z0-9_]*$/, 'Use lower-case letters, digits and underscores.')
+    .regex(new RegExp(FIELD_KEY_PATTERN), 'Use lower-case letters, digits and underscores.')
     .max(64),
   label: name,
   valueType: z.enum(FIELD_VALUE_TYPES),

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SLUG_PATTERN } from './patterns.ts';
 
 /**
  * Identifier types. "Branded" means TypeScript treats them as distinct from plain strings:
@@ -15,6 +16,6 @@ export const Slug = z
   .string()
   .min(1)
   .max(100)
-  .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Use lower-case letters and digits, separated by hyphens.')
+  .regex(new RegExp(SLUG_PATTERN), 'Use lower-case letters and digits, separated by hyphens.')
   .brand<'Slug'>();
 export type Slug = z.infer<typeof Slug>;

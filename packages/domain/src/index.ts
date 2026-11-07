@@ -10,6 +10,7 @@ export {
 } from './appearance/resolve.ts';
 export { HexColor } from './colors.ts';
 export { Slug, Uuid } from './ids.ts';
+export * from './patterns.ts';
 export * from './registry/index.ts';
 export * from './richtext/index.ts';
 export * from './schemas/index.ts';

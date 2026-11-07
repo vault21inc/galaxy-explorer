@@ -57,6 +57,7 @@ Added by later tasks; update this file when you add one:
 - Change the schema only with a new migration. Never edit an applied migration.
 - Every content table has the audit trigger, and every write runs inside `withBatch()`. A write outside a batch fails, by design.
 - Relationships are columns with foreign keys; same-map references are composite foreign keys. jsonb holds only Zod-validated presentation and settings documents (data-model.md §2, §4).
+- Foreign keys are written in SQL at the end of the migration, not in the Drizzle schema, because they must be deferrable and Drizzle can't say so ([packages/db/migrations/README.md](packages/db/migrations/README.md)). Check lists and format checks are generated from `@ge/domain` registries and patterns, never typed by hand.
 - New map-scoped tables go into `AUDITED_TABLES` and `CLONE_SPEC`. The consistency tests enforce this.
 
 ### Rendering performance
