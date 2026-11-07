@@ -140,4 +140,5 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-07:** M0-T4 done: the Fastify API on port 3100 with config validation, problem+json errors, OpenAPI docs at `/api/docs` and `/api/health`.
 - **2026-11-07:** work moves straight to `main` (D-22).
 - **2026-11-07:** M0-T5 done: Drizzle, `pnpm db:migrate` and `db:reset`, and `withTestDb`, which gives each integration test its own migrated database.
-- **2026-11-07:** M0-T6 done: the web app on port 5173 with an on-demand canvas, a 5,000-star placeholder sky, the `?perf=1` HUD and `window.__GE_TEST__`. Idle renders 0 frames. Next: **M0-T7**, Playwright and CI.
+- **2026-11-07:** M0-T6 done: the web app on port 5173 with an on-demand canvas, a 5,000-star placeholder sky, the `?perf=1` HUD and `window.__GE_TEST__`. Idle renders 0 frames.
+- **2026-11-07:** M0-T7 done: Playwright e2e tests (Chromium and WebKit; idle = 0 frames, axe clean) and GitHub Actions CI on every push to `main`, plus Dependabot. Next: **M0-T8**, agent docs, the commit checklist and the performance baseline on the owner's Mac.

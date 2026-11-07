@@ -206,7 +206,32 @@
 - Renovate or Dependabot, weekly, grouping minor updates.
 
 **Done when:**
-- [ ] A push to `main` shows green CI, and a deliberately failing test, pushed to a throwaway branch, turns it red with the report attached.
+- [x] A push to `main` shows green CI, and a deliberately failing test, pushed to a throwaway branch, turns it red with the report attached.
+
+**Notes (done 2026-11-07):**
+- **Runs:**
+  - [green on `main`](https://github.com/vault21inc/galaxy-explorer/actions/runs/42405387976), about 2 minutes;
+  - [red on the throwaway branch](https://github.com/vault21inc/galaxy-explorer/actions/runs/42405388220): the e2e step failed (1 failed, 7 passed) and the `playwright-report` artifact (about 1 MB) was uploaded. The branch was then deleted.
+- **CI also runs by hand** (`workflow_dispatch`): `gh workflow run ci.yml --ref <branch>` checks a branch without a pull request. That's how the red run was started.
+- **Where e2e lives:** Playwright is in `apps/web` (`playwright.config.js`, `e2e/*.spec.ts`). The servers start from commands, so the web package still imports nothing from db or api.
+  - The API runs on port 3101 against a `ge_e2e` database on the test server, reset at the start of each run with `pnpm db:reset`.
+  - The web app is a production build with `VITE_TEST_HOOKS=1`, served by `vite preview` on port 4173. Both ports differ from `pnpm dev`'s, so the tests run alongside it.
+- **First e2e tests:**
+  - the app loads and idle adds **0 frames** over 3 s;
+  - a real mouse drag renders frames, moves the camera, and rendering stops once it settles;
+  - the sky is one draw call of 5,000 points;
+  - `/api` is proxied;
+  - the canvas survives navigation;
+  - axe finds no WCAG 2.2 AA violations on `/` and the map route.
+- **Locally,** the suite runs in Chromium and WebKit in about 17 s. CI runs Chromium with SwiftShader (software WebGL) and retries a failed test once.
+- **GitHub Actions** are pinned to commit SHAs. The Playwright browser download is cached by version.
+- **Postgres in CI** is a `postgres:18.6` service on port 5443 with a tmpfs data directory. Service containers can't take `-c fsync=off`, unlike the local test server.
+- **Dependabot:**
+  - weekly npm and GitHub Actions updates, with minor and patch updates grouped;
+  - a 3-day cooldown, matching pnpm's minimum release age;
+  - TypeScript majors are ignored until typescript-eslint supports TypeScript 7 (D-20).
+  - It opened its first pull requests right away, and CI ran on them.
+- **A flaky timeout fixed along the way:** on a cold runner, the first ESLint run in `packages/config/test/layers.test.js` took 6.7 s, over Vitest's 5 s default. That package now allows 30 s per test.
 
 ### M0-T8 Agent docs, commit checklist and performance baseline
 
