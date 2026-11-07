@@ -42,7 +42,7 @@ export function PerfHud() {
     ['triangles', String(render?.triangles ?? '–')],
     ['points', String(render?.points ?? '–')],
     ['geo / tex', render ? `${String(render.geometries)} / ${String(render.textures)}` : '–'],
-    ['dpr', render ? fmt(render.dpr) : '–'],
+    ['dpr', render ? render.dpr.toFixed(2) : '–'],
   ];
 
   return (

@@ -64,8 +64,10 @@ The placeholder sky: 5,000 points in one draw call, no textures.
 | Date | Commit | Browser | Display | Idle | Moving: fps | Moving: median / p95 frame | Draw calls | Points | Geo / tex | DPR at rest |
 |---|---|---|---|---|---|---|---|---|---|---|
 | 2026-11-07 | `9528aed` | Chrome 156 | external, 240 Hz | 0 frames (`idle`) | 238 | 4.2 / 4.7 ms | 1 | 5,000 | 1 / 0 | 1.5 |
+| 2026-11-07 | `088875f` | not noted | built-in, 120 Hz | 0 frames (`idle`) | 120 | 8.3 / 9.0 ms | 1 | 5,000 | 1 / 0 | 1.5 (0.75 while moving) |
 
 - The owner took these readings from the HUD. The display was the external one: 4.2 ms between frames means 240 Hz, faster than the built-in display can refresh.
 - Frame times here only show that the empty canvas keeps up with the display. With nothing to draw, they say little about GPU cost. The useful numbers start with the stress map in M2.
 - The moving reading showed `dpr 1.5`, not 0.75. The HUD's frame statistics cover the last 2 seconds, so they still showed the drag after the camera had stopped and the resolution had already gone back to 1.5.
-- Not yet measured: Safari, and the built-in display. Add them at M2-T8 at the latest.
+- On the built-in display, the moving reading caught the lowered resolution: the HUD showed `dpr 0.8`, which is 0.75 rounded to one decimal. The HUD now shows two decimals.
+- The second row's browser wasn't noted. Safari is still to be measured explicitly, by M2-T8 at the latest.
