@@ -535,6 +535,8 @@ The API stores and returns overrides only; view payloads carry the resolved resu
 
 How each is shown when hidden is in [ux.md §6](ux.md#6-spoilers). One function, `redactEntity(entity, policy)` in `packages/domain/src/spoilers/`, implements the rules for every surface.
 
+When redaction removes content (`spoilers=exclude`), a hidden text keeps its shape with `▇` in place of the words, and a hidden image, link, fact, relation, membership or location becomes a placeholder `{ redacted: true, isSpoiler, sortKey?, … }` that keeps only what isn't secret, such as which fact it is. Each item has a key from `spoilerKeys` (`<entityId>/description#0`, `<entityId>/fact/<fieldDefinitionId>`, …), which is how a reader reveals one item.
+
 ## 8. Drafts and visibility
 
 - `status = 'draft'` exists on maps and entities. For anonymous requests, the service layer:

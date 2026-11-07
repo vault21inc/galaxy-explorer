@@ -28,9 +28,29 @@
 - `SpoilerPolicy = { showAll: boolean; revealed: ReadonlySet<string> }`; `isHidden(flagged, key, policy)`; `redactRichText(rt, policy)`; `redactEntity(entityRead, policy)`, which covers every flag in data-model §7.
 
 **Done when:**
-- [ ] Unit tests cover plain-text extraction for all three formats, including lists, links, tables and line breaks.
-- [ ] Inline spoilers are tested in Markdown (`||x||`, escaped `\|\|`, unclosed `||`) and HTML (`<span data-spoiler>`, including nested).
-- [ ] A table-driven test shows `redactEntity` hides every flagged item in data-model §7 and leaves everything else untouched.
+- [x] Unit tests cover plain-text extraction for all three formats, including lists, links, tables and line breaks.
+- [x] Inline spoilers are tested in Markdown (`||x||`, escaped `\|\|`, unclosed `||`) and HTML (`<span data-spoiler>`, including nested).
+- [x] A table-driven test shows `redactEntity` hides every flagged item in data-model §7 and leaves everything else untouched.
+
+**Notes (done 2026-11-07):**
+- **Markdown spoilers** are a real parser extension (`richtext/markdown-spoiler.ts`), modelled on GFM's `~~strikethrough~~`, and also a unified plugin (`remarkSpoiler`) that the web app can pass to react-markdown. The rules:
+  - a marker is exactly `||`;
+  - escaped, unclosed and three-pipe markers are plain text;
+  - `|| x ||` with inner spaces isn't a spoiler (the same rule as `**bold**`);
+  - code spans win over spoilers;
+  - nested spoilers count as one.
+  - Inside GFM tables, pipes separate cells, so a spoiler in a table needs HTML.
+- **Plain text** uses our own walk over the syntax tree instead of `mdast-util-to-string`, which joins blocks with no separator. The output has one line per paragraph, heading, list item, table row or code line; table cells are joined with ` | `; empty lines are dropped. Raw HTML inside Markdown is ignored, as the renderer will ignore it.
+- **Redaction bars** are `▇` about as long as the hidden text: rounded up to a multiple of 3, from 3 to 40 characters, so the exact length isn't revealed.
+- **Spoiler keys** come from `spoilerKeys`, such as `<entityId>/description#0` for the first inline spoiler in a description. They're how a reader reveals one item.
+- **`redactRichText(rt, policy, fieldKey)`:** a hidden whole-field spoiler becomes plain `▇` text. Hidden inline spoilers keep their `||` markers or `<span data-spoiler>`, with the text inside replaced, and the rest of the source stays byte for byte.
+- **`redactEntity(entity, policy, { contentFields })`:**
+  - a hidden image, link, fact, relation, membership or location becomes a placeholder `{ redacted: true, … }` that keeps only what isn't secret (which fact, the image role, the sort order);
+  - a hidden whole entity also blacks out its texts and nulls its kind-specific `contentFields`, which the entity-kind registry (M1-T2) will list.
+  - It takes the minimal shapes it needs, so the M1-T6 read types pass straight in.
+- **`redactMap` and `redactUniverse`** cover the map flag and the map and universe texts.
+- **`RICH_TEXT_POLICY`** is data, plus `isAllowedLinkUrl` (http, https, mailto, site-relative; never `//host`, `/\host` or `javascript:`) and `isAllowedImageSource` (`/media/` only). The sanitizers themselves come in M1-T5.
+- **New dependencies:** unified, remark-parse, remark-gfm, micromark-util-chunked / classify-character / resolve-all / character, htmlparser2, domhandler, dom-serializer and zod. Their types come from @types/mdast, mdast-util-from-markdown and micromark-util-types. The package still bundles for the browser with no Node imports.
 
 ### M1-T2 Registries and document schemas
 
