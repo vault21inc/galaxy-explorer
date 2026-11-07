@@ -50,7 +50,7 @@ Dependency rules. `packages/config/workspace.js` holds this table as data. ESLin
 
 Packages are imported by name (`@ge/domain`), never by relative paths across package boundaries. The same lint rule rejects relative paths into `apps/` or `packages/`.
 
-**Internal packages export TypeScript source.** `domain`, `db` and `api-client` have no build step. Their `exports` point at `src/index.ts`, and whatever runs them compiles them: Vite, Vitest, or the API's bundler.
+**Internal packages export TypeScript source.** `domain`, `db` and `api-client` have no build step. Their `exports` point at `src/index.ts`, and whatever runs them compiles them: Vite and Vitest do, and the API runs on Node's built-in type stripping. That's why relative imports spell out the `.ts` extension.
 
 Turborepo's `lint`, `typecheck` and `test` tasks depend on a no-op `transit` task. Changing a package therefore invalidates the cached results of every package that depends on it, while the tasks still run in parallel.
 
@@ -295,7 +295,8 @@ All configuration comes from environment variables, validated by a Zod schema at
 | `DATABASE_URL` | api, db scripts | `postgres://ge:ge@127.0.0.1:5442/ge` |
 | `TEST_DATABASE_URL` | integration tests | `postgres://ge:ge@127.0.0.1:5443/ge_test` |
 | `GE_AUTH_MODE` | api | `none` |
-| `GE_HOST`, `GE_PORT` | api | `127.0.0.1`, `3100` |
+| `GE_HOST`, `GE_PORT` | api | `127.0.0.1`, `3100`. With `GE_AUTH_MODE=none` the host must be a loopback address. |
+| `GE_LOG_LEVEL` | api | `info` (`fatal` … `trace`, or `silent`) |
 | `GE_MEDIA_DIR` | api | `./.data/media` |
 | `GE_PUBLIC_URL` | api, web build | `http://localhost:5173` |
 | `GE_SESSION_SECRET` | api (M8) | 32+ random bytes |

@@ -4,12 +4,14 @@
     "target": "ES2023",
     "lib": ["ES2023"],
 
-    // Packages export TypeScript source and are compiled by their consumer (Vite, Vitest, the
-    // API's bundler), so resolve imports like a bundler and never emit from tsc.
+    // Packages export TypeScript source. Vite and Vitest compile it, and the API runs it with
+    // Node's built-in type stripping, so tsc never emits. Relative imports spell out the `.ts`
+    // extension because Node resolves files exactly as written.
     "module": "ESNext",
     "moduleResolution": "bundler",
     "moduleDetection": "force",
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
 

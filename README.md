@@ -30,9 +30,13 @@ pnpm db:up
 ```
 
 ```bash
-pnpm check
+pnpm dev
 ```
 
 - `pnpm db:up` starts the dev database on 127.0.0.1:5442 and the test database on 127.0.0.1:5443. `pnpm db:down` stops them; dev data is kept, test data isn't.
+- `pnpm dev` starts the API on http://127.0.0.1:3100 and restarts it on changes:
+  - http://127.0.0.1:3100/api/health reports whether it can reach the database;
+  - http://127.0.0.1:3100/api/docs is the interactive API documentation.
 - `pnpm check` runs the format check, lint, typecheck and unit tests across the workspace.
-- The API and web app are added in M0-T4 to M0-T6.
+- `pnpm test:integration` runs the tests that need the test database.
+- The web app arrives in M0-T6.
