@@ -15,14 +15,24 @@ A browser app for building and exploring galaxies from any fictional universe, s
 Prerequisites:
 - Node.js, at the version in `.nvmrc` (26)
 - pnpm, through Corepack: `corepack enable` once; the version comes from `package.json`
-- Docker, from M0-T3 onward
+- Docker
 
 ```bash
 pnpm install
 ```
 
 ```bash
+cp .env.example .env
+```
+
+```bash
+pnpm db:up
+```
+
+```bash
 pnpm check
 ```
 
-`pnpm check` runs the format check, lint, typecheck and unit tests across the workspace. The database, API and web app are added in M0-T3 to M0-T6.
+- `pnpm db:up` starts the dev database on 127.0.0.1:5442 and the test database on 127.0.0.1:5443. `pnpm db:down` stops them; dev data is kept, test data isn't.
+- `pnpm check` runs the format check, lint, typecheck and unit tests across the workspace.
+- The API and web app are added in M0-T4 to M0-T6.

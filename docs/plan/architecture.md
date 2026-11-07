@@ -292,15 +292,15 @@ All configuration comes from environment variables, validated by a Zod schema at
 
 | Variable | Used by | Example / default |
 |---|---|---|
-| `DATABASE_URL` | api, db scripts | `postgres://ge:ge@127.0.0.1:5432/ge` |
-| `TEST_DATABASE_URL` | integration tests | `postgres://ge:ge@127.0.0.1:5433/ge_test` |
+| `DATABASE_URL` | api, db scripts | `postgres://ge:ge@127.0.0.1:5442/ge` |
+| `TEST_DATABASE_URL` | integration tests | `postgres://ge:ge@127.0.0.1:5443/ge_test` |
 | `GE_AUTH_MODE` | api | `none` |
-| `GE_HOST`, `GE_PORT` | api | `127.0.0.1`, `3000` |
+| `GE_HOST`, `GE_PORT` | api | `127.0.0.1`, `3100` |
 | `GE_MEDIA_DIR` | api | `./.data/media` |
 | `GE_PUBLIC_URL` | api, web build | `http://localhost:5173` |
 | `GE_SESSION_SECRET` | api (M8) | 32+ random bytes |
 | `GE_WIKI_USER_AGENT` | api (M7) | `GalaxyExplorer/0.1 (contact: …)` |
-| `GE_API_URL`, `GE_API_TOKEN` | mcp (M7) | `http://127.0.0.1:3000/api/v1` |
+| `GE_API_URL`, `GE_API_TOKEN` | mcp (M7) | `http://127.0.0.1:3100/api/v1` |
 
 `.env.example` documents every variable. Real `.env` files are git-ignored.
 
