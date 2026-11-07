@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { drizzle, type NodePgQueryResultHKT } from 'drizzle-orm/node-postgres';
+import type { PgDatabase } from 'drizzle-orm/pg-core';
 import pg from 'pg';
 import * as schema from './schema/index.ts';
 
@@ -35,6 +36,12 @@ export function createDatabase(connectionString: string, options: DatabaseOption
 
 /** A Drizzle database over a `pg` pool, as returned by `createDatabase`. */
 export type Database = ReturnType<typeof createDatabase>;
+
+/**
+ * Anything queries can run on: the database itself, or a transaction inside `withBatch`.
+ * Services take an Executor so the same code runs alone or as part of a larger batch.
+ */
+export type Executor = PgDatabase<NodePgQueryResultHKT, typeof schema>;
 
 /** True when the database answers a trivial query; never throws. */
 export async function pingDatabase(db: Database): Promise<boolean> {

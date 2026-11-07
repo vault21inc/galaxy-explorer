@@ -34,6 +34,17 @@ export function configFor(packageName, packageDir, { react = false } = {}) {
       },
       rules: {
         'no-restricted-imports': ['error', { patterns: importRestrictions(pkg) }],
+        // A leading underscore marks a deliberately unused name, and `const { a, ...rest } = x`
+        // is how a field is dropped from an object.
+        '@typescript-eslint/no-unused-vars': [
+          'error',
+          {
+            argsIgnorePattern: '^_',
+            varsIgnorePattern: '^_',
+            destructuredArrayIgnorePattern: '^_',
+            ignoreRestSiblings: true,
+          },
+        ],
       },
     },
     react ? { files: ['**/*.{ts,tsx}'], ...reactHooks.configs.flat['recommended-latest'] } : {},

@@ -179,8 +179,48 @@
 - Version checks: a stale `version` gives `VersionConflict` (409) with the current row.
 
 **Done when:**
-- [ ] Every rule has a table-driven test covering both the allowed and the rejected case.
-- [ ] An XSS corpus test passes: `<script>`, `onerror=`, `javascript:` and `data:` links, SVG payloads, `style` attributes and nested-encoding tricks are all neutralized on write.
+- [x] Every rule has a table-driven test covering both the allowed and the rejected case.
+- [x] An XSS corpus test passes: `<script>`, `onerror=`, `javascript:` and `data:` links, SVG payloads, `style` attributes and nested-encoding tricks are all neutralized on write.
+
+**Notes (done 2026-11-07):**
+- **Layout:** in `apps/api/src/services/`:
+  - `entity-service.ts`: `createEntity`, `updateEntity`, `deleteEntity`;
+  - `entity-read.ts`: `getEntity`, `listEntities`;
+  - `aspects/`: images, links, facts, relations, location, group members;
+  - `rules/`;
+  - `sanitize.ts`, `visibility.ts`, `errors.ts`, `lookup.ts`.
+
+  Writes take an `Executor` (a transaction from `withBatch`) instead of opening their own batch, so the routes (M1-T6) and the batch endpoint (M1-T7) decide what one undoable change is.
+- **Generic over kinds:** the services handle every kind the same way. The base and extension fields are split by the registry. `EXTENSION_TABLES` in `@ge/db` binds each kind to its table, and a test checks the binding against the registry. The only per-kind code is the rule dispatch in `rules/entities.ts`.
+- **Reads:**
+  - `include=` takes `facts`, `images`, `links`, `relations`, `location`, and `members` for groups;
+  - relations are listed from both ends;
+  - lists filter by extension fields (`parentId: null` means top level), status and a name substring, and page with an id cursor.
+- **Aspect shapes** (`ImageWrite`/`Read`, `LinkWrite`, `FactWrite`, `RelationWrite`, `LocationWrite`, a discriminated union per mode, `MemberWrite`, and `ENTITY_INCLUDES`) are in `@ge/domain`, ready for the routes.
+- **Sanitizing:**
+  - `sanitizeRichTextFields(schema, input)` walks the Zod schema, so rich text is found inside unions (text facts) and lists, and look-alike objects elsewhere are left alone;
+  - HTML is cleaned with sanitize-html and `RICH_TEXT_POLICY`, and every link is checked again with `isAllowedLinkUrl`;
+  - images outside `/media/` are dropped, and SVG, MathML, iframes and similar tags are removed with their contents;
+  - Markdown and plain text are stored as written. The Markdown renderer (M3) must ignore raw HTML and use `isAllowedLinkUrl` for link targets.
+  - The policy allows `<strong>` and `<em>` but not `<b>` and `<i>` (ux.md §8), so bold and italic pasted as `<b>`/`<i>` lose their formatting, though the text is kept.
+- **How the rules were interpreted:**
+  - **Group types with no parent type** make top-level groups only.
+  - **Cycles:** a group or object can't end up inside itself. Self-nesting group types such as a Region inside a Region make this reachable for groups.
+  - **Base type changes:** changing an object's base type must keep its children allowed.
+  - **Group type changes:** changing a group's type must keep its members in one group per type and its subgroups nested correctly.
+  - **`surface` locations** need a body that has an orbit view (planet, moon). **`space` locations** use the frame of a body that has a system view (a system), or the galaxy.
+  - **Relations** may cross maps within a universe; characters relate to events anywhere.
+- **Drafts:** `visibleTo(actor, { includeDrafts })` honors `includeDrafts` only for editors. An anonymous reader gets no draft, nothing on a draft map, and no descendant of a draft object, at any depth.
+- **Errors:** `RuleViolation` → 422 (with the field's path), `NotFound` → 404, `VersionConflict` → 409 with `current`, and `RevertConflictError` → 409 with `conflict`. Database constraint errors that slip past the rules map to 409 (unique) or 422 (foreign key, check). Zod errors map to 400.
+- **Also changed:**
+  - `drizzle-orm` moved to the shared catalog, since db and api both use it;
+  - the API gained `sanitize-html` 2.18.1;
+  - the shared ESLint config now treats `_`-prefixed names, and fields dropped with `...rest`, as intentionally unused.
+- **Tests:** 75 new API tests:
+  - 31 rules, each allowed and rejected (62 tests), checking the error's field path and, where it matters, its wording, including the friendly "Gudrun is already in Helican, another Sector";
+  - a 32-payload XSS corpus, and confirmation that allowed HTML passes unchanged;
+  - service tests for create (batch, HTML cleaning, `namePlain`), includes, versions and conflicts, subtree delete, lists and cursors, and drafts at every depth;
+  - the error mapping.
 
 ### M1-T6 Generated REST routes
 

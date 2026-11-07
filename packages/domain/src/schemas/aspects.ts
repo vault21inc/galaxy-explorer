@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import { Uuid } from '../ids.ts';
+import { HTTP_URL_PATTERN } from '../patterns.ts';
+import { RELATION_TYPES } from '../registry/relation-types.ts';
+import { RichText } from '../richtext/schema.ts';
+import { FieldValue } from './field-value.ts';
 
 /**
  * Value lists for the aspect tables (data-model §3.4). The database checks are generated from
@@ -38,3 +43,125 @@ export const AssetVariants = z.object({
   texture: variant.optional(),
 });
 export type AssetVariants = z.infer<typeof AssetVariants>;
+
+// ---------------------------------------------------------------------------------------------
+// Aspect read and write shapes, as the API returns and accepts them (architecture.md §5). The
+// entity they belong to comes from the URL (`/entities/{id}/links`), so it isn't in the writes.
+// ---------------------------------------------------------------------------------------------
+
+const sortKey = z.number();
+const isSpoiler = z.boolean();
+
+export const ImageWrite = z.strictObject({
+  assetId: Uuid,
+  /** Default 'gallery'. Every other role is one image per entity. */
+  role: z.enum(IMAGE_ROLES).optional(),
+  caption: RichText.nullable().optional(),
+  isSpoiler: isSpoiler.optional(),
+  sortKey: sortKey.optional(),
+});
+export const ImageRead = z.object({
+  entityId: Uuid,
+  assetId: Uuid,
+  role: z.enum(IMAGE_ROLES),
+  caption: RichText.nullable(),
+  isSpoiler,
+  sortKey,
+});
+
+export const LinkWrite = z.strictObject({
+  url: z.string().max(2_000).regex(new RegExp(HTTP_URL_PATTERN), 'Use an http or https URL.'),
+  label: z.string().max(200).nullable().optional(),
+  isSpoiler: isSpoiler.optional(),
+  sortKey: sortKey.optional(),
+});
+export const LinkRead = z.object({
+  id: Uuid,
+  entityId: Uuid,
+  url: z.string(),
+  label: z.string().nullable(),
+  isSpoiler,
+  sortKey,
+});
+
+export const FactWrite = z.strictObject({
+  fieldDefinitionId: Uuid,
+  value: FieldValue,
+  isSpoiler: isSpoiler.optional(),
+  /** Overrides the field definition's order for this entity. */
+  sortKey: sortKey.nullable().optional(),
+});
+export const FactRead = z.object({
+  entityId: Uuid,
+  fieldDefinitionId: Uuid,
+  value: FieldValue,
+  isSpoiler,
+  sortKey: sortKey.nullable(),
+});
+
+export const RelationWrite = z.strictObject({
+  relationType: z.enum(RELATION_TYPES),
+  /** The other end; this entity is the `from` end. */
+  toEntityId: Uuid,
+  role: RichText.nullable().optional(),
+  isSpoiler: isSpoiler.optional(),
+  sortKey: sortKey.optional(),
+});
+export const RelationRead = z.object({
+  id: Uuid,
+  relationType: z.enum(RELATION_TYPES),
+  fromEntityId: Uuid,
+  toEntityId: Uuid,
+  role: RichText.nullable(),
+  isSpoiler,
+  sortKey,
+});
+
+/** Where a place or event is: one shape per mode, so each mode's required fields are clear. */
+export const LocationWrite = z.discriminatedUnion('mode', [
+  z.strictObject({
+    mode: z.literal('surface'),
+    /** A planet or moon. */
+    objectId: Uuid,
+    latDeg: z.number().min(-90).max(90),
+    lonDeg: z.number().min(-180).lt(180),
+    isSpoiler: isSpoiler.optional(),
+  }),
+  z.strictObject({ mode: z.literal('object'), objectId: Uuid, isSpoiler: isSpoiler.optional() }),
+  z.strictObject({
+    mode: z.literal('space'),
+    /** The system whose frame x, y, z are in; null for the galaxy frame. */
+    objectId: Uuid.nullable().optional(),
+    x: z.number(),
+    y: z.number(),
+    z: z.number(),
+    isSpoiler: isSpoiler.optional(),
+  }),
+  z.strictObject({ mode: z.literal('place'), placeId: Uuid, isSpoiler: isSpoiler.optional() }),
+]);
+export const LocationRead = z.object({
+  entityId: Uuid,
+  mode: z.enum(LOCATION_MODES),
+  objectId: Uuid.nullable(),
+  placeId: Uuid.nullable(),
+  latDeg: z.number().nullable(),
+  lonDeg: z.number().nullable(),
+  x: z.number().nullable(),
+  y: z.number().nullable(),
+  z: z.number().nullable(),
+  isSpoiler,
+});
+
+export const MemberWrite = z.strictObject({ objectId: Uuid, isSpoiler: isSpoiler.optional() });
+export const MemberRead = z.object({ objectId: Uuid, isSpoiler });
+
+/** Aspects an entity read can include on request (`include=facts,images,…`). */
+export const ENTITY_INCLUDES = [
+  'facts',
+  'images',
+  'links',
+  'relations',
+  'location',
+  'members',
+] as const;
+export type EntityInclude = (typeof ENTITY_INCLUDES)[number];

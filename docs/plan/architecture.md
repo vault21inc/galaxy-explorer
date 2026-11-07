@@ -309,7 +309,7 @@ All configuration comes from environment variables, validated by a Zod schema at
 ## 12. Errors and logging
 
 - Fastify's logger (pino) writes JSON with a request id, and redacts authorization headers and cookies.
-- Domain rule violations throw typed errors (`RuleViolation`, `NotFound`, `VersionConflict`, `BatchConflict`). One error handler maps them to problem+json.
+- Domain rule violations throw typed errors (`RuleViolation` → 422, `NotFound` → 404, `VersionConflict` → 409 with `current`, `RevertConflictError` → 409 with `conflict`). One error handler maps them to problem+json, and also maps database constraint errors that get past the rules (unique → 409, foreign key or check → 422).
 - Postgres errors from the revert function use SQLSTATE `GE409`, which maps to 409 with the conflicting rows listed.
 - The web app shows API errors as toasts with the problem's `title`. Validation errors attach to form fields by `path`.
 - The UI never swallows an error silently.

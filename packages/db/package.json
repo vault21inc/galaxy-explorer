@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@ge/domain": "workspace:*",
-    "drizzle-orm": "0.45.4",
+    "drizzle-orm": "catalog:",
     "pg": "catalog:"
   },
   "devDependencies": {

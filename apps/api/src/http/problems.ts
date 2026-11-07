@@ -4,7 +4,9 @@ import {
   hasZodFastifySchemaValidationErrors,
   isResponseSerializationError,
 } from 'fastify-type-provider-zod';
+import { BatchNotFoundError, databaseErrorOf, RevertConflictError } from '@ge/db';
 import { z } from 'zod';
+import { NotFound, RuleViolation, VersionConflict } from '../services/errors.ts';
 
 /**
  * Every error response is an RFC 9457 "problem details" document
@@ -16,19 +18,31 @@ export const problemSchema = z.object({
   status: z.number().int(),
   detail: z.string().optional(),
   errors: z.array(z.object({ path: z.string(), message: z.string() })).optional(),
+  /** On a 409 version conflict: the record as it is now, so the client can merge. */
+  current: z.unknown().optional(),
+  /** On a 409 revert conflict: the row that changed since the batch. */
+  conflict: z
+    .object({ table: z.string(), primaryKey: z.record(z.string(), z.unknown()) })
+    .optional(),
 });
 
 export type Problem = z.infer<typeof problemSchema>;
 
 const PROBLEM_CONTENT_TYPE = 'application/problem+json';
 
-export function problem(status: number, detail?: string, errors?: Problem['errors']): Problem {
+export function problem(
+  status: number,
+  detail?: string,
+  errors?: Problem['errors'],
+  extra: Pick<Problem, 'current' | 'conflict'> = {},
+): Problem {
   return {
     type: 'about:blank',
     title: STATUS_CODES[status] ?? 'Error',
     status,
     ...(detail === undefined ? {} : { detail }),
     ...(errors === undefined ? {} : { errors }),
+    ...extra,
   };
 }
 
@@ -47,6 +61,9 @@ export function handleError(error: FastifyError, request: FastifyRequest, reply:
     return sendProblem(reply, problem(400, `The ${part} is invalid.`, errors));
   }
 
+  const domainProblem = problemForDomainError(error);
+  if (domainProblem) return sendProblem(reply, domainProblem);
+
   if (isResponseSerializationError(error)) {
     request.log.error({ err: error }, 'response did not match its schema');
     return sendProblem(reply, problem(500));
@@ -63,4 +80,54 @@ export function handleError(error: FastifyError, request: FastifyRequest, reply:
 
 export function handleNotFound(request: FastifyRequest, reply: FastifyReply) {
   return sendProblem(reply, problem(404, `No route for ${request.method} ${request.url}.`));
+}
+
+/**
+ * Problems for the services' typed errors (architecture.md §12) and for database constraint
+ * violations that slipped past the service rules. Returns undefined for anything else.
+ */
+export function problemForDomainError(error: unknown): Problem | undefined {
+  if (error instanceof RuleViolation) {
+    return problem(
+      422,
+      error.message,
+      error.path ? [{ path: error.path, message: error.message }] : undefined,
+    );
+  }
+  if (error instanceof NotFound || error instanceof BatchNotFoundError)
+    return problem(404, error.message);
+  if (error instanceof VersionConflict)
+    return problem(409, error.message, undefined, { current: error.current });
+  if (error instanceof RevertConflictError) {
+    return problem(409, error.message, undefined, {
+      conflict: { table: error.table, primaryKey: error.primaryKey },
+    });
+  }
+  if (error instanceof z.ZodError) {
+    return problem(
+      400,
+      'The request body is invalid.',
+      error.issues.map((issue) => ({ path: `/${issue.path.join('/')}`, message: issue.message })),
+    );
+  }
+  const database = databaseErrorOf(error);
+  switch (database?.code) {
+    case '23505':
+      return problem(
+        409,
+        `That would duplicate an existing record (${database.constraint ?? 'unique'}).`,
+      );
+    case '23503':
+      return problem(
+        422,
+        `That refers to something that doesn't exist or is in use (${database.constraint ?? 'reference'}).`,
+      );
+    case '23514':
+      return problem(
+        422,
+        `A value is out of range or badly formatted (${database.constraint ?? 'check'}).`,
+      );
+    default:
+      return undefined;
+  }
 }

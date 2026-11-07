@@ -4,7 +4,14 @@
  * Every write runs inside `withBatch()`; see src/audit/ and data-model.md §9.
  * Test databases come from `@ge/db/testing`.
  */
-export { createDatabase, pingDatabase, type Database, type DatabaseOptions } from './client.ts';
+export {
+  createDatabase,
+  pingDatabase,
+  type Database,
+  type DatabaseOptions,
+  type Executor,
+} from './client.ts';
 export { MIGRATIONS_DIR, migrateDatabase, resetDatabase } from './migrate.ts';
 export * from './audit/index.ts';
+export { EXTENSION_TABLES } from './schema/bindings.ts';
 export * as schema from './schema/index.ts';
