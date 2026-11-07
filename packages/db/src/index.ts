@@ -1,7 +1,8 @@
 /**
  * @ge/db: the PostgreSQL schema and data primitives.
  *
- * Drizzle wiring and test databases arrive in M0-T5; the schema, audit trigger, batches and
- * revert arrive in M1 (docs/plan/data-model.md).
+ * The schema, audit trigger, batches and revert arrive in M1 (docs/plan/data-model.md).
+ * Test databases come from `@ge/db/testing`.
  */
-export { createPool, pingDatabase } from './pool.ts';
+export { createDatabase, pingDatabase, type Database, type DatabaseOptions } from './client.ts';
+export { MIGRATIONS_DIR, migrateDatabase, resetDatabase } from './migrate.ts';

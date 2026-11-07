@@ -38,5 +38,6 @@ pnpm dev
   - http://127.0.0.1:3100/api/health reports whether it can reach the database;
   - http://127.0.0.1:3100/api/docs is the interactive API documentation.
 - `pnpm check` runs the format check, lint, typecheck and unit tests across the workspace.
-- `pnpm test:integration` runs the tests that need the test database.
+- `pnpm db:migrate` applies database migrations; `pnpm db:reset` wipes the local dev database and migrates it again.
+- `pnpm test:integration` runs the tests that need the test database. Each test gets its own copy of a migrated template database, which is dropped afterwards.
 - The web app arrives in M0-T6.

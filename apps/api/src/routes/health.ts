@@ -1,6 +1,5 @@
-import { pingDatabase } from '@ge/db';
+import { pingDatabase, type Database } from '@ge/db';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
-import type pg from 'pg';
 import { z } from 'zod';
 
 const healthResponse = z.object({
@@ -12,7 +11,7 @@ const healthResponse = z.object({
 });
 
 export interface HealthRouteOptions {
-  pool: pg.Pool;
+  db: Database;
   version: string;
 }
 
@@ -31,7 +30,7 @@ export const healthRoutes: FastifyPluginCallbackZod<HealthRouteOptions> = (app, 
       },
     },
     async (_request, reply) => {
-      const dbUp = await pingDatabase(options.pool);
+      const dbUp = await pingDatabase(options.db);
       return reply.code(dbUp ? 200 : 503).send({
         data: {
           status: dbUp ? 'ok' : 'degraded',

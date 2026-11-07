@@ -27,7 +27,6 @@
     "@apidevtools/swagger-parser": "13.1.0",
     "@ge/config": "workspace:*",
     "@types/node": "catalog:",
-    "@types/pg": "catalog:",
     "eslint": "catalog:",
     "openapi-types": "12.1.3",
     "typescript": "catalog:",

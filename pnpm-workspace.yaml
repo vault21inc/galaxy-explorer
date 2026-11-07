@@ -21,3 +21,8 @@ catalog:
 
 # Record exact versions when dependencies are added.
 savePrefix: ''
+
+# Packages allowed to run install scripts. esbuild (pulled in by drizzle-kit) only uses its
+# script to double-check its platform binary, which pnpm already installs, so it stays off.
+allowBuilds:
+  esbuild: false

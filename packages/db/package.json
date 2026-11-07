@@ -5,22 +5,29 @@
   "type": "module",
   "description": "Drizzle schema, migrations, audit/batch/revert/clone primitives and seeds.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/index.ts",
+    "./testing/global-setup": "./src/testing/global-setup.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --project unit --passWithNoTests",
-    "test:integration": "vitest run --project integration"
+    "test:integration": "vitest run --project integration",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "node --env-file-if-exists=../../.env src/cli.ts migrate",
+    "db:reset": "node --env-file-if-exists=../../.env src/cli.ts reset"
   },
   "dependencies": {
     "@ge/domain": "workspace:*",
+    "drizzle-orm": "0.45.4",
     "pg": "catalog:"
   },
   "devDependencies": {
     "@ge/config": "workspace:*",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
+    "drizzle-kit": "0.31.11",
     "eslint": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",

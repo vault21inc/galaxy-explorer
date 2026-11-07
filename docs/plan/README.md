@@ -137,4 +137,6 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-01:** M0-T1 done: the private repository [vault21inc/galaxy-explorer](https://github.com/vault21inc/galaxy-explorer) holds the plan.
 - **2026-11-01:** M0-T2 done: the pnpm and Turborepo workspace, shared configs, stub packages, and layering enforced by lint.
 - **2026-11-07:** M0-T3 done: dev and test Postgres 18 in Docker on ports 5442 and 5443.
-- **2026-11-07:** M0-T4 done: the Fastify API on port 3100 with config validation, problem+json errors, OpenAPI docs at `/api/docs` and `/api/health`. Next: **M0-T5**, Drizzle and migrations.
+- **2026-11-07:** M0-T4 done: the Fastify API on port 3100 with config validation, problem+json errors, OpenAPI docs at `/api/docs` and `/api/health`.
+- **2026-11-07:** work moves straight to `main` (D-22).
+- **2026-11-07:** M0-T5 done: Drizzle, `pnpm db:migrate` and `db:reset`, and `withTestDb`, which gives each integration test its own migrated database. Next: **M0-T6**, the web skeleton with on-demand rendering.

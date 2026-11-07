@@ -125,8 +125,24 @@
   3. It exports `withTestDb(async (db) => …)` for db and api tests.
 
 **Done when:**
-- [ ] `pnpm db:migrate` runs, as a no-op until M1.
-- [ ] A sample integration test using `withTestDb` passes, and its database is gone afterwards.
+- [x] `pnpm db:migrate` runs, as a no-op until M1.
+- [x] A sample integration test using `withTestDb` passes, and its database is gone afterwards.
+
+**Notes (done 2026-11-07):**
+- **Drizzle version:** drizzle-orm 0.45.4 and drizzle-kit 0.31.11, the current stable releases. 1.0 is still a release candidate (D-20).
+- **Modules:**
+  - `src/client.ts` has `createDatabase(url, { onIdleClientError })`, which returns a Drizzle database whose pool is `db.$client`, and `pingDatabase(db)`. It replaces M0-T4's `createPool`.
+  - `src/migrate.ts` has `migrateDatabase(url)` and `resetDatabase(url)`.
+  - `src/cli.ts` backs `pnpm db:migrate` and `pnpm db:reset`.
+  - `src/admin.ts` creates and drops whole databases.
+- **The migrations folder** starts with an empty journal (`migrations/meta/_journal.json`), so `db:migrate` works before the first migration. Drizzle records applied migrations in `drizzle.__drizzle_migrations`.
+- **`db:reset` refuses any server that isn't on this machine,** so a production `DATABASE_URL` can't be wiped by accident. `pnpm db:generate` runs drizzle-kit.
+- **Test databases differ from the plan in two ways:**
+  - **One database per `withTestDb` call, not per test file.** The call creates it, runs the callback and drops it, even when the test fails. The callback gets the database and its URL; the API's tests use the URL to start a server. A copy takes milliseconds, so the stricter isolation costs little.
+  - **The template is `ge_template_<hash of the migrations folder>`, not `ge_template`.** Turborepo runs the db and api integration tests at the same time, and both would rebuild one fixed name and race each other. With the hash, the template is reused until a migration changes, and an advisory lock makes concurrent runs wait while one builds it. It's built under a temporary name and renamed when complete, so a crash can't leave a half-built template.
+  - Old templates, and test databases over an hour old from a crashed run, are dropped on the next run.
+- **Using it:** a package opts in with `vitestConfig({ integrationGlobalSetup })` in its `vitest.config.js`, as db and api do; `@ge/config/vitest` now exports that function. The global setup passes the template's name to test files through Vitest's `provide`/`inject`.
+- **esbuild:** drizzle-kit pulls in esbuild, whose install script only re-checks its binary. `allowBuilds` in `pnpm-workspace.yaml` turns it off.
 
 ### M0-T6 Web skeleton with on-demand rendering
 

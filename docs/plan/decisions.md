@@ -200,6 +200,7 @@ To change a decision, edit its entry, keep the old text on a `Superseded:` line,
   - Every tool version is pinned once, exactly, in the `catalog:` section of `pnpm-workspace.yaml`. Packages refer to it as `"catalog:"`.
   - TypeScript 6.0, not 7: typescript-eslint 8 supports only TypeScript below 6.1. Move to TypeScript 7, the native compiler, once typescript-eslint supports it.
   - ESLint 10 with typescript-eslint's `strictTypeChecked` and `stylisticTypeChecked`; Prettier 3; Vitest 5 with Vite 8; Turborepo 2.
+  - Drizzle ORM 0.45 and drizzle-kit 0.31 (M0-T5), the stable releases. Drizzle 1.0, which changes the migrations folder layout and adds relational queries v2, is still a release candidate. Move to 1.0 once it's the `latest` release, ideally before M1-T1 writes the first migration, or with `drizzle-kit up` afterwards.
   - pnpm's default one-day minimum release age stays on as a supply-chain safeguard. A version published in the last 24 hours can't be pinned yet.
 - **D-21 Internal packages export TypeScript source.**
   - domain, db and api-client have no build step; whatever runs them compiles them.

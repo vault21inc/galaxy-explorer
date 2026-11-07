@@ -24,7 +24,8 @@ These are created in M0. M0-T8 makes this list match reality.
 | `pnpm format` | format code with Prettier (Markdown is left alone) |
 | `pnpm test:integration` | API and DB tests (`*.int.test.ts`) against the test Postgres; unit tests are `*.test.ts` |
 | `pnpm test:e2e` | Playwright end-to-end tests |
-| `pnpm db:migrate` / `pnpm db:reset` | apply migrations / drop, migrate and seed the demo data |
+| `pnpm db:migrate` / `pnpm db:reset` | apply migrations / drop, migrate and seed the demo data (local databases only; seeding arrives in M1-T11) |
+| `pnpm db:generate` | generate a migration from `packages/db/src/schema` with drizzle-kit; add `--custom` for an empty one to write by hand |
 | `pnpm db:seed demo` / `pnpm db:seed stress` | seed the demo universe / the 5,000-object performance map |
 | `pnpm api:generate` | regenerate `packages/api-client` from the API's OpenAPI document |
 | `pnpm perf` | local performance run on the owner's Mac (rendering tasks) |
@@ -78,7 +79,7 @@ Details are in rendering.md §2.
 
 ### Testing
 
-- Unit-test pure logic. Integration-test the API and DB against real Postgres; don't mock the database. Write Playwright e2e tests for user flows.
+- Unit-test pure logic. Integration-test the API and DB against real Postgres; don't mock the database. `withTestDb` from `@ge/db/testing` gives each test a fresh, migrated database. Write Playwright e2e tests for user flows.
 - Verify 3D behavior through `window.__GE_TEST__` (rendering.md §14), not pixel guesses.
 - A new entity kind or settings resource must pass the generic contract suite **without new per-kind test code**.
 

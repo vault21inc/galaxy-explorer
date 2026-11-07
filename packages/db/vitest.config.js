@@ -1,1 +1,3 @@
-export { default } from '@ge/config/vitest';
+import { vitestConfig } from '@ge/config/vitest';
+
+export default vitestConfig({ integrationGlobalSetup: './src/testing/global-setup.ts' });

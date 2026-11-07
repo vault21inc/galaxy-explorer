@@ -2,7 +2,7 @@ import fastifyCompress from '@fastify/compress';
 import fastifySensible from '@fastify/sensible';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
-import { createPool } from '@ge/db';
+import { createDatabase } from '@ge/db';
 import Fastify from 'fastify';
 import {
   jsonSchemaTransform,
@@ -33,10 +33,12 @@ export async function buildServer(config: Config) {
   app.setErrorHandler(handleError);
   app.setNotFoundHandler(handleNotFound);
 
-  const pool = createPool(config.databaseUrl, (error) => {
-    app.log.error({ err: error }, 'idle database connection failed');
+  const db = createDatabase(config.databaseUrl, {
+    onIdleClientError: (error) => {
+      app.log.error({ err: error }, 'idle database connection failed');
+    },
   });
-  app.addHook('onClose', () => pool.end());
+  app.addHook('onClose', () => db.$client.end());
 
   await app.register(fastifySensible);
   await app.register(fastifyCompress);
@@ -55,7 +57,7 @@ export async function buildServer(config: Config) {
   await app.register(fastifySwaggerUi, { routePrefix: '/api/docs' });
 
   app.get('/api/openapi.json', { schema: { hide: true } }, () => app.swagger());
-  await app.register(healthRoutes, { pool, version: packageJson.version });
+  await app.register(healthRoutes, { db, version: packageJson.version });
 
   return app;
 }
