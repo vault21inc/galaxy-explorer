@@ -5,8 +5,11 @@ Galaxy Explorer is a universe-agnostic 3D galaxy builder. The owner builds galax
 ## Before you start a task
 
 1. Read `docs/plan/README.md`, then your task in `docs/plan/milestones/Mx-*.md`, then the sections listed under "Read first".
-2. Check `docs/plan/decisions.md`. Don't silently contradict a decision. If the plan is wrong or ambiguous, stop and ask; or, if the fix is clear, change the plan in the same PR and say so in the PR description.
-3. Keep to one task, one branch and one PR. Name the branch `m2-t4-camera-bindings`. Commit messages start with the task ID, for example `M2-T4: resolve bindings per platform`.
+2. Check `docs/plan/decisions.md`. Don't silently contradict a decision. If the plan is wrong or ambiguous, stop and ask; or, if the fix is clear, change the plan in the same commit and say so in the commit message.
+3. Work directly on `main`, one task at a time, with no task branches or PRs (D-22). A task is one commit, or a few if that reads better.
+   - Commit messages start with the task ID, for example `M2-T4: resolve bindings per platform`.
+   - The message body says what changed and how you verified it. Anything the plan asks to "report" (performance numbers, manual checks, new dependencies) goes there too.
+   - Run `pnpm check` and the relevant integration and e2e suites before every commit: `main` must always pass. Then push.
 4. Commits use the email `24880568+vault21inc@users.noreply.github.com`, set in the repository's local git config. In a fresh clone, run `git config user.email 24880568+vault21inc@users.noreply.github.com` before your first commit.
 
 ## Commands
@@ -55,7 +58,7 @@ Details are in rendering.md §2.
 - Never put per-frame data in React state. Never allocate inside `useFrame`.
 - Instance or merge anything repeated more than about 20 times. Labels go through the label layer only.
 - Dispose of what you create with `new`.
-- Rendering PRs report draw calls and median and p95 frame times, before and after.
+- Rendering commits report draw calls and median and p95 frame times, before and after.
 
 ### Security
 
@@ -71,7 +74,7 @@ Details are in rendering.md §2.
 - **Comment the why.** The owner is an experienced developer who is new to three.js. Explain every non-obvious piece of 3D math, shader code and camera logic in plain words, and link the relevant section of `docs/plan/rendering.md`.
 - Rendering tunables go in `apps/web/src/render/tuning.ts`, with units and comments, not as inline magic numbers.
 - Prefer small files (under about 300 lines), one component per file, and clear names over cleverness.
-- Add a dependency only when it removes real work, and mention it in the PR. Pin it exactly. A tool used by several packages gets its version once, in the `catalog:` section of `pnpm-workspace.yaml`.
+- Add a dependency only when it removes real work, and mention it in the commit message. Pin it exactly. A tool used by several packages gets its version once, in the `catalog:` section of `pnpm-workspace.yaml`.
 
 ### Testing
 
@@ -89,4 +92,4 @@ Details are in rendering.md §2.
 - [ ] The task's "Done when" items are met and checked off in the milestone file.
 - [ ] Tests are added or updated; `pnpm check` and the relevant integration and e2e suites pass.
 - [ ] Docs (`docs/plan/*`, `AGENTS.md`) are updated if behavior, commands or decisions changed.
-- [ ] No performance budget regressed. For rendering tasks, the numbers are in the PR.
+- [ ] No performance budget regressed. For rendering tasks, the numbers are in the commit message.

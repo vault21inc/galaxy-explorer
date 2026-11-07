@@ -1,6 +1,6 @@
 # M0: Foundation
 
-**Goal:** a production-shaped but empty repository. One command starts the database, the API and the web app. CI checks every PR. The 3D canvas renders only on demand from day one.
+**Goal:** a production-shaped but empty repository. One command starts the database, the API and the web app. CI checks every push to `main`. The 3D canvas renders only on demand from day one.
 
 **Depends on:** nothing.
 **Read first:** [architecture.md §2, §11, §13](../architecture.md), [rendering.md §1–3](../rendering.md).
@@ -9,7 +9,7 @@
 2. `?perf=1` shows the performance HUD.
 3. `/api/health` reports the database as OK.
 4. `/api/docs` shows Swagger UI.
-5. A test PR shows green CI.
+5. A push to `main` shows green CI.
 
 **Out of scope:** any domain tables or features.
 
@@ -27,7 +27,7 @@
   - a short root `README.md`: what the project is, how to run it (filled in by later tasks), and a link to `docs/plan/README.md`.
 - Make the first commit with the existing `docs/`, `AGENTS.md` and `CLAUDE.md`.
 - `gh repo create galaxy-explorer --private --source . --push`.
-- Optional, if the GitHub plan allows it on private repos: protect `main` (require PRs and green CI). This waits until M0-T7, when there are CI checks to require.
+- Branch protection on `main` isn't used while work goes straight to `main` (D-22).
 
 **Done when:**
 - [x] The repository exists on GitHub, is private, and has `main` pushed: [vault21inc/galaxy-explorer](https://github.com/vault21inc/galaxy-explorer), 2026-11-01.
@@ -162,7 +162,7 @@
   - `webServer` starts the api and the web app with `VITE_TEST_HOOKS=1`;
   - first e2e test: the app loads, and idle renders no frames.
 - `@axe-core/playwright` for accessibility checks, starting with the shell.
-- `.github/workflows/ci.yml`, in order:
+- `.github/workflows/ci.yml`, triggered on pushes to `main` and on pull requests, in order:
   1. checkout;
   2. set up pnpm with its cache, and Node from `.nvmrc`;
   3. `pnpm install --frozen-lockfile`;
@@ -174,18 +174,18 @@
 - Renovate or Dependabot, weekly, grouping minor updates.
 
 **Done when:**
-- [ ] A PR shows green CI, and a deliberately failing test turns it red with the report attached.
+- [ ] A push to `main` shows green CI, and a deliberately failing test, pushed to a throwaway branch, turns it red with the report attached.
 
-### M0-T8 Agent docs, PR template and performance baseline
+### M0-T8 Agent docs, commit checklist and performance baseline
 
 **What:** keep the agent instructions true, and start the performance log.
 
 - Update the command list in `AGENTS.md` to match the scripts that actually exist.
-- `.github/pull_request_template.md`, with:
+- A commit message checklist in `AGENTS.md` (D-22), covering:
   - the task ID;
   - acceptance criteria checked;
   - tests added;
-  - performance numbers (rendering PRs);
+  - performance numbers (rendering tasks);
   - docs updated;
   - decisions changed.
 - `docs/perf/README.md`:
@@ -194,7 +194,7 @@
   - the baseline numbers for the empty canvas from the HUD.
 
 **Done when:**
-- [ ] The files are merged, and `AGENTS.md` commands all run.
+- [ ] The files are committed, and `AGENTS.md` commands all run.
 
 ---
 

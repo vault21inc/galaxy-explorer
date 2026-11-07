@@ -45,7 +45,7 @@
 
 **Done when:**
 - [ ] Unit test: the same seed gives the same first 1,000 points (hash compared); a different seed gives different points.
-- [ ] The background uses at most 5 draw calls. The PR includes the HUD numbers and a screenshot, compared with the references in `docs/design/references/` if they exist.
+- [ ] The background uses at most 5 draw calls. The commit message includes the HUD numbers and a screenshot, compared with the references in `docs/design/references/` if they exist.
 
 ### M2-T3 Bodies and regions
 
@@ -80,7 +80,7 @@
   - right-drag and Cmd/Ctrl-drag move the target;
   - the wheel over an off-center object moves the target toward it;
   - arrow keys pan.
-- [ ] The PR notes a manual check with a mouse and with a trackpad in Chrome and Safari.
+- [ ] The commit message notes a manual check with a mouse and with a trackpad in Chrome and Safari.
 
 ### M2-T5 Picking, hover and selection
 

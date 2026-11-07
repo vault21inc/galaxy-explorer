@@ -135,7 +135,7 @@
 - An `llms.txt` at the site root points to the guide and the OpenAPI document.
 
 **Done when:**
-- [ ] A fresh Claude Code session, given only the guide and the MCP server, builds the M7 demo content without help. Record the transcript summary in the PR.
+- [ ] A fresh Claude Code session, given only the guide and the MCP server, builds the M7 demo content without help. Record the transcript summary in the commit message.
 
 ---
 

@@ -53,7 +53,7 @@
 **Done when:**
 - [ ] A determinism test: identical parameters give an identical pixel hash, read back with `readPixels` in an e2e helper.
 - [ ] A seam test: texel columns 0 and width − 1 differ by at most 2/255 per channel.
-- [ ] Baking at 2,048 × 1,024 takes under 50 ms on the reference Mac (measured, reported in the PR).
+- [ ] Baking at 2,048 × 1,024 takes under 50 ms on the reference Mac (measured, reported in the commit message).
 - [ ] Dragging a palette slider updates the globe within 200 ms.
 
 ### M6-T3 Orbit view

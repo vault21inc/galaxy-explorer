@@ -110,15 +110,15 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 
 ## Working with coding agents
 
-- **One task per session and per PR.** A good prompt: *"Implement M2-T4 from docs/plan/milestones/M2-galaxy-view.md. Follow AGENTS.md. Stop and ask if anything in the plan is ambiguous or wrong."*
+- **One task per session, committed straight to `main`** ([D-22](decisions.md)). Each task's commit message starts with its ID, so `git log --oneline` reads as the task list. A good prompt: *"Implement M2-T4 from docs/plan/milestones/M2-galaxy-view.md. Follow AGENTS.md. Stop and ask if anything in the plan is ambiguous or wrong."*
 - **Order:** tasks run in order within a milestone unless a task says otherwise. M4 and M5 can run in parallel. M7-T7 and M7-T8 can start any time after M1.
 - **Review checklist for the owner:**
   - the task's "Done when" boxes are honestly checked;
-  - new tests exist and pass in CI;
+  - new tests exist and pass (in CI once M0-T7 lands);
   - there's no per-kind copy-paste (registries are used);
-  - rendering PRs show their HUD numbers;
+  - rendering commits report their HUD numbers;
   - docs and decisions are updated when something changed.
-- **When reality disagrees with the plan,** the agent updates the plan in the same PR and says so. The plan is a living document, not a contract.
+- **When reality disagrees with the plan,** the agent updates the plan in the same commit and says so. The plan is a living document, not a contract.
 
 ## Open items
 

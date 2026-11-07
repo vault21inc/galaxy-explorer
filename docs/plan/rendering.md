@@ -47,7 +47,7 @@ These are **acceptance criteria**. A milestone that touches 3D isn't done until 
 11. **Size textures to their use:** at most 2,048 × 1,024 in the orbit view (4,096 × 2,048 on High) and 256 × 128 in the system view, always mipmapped. Uploaded images are resized on the server.
 12. **Dispose of each view's resources on unmount,** checked by the M5 leak test.
 13. Use `powerPreference: 'default'`, so dual-GPU Macs don't switch to the hot discrete GPU.
-14. **Every rendering PR states its numbers:** draw calls and median and p95 frame time from the dev HUD and `pnpm perf`, before and after.
+14. **Every rendering commit states its numbers:** draw calls and median and p95 frame time from the dev HUD and `pnpm perf`, before and after.
 
 Each rule removes one of the usual causes of a hot, laggy three.js page: continuous rendering of a static picture, Retina pixel counts, full-screen effects, large overlapping transparent sprites, per-object HTML labels, and per-frame React re-renders.
 

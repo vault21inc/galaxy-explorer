@@ -206,3 +206,8 @@ To change a decision, edit its entry, keep the old text on a `Superseded:` line,
   - The API runs its TypeScript directly with Node's built-in type stripping (M0-T4), so code uses only erasable syntax and relative imports end in `.ts`.
   - Node refuses to strip types from files inside `node_modules`. The production image (M8-T4) must therefore keep the workspace layout, or bundle the API.
   - Turborepo's `transit` task keeps cached results correct across packages ([architecture.md §2](architecture.md#2-packages-and-layering)).
+- **D-22 Work goes straight to `main`** (2026-11-07, after M0-T4).
+  - The owner is the only reader for now, so task branches and PRs added steps without adding review. M0-T2 to M0-T4 went through PRs #1–#3; everything after is committed directly.
+  - Each task is one commit (or a few) whose message starts with the task ID and records what the plan asks to report. `main` must pass `pnpm check` and the integration tests at every commit.
+  - CI (M0-T7) runs on every push to `main`. A failing experiment goes on a throwaway branch, not on `main`.
+  - Revisit when someone else contributes, or when `main` starts deploying to production (M8-T6): then PRs and branch protection come back.

@@ -68,7 +68,7 @@
 **Done when:**
 - [ ] securityheaders.com rates the site A or better.
 - [ ] The CSP raises no violations during the golden-path e2e test against a production build.
-- [ ] The new CI checks run on every PR.
+- [ ] The new CI checks run on every push.
 
 ### M8-T4 Production build and containers
 

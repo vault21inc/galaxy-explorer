@@ -351,5 +351,5 @@ All services run under one `docker-compose.prod.yml` on one droplet. Migrations 
 - **Size:** aim for files under 300 lines and one component per file. Split by responsibility, not by line count alone.
 - **Comments explain why.** Every non-obvious piece of 3D math, shader code or camera logic gets a plain-language comment. The owner is new to three.js, so link the relevant section of `rendering.md`.
 - **No magic numbers in rendering:** tunables live in `apps/web/src/render/tuning.ts`, each with a comment and its unit.
-- **Dependencies:** add one only when it removes real work. Note new runtime dependencies in the PR description, and in `decisions.md` if they're architectural.
+- **Dependencies:** add one only when it removes real work. Note new runtime dependencies in the commit message, and in `decisions.md` if they're architectural.
 - **Language in the product:** say "event", never "scene", in UI text, API names and docs. three.js's `Scene` class in code is fine. The three levels are the galaxy view, system view and orbit view.
