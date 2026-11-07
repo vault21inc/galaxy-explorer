@@ -64,20 +64,29 @@
 **What:** Postgres 18 in Docker for development and for tests.
 
 - `docker/compose.dev.yml`:
-  - `db`: `postgres:18`, bound to `127.0.0.1:5432`, named volume `ge-pgdata`, with a healthcheck;
-  - `db-test`: `postgres:18` on `127.0.0.1:5433`, data on tmpfs, `fsync=off` and `synchronous_commit=off` for speed.
+  - `db`: `postgres:18`, bound to `127.0.0.1:5442`, named volume `ge-pgdata`, with a healthcheck;
+  - `db-test`: `postgres:18` on `127.0.0.1:5443`, data on tmpfs, `fsync=off` and `synchronous_commit=off` for speed.
 - Scripts: `db:up`, `db:down`, `db:psql`.
-- `.env.example` with `DATABASE_URL` and `TEST_DATABASE_URL` (architecture §11). The setup reads `.env` through a small loader (`dotenv-flow` or Node's `--env-file`).
+- `.env.example` with `DATABASE_URL` and `TEST_DATABASE_URL` (architecture §11). Scripts that need it read `.env` with Node's built-in `--env-file-if-exists`, so no loader package is needed.
 
 **Done when:**
-- [ ] `pnpm db:up` brings both databases up healthy.
-- [ ] `select uuidv7();` works in both, which proves Postgres 18.
+- [x] `pnpm db:up` brings both databases up healthy.
+- [x] `select uuidv7();` works in both, which proves Postgres 18.
+
+**Notes (done 2026-11-07):**
+- **Ports 5442 and 5443, not 5432 and 5433:** another local project's dev environment holds 5432. Port 3000 is also taken on the owner's Mac, so the API's default port is now 3100 (M0-T4, architecture §11).
+- **Image:** pinned to `postgres:18.6`. Postgres 18 images keep their data under `/var/lib/postgresql/18/`, so the volume and the tmpfs mount at `/var/lib/postgresql`.
+- **Verified:**
+  - both databases are bound to 127.0.0.1 only;
+  - a table in `db` survives `db:down` and `db:up`, and a table in `db-test` doesn't;
+  - `fsync` is off in `db-test` only.
+- `pnpm db:psql` opens an interactive `psql` on the dev database.
 
 ### M0-T4 API skeleton
 
 **What:** a Fastify server that every later task builds on.
 
-- `buildServer(config)` factory, so tests use `app.inject()` without a port. `src/main.ts` starts it on `GE_HOST:GE_PORT` (default `127.0.0.1:3000`) and shuts down gracefully.
+- `buildServer(config)` factory, so tests use `app.inject()` without a port. `src/main.ts` starts it on `GE_HOST:GE_PORT` (default `127.0.0.1:3100`) and shuts down gracefully.
 - Config comes from env, validated with Zod (architecture §11); startup fails with a readable message if it's invalid.
 - Plugins:
   - pino logging with authorization and cookie redaction;

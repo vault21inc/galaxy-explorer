@@ -16,6 +16,9 @@
     "test:e2e": "turbo run test:e2e",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "db:up": "docker compose -f docker/compose.dev.yml up -d --wait",
+    "db:down": "docker compose -f docker/compose.dev.yml down",
+    "db:psql": "docker compose -f docker/compose.dev.yml exec db psql -U ge -d ge",
     "check": "prettier --check . && turbo run lint typecheck test"
   },
   "devDependencies": {
