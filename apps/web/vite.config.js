@@ -22,6 +22,8 @@ export default defineConfig(({ mode }) => {
       // no cross-origin setup in development.
       proxy: { '/api': apiOrigin, '/media': apiOrigin },
     },
+    // Vitest runs only the unit tests; e2e/*.spec.ts are Playwright's.
+    test: { include: ['{src,test}/**/*.test.{ts,tsx}'] },
     build: {
       sourcemap: true,
       // three.js alone is about 700 kB minified, so Vite's default 500 kB warning always fires.

@@ -1,0 +1,28 @@
+# Weekly dependency updates, with minor and patch updates grouped into one pull request per
+# ecosystem. Majors arrive one at a time, since they may need code changes. CI runs on each
+# pull request.
+version: 2
+updates:
+  - package-ecosystem: npm
+    # pnpm workspace: the root lockfile and the catalog in pnpm-workspace.yaml.
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    # Matches pnpm's own minimum release age, with a little margin: a version must be a few
+    # days old before it's proposed.
+    cooldown:
+      default-days: 3
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        update-types: [minor, patch]

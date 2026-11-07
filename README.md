@@ -40,4 +40,5 @@ pnpm dev
   - http://127.0.0.1:3100/api/docs is the interactive API documentation.
 - `pnpm check` runs the format check, lint, typecheck and unit tests across the workspace.
 - `pnpm db:migrate` applies database migrations; `pnpm db:reset` wipes the local dev database and migrates it again.
+- `pnpm test:e2e` runs the browser tests (Playwright). Install the browsers once with `pnpm --filter @ge/web exec playwright install chromium webkit`.
 - `pnpm test:integration` runs the tests that need the test database. Each test gets its own copy of a migrated template database, which is dropped afterwards.
