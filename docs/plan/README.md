@@ -142,3 +142,4 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-07:** M0-T6 done: the web app on port 5173 with an on-demand canvas, a 5,000-star placeholder sky, the `?perf=1` HUD and `window.__GE_TEST__`. Idle renders 0 frames.
 - **2026-11-07:** M0-T7 done: Playwright e2e tests (Chromium and WebKit; idle = 0 frames, axe clean) and GitHub Actions CI on every push to `main`, plus Dependabot.
 - **2026-11-07:** M0-T8 done: `AGENTS.md` commands checked and a commit message checklist added, the reference machine and first baseline in [docs/perf/README.md](../perf/README.md), and the README's getting-started section rewritten.
+- **2026-11-07:** **M0 complete.** Next: **M1-T1**, domain primitives (the start of M1, the data core).

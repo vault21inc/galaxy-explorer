@@ -31,7 +31,7 @@
 
 **Done when:**
 - [x] The repository exists on GitHub, is private, and has `main` pushed: [vault21inc/galaxy-explorer](https://github.com/vault21inc/galaxy-explorer), 2026-11-01.
-- [ ] `git status` is clean after `pnpm install` in later tasks; the ignore rules are correct.
+- [x] `git status` is clean after `pnpm install` in later tasks; the ignore rules are correct. *Checked in M0-T8, in the working copy and in a fresh clone.*
 
 ### M0-T2 Workspace scaffold
 
@@ -163,7 +163,7 @@
 
 **Done when:**
 - [x] Orbiting the camera renders frames, and frames stop when it settles.
-- [ ] An e2e test (M0-T7) confirms idle adds **0 frames** over 3 s. *Checked by hand through `window.__GE_TEST__` (below); the automated test lands with Playwright in M0-T7.*
+- [x] An e2e test (M0-T7) confirms idle adds **0 frames** over 3 s. *`apps/web/e2e/app.spec.ts`, added in M0-T7; it runs in CI.*
 - [x] The HUD toggles with `?perf=1`.
 
 **Notes (done 2026-11-07):**
@@ -270,6 +270,8 @@
 
 ## Milestone acceptance
 
-- [ ] Every M0 task is checked off.
-- [ ] Following the demo steps from a fresh clone works on the owner's Mac.
-- [ ] CI is green on `main`.
+- [x] Every M0 task is checked off.
+- [x] Following the demo steps from a fresh clone works on the owner's Mac. *2026-11-07: a fresh clone of `a1d6f97`, set up by following the README, served the app, `/api/health` (ok) and `/api/docs`, and passed `pnpm check`. The owner orbited the starfield and read the HUD on the same machine.*
+- [x] CI is green on `main` ([run for `a1d6f97`](https://github.com/vault21inc/galaxy-explorer/actions/runs/42407667565)).
+
+**M0 completed 2026-11-07.**
