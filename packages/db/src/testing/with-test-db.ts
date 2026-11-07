@@ -1,3 +1,4 @@
+import pg from 'pg';
 import { inject } from 'vitest';
 import {
   createDatabaseNamed,
@@ -23,14 +24,18 @@ import { newTestDatabaseName } from './template.ts';
  *   }));
  * ```
  */
-export async function withTestDb<T>(fn: (db: Database, url: string) => Promise<T>): Promise<T> {
+export async function withTestDb<T>(
+  fn: (db: Database, url: string) => Promise<T>,
+  options: TestDbOptions = {},
+): Promise<T> {
   const { serverUrl, templateName } = testDatabaseContext();
   const databaseName = newTestDatabaseName();
-  const url = withDatabaseName(serverUrl, databaseName);
+  let url = withDatabaseName(serverUrl, databaseName);
 
   await withAdminClient(serverUrl, (client) =>
     createDatabaseNamed(client, databaseName, templateName),
   );
+  if (options.ambientBatch) url = await withAmbientBatch(url);
   const db = createDatabase(url, {
     onIdleClientError: (error) => {
       console.error(`Test database ${databaseName}: idle connection failed`, error);
@@ -53,4 +58,36 @@ function testDatabaseContext() {
     );
   }
   return context;
+}
+
+export interface TestDbOptions {
+  /**
+   * Log every write to one change batch made up front, so tests about constraints rather than
+   * history can write without `withBatch` (which they'd otherwise need: the audit trigger
+   * rejects writes outside a batch with GE400). Tests of history itself leave this off.
+   */
+  ambientBatch?: boolean;
+}
+
+/**
+ * Creates a batch and returns a URL whose connections all start with `ge.batch_id` set to it,
+ * through Postgres's `options` connection parameter. `withBatch` still overrides it inside its
+ * own transactions.
+ */
+async function withAmbientBatch(url: string): Promise<string> {
+  const client = new pg.Client({ connectionString: url });
+  await client.connect();
+  try {
+    const result = await client.query<{ id: string }>(
+      `insert into change_batches (actor_type, actor_label, description)
+       values ('system', 'test', 'Ambient test batch') returning id`,
+    );
+    const batchId = result.rows[0]?.id;
+    if (!batchId) throw new Error('Creating the ambient batch returned no row.');
+    const withOptions = new URL(url);
+    withOptions.searchParams.set('options', `-c ge.batch_id=${batchId}`);
+    return withOptions.toString();
+  } finally {
+    await client.end();
+  }
 }

@@ -24,12 +24,15 @@ import {
   PG,
 } from './fixtures.ts';
 
+/** These tests check constraints, not history, so their writes share one ambient batch. */
+const withDb: typeof withTestDb = (fn) => withTestDb(fn, { ambientBatch: true });
+
 // Each test makes the bad write and expects the database to reject it with the right
 // constraint (M1-T3). The service layer adds friendlier checks in M1-T5; these are the floor.
 
 describe('same-map references', () => {
   it('rejects a parent object from another map', () =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const { universeId, mapId } = await insertUniverseWithMap(db);
       const otherMapId = await insertMap(db, universeId, 'other');
       const system = await insertObject(db, { universeId, mapId: otherMapId });
@@ -49,7 +52,7 @@ describe('same-map references', () => {
     }));
 
   it('rejects an object that is its own parent', () =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const { universeId, mapId } = await insertUniverseWithMap(db);
       const entityId = await insertEntity(db, { universeId, mapId, kind: 'celestial_object' });
       await expectPgError(
@@ -62,7 +65,7 @@ describe('same-map references', () => {
     }));
 
   it('rejects an extension row in a different map from its entity', () =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const { universeId, mapId } = await insertUniverseWithMap(db);
       const otherMapId = await insertMap(db, universeId, 'other');
       const entityId = await insertEntity(db, { universeId, mapId, kind: 'celestial_object' });
@@ -76,7 +79,7 @@ describe('same-map references', () => {
 
 describe('group membership', () => {
   it('allows an object in at most one group of each type', () =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const { universeId, mapId } = await insertUniverseWithMap(db);
       const sector = await insertGroupType(db, universeId, 'Sector');
       const faction = await insertGroupType(db, universeId, 'Faction');
@@ -100,7 +103,7 @@ describe('group membership', () => {
     }));
 
   it("rejects a membership that misstates the group's type", () =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const { universeId, mapId } = await insertUniverseWithMap(db);
       const sector = await insertGroupType(db, universeId, 'Sector');
       const faction = await insertGroupType(db, universeId, 'Faction');
@@ -114,7 +117,7 @@ describe('group membership', () => {
     }));
 
   it('rejects a parent group from another map', () =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const { universeId, mapId } = await insertUniverseWithMap(db);
       const otherMapId = await insertMap(db, universeId, 'other');
       const groupTypeId = await insertGroupType(db, universeId);
@@ -156,7 +159,7 @@ describe('locations', () => {
     ['space', (s: Awaited<ReturnType<typeof setup>>) => ({ objectId: s.body, ...point })],
     ['place', (s: Awaited<ReturnType<typeof setup>>) => ({ placeId: s.otherPlace })],
   ] as const)('accepts a valid %s location', (mode, columns) =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const s = await setup(db);
       await db
         .insert(entityLocations)
@@ -211,7 +214,7 @@ describe('locations', () => {
       (s: Awaited<ReturnType<typeof setup>>) => ({ placeId: s.otherPlace, ...point }),
     ],
   ] as const)('rejects %s', (_label, mode, columns) =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const s = await setup(db);
       await expectPgError(
         db
@@ -227,7 +230,7 @@ describe('locations', () => {
     ['latitude above 90', { latDeg: 91, lonDeg: 0 }, 'entity_locations_lat_range'],
     ['longitude of 180', { latDeg: 0, lonDeg: 180 }, 'entity_locations_lon_range'],
   ])('rejects a %s', (_label, angles, constraint) =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const s = await setup(db);
       await expectPgError(
         db.insert(entityLocations).values({
@@ -244,7 +247,7 @@ describe('locations', () => {
   );
 
   it('rejects an unknown mode', () =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const s = await setup(db);
       await expectPgError(
         db
@@ -258,7 +261,7 @@ describe('locations', () => {
 
 describe('entity scope', () => {
   it('rejects a character with a map', () =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const { universeId, mapId } = await insertUniverseWithMap(db);
       await expectPgError(
         insertEntity(db, { universeId, mapId, kind: 'character' }),
@@ -269,7 +272,7 @@ describe('entity scope', () => {
     }));
 
   it('rejects a map-scoped entity without a map', () =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const universeId = await insertUniverse(db);
       await expectPgError(
         insertEntity(db, { universeId, mapId: null, kind: 'event' }),
@@ -279,7 +282,7 @@ describe('entity scope', () => {
     }));
 
   it('rejects an unknown kind', () =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const { universeId, mapId } = await insertUniverseWithMap(db);
       await expectPgError(
         insertEntity(db, { universeId, mapId, kind: 'route' as 'event' }),
@@ -291,7 +294,7 @@ describe('entity scope', () => {
 
 describe('external keys', () => {
   it('are unique per map but may repeat across maps', () =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const { universeId, mapId } = await insertUniverseWithMap(db);
       const otherMapId = await insertMap(db, universeId, 'other');
       await insertEntity(db, { universeId, mapId, kind: 'place', externalKey: 'gudrun' });
@@ -309,7 +312,7 @@ describe('external keys', () => {
     }));
 
   it('are unique per universe for universe-scoped kinds, whose map is null', () =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const universeId = await insertUniverse(db);
       const otherUniverseId = await insertUniverse(db, 'other-universe');
       await insertEntity(db, {
@@ -332,7 +335,7 @@ describe('external keys', () => {
     }));
 
   it('may be left out on any number of entities', () =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const { universeId, mapId } = await insertUniverseWithMap(db);
       await insertEntity(db, { universeId, mapId, kind: 'place' });
       await insertEntity(db, { universeId, mapId, kind: 'place' });
@@ -343,7 +346,7 @@ describe('formats', () => {
   it.each(['Warhammer', 'warhammer 40k', 'a--b', '-a', ''])(
     'rejects the universe slug %j',
     (slug) =>
-      withTestDb(async (db) => {
+      withDb(async (db) => {
         await expectPgError(
           db.insert(universes).values({ slug, name: rt.plain('x'), namePlain: 'x' }),
           PG.check,
@@ -353,7 +356,7 @@ describe('formats', () => {
   );
 
   it('rejects a bad map slug', () =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const universeId = await insertUniverse(db);
       await expectPgError(
         db.insert(maps).values({ universeId, slug: 'M41', name: rt.plain('x'), namePlain: 'x' }),
@@ -363,7 +366,7 @@ describe('formats', () => {
     }));
 
   it.each(['#FFFFFF', '#fff', 'c8a24a', 'red'])('rejects the color %j', (color) =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const universeId = await insertUniverse(db);
       await expectPgError(
         db
@@ -378,7 +381,7 @@ describe('formats', () => {
   it.each(['javascript:alert(1)', 'ftp://example.com', 'example.com', '/relative'])(
     'rejects the link %j',
     (url) =>
-      withTestDb(async (db) => {
+      withDb(async (db) => {
         const { universeId, mapId } = await insertUniverseWithMap(db);
         const entityId = await insertEntity(db, { universeId, mapId, kind: 'place' });
         await expectPgError(
@@ -390,7 +393,7 @@ describe('formats', () => {
   );
 
   it('rejects an asset source URL that is not http(s)', () =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const universeId = await insertUniverse(db);
       const variant = { key: 'a', width: 1, height: 1 };
       await expectPgError(
@@ -410,7 +413,7 @@ describe('formats', () => {
     }));
 
   it('accepts well-formed values', () =>
-    withTestDb(async (db) => {
+    withDb(async (db) => {
       const { universeId, mapId } = await insertUniverseWithMap(db);
       const entityId = await insertEntity(db, { universeId, mapId, kind: 'place' });
       await db.insert(entityLinks).values({ entityId, url: 'https://example.com/wiki' });

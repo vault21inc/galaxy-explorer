@@ -132,11 +132,29 @@
 - An exported `CLONE_SPEC` constant (data-model §10), which lists every map-scoped table, its id columns and the columns to remap. It's only data for now; M7-T5 implements `cloneMap()` on top of it.
 
 **Done when:**
-- [ ] Introspection test: every table in `AUDITED_TABLES` has the trigger, and every table with `map_id` or an `entities` foreign key is in `AUDITED_TABLES` and in `CLONE_SPEC`.
-- [ ] A write outside `withBatch` fails with `GE400`.
-- [ ] A **generated** test, one case per audited table, inserts, updates and deletes a row, reverts each batch, then reverts the revert (redo). The row ends up in the expected state each time.
-- [ ] Cascade test: delete a system that has child objects, group memberships, images and an event located on it. Reverting the delete restores everything exactly, apart from `updated_at`.
-- [ ] Conflict test: update A, update A again, then revert the first batch → 409 `GE409`, and nothing changes.
+- [x] Introspection test: every table in `AUDITED_TABLES` has the trigger, and every table with `map_id` or an `entities` foreign key is in `AUDITED_TABLES` and in `CLONE_SPEC`.
+- [x] A write outside `withBatch` fails with `GE400`.
+- [x] A **generated** test, one case per audited table, inserts, updates and deletes a row, reverts each batch, then reverts the revert (redo). The row ends up in the expected state each time.
+- [x] Cascade test: delete a system that has child objects, group memberships, images and an event located on it. Reverting the delete restores everything exactly, apart from `updated_at`.
+- [x] Conflict test: update A, update A again, then revert the first batch → 409 `GE409`, and nothing changes.
+
+**Notes (done 2026-11-07):**
+- **Migration `0001_audit.sql`** (hand-written) contains `ge_audit()`, its trigger on each of the 17 tables in `AUDITED_TABLES`, and `ge_revert_batch()` with three small helpers. The trigger lines were printed from `AUDITED_TABLES`, whose primary keys are read from the Drizzle schema, and a test checks that the triggers and the list still match.
+- **`withBatch(db, actor, description, fn, { universeId?, revertsBatchId? })`** returns `{ result, batchId }`. It sets `ge.batch_id` for its transaction only, and a test checks that the setting doesn't leak to the next write on the same connection.
+- **`revertBatch(db, batchId, actor)`** runs `ge_revert_batch` in a new batch described as "Revert: …", and returns the new batch id and the number of rows changed. Postgres errors become `RevertConflictError` (GE409, with the table and primary key) and `BatchNotFoundError` (GE404), ready for the API to map to 409 and 404.
+- **"Unchanged" ignores `version` as well as `updated_at`:**
+  - this applies both when checking for conflicts and in the cascade test;
+  - every restore bumps `version`, so comparing versions would make any batch that touched a row twice impossible to revert;
+  - the conflict test still fails as required, because the content differs.
+- **`CLONE_SPEC`** lists, per table, the columns that get fresh ids, the columns remapped through `clone_ids`, and how its rows are selected: by map, by an entity in the map, or (relations) by either end in the map.
+- **Deleting an object (for M1-T5):** the database cascade removes the children's `celestial_objects` rows but not their `entities` rows, because `entities` doesn't reference its extension. The entity service must therefore delete the whole subtree's entities in one statement, as the cascade test does with a recursive query.
+- **Tests that aren't about history** can call `withTestDb(fn, { ambientBatch: true })`. Every connection then starts inside one pre-made batch, through Postgres's `options` connection setting. The M1-T3 constraint tests use it.
+- **Tests:** 29 new database integration tests (99 in all):
+  - introspection: triggers and their key arguments, every content table audited, map-scoped tables in both lists, `CLONE_SPEC` columns exist;
+  - `withBatch`: GE400, the log contents, no leaking, rollback;
+  - the generated test, one case per audited table, which fails if a table has no case;
+  - cascade, conflict and an unknown batch.
+  - A throwaway test confirmed that replacing `ge_revert_batch` with a no-op makes the assertions fail.
 
 ### M1-T5 Entity service and rules
 

@@ -602,7 +602,7 @@ Cascaded deletes fire the trigger on child tables inside the same transaction, s
    - `INSERT` → delete the row by `pk`. If it's already gone (for example, a cascade removed it), skip it.
    - `UPDATE` → restore every column from `before`, with `version = current.version + 1` and `updated_at = now()` where those columns exist.
    - `DELETE` → insert `before` again, bumping `version` where the column exists. If an identical row already exists, skip it.
-3. **Conflict check** before each step: the current row must equal the logged `after` (or `before` for re-inserts), ignoring `updated_at`. Otherwise someone changed it since, so raise SQLSTATE `GE409` with the conflicting table and pk. The API returns 409, and nothing is reverted, because the whole revert is one transaction.
+3. **Conflict check** before each step: the current row must equal the logged `after` (or `before` for re-inserts), ignoring `updated_at` and `version`, because every restore bumps the version. Otherwise someone changed it since, so raise SQLSTATE `GE409` with the conflicting table and pk. The API returns 409, and nothing is reverted, because the whole revert is one transaction.
 4. Use dynamic SQL with `jsonb_populate_record(null::<table>, …)` so the function works for every audited table without per-table code.
 
 Redo is the revert of a revert. The web app's undo stack and the history panel's "Revert" button both call `POST /history/{batchId}/revert`. A test reverts and re-applies an insert, update and delete on **every** audited table; the test is generated from the table list.
@@ -631,7 +631,7 @@ Deletes are hard deletes: the change log keeps everything needed to revert them.
 |---|---|
 | Universe | Cascades to everything in it. The UI requires typing the universe's name. |
 | Map | Cascades to all map-scoped entities. |
-| Object | Cascades to child objects, its group memberships and route waypoints, and **locations** pointing at it. Places and events located there survive but become unplaced; they're listed under "Unplaced" in the outliner. |
+| Object | Cascades to child objects, its group memberships and route waypoints, and **locations** pointing at it. Places and events located there survive but become unplaced; they're listed under "Unplaced" in the outliner. The database cascade removes child `celestial_objects` rows only, so the entity service deletes the whole subtree's `entities` rows in one statement. |
 | Group | Removes its memberships; child groups lose their parent. |
 | Place | Events located at the place become unplaced. |
 | Character | Removes its relations. |
