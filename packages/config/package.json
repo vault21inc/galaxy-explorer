@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@eslint/js": "catalog:",
+    "eslint-plugin-react-hooks": "7.1.1",
     "globals": "catalog:",
     "typescript-eslint": "catalog:"
   },

@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import { defineConfig } from 'eslint/config';
 import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 import { WORKSPACE_PACKAGES } from './workspace.js';
 
@@ -9,10 +10,14 @@ import { WORKSPACE_PACKAGES } from './workspace.js';
  *
  *   export default configFor('@ge/web', import.meta.dirname);
  *
+ * React packages pass `{ react: true }` to add the Rules of Hooks and the React Compiler's checks
+ * (eslint-plugin-react-hooks).
+ *
  * @param {string} packageName - a package listed in workspace.js
  * @param {string} packageDir - the package's absolute path; type-aware rules read its tsconfig.json
+ * @param {{ react?: boolean }} [options]
  */
-export function configFor(packageName, packageDir) {
+export function configFor(packageName, packageDir, { react = false } = {}) {
   const pkg = WORKSPACE_PACKAGES.find((candidate) => candidate.name === packageName);
   if (!pkg) {
     throw new Error(`${packageName} is not listed in packages/config/workspace.js`);
@@ -31,6 +36,7 @@ export function configFor(packageName, packageDir) {
         'no-restricted-imports': ['error', { patterns: importRestrictions(pkg) }],
       },
     },
+    react ? { files: ['**/*.{ts,tsx}'], ...reactHooks.configs.flat['recommended-latest'] } : {},
     {
       // Config files are plain JavaScript run by Node, outside every tsconfig.
       files: ['**/*.{js,mjs,cjs}'],

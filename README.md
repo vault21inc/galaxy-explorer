@@ -34,10 +34,10 @@ pnpm dev
 ```
 
 - `pnpm db:up` starts the dev database on 127.0.0.1:5442 and the test database on 127.0.0.1:5443. `pnpm db:down` stops them; dev data is kept, test data isn't.
-- `pnpm dev` starts the API on http://127.0.0.1:3100 and restarts it on changes:
-  - http://127.0.0.1:3100/api/health reports whether it can reach the database;
+- `pnpm dev` starts the API and the web app, and reloads them on changes:
+  - http://localhost:5173 is the web app. For now it shows a placeholder starfield: drag to orbit, scroll or pinch to zoom. Add `?perf=1` to the address for the performance HUD;
+  - http://127.0.0.1:3100/api/health reports whether the API can reach the database;
   - http://127.0.0.1:3100/api/docs is the interactive API documentation.
 - `pnpm check` runs the format check, lint, typecheck and unit tests across the workspace.
 - `pnpm db:migrate` applies database migrations; `pnpm db:reset` wipes the local dev database and migrates it again.
 - `pnpm test:integration` runs the tests that need the test database. Each test gets its own copy of a migrated template database, which is dropped afterwards.
-- The web app arrives in M0-T6.

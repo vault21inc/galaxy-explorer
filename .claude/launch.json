@@ -7,6 +7,13 @@
       "runtimeArgs": ["--filter", "@ge/api", "dev"],
       "port": 3100,
       "url": "http://127.0.0.1:3100"
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@ge/web", "dev"],
+      "port": 5173,
+      "url": "http://localhost:5173"
     }
   ]
 }

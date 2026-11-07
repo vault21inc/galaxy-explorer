@@ -157,14 +157,30 @@
   - drei `<CameraControls>`;
   - a placeholder sky of 5,000 points.
 - `render/tuning.ts` with its first constants, each commented.
-- Dev HUD (r3f-perf) behind `?perf=1`.
+- Dev HUD behind `?perf=1`.
 - `window.__GE_TEST__` (dev and `VITE_TEST_HOOKS=1` builds only) with `frameCount`, `renderInfo()`, `frameStats()` and `resetFrameStats()` (rendering.md §14).
 - The Vite dev server proxies `/api` and `/media` to the API.
 
 **Done when:**
-- [ ] Orbiting the camera renders frames, and frames stop when it settles.
-- [ ] An e2e test (M0-T7) confirms idle adds **0 frames** over 3 s.
-- [ ] The HUD toggles with `?perf=1`.
+- [x] Orbiting the camera renders frames, and frames stop when it settles.
+- [ ] An e2e test (M0-T7) confirms idle adds **0 frames** over 3 s. *Checked by hand through `window.__GE_TEST__` (below); the automated test lands with Playwright in M0-T7.*
+- [x] The HUD toggles with `?perf=1`.
+
+**Notes (done 2026-11-07):**
+- **Versions:** React 19.3, three.js 0.187, React Three Fiber 9.8, drei 10.7, React Router 8.5, TanStack Query 5.106, zustand 5.1, Tailwind 4.3 (D-20).
+- **Dev HUD:** our own `render/perf-hud.tsx` instead of r3f-perf, whose last release (2024) depends on drei 9 and React 18 and doesn't fit React 19 and R3F 9. It's a few dozen lines on top of the test hooks' numbers, and it never renders frames itself (rendering.md §14).
+- **Frame timing:** `render/frame-timeline.ts` keeps the last 4,096 frame times in a preallocated buffer. "Frame time" is the interval between consecutive frames, and gaps over 250 ms count as idle, not as slow frames.
+- **Test hooks:** `frameCount`, `renderInfo()`, `frameStats()`, `resetFrameStats()`, plus `cameraPose()`, which is cheap and helps the orbit e2e test. Production builds don't contain the hooks module at all (checked in the build output). `VITE_TEST_HOOKS=1 pnpm build` includes it.
+- **shadcn/ui** is initialized (`components.json`, `src/lib/utils.ts`, the tokens in `src/index.css`) with no components yet. Add them with `pnpm dlx shadcn@latest add <name>` from `apps/web`.
+- **Lint:** web code now also runs eslint-plugin-react-hooks (the Rules of Hooks and the React Compiler's checks), through `configFor(…, { react: true })`.
+- **Measured in the in-app browser** (1024 × 768, device pixel ratio 2):
+  - idle: **0 frames** over 3 s, before and after interaction;
+  - a drag renders about 155 frames while the camera eases, then stops; one more frame follows when the resolution returns to full;
+  - while moving, the pixel ratio drops from 1.5 to 0.75, then returns to 1.5;
+  - **1 draw call** for the 5,000-star sky, 1 geometry, no textures;
+  - initial JavaScript: **362 kB** gzipped (budget 600 kB).
+  - Frame times from the in-app browser aren't meaningful, because it runs as a background page. The baseline on the reference Mac is M0-T8.
+- **Known warning:** React Three Fiber 9.8 logs "THREE.Clock: This module has been deprecated" with three.js 0.187. It's harmless and goes away when R3F updates.
 
 ### M0-T7 Tests and CI
 

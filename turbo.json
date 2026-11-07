@@ -6,12 +6,13 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**"],
+      "env": ["VITE_*"]
     },
     "dev": {
       "cache": false,
       "persistent": true,
-      "passThroughEnv": ["DATABASE_URL", "GE_*"]
+      "passThroughEnv": ["DATABASE_URL", "GE_*", "VITE_*"]
     },
     "lint": {
       "dependsOn": ["transit"]

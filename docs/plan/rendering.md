@@ -66,7 +66,7 @@ Each rule removes one of the usual causes of a hot, laggy three.js page: continu
   <PerformanceMonitor onDecline={quality.stepDown} />
   <AdaptiveDpr />
   <ViewHost />                           // renders the current view from the levels registry (§4)
-  {import.meta.env.DEV && <PerfHud />}   // r3f-perf, toggled with ?perf=1
+  <FrameProbe />                         // counts frames for the HUD and test hooks (§14)
 </Canvas>
 <LabelLayer />                           // DOM overlay, sibling of the canvas (§11)
 <TransitionOverlay />                    // the fade used between views (§4)
@@ -319,7 +319,7 @@ interface GeTestHooks {
   3. Records `frameStats()` and `renderInfo()` per phase.
   4. Checks the budgets in §2.
   5. Writes a dated report to `docs/perf/`.
-- **Dev HUD** (`?perf=1`): r3f-perf, showing fps, draw calls, triangles, GPU memory and the current DPR.
+- **Dev HUD** (`?perf=1`, development only): `render/perf-hud.tsx`, a small DOM overlay showing fps, median and p95 frame time, total frames, draw calls, triangles, points, geometries and textures on the GPU, and the current DPR. It reads the same numbers as the test hooks and polls twice a second, so it never renders frames itself; a still scene reads "idle". (r3f-perf was planned, but it hasn't been updated for React 19 and R3F 9.)
 
 ## 15. Later: WebGPU and 3D models
 

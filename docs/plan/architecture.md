@@ -299,6 +299,7 @@ All configuration comes from environment variables, validated by a Zod schema at
 | `GE_LOG_LEVEL` | api | `info` (`fatal` … `trace`, or `silent`) |
 | `GE_MEDIA_DIR` | api | `./.data/media` |
 | `GE_PUBLIC_URL` | api, web build | `http://localhost:5173` |
+| `VITE_TEST_HOOKS` | web build | unset; `1` exposes `window.__GE_TEST__` in a production build, for e2e tests (development builds always have it) |
 | `GE_SESSION_SECRET` | api (M8) | 32+ random bytes |
 | `GE_WIKI_USER_AGENT` | api (M7) | `GalaxyExplorer/0.1 (contact: …)` |
 | `GE_API_URL`, `GE_API_TOKEN` | mcp (M7) | `http://127.0.0.1:3100/api/v1` |

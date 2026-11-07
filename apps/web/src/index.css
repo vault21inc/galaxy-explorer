@@ -1,0 +1,92 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/*
+ * Design tokens (ux.md §11). The app is dark only: these values sit on :root and <html> carries
+ * the `dark` class, so shadcn/ui components' `dark:` styles apply too. Add shadcn components with
+ * `pnpm dlx shadcn@latest add <name>` from apps/web; they read these variables.
+ */
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.5rem;
+
+  /* Near-black space, also the canvas clear color (render/tuning.ts SPACE_COLOR). */
+  --background: #03050a;
+  --foreground: #e6ebf2;
+
+  /* Panels: translucent dark with a hairline border. */
+  --card: rgb(10 14 22 / 0.85);
+  --card-foreground: #e6ebf2;
+  --popover: rgb(10 14 22 / 0.95);
+  --popover-foreground: #e6ebf2;
+
+  /* The accent. Universes override it in their settings (M4); cyan is the default. */
+  --primary: #4fd1ff;
+  --primary-foreground: #03050a;
+
+  --secondary: rgb(255 255 255 / 0.06);
+  --secondary-foreground: #e6ebf2;
+  --muted: rgb(255 255 255 / 0.04);
+  --muted-foreground: #8b95a7;
+  --accent: rgb(79 209 255 / 0.12);
+  --accent-foreground: #e6ebf2;
+  --destructive: #f05252;
+
+  --border: rgb(255 255 255 / 0.08);
+  --input: rgb(255 255 255 / 0.12);
+  --ring: #4fd1ff;
+}
+
+@theme inline {
+  --font-sans:
+    Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    /* The canvas owns the whole window; nothing scrolls behind it. */
+    overflow: hidden;
+  }
+}
+
+/* Group labels and section headers: uppercase with wide tracking (ux.md §11). */
+@utility label-caps {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
