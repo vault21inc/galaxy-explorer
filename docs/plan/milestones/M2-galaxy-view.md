@@ -269,7 +269,7 @@
 - **Test hooks:** `visibleLabels`, `labelStats` and `resetLabelStats`.
 - **Measuring the budget:** WebKit rounds `performance.now()` to whole milliseconds, so the budget test runs in Chromium only.
   - Headless browsers draw the stress map in software (about 185 ms per frame), and parallel workers share the CPU, so the e2e test only guards against regressions, at 5 ms (10 ms on CI).
-  - The 2 ms budget itself was measured headed, and M2-T8's `pnpm perf` will check it.
+  - The 2 ms budget itself was measured headed, and M2-T8's `pnpm perf` will check it. CI only logs the timing: GitHub's shared runners measured 5 ms median and 13–25 ms p95 on the same code.
 - **Tests:**
   - 12 unit tests: placement, priority order, overlap rejection with 2,000 candidates, the 200 cap, the view's edges, `labelText` and the mode cycle;
   - 4 e2e tests: one label on hover; L cycles the modes and they're remembered; Space shows labels with no overlapping boxes and Erebus as a redaction bar; the update-time guard.
