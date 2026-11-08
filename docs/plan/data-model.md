@@ -460,6 +460,7 @@ const GalaxySettings = z.object({
   armTwist: z.number().min(0).max(3),                  // turns of the log spiral across the radius
   armSpread: z.number().min(0).max(1),
   bulgeRadiusLy: z.number().min(0),
+  barLengthRadii: z.number().min(0).max(0.6),          // default 0 = no bar; half-length of a central bar (D-24)
   starPoints: z.number().int().min(1_000).max(50_000), // capped further by the quality setting
   colors: z.object({ core: HexColor, arm: HexColor, dust: HexColor }),
 }).partial();

@@ -120,7 +120,7 @@ Data is stored in the same frames (data-model.md §5), so no conversion happens 
 
 ## 6. Galaxy view
 
-**Background** (`render/galaxy/`): generated from `map.galaxySettings` (G1).
+**Background** (`render/galaxy/`): generated from `map.galaxySettings` (G1). The owner shapes it in the Map settings panel, from named presets and sliders, including an optional central bar (M3-T8, D-24).
 
 - **Disc:** one horizontal plane, 1.2 × the galaxy radius, with a texture baked once per settings hash (§9). The texture is a top-down log-spiral density with core, arm and dust colors. It's drawn additively with depth writes off.
 - **Depth stars:** at most 20,000 `THREE.Points` sampled from the same density function by a seeded PRNG in a Web Worker. They form a thin disc plus a bulge, colored by radius, sized with attenuation but capped at 3 px. They're one draw call and give the disc thickness and parallax.

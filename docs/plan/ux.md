@@ -14,7 +14,7 @@ What the app looks like and how it responds to the mouse, trackpad, touch and ke
 │ via "List")    │                                                       │ the edit form   │
 │                │                                                       │ in edit mode    │
 ├────────────────┴───────────────────────────────────────────────────────┴─────────────────┤
-│ Edit toolbar (edit mode only):  Select · Add ▾ · Group · Route · Underlay · Undo · Redo · History │
+│ Edit toolbar (edit mode): Select · Add ▾ · Group · Route · Map · Undo · Redo · History   │
 └──────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 

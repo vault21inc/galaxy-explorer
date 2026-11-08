@@ -1,11 +1,11 @@
 # M3: Galaxy editing
 
-**Goal:** build a galaxy by hand. In edit mode the owner can create, place, move, describe and delete objects; select several at once; undo anything; upload images; and trace positions over a reference map.
+**Goal:** build a galaxy by hand. In edit mode the owner can create, place, move, describe and delete objects; select several at once; undo anything; upload images; shape the galaxy itself; and trace positions over a reference map.
 
 **Depends on:** M2.
 **Read first:** [ux.md §2–5, §8](../ux.md), [architecture.md §4, §8](../architecture.md), [data-model.md §9](../data-model.md#9-history-batches-audit-trigger-revert).
 **Demo at the end:**
-1. Turn on edit mode and add a reference image under the galaxy.
+1. Turn on edit mode. In Map settings, pick the "Barred spiral" preset, widen its bar and loosen its arms, then add a reference image under the galaxy.
 2. Place three systems on it, set one system's height with the gizmo, and rename one with Markdown in its description.
 3. Box-select two systems and move them together.
 4. Undo everything step by step, then redo it.
@@ -142,19 +142,43 @@
   - uploading the same file twice returns the same asset.
 - [ ] E2E: adding an image to an object shows it with its credit; flagging it as a spoiler blurs it in view mode.
 
-### M3-T8 Reference underlay
+### M3-T8 Map settings: galaxy shape and reference underlay
 
-**Where:** `apps/web/src/render/galaxy/underlay.tsx`, `src/panels/map-settings/`.
+**Where:** `packages/domain/src/galaxy/`, `apps/web/src/panels/map-settings/`, `apps/web/src/render/galaxy/`.
 
-- The Map settings panel, opened from the toolbar's Underlay button:
+- **The Map settings panel**, opened from the toolbar's Map button (ux.md §1), has two sections. Every change is one batch, so undo and history cover it.
+- **Galaxy shape** (D-24), editing `maps.galaxy_settings`:
+  - **Presets** first: a row of named shapes, each a thumbnail of its disc. Picking one fills the settings, and the sliders then edit from there. Nothing remembers which preset was picked.
+  - **Sliders** for arms (0–8), arm twist, arm spread, bar length, bulge radius, radius and thickness; three color pickers (core, arm, dust); a seed field with a "shuffle" button.
+  - **Live preview while dragging:** the disc re-bakes at 512² into one reused render target, debounced by 150 ms (rendering.md §9). The full 2,048² bake runs on release, so dragging never fills the bake cache with full-size textures. The depth stars regenerate in the worker on release.
+  - "Reset to default" restores `GALAXY_DEFAULTS`.
+- **Presets are data** (`packages/domain/src/galaxy/presets.ts`): an id, a label and partial `GalaxySettings`, parsed by the schema in a unit test. A new preset needs no code change. The starting set:
+
+  | Preset | Shape |
+  |---|---|
+  | Grand-design spiral | the defaults: 4 well-defined arms |
+  | Two-armed spiral | 2 long, open arms |
+  | Barred spiral | 2 arms starting from the ends of a central bar |
+  | Flocculent spiral | 6–8 short, patchy arms with a wide spread |
+  | Tightly wound spiral | 3–4 arms with a high twist |
+  | Lenticular | no arms, a thin disc and a modest bulge |
+  | Elliptical | no arms, a thick disc and a large bulge |
+
+- **A central bar** (`barLengthRadii`, data-model §4): the shape the current formula can't make.
+  - The bar is an elongated, flattened ellipsoid through the center along the galaxy's X axis, and the arms start at its ends instead of at the center.
+  - Add it to `sampleGalaxyPosition` and to the disc's bake shader together; both read `GALAXY_SHAPE`.
+  - With `barLengthRadii` 0 (the default), the sampler must draw exactly the same random numbers as before, so existing maps, the stress seed and the pinned point hash (`apps/web/test/galaxy-points.test.ts`) don't change.
+- **Reference underlay:**
   - choose or upload an image;
   - set its width in the galaxy unit, rotation, X and Z offsets and opacity;
   - turn it on or off.
 
-  These are saved in `maps.underlay` and `maps.underlay_asset_id`.
-- The underlay renders only in edit mode, under everything, with depth writes off.
+  These are saved in `maps.underlay` and `maps.underlay_asset_id`. The underlay renders only in edit mode, under everything, with depth writes off.
+- **Not covered:** ring and irregular galaxies. Each would be another shape term in the sampler and the shader; add them as later presets if wanted.
 
 **Done when:**
+- [ ] Unit tests: every preset parses as `GalaxySettings`; a bar puts disc stars along the X axis near the center (density test, as in `galaxy-density.test.ts`); with no bar, the sampler's first 1,000 positions are unchanged.
+- [ ] E2E: picking a preset and moving a slider changes the disc (its bake key and `renderInfo()`), survives a reload, and undoes in one step. While dragging, the texture count stays at most one above its starting value.
 - [ ] E2E: the underlay is visible in edit mode, invisible in view mode, and its settings persist after a reload.
 
 ### M3-T9 Outliner

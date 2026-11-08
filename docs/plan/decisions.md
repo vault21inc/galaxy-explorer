@@ -220,3 +220,8 @@ To change a decision, edit its entry, keep the old text on a `Superseded:` line,
   - **Revert compares rows ignoring `version` as well as `updated_at`,** because every restore bumps the version (M1-T4).
   - **Deleting an object deletes its whole subtree's entities in the service:** the database cascade only reaches the children's extension rows (M1-T4, M1-T5).
   - **`<b>` and `<i>` are allowed** in rich-text HTML (owner's request, M1-T5; ux.md §8).
+- **D-24 Galaxy shapes are editable, from presets** (2026-11-08, owner's request after M2-T2).
+  - The owner edits each map's galaxy shape in the browser: M3-T8's Map settings panel gains a Galaxy section with named presets and sliders, previewed live.
+  - Presets are data in `@ge/domain` (`galaxy/presets.ts`) that fill in `GalaxySettings`; the map stores only the settings, not which preset they came from.
+  - `GalaxySettings` gains `barLengthRadii` (default 0) for barred spirals, the one common shape the M2 formula couldn't make. Ring and irregular galaxies are left for later presets.
+  - Extends G1, which planned a procedural spiral per map without saying how its shape is chosen.
