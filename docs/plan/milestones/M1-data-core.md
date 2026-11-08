@@ -409,13 +409,34 @@
 - `pnpm db:reset` now ends by seeding demo.
 
 **Done when:**
-- [ ] Running either seed twice yields identical data.
-- [ ] Later e2e and performance tests use these seeds, starting with M1-T9's view snapshot (`apps/api/test/views.int.test.ts`) and stress benchmark (`views-stress.int.test.ts`), which use stand-in fixtures until the seeds exist.
+- [x] Running either seed twice yields identical data.
+- [x] Later e2e and performance tests use these seeds, starting with M1-T9's view snapshot (`apps/api/test/views.int.test.ts`) and stress benchmark (`views-stress.int.test.ts`), which use stand-in fixtures until the seeds exist.
+
+**Notes (done 2026-11-08):**
+- **The seeds live in `apps/api/src/seeds/`.** The demo goes through the API's services, so every rule applies, and `@ge/db` doesn't have to know about the API. `pnpm db:seed` runs `apps/api`'s seed script, and the root `pnpm db:reset` now runs the db package's reset followed by `seed demo`.
+- **The demo** ("Example Universe", generic names, no Warhammer content):
+  - 25 objects: 6 systems each with a star, 7 planets (4 explorable, two with Hive World and Forge World subtypes, one a rogue planet), 2 moons, a belt, a station, a nebula and an anomaly;
+  - Vela Sector › Inner and Outer Reach; 3 event categories;
+  - 3 field definitions with facts;
+  - 2 places, and 4 events, one per location mode;
+  - 2 characters with participant relations, and 2 placeholder image assets (uploads arrive in M3);
+  - a second, spoiler-flagged map ("After the Fall"), added to cover the whole-map flag;
+  - every flag in data-model §7 and all three text formats, checked by a test.
+- **Idempotent:** entities upsert by external key, and other rows are found by natural key (slug, name, field key, URL, relation ends). A second run changes no ids or content, only `version` and `updated_at`. The test compares every audited table, ignoring those two columns.
+- **The stress seed** (`--objects 5000 --groups 300 --seed 40000`; `--routes` is accepted and ignored until M4) writes in bulk with upserts on external keys, inside one audited batch:
+  - it takes about 0.8 s, against tens of seconds through the entity service;
+  - positions come from `sampleGalaxyPosition`, a new pure sampler in `@ge/domain` (bulge, exponential disc, logarithmic arms) that M2's background can reuse;
+  - groups are spatial clusters: each object joins the nearest of `groups` centers sampled from the same density.
+- **Shared random generator:** `seededRandom` (and `gaussian`) moved to `@ge/domain`, and the web sky imports it. `@ge/domain` is now marked side-effect-free, so the web bundle didn't grow (362 kB gzipped).
+- **M1-T9's tests now use the seeds.** The view snapshot is of the demo seed: the galaxy, the Aster system and the Primus orbit. The benchmark uses the stress seed: **52 ms median, 372 kB gzipped**.
+- **Tests:** 4 integration tests (demo contents, the spoiler and format checklist, both seeds re-run with identical results, stress clustering) and 6 unit tests for the density and Gaussian functions.
 
 ---
 
 ## Milestone acceptance
 
-- [ ] All tasks are checked off, and `pnpm check` and integration tests are green in CI.
-- [ ] The demo works from Swagger UI alone.
-- [ ] `docs/plan/decisions.md` is updated if any schema detail changed from data-model.md, and so is data-model.md itself.
+- [x] All tasks are checked off, and `pnpm check` and integration tests are green in CI.
+- [x] The demo works from Swagger UI alone. *2026-11-08, against the dev API after `pnpm db:reset`, using the requests Swagger's "Try it out" sends: one batch created a system with three planets, a PATCH moved a planet, the revert restored it, and the history showed "Nova I: x 1→7.5", reverted once.*
+- [x] `docs/plan/decisions.md` is updated if any schema detail changed from data-model.md, and so is data-model.md itself. *D-23 lists them.*
+
+**M1 completed 2026-11-08.**

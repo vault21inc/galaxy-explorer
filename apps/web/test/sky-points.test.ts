@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { generateSkyPoints, seededRandom } from '../src/render/sky-points.ts';
+import { seededRandom } from '@ge/domain';
+import { generateSkyPoints } from '../src/render/sky-points.ts';
 
 const options = { count: 2_000, radius: 100, minBrightness: 0.3, seed: 7 };
 

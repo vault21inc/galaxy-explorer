@@ -1,11 +1,14 @@
+import { schema } from '@ge/db';
 import { withTestDb } from '@ge/db/testing';
 import { rt } from '@ge/domain';
+import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
+import { seedDemo } from '../src/seeds/demo.ts';
 import { apiOn, type Api } from './contract/harness.ts';
 
 /**
- * The view payloads (M1-T9). The fixture is built with one batch request, so it's the same
- * every run; the demo seed (M1-T11) will replace it for the snapshot.
+ * The view payloads (M1-T9). The snapshot covers the demo seed (M1-T11); the targeted tests use
+ * a small fixture built with one batch request, so each case is easy to see.
  */
 
 const run = (fn: (api: Api) => Promise<void>) =>
@@ -134,16 +137,29 @@ function stable(value: unknown, ids = new Map<string, string>()): unknown {
 }
 
 describe('view payloads', () => {
-  it('match the snapshot for the fixture (galaxy, system and orbit)', () =>
-    run(async (api) => {
-      const f = await buildFixture(api);
-      const ids = new Map<string, string>();
-      const galaxy = (await api.expect(200, 'GET', `/maps/${f.mapId}/views/galaxy`)).body.data;
-      const system = (await api.expect(200, 'GET', `/objects/${f.ids[0] ?? ''}/views/system`)).body
-        .data;
-      const orbit = (await api.expect(200, 'GET', `/objects/${f.ids[2] ?? ''}/views/orbit`)).body
-        .data;
-      expect(stable({ galaxy, system, orbit }, ids)).toMatchSnapshot();
+  it('match the snapshot for the demo seed (galaxy, system and orbit)', () =>
+    withTestDb(async (db, url) => {
+      const { mapId } = await seedDemo(db);
+      const api = await apiOn(url);
+      try {
+        const objectId = async (key: string) => {
+          const rows = await db
+            .select({ id: schema.entities.id })
+            .from(schema.entities)
+            .where(eq(schema.entities.externalKey, key));
+          return rows[0]?.id ?? '';
+        };
+        const galaxy = (await api.expect(200, 'GET', `/maps/${mapId}/views/galaxy`)).body.data;
+        const system = (
+          await api.expect(200, 'GET', `/objects/${await objectId('demo-aster')}/views/system`)
+        ).body.data;
+        const orbit = (
+          await api.expect(200, 'GET', `/objects/${await objectId('demo-aster-ii')}/views/orbit`)
+        ).body.data;
+        expect(stable({ galaxy, system, orbit })).toMatchSnapshot();
+      } finally {
+        await api.close();
+      }
     }));
 
   it('galaxy: top-level objects only, resolved appearance, groups and group types', () =>

@@ -1,3 +1,5 @@
+import { seededRandom } from '@ge/domain';
+
 /**
  * Generates the placeholder sky: star positions spread evenly over a sphere, and a brightness
  * per star. Pure functions, so they're unit-tested and run once per load, not per frame.
@@ -43,19 +45,4 @@ export function generateSkyPoints({ count, radius, minBrightness, seed }: SkyOpt
   }
 
   return { positions, colors };
-}
-
-/**
- * A small, fast pseudo-random generator (mulberry32) that returns numbers in [0, 1). The same
- * seed always gives the same sequence, which `Math.random` can't do.
- */
-export function seededRandom(seed: number): () => number {
-  let state = seed >>> 0;
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let t = state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296;
-  };
 }

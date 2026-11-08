@@ -152,4 +152,6 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-08:** M1-T7 done: `POST /api/v1/batch` runs up to 1,000 operations as one change, with `$op:N` references, errors naming the failing operation, and dry runs that report their impact.
 - **2026-11-08:** M1-T8 done: history list, per-entity batch summaries, and revert/redo over HTTP with a 409 that lists every conflicting entity.
 - **2026-11-08:** M1-T9 done: galaxy, system and orbit view payloads with resolved appearance, pins, draft filtering and `spoilers=exclude`; 5,000 objects build in 51 ms and gzip to 389 kB.
-- **2026-11-08:** M1-T10 done: the typed API client generated from the OpenAPI document (`pnpm api:generate`), with `createApiClient`/`unwrap`/`ApiError`, and a CI check that fails when it's stale. Next: **M1-T11**, the demo and stress seeds.
+- **2026-11-08:** M1-T10 done: the typed API client generated from the OpenAPI document (`pnpm api:generate`), with `createApiClient`/`unwrap`/`ApiError`, and a CI check that fails when it's stale.
+- **2026-11-08:** M1-T11 done: `pnpm db:seed demo` and `pnpm db:seed stress`, both idempotent; `db:reset` seeds the demo.
+- **2026-11-08:** **M1 complete.** Next: **M2-T1**, the app shell, routing and data hooks: the start of the galaxy view.

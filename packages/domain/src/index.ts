@@ -9,6 +9,13 @@ export {
   type ResolveAppearanceInput,
 } from './appearance/resolve.ts';
 export { HexColor } from './colors.ts';
+export {
+  GALAXY_DEFAULTS,
+  resolveGalaxySettings,
+  sampleGalaxyPosition,
+  type ResolvedGalaxySettings,
+} from './galaxy/density.ts';
+export { gaussian, seededRandom } from './random.ts';
 export { Slug, Uuid } from './ids.ts';
 export * from './patterns.ts';
 export * from './registry/index.ts';

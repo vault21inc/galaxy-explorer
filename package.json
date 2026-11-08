@@ -21,7 +21,8 @@
     "db:psql": "docker compose -f docker/compose.dev.yml exec db psql -U ge -d ge",
     "db:generate": "pnpm --filter @ge/db db:generate",
     "db:migrate": "pnpm --filter @ge/db db:migrate",
-    "db:reset": "pnpm --filter @ge/db db:reset",
+    "db:reset": "pnpm --filter @ge/db db:reset && pnpm --filter @ge/api seed demo",
+    "db:seed": "pnpm --filter @ge/api seed",
     "api:generate": "pnpm --filter @ge/api openapi:write && pnpm --filter @ge/api-client generate",
     "api:check": "pnpm api:generate && git diff --exit-code -- packages/api-client/openapi.json packages/api-client/src/generated",
     "check": "prettier --check . && turbo run lint typecheck test"

@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --project unit --passWithNoTests",
     "test:integration": "vitest run --project integration",
-    "openapi:write": "node src/openapi-cli.ts ../../packages/api-client/openapi.json"
+    "openapi:write": "node src/openapi-cli.ts ../../packages/api-client/openapi.json",
+    "seed": "node --env-file-if-exists=../../.env src/seeds/cli.ts"
   },
   "dependencies": {
     "@fastify/compress": "9.3.0",

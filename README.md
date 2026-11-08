@@ -94,7 +94,8 @@ The e2e tests start their own API and web server on different ports, so they can
 
 Database commands:
 - `pnpm db:migrate` applies new migrations;
-- `pnpm db:reset` wipes the dev database and migrates it again;
+- `pnpm db:reset` wipes the dev database, migrates it again and loads the demo universe;
+- `pnpm db:seed demo` loads (or refreshes) the small "Example Universe", and `pnpm db:seed stress` adds a 5,000-object map for performance testing;
 - `pnpm db:psql` opens a SQL prompt on the dev database.
 
 [AGENTS.md](AGENTS.md#commands) lists every command.

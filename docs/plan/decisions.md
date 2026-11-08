@@ -213,3 +213,10 @@ To change a decision, edit its entry, keep the old text on a `Superseded:` line,
   - Each task is one commit (or a few) whose message starts with the task ID and records what the plan asks to report. `main` must pass `pnpm check` and the integration tests at every commit.
   - CI (M0-T7) runs on every push to `main`. A failing experiment goes on a throwaway branch, not on `main`.
   - Revisit when someone else contributes, or when `main` starts deploying to production (M8-T6): then PRs and branch protection come back.
+- **D-23 Schema details changed during M1** (2026-11-08). data-model.md is updated to match each one.
+  - **Foreign keys are written in SQL,** not in the Drizzle schema, because every one must be deferrable and Drizzle can't declare that (M1-T3; packages/db/migrations/README.md).
+  - **`maps.underlay_asset_id` is `on delete restrict`:** an asset in use can't be deleted (§11), not `set null` as §3.1 first said.
+  - **The location check also requires each mode's unused columns to be null** (y, z, lon), not only some of them.
+  - **Revert compares rows ignoring `version` as well as `updated_at`,** because every restore bumps the version (M1-T4).
+  - **Deleting an object deletes its whole subtree's entities in the service:** the database cascade only reaches the children's extension rows (M1-T4, M1-T5).
+  - **`<b>` and `<i>` are allowed** in rich-text HTML (owner's request, M1-T5; ux.md §8).
