@@ -4,6 +4,8 @@ import { detectPlatform, type Platform } from '@/input/platform.ts';
 import { hoverStore } from '@/state/hover.ts';
 import { useSelection } from '@/state/selection.ts';
 import { flyTo } from './camera/fly-to.ts';
+import { visibleLabels } from './labels/label-driver.tsx';
+import { labelTimeline } from './labels/label-stats.ts';
 import { clampedRadiusPx } from './bodies/body-scale.ts';
 import { canvasState, frameTimeline, renderInfo, type RenderInfo } from './diagnostics.ts';
 import type { FrameStats } from './frame-timeline.ts';
@@ -43,6 +45,11 @@ export interface GeTestHooks {
   hoveredId(): string | null;
   /** Flies the camera to an object, as a double-click does; resolves when it has settled. */
   flyTo(id: string): Promise<void>;
+  /** The labels on screen after the last frame. */
+  visibleLabels(): { id: string; text: string }[];
+  /** Label-update durations since the last reset (budget: 2 ms per frame, rendering.md §11). */
+  labelStats(): { count: number; medianMs: number; p95Ms: number };
+  resetLabelStats(): void;
 }
 
 declare global {
@@ -68,6 +75,11 @@ export function installTestHooks(): void {
     platform: () => detectPlatform(),
     selectedIds: () => [...useSelection.getState().selectedIds],
     hoveredId: () => hoverStore.getState().hoveredId,
+    visibleLabels: () => visibleLabels().map(({ id, text }) => ({ id, text })),
+    labelStats: () => labelTimeline.stats(),
+    resetLabelStats: () => {
+      labelTimeline.reset();
+    },
     flyTo: async (id) => {
       const object = drawnObject(id);
       const controls = canvasState()?.controls;

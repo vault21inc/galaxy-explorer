@@ -38,6 +38,8 @@ const body = (id: string, center: [number, number, number], radius = 120): Drawn
   state: 'normal',
   color: '#ffffff',
   pickPriority: 1,
+  label: id,
+  labelPriority: 0,
 });
 
 const region = (id: string, center: [number, number, number], radius: number): DrawnObject => ({

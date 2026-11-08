@@ -40,6 +40,12 @@ function ensureFresh(state: RootState): void {
   lastHeight = size.height;
 }
 
+/** The picker, fresh for the current camera: every drawn object projected to the screen. */
+export function projected(state: RootState): ScreenPicker {
+  ensureFresh(state);
+  return picker;
+}
+
 /** The object under a point given in page coordinates (`clientX`, `clientY`), or null. */
 export function pickAt(state: RootState, clientX: number, clientY: number): DrawnObject | null {
   ensureFresh(state);

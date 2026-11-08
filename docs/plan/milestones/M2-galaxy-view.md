@@ -247,9 +247,32 @@
 - Group labels are supported by the solver now and fed by M4.
 
 **Done when:**
-- [ ] Unit tests cover priority order, overlap rejection and the 200 cap.
-- [ ] E2E: hovering shows exactly one label; L cycles the modes; holding Space shows many labels and none of their bounding boxes overlap.
-- [ ] Updating the label layer takes at most 2 ms per frame with 200 labels on the reference Mac.
+- [x] Unit tests cover priority order, overlap rejection and the 200 cap.
+- [x] E2E: hovering shows exactly one label; L cycles the modes; holding Space shows many labels and none of their bounding boxes overlap.
+- [x] Updating the label layer takes at most 2 ms per frame with 200 labels on the reference Mac. *0.7 ms median, 1.1 ms p95 with 160–200 labels on the stress map while orbiting and zooming (headed Chromium, owner's Mac).*
+
+**Notes (done 2026-11-08):**
+- **`solveLabels(candidates, viewport, metrics, count)`** is pure.
+  - **Ranking:** each candidate's rank is one number, highest first: selected, hovered, groups (larger first), then label priority, then on-screen size in half pixels.
+  - **Sorting:** ranks and positions are packed into one double, and a typed array is sorted natively. A comparison function took about 1 ms per frame for 5,000 candidates.
+  - **Placement:** greedy, 4 px right of the body's drawn radius, vertically centered, wholly inside the view. Overlaps are found through a 64 px grid, and it stops at 200.
+- **The label text** comes from the renderers. They publish `label` (from `labelText(item, spoilerPolicy)`) and `labelPriority` with each drawn object. A hidden whole-item spoiler gets a redaction bar; otherwise hidden spoilers show the redacted name.
+- **`LabelLayer`:** 200 pooled `<div>`s above the canvas, `aria-hidden`.
+  - A label keeps its element across frames, so text and style change only when an element is reassigned. Each frame writes only `transform: translate3d`.
+  - Object labels are white at 85 % with a dark text shadow (ux.md §10). The group style (uppercase, 0.08em) is ready for M4.
+- **`LabelDriver`** runs in R3F's after-render callback (`addAfterEffect`), when the camera matrices match the frame just drawn. A mode, hover or selection change asks for one frame.
+  - **`all` mode:** candidates come from the picker's projection, which now builds its grid only when something picks. That made projecting for labels cheap.
+  - **`hover` and `groups` modes:** only the hovered and selected objects are projected.
+  - Candidate objects are reused between frames, and text widths are cached per kind.
+- **Modes:** `hover` (the default), `groups` (shows nothing extra until M4) and `all`, remembered per browser (`state/labels.ts`).
+  - L cycles them, and holding Space shows all. Space is ignored when it would press a focused button, and it's released on window blur.
+- **Test hooks:** `visibleLabels`, `labelStats` and `resetLabelStats`.
+- **Measuring the budget:** WebKit rounds `performance.now()` to whole milliseconds, so the budget test runs in Chromium only.
+  - Headless browsers draw the stress map in software (about 185 ms per frame), and parallel workers share the CPU, so the e2e test only guards against regressions, at 5 ms (10 ms on CI).
+  - The 2 ms budget itself was measured headed, and M2-T8's `pnpm perf` will check it.
+- **Tests:**
+  - 12 unit tests: placement, priority order, overlap rejection with 2,000 candidates, the 200 cap, the view's edges, `labelText` and the mode cycle;
+  - 4 e2e tests: one label on hover; L cycles the modes and they're remembered; Space shows labels with no overlapping boxes and Erebus as a redaction bar; the update-time guard.
 
 ### M2-T7 Info panel, rich text and spoilers
 

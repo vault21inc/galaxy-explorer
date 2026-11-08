@@ -104,3 +104,13 @@ The stress map: 5,000 objects (4,887 bodies in one draw call, 113 regions in one
 
 - **The picker** (`apps/web/test/screen-picker.test.ts`) over 5,000 stress-like objects at 1440 × 900: a rebuild takes 0.82 ms and a pick 0.16 µs.
 - The rings are one draw call however many are selected: 2 triangles per ring.
+
+### Labels (M2-T6)
+
+| Date | Commit | Browser | Display | Labels | Label update: median / p95 | Frames: median / p95 | Draw calls |
+|---|---|---|---|---|---|---|---|
+| 2026-11-08 | M2-T6 | Playwright's Chromium, headed, 1440 × 900 | external, 240 Hz | 160–200 (Space held) | 0.7 / 1.1 ms (374 updates) | 4.2 / 4.7 ms | 7 |
+
+- On the stress map: two drags and wheel zooms with every label shown.
+- The first version took 2.1 / 2.4 ms, over the 2 ms budget. Most of that was sorting 5,000 candidates with a comparison function; fixes: a packed numeric rank sorted as a typed array, the picker's grid built only when picking, candidate objects reused, and text widths cached without building a key string.
+- Headless Chromium (software rendering) draws the stress map at about 185 ms per frame; label updates there take about 1 ms.

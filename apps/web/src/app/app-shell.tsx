@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Outlet, useSearchParams } from 'react-router';
+import { LabelLayer } from '@/render/labels/label-layer.tsx';
 import { Stage } from '@/render/stage.tsx';
 import { TopBar } from './top-bar.tsx';
 
@@ -21,6 +22,7 @@ export function AppShell() {
       <div className="absolute inset-0">
         <Stage />
       </div>
+      <LabelLayer />
       <TopBar />
       <Outlet />
       {showPerfHud && (

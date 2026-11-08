@@ -257,6 +257,7 @@ Procedural looks are generated once on the GPU and reused (D-10):
   2. **Priority:** selected > hovered > groups (larger groups first) > objects by `labelPriority`, then by on-screen size.
   3. **Placement:** greedy, to the right of the body's on-screen radius plus 4 px. A label is skipped if its rectangle overlaps a placed one; a grid index makes this fast. Text widths are measured once per string with `CanvasRenderingContext2D.measureText` and cached.
 - Placement updates only `transform: translate3d(…)`. Text content changes only when a pooled element is reassigned.
+- The update runs after each rendered frame (R3F's `addAfterEffect`), when the camera matrices match the frame just drawn. In `all` mode it reuses the picker's projection. Candidates are ranked by one packed number and sorted as a typed array, to stay within 2 ms with 5,000 candidates (M2-T6).
 - Text comes from `labelText(item, spoilerPolicy)`. Hidden spoilers render as a redaction bar of similar length.
 - Group labels are uppercase with letter spacing, in the group's color. Object labels are smaller and white at about 85 % opacity.
 - Labels are `aria-hidden`: the outliner is the accessible list of the same items (ux.md §10).

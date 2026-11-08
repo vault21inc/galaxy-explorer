@@ -1,5 +1,6 @@
 import type { ViewObject } from '@ge/domain';
 import { hexToLinear } from '../color.ts';
+import { labelText } from '../labels/label-text.ts';
 import type { DrawnObject, DrawnState } from '../scene-index.ts';
 import { GALAXY_BODY_MAX_PX, GALAXY_BODY_MIN_PX, REDACTION_COLOR } from '../tuning.ts';
 
@@ -69,6 +70,8 @@ export function buildBodyBuffers(
       state,
       color,
       pickPriority: 1,
+      label: labelText(object, policy),
+      labelPriority: object.appearance.labelPriority ?? 0,
     });
   });
   return buffers;

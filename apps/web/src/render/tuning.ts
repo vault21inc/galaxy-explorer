@@ -290,3 +290,25 @@ export const SELECTION_RING_OPACITY = 1;
  * so a 120 ly system arrives with its neighborhood in view instead of filling the screen.
  */
 export const FLY_TO_MIN_RADIUS_LY = 1_500;
+
+// ---------------------------------------------------------------------------------------------
+// Labels (rendering.md §11, ux.md §7)
+// ---------------------------------------------------------------------------------------------
+
+/** The most labels shown at once; also the size of the reusable element pool. */
+export const LABEL_MAX = 200;
+
+/** Space between a body's on-screen edge and its label, in CSS pixels. */
+export const LABEL_GAP_PX = 4;
+
+/** Label typography. The canvas measures text with the same font, so widths match the DOM. */
+export const LABEL_FONT_FAMILY =
+  "Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif";
+export const OBJECT_LABEL_FONT_PX = 12;
+export const OBJECT_LABEL_HEIGHT_PX = 16;
+export const GROUP_LABEL_FONT_PX = 11;
+export const GROUP_LABEL_HEIGHT_PX = 15;
+/** Group labels are uppercase with this letter spacing, in em (ux.md §11). */
+export const GROUP_LABEL_LETTER_SPACING_EM = 0.08;
+/** Object labels are white at this opacity (rendering.md §11). */
+export const OBJECT_LABEL_OPACITY = 0.85;

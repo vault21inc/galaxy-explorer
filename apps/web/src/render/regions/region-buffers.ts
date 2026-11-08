@@ -1,6 +1,7 @@
 import type { ViewObject } from '@ge/domain';
 import { seededRandom } from '@ge/domain/galaxy';
 import { hexToLinear } from '../color.ts';
+import { labelText } from '../labels/label-text.ts';
 import type { DrawnObject } from '../scene-index.ts';
 import {
   DEFAULT_REGION_STYLE,
@@ -108,6 +109,8 @@ export function buildRegionBuffers(
       state: redacted ? 'redacted' : object.status === 'draft' ? 'draft' : 'normal',
       color: hex,
       pickPriority: 0,
+      label: labelText(object, policy),
+      labelPriority: object.appearance.labelPriority ?? 0,
     });
   }
   return buffers;

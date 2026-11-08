@@ -33,6 +33,8 @@ export class ScreenPicker {
   #x = new Float32Array(0);
   #y = new Float32Array(0);
   #radius = new Float32Array(0);
+  /** The drawn radius, without the minimum pick size: labels sit just outside it. */
+  #drawnRadius = new Float32Array(0);
   #depth = new Float32Array(0);
   #columns = 0;
   #rows = 0;
@@ -73,27 +75,29 @@ export class ScreenPicker {
       // with y flipped: device y points up, screen y points down.
       const screenX = ((clipX / clipW + 1) / 2) * widthPx;
       const screenY = ((1 - clipY / clipW) / 2) * heightPx;
-      const radius = Math.max(
-        clampedRadiusPx(
-          object.radius,
-          clipW,
-          worldPerPxAt1,
-          object.minRadiusPx,
-          object.maxRadiusPx,
-        ),
-        PICK_MIN_RADIUS_PX,
+      const drawnRadius = clampedRadiusPx(
+        object.radius,
+        clipW,
+        worldPerPxAt1,
+        object.minRadiusPx,
+        object.maxRadiusPx,
       );
+      const radius = Math.max(drawnRadius, PICK_MIN_RADIUS_PX);
       if (screenX + radius < 0 || screenX - radius > widthPx) continue;
       if (screenY + radius < 0 || screenY - radius > heightPx) continue;
       this.#x[count] = screenX;
       this.#y[count] = screenY;
       this.#radius[count] = radius;
+      this.#drawnRadius[count] = drawnRadius;
       this.#depth[count] = clipW;
       this.#slotObject[count] = index;
       count++;
     }
     this.#count = count;
-    this.#buildGrid(widthPx, heightPx);
+    // The grid is built at the first pick, not here: labels re-project every frame while the
+    // camera moves but never pick, so they shouldn't pay for it.
+    this.#gridSize = { widthPx, heightPx };
+    this.#gridStale = true;
   }
 
   /**
@@ -102,6 +106,7 @@ export class ScreenPicker {
    * radius), then the nearest to the camera.
    */
   pick(xPx: number, yPx: number): DrawnObject | null {
+    this.#ensureGrid();
     const cell = this.#cellAt(xPx, yPx);
     if (cell < 0) return null;
     let best = -1;
@@ -147,6 +152,15 @@ export class ScreenPicker {
     return hits;
   }
 
+  /** Calls `visit` for every projected object with its screen center and drawn radius. */
+  visit(visit: (object: DrawnObject, xPx: number, yPx: number, radiusPx: number) => void): void {
+    for (let slot = 0; slot < this.#count; slot++) {
+      const object = this.#objectAt(slot);
+      if (object)
+        visit(object, this.#x[slot] ?? 0, this.#y[slot] ?? 0, this.#drawnRadius[slot] ?? 0);
+    }
+  }
+
   /** Where an object was projected: its screen center and pick radius, or null. */
   screenCircleOf(id: string): { x: number; y: number; radiusPx: number } | null {
     for (let slot = 0; slot < this.#count; slot++) {
@@ -166,6 +180,15 @@ export class ScreenPicker {
     const row = Math.floor(yPx / PICK_CELL_PX);
     if (column < 0 || row < 0 || column >= this.#columns || row >= this.#rows) return -1;
     return row * this.#columns + column;
+  }
+
+  #gridStale = true;
+  #gridSize = { widthPx: 0, heightPx: 0 };
+
+  #ensureGrid(): void {
+    if (!this.#gridStale) return;
+    this.#buildGrid(this.#gridSize.widthPx, this.#gridSize.heightPx);
+    this.#gridStale = false;
   }
 
   #buildGrid(widthPx: number, heightPx: number): void {
@@ -222,6 +245,7 @@ export class ScreenPicker {
     this.#x = new Float32Array(size);
     this.#y = new Float32Array(size);
     this.#radius = new Float32Array(size);
+    this.#drawnRadius = new Float32Array(size);
     this.#depth = new Float32Array(size);
     this.#slotObject = new Int32Array(size);
   }

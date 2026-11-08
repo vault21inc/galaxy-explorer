@@ -5,6 +5,7 @@ import { InputBindings } from '@/input/input-bindings.tsx';
 import { useQuality, useQualityPreset } from '@/state/quality.ts';
 import { attachCanvas, DIAGNOSTICS_ENABLED, loadTestHooks } from './diagnostics.ts';
 import { FrameProbe } from './frame-probe.tsx';
+import { LabelDriver } from './labels/label-driver.tsx';
 import { Sky } from './sky.tsx';
 import { ViewHost } from './view-host.tsx';
 import {
@@ -69,6 +70,8 @@ export function Stage() {
       <Sky />
       {/* The current view, which sets its own camera limits (rendering.md §4–5). */}
       <ViewHost />
+      {/* Places the DOM labels (labels/label-layer.tsx) after every rendered frame. */}
+      <LabelDriver />
       {DIAGNOSTICS_ENABLED && <FrameProbe />}
     </Canvas>
   );

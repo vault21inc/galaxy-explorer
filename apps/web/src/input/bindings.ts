@@ -161,7 +161,9 @@ export type KeyAction =
   | 'zoom-out'
   | 'reset-view'
   | 'frame-selection'
-  | 'clear-selection';
+  | 'clear-selection'
+  | 'cycle-labels'
+  | 'show-all-labels';
 
 export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
   ArrowUp: 'pan-up',
@@ -179,4 +181,8 @@ export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
   F: 'frame-selection',
   // Esc clears the selection; with nothing selected it will go up one view (M5).
   Escape: 'clear-selection',
+  // Labels (ux.md §7): L cycles hover → groups → all; Space shows all while held.
+  l: 'cycle-labels',
+  L: 'cycle-labels',
+  ' ': 'show-all-labels',
 };

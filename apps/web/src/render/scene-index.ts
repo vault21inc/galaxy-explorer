@@ -27,6 +27,10 @@ export interface DrawnObject {
    * before the nebula. Bodies are 1, regions (areas) 0.
    */
   pickPriority: number;
+  /** Its label's text under the current spoiler policy (labels/label-text.ts). */
+  label: string;
+  /** 0–10: higher keeps its label when labels collide (ux.md §7). */
+  labelPriority: number;
 }
 
 const sources = new Map<string, readonly DrawnObject[]>();

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { flyTo } from '@/render/camera/fly-to.ts';
 import { resetViewCamera } from '@/render/camera/use-view-camera.ts';
 import { drawnObject, type DrawnObject } from '@/render/scene-index.ts';
+import { useLabels } from '@/state/labels.ts';
 import { useSelection } from '@/state/selection.ts';
 import { KEY_PAN_FRACTION, KEY_ZOOM_FACTOR } from '@/render/tuning.ts';
 import { KEY_BINDINGS, type KeyAction } from './bindings.ts';
@@ -53,6 +54,13 @@ export function useKeyboard(): void {
         case 'clear-selection':
           useSelection.getState().clear();
           return;
+        case 'cycle-labels':
+          useLabels.getState().cycle();
+          return;
+        case 'show-all-labels':
+          // Released in onKeyUp; holding the key repeats keydown, which changes nothing.
+          useLabels.getState().setShowAllHeld(true);
+          return;
       }
     };
 
@@ -62,14 +70,32 @@ export function useKeyboard(): void {
       if (ignoresCameraKeys(event.target)) return;
       const action = KEY_BINDINGS[event.key];
       if (!action) return;
+      // Space and Enter press a focused button or link; leave them to it.
+      if (event.key === ' ' && isPressable(event.target)) return;
       event.preventDefault(); // arrows would scroll the page
       void perform(action);
     };
+    const onKeyUp = (event: KeyboardEvent) => {
+      if (KEY_BINDINGS[event.key] === 'show-all-labels') useLabels.getState().setShowAllHeld(false);
+    };
+    // Switching windows while holding Space never delivers the key-up.
+    const onBlur = () => {
+      useLabels.getState().setShowAllHeld(false);
+    };
     window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onBlur);
     };
   }, [controlsReady, get]);
+}
+
+/** Buttons and links, which Space activates. */
+function isPressable(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest('button, a[href], [role="button"]') !== null;
 }
 
 /** Text fields and widgets with their own arrow keys (menus, trees, radio groups, sliders). */
