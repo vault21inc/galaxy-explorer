@@ -125,3 +125,7 @@ The stress map: 5,000 objects (4,887 bodies in one draw call, 113 regions in one
 - On the stress map: two drags and wheel zooms with every label shown.
 - The first version took 2.1 / 2.4 ms, over the 2 ms budget. Most of that was sorting 5,000 candidates with a comparison function; fixes: a packed numeric rank sorted as a typed array, the picker's grid built only when picking, candidate objects reused, and text widths cached without building a key string.
 - Headless Chromium (software rendering) draws the stress map at about 185 ms per frame; label updates there take about 1 ms.
+
+### Galaxy view gate (M2-T8)
+
+`pnpm perf` reports: [2026-11-08-M2.md](2026-11-08-M2.md), every measured budget met in Google Chrome 156 and Playwright's WebKit 27.2 on the stress map (windows on the 240 Hz external display). Safari itself on the built-in display is the owner's reading still to take.
