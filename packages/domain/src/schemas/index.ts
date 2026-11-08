@@ -49,5 +49,7 @@ export {
   ViewGroupType,
   ViewObject,
   ViewPin,
+  viewPayloads,
+  type ViewPayload,
 } from './views.ts';
 export { openApiComponents } from './components.ts';

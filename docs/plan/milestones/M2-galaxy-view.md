@@ -33,7 +33,37 @@
 - Loading, error and empty states for every route.
 
 **Done when:**
-- [ ] An e2e test opens the demo map URL, sees the canvas and the map name, switches maps, and checks that the URL follows and that Back and Forward work.
+- [x] An e2e test opens the demo map URL, sees the canvas and the map name, switches maps, and checks that the URL follows and that Back and Forward work.
+
+**Notes (done 2026-11-08):**
+- **Routes** (`src/app/router.tsx`), all inside `AppShell`, so the canvas survives navigation:
+  - `/` lists universes and has the "New universe" form;
+  - `/u/:universeSlug` redirects (with `replace`, so Back skips it) to `settings.defaultMapId` or the first map by `sortKey`;
+  - `/u/:universeSlug/:mapSlug` loads the galaxy view payload; M2-T2 and M2-T3 draw it;
+  - `…/view/:objectId` redirects to `?select=:objectId`;
+  - anything else is "Page not found".
+- **Slugs resolve on the client:** the API has no lookup by slug, so `useUniverseRoute` finds the universe in the universe list and the map in its maps. The top bar and the pages share the cache, so it's two requests per universe.
+- **"New universe" also creates a first map**, "Main" (slug `main`), and opens it. A universe without a map has nothing to show until M3 adds map editing. The address follows the name (`slugify`) until it's edited, and is checked with the domain's `Slug` schema.
+- **Data hooks** (`src/api/`), one per access pattern, never one per kind:
+  - `useEntity(kind, id, { include, spoilers })`, `useEntityList(kind, scope, filters)` and `useViewPayload(level, subjectId)`;
+  - their paths come from the registries (`requests.ts`); a unit test checks every kind's and level's path, path parameters and query parameters against `openapi.json`, which `@ge/api-client` now exports;
+  - result types come from the domain: the new `EntityReadOf<K>`, and `ViewPayload<L>` from the new `viewPayloads` map;
+  - keys follow `[kind | 'view', …params]`, with universes and maps as `['universe', …]` and `['map', …]`;
+  - the universe and map hooks (`containers.ts`) use the generated client's literal paths.
+- **Requests retry only what might work next time:** 5xx and network failures get two more tries (1 s, 2 s); a 4xx shows at once.
+- **Top bar:**
+  - universe and map switchers (Radix dropdown menus), which stay usable on an unknown map slug, so the reader can recover;
+  - "Galaxy" breadcrumbs;
+  - the quality popover: Low, Medium and High, from `QUALITY_PRESETS` in `tuning.ts`, remembered per browser. The DPR range applies at once; MSAA applies on the next load, because WebGL fixes it when the context is created. M2-T8 adds stepping down automatically.
+- **The `?perf=1` HUD flag** follows switches; `?select=` doesn't, because it belongs to its map.
+- **Loading, error (with Retry) and empty states** use one `StatusPanel`, on every route.
+- **Not yet spoiler-aware:** the switchers show map names as they are, including the spoiler-flagged "After the Fall". The spoiler policy arrives in M2-T7, which must cover the switchers too.
+- **shadcn/ui:** added button, popover, dropdown-menu, input and label. The CLI imported `cn` from an npm package called `cn`, and installed it; that was removed and the imports point at `@/lib/utils`.
+- **Bundle:** initial JavaScript is 437 kB gzipped, up from 362 kB, within the 600 kB budget. Most of the increase is Zod, which the browser now loads with the registries, and Radix.
+- **Tests:**
+  - 7 e2e tests in `e2e/navigation.spec.ts`: switching maps with Back and Forward; the universe redirect; the object-link redirect; unknown universes, maps and pages; a failed request with Retry; creating a universe; the invalid-address check;
+  - the e2e database is now seeded with the demo, and the existing e2e and axe tests use its URL;
+  - 24 unit tests: the request paths against `openapi.json`, query keys, and `slugify`.
 
 ### M2-T2 Galaxy background
 

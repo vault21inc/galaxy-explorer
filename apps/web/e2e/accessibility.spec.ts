@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 import { waitForFirstFrame } from './test-hooks.ts';
 
 test.describe('accessibility', () => {
-  for (const path of ['/', '/u/warhammer-40k/m41']) {
+  for (const path of ['/', '/u/example-universe/main']) {
     test(`${path} has no axe violations`, async ({ page }) => {
       await page.goto(path);
       await waitForFirstFrame(page);

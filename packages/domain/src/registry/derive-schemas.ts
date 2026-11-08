@@ -80,6 +80,8 @@ type ExtensionShape<K extends EntityKind> =
 export type EntitySchemas<K extends EntityKind> = ReturnType<
   typeof deriveEntity<K, KindDef<K>['scope'], ExtensionShape<K>>
 >;
+/** A kind's read shape: what the API returns for one entity of that kind. */
+export type EntityReadOf<K extends EntityKind> = z.infer<EntitySchemas<K>['read']>;
 export type ConfigSchemas<R extends ConfigResource> = ReturnType<
   typeof deriveConfig<(typeof configResources)[R]['schema']['shape']>
 >;

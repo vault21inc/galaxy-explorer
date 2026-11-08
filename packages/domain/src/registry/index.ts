@@ -14,6 +14,7 @@ export {
   ENTITY_STATUSES,
   schemasFor,
   type ConfigSchemas,
+  type EntityReadOf,
   type EntitySchemas,
 } from './derive-schemas.ts';
 export {

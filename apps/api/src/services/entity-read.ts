@@ -4,11 +4,10 @@ import {
   schemasFor,
   type EntityInclude,
   type EntityKind,
-  type EntitySchemas,
+  type EntityReadOf,
 } from '@ge/domain';
 import { and, asc, eq, gt, ilike, sql, type SQL } from 'drizzle-orm';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
-import type { z } from 'zod';
 import {
   getLocation,
   listFacts,
@@ -23,7 +22,7 @@ import { entityVisible, type Viewer } from './visibility.ts';
 const { entities } = schema;
 
 /** An entity as the API returns it, plus any aspects asked for with `include`. */
-export type EntityRead<K extends EntityKind> = z.infer<EntitySchemas<K>['read']> &
+export type EntityRead<K extends EntityKind> = EntityReadOf<K> &
   Partial<Record<EntityInclude, unknown>>;
 
 type Row = Record<string, unknown>;

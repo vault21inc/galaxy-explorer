@@ -1,10 +1,11 @@
 import { AdaptiveDpr, CameraControls, PerformanceMonitor } from '@react-three/drei';
 import { Canvas, type RootState } from '@react-three/fiber';
+import { useState } from 'react';
+import { useQuality, useQualityPreset } from '@/state/quality.ts';
 import { attachCanvas, DIAGNOSTICS_ENABLED, loadTestHooks } from './diagnostics.ts';
 import { FrameProbe } from './frame-probe.tsx';
 import { PlaceholderSky } from './placeholder-sky.tsx';
 import {
-  ANTIALIAS,
   CAMERA_DRAGGING_SMOOTH_TIME_S,
   CAMERA_FAR,
   CAMERA_FOV_DEG,
@@ -13,8 +14,8 @@ import {
   CAMERA_NEAR,
   CAMERA_SMOOTH_TIME_S,
   CAMERA_START_DISTANCE,
-  DPR_RANGE,
   MOVING_RESOLUTION_FACTOR,
+  QUALITY_PRESETS,
   SPACE_COLOR,
 } from './tuning.ts';
 
@@ -26,17 +27,22 @@ import {
  * - `frameloop="demand"`: React Three Fiber draws a frame only after `invalidate()` is called,
  *   instead of 60–120 times a second forever. The camera controls invalidate while they move,
  *   so frames render during a drag or zoom and stop when the camera settles.
- * - `dpr`: the pixel ratio is capped at 1.5 (tuning.ts DPR_RANGE).
+ * - `dpr`: the pixel ratio is capped by the quality setting, at 1.5 on Medium (tuning.ts
+ *   QUALITY_PRESETS).
  * - `regress` on the camera controls plus `<AdaptiveDpr>`: while the camera moves, the pixel
  *   ratio drops to MOVING_RESOLUTION_FACTOR of its resting value, and returns once it stops.
  * - `powerPreference: 'default'` keeps dual-GPU Macs on the integrated GPU.
  */
 export function Stage() {
+  const { dprRange } = useQualityPreset();
+  // WebGL fixes antialiasing when the context is created, so read it once: a change in the
+  // quality popover applies on the next load.
+  const [antialias] = useState(() => QUALITY_PRESETS[useQuality.getState().level].antialias);
   return (
     <Canvas
       frameloop="demand"
-      dpr={DPR_RANGE}
-      gl={{ antialias: ANTIALIAS, powerPreference: 'default', alpha: false }}
+      dpr={dprRange}
+      gl={{ antialias, powerPreference: 'default', alpha: false }}
       camera={{
         fov: CAMERA_FOV_DEG,
         near: CAMERA_NEAR,

@@ -56,8 +56,9 @@ export default defineConfig({
   ],
   webServer: [
     {
-      // Reset the e2e database, then start the API on it.
-      command: 'pnpm --filter @ge/db db:reset && pnpm --filter @ge/api start',
+      // Reset the e2e database, seed the demo universe, then start the API on it.
+      command:
+        'pnpm --filter @ge/db db:reset && pnpm --filter @ge/api seed demo && pnpm --filter @ge/api start',
       url: `http://127.0.0.1:${API_PORT}/api/health`,
       env: { DATABASE_URL: e2eDatabaseUrl.toString(), GE_PORT: API_PORT, GE_LOG_LEVEL: 'warn' },
       reuseExistingServer: false,

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { HexColor } from '../colors.ts';
 import { Uuid } from '../ids.ts';
 import { BASE_TYPES } from '../registry/object-types.ts';
+import type { ViewLevel } from '../registry/view-levels.ts';
 import { Appearance } from './appearance.ts';
 import { LOCATION_MODES } from './aspects.ts';
 import { GroupStyle } from './styles.ts';
@@ -117,3 +118,14 @@ export type ViewPin = z.infer<typeof ViewPin>;
 
 export const OrbitView = SystemView.extend({ pins: z.array(ViewPin) });
 export type OrbitView = z.infer<typeof OrbitView>;
+
+/**
+ * Each view level's payload schema, so clients derive the payload type from the level
+ * (`ViewPayload<'system'>`) instead of naming it. `satisfies` makes a missing level a type error.
+ */
+export const viewPayloads = {
+  galaxy: GalaxyView,
+  system: SystemView,
+  orbit: OrbitView,
+} satisfies Record<ViewLevel, z.ZodType>;
+export type ViewPayload<L extends ViewLevel> = z.infer<(typeof viewPayloads)[L]>;

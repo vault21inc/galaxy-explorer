@@ -13,11 +13,42 @@
 export const SPACE_COLOR = '#03050a';
 
 /**
- * Device pixel ratio range for the canvas: [min, max]. A Retina display has a ratio of 2, which
- * means four times the pixels of ratio 1, and pixels are most of the GPU cost. Capping at 1.5
- * keeps text-sharp edges at about half the pixel cost (rendering.md §2, rule 2).
+ * The quality settings (rendering.md §13), chosen per browser in the top bar's settings popover
+ * (state/quality.ts). M2-T8 makes the frame-rate monitor step down one level when it stays low.
+ *
+ * - `dprRange`: the device pixel ratio range for the canvas, [min, max]. A Retina display has a
+ *   ratio of 2, which means four times the pixels of ratio 1, and pixels are most of the GPU
+ *   cost. Medium caps it at 1.5: text-sharp edges at about half the pixel cost (rendering.md
+ *   §2, rule 2).
+ * - `antialias`: multisample antialiasing smooths edges for a modest GPU cost. WebGL fixes it
+ *   when the canvas is created, so a change applies on the next page load.
+ * - `starPoints`: background stars in the galaxy view (M2-T2).
+ * - `orbitTexturePx`: [width, height] of baked planet textures in the orbit view (M6).
  */
-export const DPR_RANGE: [min: number, max: number] = [1, 1.5];
+export const QUALITY_PRESETS = {
+  low: { dprRange: [1, 1], antialias: false, starPoints: 8_000, orbitTexturePx: [1_024, 512] },
+  medium: {
+    dprRange: [1, 1.5],
+    antialias: true,
+    starPoints: 20_000,
+    orbitTexturePx: [2_048, 1_024],
+  },
+  high: { dprRange: [1, 2], antialias: true, starPoints: 40_000, orbitTexturePx: [4_096, 2_048] },
+} satisfies Record<string, QualityPreset>;
+
+export interface QualityPreset {
+  dprRange: [min: number, max: number];
+  antialias: boolean;
+  starPoints: number;
+  orbitTexturePx: [width: number, height: number];
+}
+
+export type QualityLevel = keyof typeof QUALITY_PRESETS;
+
+/** Lowest first, as the settings popover lists them. */
+export const QUALITY_LEVELS = ['low', 'medium', 'high'] as const satisfies readonly QualityLevel[];
+
+export const DEFAULT_QUALITY: QualityLevel = 'medium';
 
 /**
  * While the camera moves, the pixel ratio drops to this fraction of its resting value
@@ -25,9 +56,6 @@ export const DPR_RANGE: [min: number, max: number] = [1, 1.5];
  * settles. Lighter while moving, crisp when still.
  */
 export const MOVING_RESOLUTION_FACTOR = 0.5;
-
-/** Multisample antialiasing: smooths edges for a modest GPU cost. "Low" quality turns it off. */
-export const ANTIALIAS = true;
 
 // ---------------------------------------------------------------------------------------------
 // Camera (rendering.md §5, §12)

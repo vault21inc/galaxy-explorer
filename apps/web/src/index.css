@@ -4,7 +4,9 @@
 /*
  * Design tokens (ux.md §11). The app is dark only: these values sit on :root and <html> carries
  * the `dark` class, so shadcn/ui components' `dark:` styles apply too. Add shadcn components with
- * `pnpm dlx shadcn@latest add <name>` from apps/web; they read these variables.
+ * `pnpm dlx shadcn@latest add <name>` from apps/web; they read these variables. The CLI may
+ * import `cn` from an npm package named "cn" and install it: point the import at `@/lib/utils`
+ * and remove the package.
  */
 @custom-variant dark (&:is(.dark *));
 

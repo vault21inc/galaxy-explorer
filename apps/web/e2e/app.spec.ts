@@ -52,8 +52,8 @@ test.describe('the app shell', () => {
   });
 
   test('keeps the canvas when navigating to a map', async ({ page }) => {
-    await page.goto('/u/warhammer-40k/m41');
-    await expect(page.getByText('warhammer-40k / m41')).toBeVisible();
+    await page.goto('/u/example-universe/main');
+    await expect(page.getByRole('button', { name: 'Map: The Present Era' })).toBeVisible();
     await waitForFirstFrame(page);
     await page.getByRole('link', { name: 'Galaxy Explorer' }).click();
     await expect(page).toHaveURL('/');
