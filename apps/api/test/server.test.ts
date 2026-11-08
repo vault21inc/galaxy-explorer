@@ -1,4 +1,5 @@
 import SwaggerParser from '@apidevtools/swagger-parser';
+import { configResources, entityKinds } from '@ge/domain';
 import type { OpenAPIV3_1 } from 'openapi-types';
 import { afterEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -70,15 +71,61 @@ describe('problem responses', () => {
 });
 
 describe('OpenAPI document', () => {
-  it('is valid OpenAPI 3.1 and lists the health route', async () => {
+  async function openApiDocument() {
     const app = await startServer();
     const response = await app.inject({ method: 'GET', url: '/api/openapi.json' });
-    const document = response.json<OpenAPIV3_1.Document>();
-
     expect(response.statusCode).toBe(200);
+    return response.json<OpenAPIV3_1.Document>();
+  }
+
+  it('is valid OpenAPI 3.1', async () => {
+    const document = await openApiDocument();
     expect(document.openapi).toBe('3.1.0');
-    expect(Object.keys(document.paths ?? {})).toEqual(['/api/health']);
     await expect(SwaggerParser.validate(structuredClone(document))).resolves.toBeDefined();
+  });
+
+  it('has the routes of every registered entity kind and config resource', async () => {
+    const paths = Object.keys((await openApiDocument()).paths ?? {});
+    for (const kind of Object.values(entityKinds)) {
+      const scope =
+        kind.scope === 'map' ? '/api/v1/maps/{mapId}' : '/api/v1/universes/{universeId}';
+      expect(paths).toEqual(
+        expect.arrayContaining([
+          `${scope}/${kind.plural}`,
+          `${scope}/${kind.plural}/by-key/{externalKey}`,
+          `/api/v1/${kind.plural}/{id}`,
+        ]),
+      );
+    }
+    for (const resource of Object.values(configResources)) {
+      expect(paths).toEqual(
+        expect.arrayContaining([
+          `/api/v1/universes/{universeId}/${resource.plural}`,
+          `/api/v1/${resource.plural}/{id}`,
+        ]),
+      );
+    }
+  });
+
+  it('gives every operation a unique operationId, a declared tag and a description', async () => {
+    const document = await openApiDocument();
+    const declaredTags = (document.tags ?? []).map((tag) => tag.name);
+    const methods = ['get', 'put', 'post', 'patch', 'delete'] as const;
+    const operations = Object.values(document.paths ?? {}).flatMap((item) =>
+      methods.flatMap((method) => {
+        const operation = item?.[method];
+        return operation ? [operation] : [];
+      }),
+    );
+    const ids = operations.map((operation) => operation.operationId);
+    expect(ids.every(Boolean)).toBe(true);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const operation of operations) {
+      expect(operation.tags?.length, operation.operationId).toBeGreaterThan(0);
+      for (const tag of operation.tags ?? [])
+        expect(declaredTags, operation.operationId).toContain(tag);
+      expect(operation.description ?? operation.summary, operation.operationId).toBeTruthy();
+    }
   });
 
   it('serves the interactive docs page', async () => {

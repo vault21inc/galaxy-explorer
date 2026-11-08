@@ -55,8 +55,18 @@ export function configFor(packageName, packageDir, { react = false } = {}) {
       languageOptions: { globals: globals.node },
     },
     {
+      // AGENTS.md: no `any` and no non-null `!` outside tests. Tests read loosely typed JSON
+      // responses, where both keep assertions short.
       files: ['**/*.test.{ts,tsx}', 'test/**'],
-      rules: { '@typescript-eslint/no-non-null-assertion': 'off' },
+      rules: {
+        '@typescript-eslint/no-non-null-assertion': 'off',
+        '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/no-unsafe-assignment': 'off',
+        '@typescript-eslint/no-unsafe-member-access': 'off',
+        '@typescript-eslint/no-unsafe-argument': 'off',
+        '@typescript-eslint/no-unsafe-call': 'off',
+        '@typescript-eslint/no-unsafe-return': 'off',
+      },
     },
   );
 }

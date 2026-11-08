@@ -19,6 +19,7 @@ export {
 export {
   defineEntityKinds,
   ENTITY_KINDS,
+  EXAMPLE_ID,
   entityKinds,
   type EntityKind,
   type EntityKindDef,

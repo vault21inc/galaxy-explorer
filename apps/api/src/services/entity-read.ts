@@ -6,21 +6,21 @@ import {
   type EntityKind,
   type EntitySchemas,
 } from '@ge/domain';
-import { and, asc, eq, gt, ilike, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, eq, gt, ilike, sql, type SQL } from 'drizzle-orm';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import type { z } from 'zod';
+import {
+  getLocation,
+  listFacts,
+  listImages,
+  listLinks,
+  listMembers,
+  listRelations,
+} from './aspects/read.ts';
 import { NotFound } from './errors.ts';
 import { entityVisible, type Viewer } from './visibility.ts';
 
-const {
-  entities,
-  entityImages,
-  entityLinks,
-  entityLocations,
-  entityRelations,
-  fieldValues,
-  groupMembers,
-} = schema;
+const { entities } = schema;
 
 /** An entity as the API returns it, plus any aspects asked for with `include`. */
 export type EntityRead<K extends EntityKind> = z.infer<EntitySchemas<K>['read']> &
@@ -151,54 +151,11 @@ async function loadAspects(
 ) {
   const result: Partial<Record<EntityInclude, unknown>> = {};
   const want = new Set(include);
-  if (want.has('facts')) {
-    result.facts = await ex
-      .select()
-      .from(fieldValues)
-      .where(eq(fieldValues.entityId, id))
-      .orderBy(asc(fieldValues.sortKey));
-  }
-  if (want.has('images')) {
-    result.images = await ex
-      .select()
-      .from(entityImages)
-      .where(eq(entityImages.entityId, id))
-      .orderBy(asc(entityImages.sortKey));
-  }
-  if (want.has('links')) {
-    result.links = await ex
-      .select()
-      .from(entityLinks)
-      .where(eq(entityLinks.entityId, id))
-      .orderBy(asc(entityLinks.sortKey));
-  }
-  if (want.has('relations')) {
-    result.relations = (
-      await ex
-        .select()
-        .from(entityRelations)
-        .where(or(eq(entityRelations.fromEntityId, id), eq(entityRelations.toEntityId, id)))
-        .orderBy(asc(entityRelations.sortKey))
-    ).map(({ universeId: _universeId, createdAt: _createdAt, ...relation }) => relation);
-  }
-  if (want.has('location')) {
-    const [location] = await ex
-      .select()
-      .from(entityLocations)
-      .where(eq(entityLocations.entityId, id));
-    result.location = location ? withoutMapId(location) : null;
-  }
-  if (want.has('members') && kind === 'group') {
-    result.members = await ex
-      .select({ objectId: groupMembers.objectId, isSpoiler: groupMembers.isSpoiler })
-      .from(groupMembers)
-      .where(eq(groupMembers.groupId, id))
-      .orderBy(asc(groupMembers.objectId));
-  }
+  if (want.has('facts')) result.facts = await listFacts(ex, id);
+  if (want.has('images')) result.images = await listImages(ex, id);
+  if (want.has('links')) result.links = await listLinks(ex, id);
+  if (want.has('relations')) result.relations = await listRelations(ex, id);
+  if (want.has('location')) result.location = await getLocation(ex, id);
+  if (want.has('members') && kind === 'group') result.members = await listMembers(ex, id);
   return result;
-}
-
-function withoutMapId<T extends { mapId: string }>(row: T): Omit<T, 'mapId'> {
-  const { mapId: _mapId, ...rest } = row;
-  return rest;
 }

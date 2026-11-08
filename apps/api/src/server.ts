@@ -13,7 +13,13 @@ import {
 import packageJson from '../package.json' with { type: 'json' };
 import type { Config } from './config.ts';
 import { handleError, handleNotFound } from './http/problems.ts';
+import { configRoutes } from './routes/config.ts';
+import { containerRoutes } from './routes/containers.ts';
+import { contentRoutes } from './routes/content-routes.ts';
+import { entityRoutes } from './routes/entities.ts';
 import { healthRoutes } from './routes/health.ts';
+import { placementRoutes } from './routes/placement-routes.ts';
+import { openApiTags } from './routes/tags.ts';
 
 /**
  * Builds the API without listening on a port, so tests can call `app.inject()`.
@@ -49,8 +55,11 @@ export async function buildServer(config: Config) {
         title: 'Galaxy Explorer API',
         version: packageJson.version,
         description:
-          'REST API for building and exploring galaxies. Conventions: docs/plan/architecture.md §5.',
+          'REST API for building and exploring galaxies. Bodies are JSON in camelCase, wrapped as `{ "data": … }`; lists add `nextCursor`. ' +
+          'Errors are RFC 9457 problem+json. Every write is one change batch (X-GE-Batch-Id in the response), which can be reverted. ' +
+          'Updates need the `version` you read. Conventions: docs/plan/architecture.md §5.',
       },
+      tags: openApiTags(),
     },
     transform: jsonSchemaTransform,
   });
@@ -58,6 +67,16 @@ export async function buildServer(config: Config) {
 
   app.get('/api/openapi.json', { schema: { hide: true } }, () => app.swagger());
   await app.register(healthRoutes, { db, version: packageJson.version });
+  await app.register(
+    async (v1) => {
+      await v1.register(containerRoutes, { db });
+      await v1.register(entityRoutes, { db });
+      await v1.register(configRoutes, { db });
+      await v1.register(contentRoutes, { db });
+      await v1.register(placementRoutes, { db });
+    },
+    { prefix: '/api/v1' },
+  );
 
   return app;
 }

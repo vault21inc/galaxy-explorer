@@ -1,6 +1,11 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import type { z } from 'zod';
-import { configSchemasFor, schemasFor } from '../src/registry/index.ts';
+import {
+  configResources,
+  configSchemasFor,
+  entityKinds,
+  schemasFor,
+} from '../src/registry/index.ts';
 import { rt } from '../src/richtext/index.ts';
 
 const UUID = '019a5b3c-7d2e-7f00-8a1b-2c3d4e5f6a7b';
@@ -113,5 +118,22 @@ describe('configSchemasFor (config resources)', () => {
     expect(fields.create.safeParse({ ...valid, key: 'Population' }).success).toBe(false);
     expect(fields.create.safeParse({ ...valid, valueType: 'boolean' }).success).toBe(false);
     expect(fields.create.safeParse({ ...valid, appliesToKind: 'route' }).success).toBe(false);
+  });
+});
+
+describe('registry examples', () => {
+  it.each(Object.keys(entityKinds))('%s: the example is a valid create body', (kind) => {
+    const result = schemasFor(kind as keyof typeof entityKinds).create.safeParse(
+      entityKinds[kind as keyof typeof entityKinds].example,
+    );
+    expect(result.error).toBeUndefined();
+  });
+
+  it.each(Object.keys(configResources))('%s: the example is a valid create body', (name) => {
+    const resource = configResources[name as keyof typeof configResources];
+    expect(
+      configSchemasFor(name as keyof typeof configResources).create.safeParse(resource.example)
+        .error,
+    ).toBeUndefined();
   });
 });

@@ -247,8 +247,32 @@
   8. delete.
 
 **Done when:**
-- [ ] The contract suite passes for all kinds and config resources, without a single per-kind test file.
-- [ ] Swagger UI shows every route grouped by tag, and the OpenAPI document validates.
+- [x] The contract suite passes for all kinds and config resources, without a single per-kind test file.
+- [x] Swagger UI shows every route grouped by tag, and the OpenAPI document validates.
+
+**Notes (done 2026-11-08):**
+- **Generated routes:** `routes/entities.ts` and `routes/config.ts` loop over the registries; neither names a kind.
+  - **Entity routes:** list, create, `PUT …/by-key/{externalKey}`, get, update and delete.
+  - **List filters** are derived per kind: `status`, `q`, and every extension field that is an id or a choice (`parentId`, `baseType`, `subtypeId`, `groupTypeId`, `parentGroupId`, `categoryId`). An id field that may be empty accepts `null`, so `parentId=null` lists the top level.
+  - **Reads** take `include=` and `spoilers=exclude`.
+  - **Docs:** Swagger shows 83 operations under 17 tags. Each tag and operation is described for LLM readers, from new `description` and `example` fields in the entity-kind and config registries. A test checks every example against its create schema.
+- **Hand-written modules:**
+  - `routes/containers.ts`: universes and maps, with new `UniverseCreate/Update/Read` and `MapCreate/Update/Read` schemas in `@ge/domain`;
+  - `routes/content-routes.ts`: images, links, facts and relations;
+  - `routes/placement-routes.ts`: location and group members.
+  - Aspect item routes nest under the entity: `PATCH/DELETE /entities/{entityId}/links/{linkId}`, `…/images/{assetId}/{role}`, `…/relations/{relationId}`, and `PUT/DELETE …/facts/{fieldDefinitionId}`. They return their rows with spoiler flags; the redacted view is the entity read with `include` and `spoilers=exclude`.
+- **Writes:**
+  - every mutating request is one batch (`http/batch.ts`), which honors `X-GE-Batch-Description` and returns `X-GE-Batch-Id`;
+  - with `GE_AUTH_MODE=none` the actor is the local owner;
+  - a new universe's creation batch is linked to that universe once it exists. `withBatch` callbacks now receive the batch id for this.
+- **Upsert by key** creates on the first call (201) and updates on later ones (200), with no version needed. A key already used by another kind is a 422.
+- **Config resources** got a generic service (`services/config-service.ts`) and `CONFIG_TABLES` in `@ge/db`, tested against the registry. Settings have no version, so the last write wins.
+- **The contract suite** (`test/contract/`) runs the same steps for each of the 5 entity kinds (9 steps) and 4 config resources (6 steps), 69 tests in all.
+  - The steps: create and read back; list with every derived filter; update and a stale-version 409; spoiler round-trip; `spoilers=exclude`; batch headers; upsert by key; revert (through `revertBatch`; the HTTP route is M1-T8); delete.
+  - Request bodies come from the registry examples. Reference ids are filled from `REFERENCE_FIXTURES`, keyed by field name (such as `groupTypeId`), not by kind.
+- **A leak the contract suite found and fixed:** with `spoilers=exclude`, a hidden entity's (or map's) `namePlain` still held its name. Redaction now rebuilds `namePlain` from the redacted name, with unit tests in `@ge/domain`.
+- **Lint:** tests may now use `any`, as `AGENTS.md` allows ("no `any` … outside tests"), so they can read JSON responses loosely.
+- **Tests:** 76 new API tests: the 69 contract tests, plus 7 for universes and maps, aspects, members, 422 problem+json and batch descriptions. The OpenAPI test now checks registry coverage, and that operationIds are unique and every operation has a declared tag and a description.
 
 ### M1-T7 Batch endpoint
 

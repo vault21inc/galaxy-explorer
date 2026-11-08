@@ -147,4 +147,5 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-07:** M1-T2 done: the registries (view levels, object types, entity kinds, relation types, config resources), the jsonb document schemas, `schemasFor` and `resolveAppearance`.
 - **2026-11-07:** M1-T3 done: the full schema except routes, citations and auth, in one migration with deferrable foreign keys, plus constraint and registry-consistency tests.
 - **2026-11-07:** M1-T4 done: the audit trigger on every content table, `withBatch`, `revertBatch` (undo, and redo as the revert of a revert, with conflict detection), `AUDITED_TABLES` and `CLONE_SPEC`.
-- **2026-11-07:** M1-T5 done: the generic entity service, aspect services, registry-driven rules, HTML sanitizing (XSS corpus), draft visibility and typed errors. Next: **M1-T6**, the generated REST routes.
+- **2026-11-07:** M1-T5 done: the generic entity service, aspect services, registry-driven rules, HTML sanitizing (XSS corpus), draft visibility and typed errors.
+- **2026-11-08:** M1-T6 done: REST routes generated from the registries (83 operations in Swagger), hand-written universe, map, aspect and member routes, and the generic contract suite for every kind and config resource. Next: **M1-T7**, the batch endpoint.

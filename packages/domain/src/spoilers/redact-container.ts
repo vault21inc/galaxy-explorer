@@ -1,6 +1,6 @@
 import type { RichText } from '../richtext/schema.ts';
 import { isHidden, spoilerKeys, type SpoilerPolicy } from './policy.ts';
-import { blackedOut, redactOptionalRichText } from './redact-rich-text.ts';
+import { blackedOut, redactOptionalRichText, syncPlainName } from './redact-rich-text.ts';
 
 /** A map: `isSpoiler` hides all of it; its text fields can be spoilers on their own. */
 export interface RedactableMap {
@@ -45,5 +45,6 @@ function redactTextFields<T extends { id: string }>(
         ? blackedOut(value)
         : redactOptionalRichText(value, policy, spoilerKeys.field(record.id, field));
   }
+  syncPlainName(result, (record as { name?: RichText }).name);
   return result as T;
 }

@@ -2,7 +2,7 @@ import { schema, type Executor } from '@ge/db';
 import { entityKinds, schemasFor, type EntityKind } from '@ge/domain';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { z } from 'zod';
-import { NotFound, VersionConflict } from './errors.ts';
+import { NotFound, RuleViolation, VersionConflict } from './errors.ts';
 import { coreOf, extensionTableOf, getEntity, type EntityRead } from './entity-read.ts';
 import { requireMap, requireUniverse, type Scope } from './lookup.ts';
 import { checkExtension } from './rules/entities.ts';
@@ -169,4 +169,43 @@ export async function deleteEntity(
   } else {
     await tx.delete(entities).where(eq(entities.id, id));
   }
+}
+
+/**
+ * Creates or updates the entity with this external key (architecture.md §5): the idempotent
+ * write LLM agents and imports use. Keys are unique per map, or per universe for
+ * universe-scoped kinds. An update here needs no version: the last write wins.
+ */
+export async function upsertEntityByKey<K extends EntityKind>(
+  tx: Executor,
+  kind: K,
+  scope: EntityScope,
+  externalKey: string,
+  input: z.input<ReturnType<typeof schemasFor<K>>['create']>,
+): Promise<{ entity: EntityRead<K>; created: boolean }> {
+  const where = await resolveScope(tx, kind, scope);
+  const [existing] = await tx
+    .select({ id: entities.id, kind: entities.kind, version: entities.version })
+    .from(entities)
+    .where(
+      and(
+        eq(entities.universeId, where.universeId),
+        where.mapId === null ? sql`${entities.mapId} is null` : eq(entities.mapId, where.mapId),
+        eq(entities.externalKey, externalKey),
+      ),
+    );
+  const body = { ...(input as Row), externalKey };
+  if (!existing)
+    return { entity: await createEntity(tx, kind, scope, body as typeof input), created: true };
+  if (existing.kind !== kind) {
+    throw new RuleViolation(
+      `The key "${externalKey}" already belongs to a ${existing.kind}.`,
+      '/externalKey',
+    );
+  }
+  const entity = await updateEntity(tx, kind, existing.id, {
+    ...body,
+    version: existing.version,
+  } as never);
+  return { entity, created: false };
 }

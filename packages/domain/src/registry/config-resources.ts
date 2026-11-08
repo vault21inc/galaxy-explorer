@@ -17,6 +17,10 @@ export interface ConfigResourceDef {
   plural: string;
   label: { one: string; many: string };
   schema: z.ZodObject;
+  /** For the API documentation, which LLM agents read. */
+  description: string;
+  /** A valid create body for the docs. A test checks it against the schema. */
+  example: Record<string, unknown>;
 }
 
 export function defineConfigResources<const T extends Record<string, ConfigResourceDef>>(
@@ -82,21 +86,42 @@ export const configResources = defineConfigResources({
     plural: 'group-types',
     label: { one: 'Group type', many: 'Group types' },
     schema: groupTypeSchema,
+    description:
+      'A kind of group in this universe, such as Segmentum, Sector or Sub-sector (T5). `layer` gathers types shown together (Administrative, Political). ' +
+      '`parentGroupTypeId` makes types nest: groups of this type sit inside groups of the parent type.',
+    example: { name: 'Sub-sector', layer: 'Administrative', defaultColor: '#c8a24a' },
   },
   event_categories: {
     plural: 'event-categories',
     label: { one: 'Event category', many: 'Event categories' },
     schema: eventCategorySchema,
+    description:
+      'A category for events, with the icon and color of their pins, such as Battle or Discovery.',
+    example: { name: 'Battle', icon: 'swords', color: '#d9534f' },
   },
   object_subtypes: {
     plural: 'object-subtypes',
     label: { one: 'Object subtype', many: 'Object subtypes' },
     schema: objectSubtypeSchema,
+    description:
+      'A universe-specific refinement of an object base type, such as Hive World (a planet) or Webway Gate (an anomaly) (U2). ' +
+      "`defaultAppearance` sits between the base type's defaults and each object's overrides.",
+    example: { baseType: 'planet', name: 'Hive World', icon: 'building-2' },
   },
   field_definitions: {
     plural: 'field-definitions',
     label: { one: 'Field definition', many: 'Field definitions' },
     schema: fieldDefinitionSchema,
+    description:
+      'A custom fact this universe records, such as Population or Tithe Grade (U2). Entities get values for it under /entities/{id}/facts. ' +
+      '`valueType` is text, number, date_text or url. `appliesToKind` (and optionally a base type or subtype) says which entities it is for.',
+    example: {
+      key: 'population',
+      label: 'Population',
+      valueType: 'number',
+      unit: 'billion',
+      appliesToKind: 'celestial_object',
+    },
   },
 });
 

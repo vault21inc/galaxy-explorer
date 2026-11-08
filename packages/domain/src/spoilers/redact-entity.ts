@@ -1,6 +1,6 @@
 import type { RichText } from '../richtext/schema.ts';
 import { isHidden, spoilerKeys, type SpoilerPolicy } from './policy.ts';
-import { blackedOut, redactOptionalRichText } from './redact-rich-text.ts';
+import { blackedOut, redactOptionalRichText, syncPlainName } from './redact-rich-text.ts';
 
 /**
  * Applies the spoiler policy to an entity as the API returns it, covering every flag in
@@ -107,6 +107,7 @@ export function redactEntity<E extends RedactableEntity>(
 
   const result = { ...entity } as Record<string, unknown>;
   result.name = text(entity.name, 'name');
+  syncPlainName(result, entity.name);
   if ('summary' in entity) result.summary = text(entity.summary, 'summary');
   if ('description' in entity) result.description = text(entity.description, 'description');
   if (whole) for (const key of options.contentFields ?? []) result[key as string] = null;

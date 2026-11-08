@@ -33,7 +33,7 @@ export async function withBatch<T>(
   db: Database,
   actor: Actor,
   description: string,
-  fn: (tx: Transaction) => Promise<T>,
+  fn: (tx: Transaction, batchId: string) => Promise<T>,
   options: BatchOptions = {},
 ): Promise<{ result: T; batchId: string }> {
   return db.transaction(async (tx) => {
@@ -52,7 +52,7 @@ export async function withBatch<T>(
     // `true` makes the setting local to this transaction: the audit trigger reads it, and it
     // disappears at commit, so a pooled connection never carries it into the next request.
     await tx.execute(sql`select set_config('ge.batch_id', ${batch.id}, true)`);
-    return { result: await fn(tx), batchId: batch.id };
+    return { result: await fn(tx, batch.id), batchId: batch.id };
   });
 }
 

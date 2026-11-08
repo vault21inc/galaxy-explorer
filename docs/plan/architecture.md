@@ -208,7 +208,7 @@ PATCH /api/v1/objects/{id}  { version: 7, name: {...}, x: 120.5 }
 | Maps | `GET/POST /universes/{universeId}/maps`, `GET/PATCH/DELETE /maps/{mapId}`, `POST /maps/{mapId}/clone` (M7) |
 | Config resources | `GET/POST /universes/{universeId}/{plural}`, `GET/PATCH/DELETE /{plural}/{id}` for `group-types`, `event-categories`, `object-subtypes`, `field-definitions` |
 | Entities | map-scoped: `GET/POST /maps/{mapId}/{plural}`; universe-scoped: `GET/POST /universes/{universeId}/{plural}`; all: `GET/PATCH/DELETE /{plural}/{id}`. `plural` ∈ `objects`, `groups`, `routes`, `places`, `events`, `characters` |
-| Aspects (any entity) | `/entities/{entityId}/images`, `/links`, `/facts`, `/relations`, `/citations` (M7) as list + create + item update/delete; `/entities/{entityId}/location` as `PUT`/`DELETE` |
+| Aspects (any entity) | `/entities/{entityId}/images`, `/links`, `/facts`, `/relations`, `/citations` (M7) as list + create + item update/delete (items at `/links/{linkId}`, `/images/{assetId}/{role}`, `/relations/{relationId}`; facts are set with `PUT /facts/{fieldDefinitionId}`); `/entities/{entityId}/location` as `GET`/`PUT`/`DELETE` |
 | Kind-specific | `PUT/POST/DELETE /groups/{groupId}/members`, `PUT /routes/{routeId}/waypoints` |
 | Views (render payloads) | `GET /maps/{mapId}/views/galaxy`, `GET /objects/{objectId}/views/system`, `GET /objects/{objectId}/views/orbit` |
 | Batch | `POST /batch` with `{ description, dryRun?, operations: [{ op, kind, id?, version?, data? }] }`: all operations in one transaction and one change batch. `dryRun: true` validates and returns the would-be results, then rolls back. |

@@ -309,3 +309,24 @@ describe('redactMap and redactUniverse', () => {
     });
   });
 });
+
+describe('namePlain', () => {
+  const withPlain = {
+    id: 'e9',
+    isSpoiler: false,
+    name: rt.md('The ||traitor|| king'),
+    namePlain: 'The traitor king',
+  };
+
+  it('is rebuilt from the redacted name, so it never leaks', () => {
+    expect(redactEntity(withPlain, HIDE_SPOILERS).namePlain).toBe('The ▇▇▇▇▇▇▇▇▇ king');
+    expect(redactEntity({ ...withPlain, isSpoiler: true }, HIDE_SPOILERS).namePlain).toMatch(
+      /^▇+$/,
+    );
+    expect(redactMap({ ...withPlain, isSpoiler: true }, HIDE_SPOILERS).namePlain).toMatch(/^▇+$/);
+  });
+
+  it('stays as it was when nothing is hidden', () => {
+    expect(redactEntity(withPlain, SHOW_SPOILERS).namePlain).toBe('The traitor king');
+  });
+});

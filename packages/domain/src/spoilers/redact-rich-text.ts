@@ -39,3 +39,17 @@ export function redactOptionalRichText<T extends RichText | null | undefined>(
 ): T {
   return (text ? redactRichText(text, policy, fieldKey) : text) as T;
 }
+
+/**
+ * Records carry `namePlain`, a plain-text copy of `name` for labels and sorting. When redaction
+ * changed the name, the copy is rebuilt from the redacted name, or it would leak what the name
+ * hides.
+ */
+export function syncPlainName(
+  result: Record<string, unknown>,
+  originalName: RichText | undefined,
+): void {
+  if ('namePlain' in result && result.name !== originalName && result.name) {
+    result.namePlain = toPlainText(result.name as RichText);
+  }
+}
