@@ -11,6 +11,7 @@ export {
 export { HexColor } from './colors.ts';
 export {
   GALAXY_DEFAULTS,
+  GALAXY_SHAPE,
   resolveGalaxySettings,
   sampleGalaxyPosition,
   type ResolvedGalaxySettings,

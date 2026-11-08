@@ -22,6 +22,9 @@ export default defineConfig(({ mode }) => {
       // no cross-origin setup in development.
       proxy: { '/api': apiOrigin, '/media': apiOrigin },
     },
+    // Web Workers (src/workers/) are built as ES modules, like the app, so they can share its
+    // code (the domain package) and `new Worker(…, { type: 'module' })` works in every browser.
+    worker: { format: 'es' },
     // Vitest runs only the unit tests; e2e/*.spec.ts are Playwright's.
     test: { include: ['{src,test}/**/*.test.{ts,tsx}'] },
     build: {

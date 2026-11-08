@@ -2,7 +2,7 @@
  * Rendering tunables: every number that shapes how the 3D view looks or performs, in one place,
  * with its unit. Code elsewhere imports these instead of using inline numbers (AGENTS.md).
  *
- * The M0 values drive the placeholder sky; the real views add theirs from M2 on.
+ * Grouped by what they tune: the canvas, the camera, the sky, each view, and baking.
  */
 
 // ---------------------------------------------------------------------------------------------
@@ -65,19 +65,16 @@ export const MOVING_RESOLUTION_FACTOR = 0.5;
 export const CAMERA_FOV_DEG = 45;
 
 /**
- * Near and far clipping distances, in scene units. Nothing closer than `near` or farther than
- * `far` is drawn. Depth precision depends on far ÷ near, so keep the ratio as small as the view
- * allows (rendering.md §1, concept 2).
+ * The camera before any view sets its own (pages without a view, such as the universe list,
+ * show only the sky). Near and far are clipping distances: nothing closer than `near` or
+ * farther than `far` is drawn, and depth precision depends on far ÷ near (rendering.md §1,
+ * concept 2). Each view replaces these (galaxy: GALAXY_NEAR_RADII and the rest below).
  */
 export const CAMERA_NEAR = 0.1;
 export const CAMERA_FAR = 5_000;
 
-/** Where the camera starts, as a distance from the origin, in scene units. */
+/** Where that camera starts, as a distance from the origin, in scene units. */
 export const CAMERA_START_DISTANCE = 30;
-
-/** How close and how far the camera may get from its target, in scene units. */
-export const CAMERA_MIN_DISTANCE = 2;
-export const CAMERA_MAX_DISTANCE = 400;
 
 /**
  * Easing for camera movement, in seconds: roughly how long the camera takes to catch up with
@@ -87,23 +84,91 @@ export const CAMERA_SMOOTH_TIME_S = 0.2;
 export const CAMERA_DRAGGING_SMOOTH_TIME_S = 0.1;
 
 // ---------------------------------------------------------------------------------------------
-// Placeholder sky (M0 only; M2 replaces it with the baked galaxy background)
+// Sky (rendering.md §6): the distant starfield behind every view
 // ---------------------------------------------------------------------------------------------
 
 /** How many background stars. All of them are one draw call (rendering.md §1, concept 5). */
 export const SKY_STAR_COUNT = 5_000;
 
-/**
- * Radius of the sphere the stars sit on, in scene units. It's far beyond the camera's maximum
- * distance, so stars stay in the background, and inside `CAMERA_FAR`, so they aren't clipped.
- */
-export const SKY_RADIUS = 1_000;
-
-/** On-screen size of each star, in CSS pixels, whatever its distance. */
+/** On-screen size of each star, in CSS pixels, whatever the view. */
 export const SKY_STAR_SIZE_PX = 2;
 
 /** Dimmest star brightness, from 0 (black) to 1 (full). Brightness varies between this and 1. */
-export const SKY_STAR_MIN_BRIGHTNESS = 0.35;
+export const SKY_STAR_MIN_BRIGHTNESS = 0.12;
 
 /** Seed for the star pattern, so it's identical on every load and in every screenshot. */
 export const SKY_SEED = 40_000;
+
+// ---------------------------------------------------------------------------------------------
+// Galaxy view (rendering.md §5, §6). Distances in light-years, or in galaxy radii ("_RADII").
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Where the camera starts: this many radii from the center, tilted this far from straight
+ * down onto the disc. 2.2 radii frames the whole disc in a 45° field of view.
+ */
+export const GALAXY_START_DISTANCE_RADII = 2.2;
+export const GALAXY_START_TILT_DEG = 50;
+
+/** The closest and farthest the camera may get to its target (rendering.md §5). */
+export const GALAXY_MIN_DISTANCE_LY = 20;
+export const GALAXY_MAX_DISTANCE_RADII = 3;
+
+/**
+ * Near and far clipping distances. Far covers the far edge of the disc from the maximum
+ * distance. Near is fixed for now; M2-T4 makes it follow the camera's distance to its target
+ * (rendering.md §5) so depth precision holds when zoomed in close.
+ */
+export const GALAXY_NEAR_RADII = 1 / 5_000;
+export const GALAXY_FAR_RADII = 6;
+
+/**
+ * How far the camera may tilt, in degrees from straight down (0) to straight up (180). Never
+ * exactly 0 or 180: there, "up" is undefined and the camera would spin (rendering.md §5).
+ */
+export const POLAR_MIN_DEG = 5;
+export const POLAR_MAX_DEG = 175;
+
+/** The disc plane's half-width, in radii: a little wider than the galaxy so its edge fades out. */
+export const GALAXY_DISC_EXTENT_RADII = 1.2;
+
+/** The baked disc texture's width and height, in pixels (rendering.md §9). */
+export const GALAXY_DISC_TEXTURE_PX = 2_048;
+
+/** The disc's brightness when drawn; 1 adds the baked colors at full strength. */
+export const GALAXY_DISC_INTENSITY = 0.8;
+
+/**
+ * How much of the disc's light is the smooth arm glow; the rest is mottled by noise, which
+ * gives the arms their clumpy, star-forming look.
+ */
+export const GALAXY_DISC_NOISE_AMOUNT = 0.55;
+
+/** Depth stars' on-screen size range, in CSS pixels. Capped so close stars never become blobs. */
+export const GALAXY_STAR_MIN_PX = 1;
+export const GALAXY_STAR_MAX_PX = 3;
+
+/** A depth star's size in radii (about 100 ly in a 50,000 ly galaxy), varied ±50 %. */
+export const GALAXY_STAR_SIZE_RADII = 0.002;
+
+/** Dimmest depth-star brightness, and how far their colors lean toward white. */
+export const GALAXY_STAR_MIN_BRIGHTNESS = 0.25;
+export const GALAXY_STAR_WHITE_MIX = 0.45;
+
+/**
+ * The core glows: soft light over the bulge (rendering.md §6). Each has a radius in bulge radii
+ * and a strength; their on-screen radius is capped at GALAXY_GLOW_MAX_PX, because a glow that
+ * fills the screen costs a full screen of blended pixels (rendering.md §1, concept 7).
+ */
+export const GALAXY_GLOWS = [
+  { radiusBulges: 0.7, intensity: 0.35 },
+  { radiusBulges: 2.4, intensity: 0.1 },
+] as const;
+export const GALAXY_GLOW_MAX_PX = 480;
+
+// ---------------------------------------------------------------------------------------------
+// Baking (rendering.md §9)
+// ---------------------------------------------------------------------------------------------
+
+/** Baked textures kept on the GPU; the least recently used is disposed past this. */
+export const BAKE_CACHE_SIZE = 48;

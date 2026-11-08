@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Pure TypeScript shared by every package: Zod schemas, registries, rich text, spoiler redaction, geo math.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./galaxy": "./src/galaxy/index.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings=0",

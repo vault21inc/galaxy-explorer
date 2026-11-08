@@ -74,8 +74,39 @@
 - The disc plane, depth-star `Points` (capped point size), 1–3 core glows and sky points, all driven by `map.galaxySettings` with defaults (rendering.md §6).
 
 **Done when:**
-- [ ] Unit test: the same seed gives the same first 1,000 points (hash compared); a different seed gives different points.
-- [ ] The background uses at most 5 draw calls. The commit message includes the HUD numbers and a screenshot, compared with the references in `docs/design/references/` if they exist.
+- [x] Unit test: the same seed gives the same first 1,000 points (hash compared); a different seed gives different points.
+- [x] The background uses at most 5 draw calls. The commit message includes the HUD numbers and a screenshot, compared with the references in `docs/design/references/` if they exist. *4 draw calls; the screenshot is `docs/perf/screenshots/2026-11-08-M2-T2-galaxy.jpg`, linked from the commit. There are no references yet.*
+
+**Notes (done 2026-11-08):**
+- **Four draw calls:** the sky, the disc, the core glows (one mesh for both) and the depth stars. The stress map's objects don't change this; M2-T3 adds their own calls.
+- **The disc** is a bake of the same density the stars and the stress seed sample (`sampleGalaxyPosition`):
+  - an exponential disc, logarithmic spiral arms, dust lanes along each arm's inner edge, a Gaussian bulge, and value-noise mottling, all run once at bake time;
+  - its constants now live in `GALAXY_SHAPE` in `@ge/domain`, which the sampler and the shader share;
+  - 2,048² with mipmaps and 8× anisotropic filtering, drawn additively without writing depth;
+  - the texture stores the square root of linear light, and the draw shader squares it, so the dim outer disc doesn't band in 8 bits per channel.
+- **`bake()`** (`render/bake/bake.ts`) renders a generator shader into a render target with mipmaps. `BakeCache` holds up to 48 targets, least recently used first out, and disposes what it evicts. A map's disc survives leaving the map, so returning reuses it.
+- **Depth stars:** `generateGalaxyPoints(settings, count)` runs in a Web Worker and transfers its arrays back.
+  - Its seed is offset from the map's, so it doesn't replay the stress seed's random sequence.
+  - Sizes are in light-years, clamped to 1–3 px on screen; stars smaller than a pixel fade instead of shrinking.
+  - The count is the map's `starPoints`, capped by the quality setting (20,000 on Medium).
+- **The core glow:** two camera-facing squares in one mesh, with a Gaussian falloff, capped at 480 px on screen to bound fill rate.
+- **The sky is now infinitely far away:** the shader turns star directions with the camera but ignores its position, and draws them first without depth testing. The same sky works at every scale, so `PlaceholderSky` is gone and the universe list shows this sky too.
+- **`@ge/domain/galaxy`:** a new subpath export with only the density and random functions. The package root also loads the rich-text parsers, and one of their dependencies touches `document`, which workers don't have.
+- **Galaxy settings defaults:** `GALAXY_DEFAULTS` now includes a seed (1) and colors (core `#ffd9a0`, arm `#a9c8ff`, dust `#3b2a1e`). data-model §4 named no color defaults.
+- **The view plumbing from rendering.md §4, introduced here** because the background needs it:
+  - the levels registry (`src/levels/registry.ts`), with the galaxy view lazy-loaded as its own chunk (5.5 kB gzipped);
+  - `<ViewHost>` in the canvas;
+  - a navigation store that the map page sets.
+- **A minimal galaxy camera:**
+  - it starts 2.2 radii out, tilted 50° from straight down;
+  - distance limits are 20 ly to 3 radii, and polar limits 5°–175°;
+  - near and far are fixed (radius ÷ 5,000 and 6 radii).
+
+  M2-T4 adds the dynamic near plane, keyboard, wheel and bindings.
+- **Not done:** the underlay (edit mode, M3).
+- **Tests:**
+  - 8 unit tests: the seeded point hash (pinned), different seeds, finite buffers, LRU eviction and disposal, and the disc's bake key;
+  - 4 e2e tests: draw calls and points within budget, idle at 0 frames, the starting camera pose, and switching maps (one cached disc per map, no leaked geometries).
 
 ### M2-T3 Bodies and regions
 

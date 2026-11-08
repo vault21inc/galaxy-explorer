@@ -71,3 +71,15 @@ The placeholder sky: 5,000 points in one draw call, no textures.
 - The moving reading showed `dpr 1.5`, not 0.75. The HUD's frame statistics cover the last 2 seconds, so they still showed the drag after the camera had stopped and the resolution had already gone back to 1.5.
 - On the built-in display, the moving reading caught the lowered resolution: the HUD showed `dpr 0.8`, which is 0.75 rounded to one decimal. The HUD now shows two decimals.
 - The second row's browser wasn't noted. Safari is still to be measured explicitly, by M2-T8 at the latest.
+
+### Galaxy background (M2-T2)
+
+The demo map's background: the baked disc, the core glow, 20,000 depth stars and the 5,000-star sky. No objects yet (M2-T3), so the stress map would look the same.
+
+| Date | Commit | Browser | Display | Idle | Moving: fps | Moving: median / p95 frame | Draw calls | Points | Geo / tex | DPR at rest |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 2026-11-08 | M2-T2 | Claude app's built-in browser (Chromium) | external, 240 Hz | 0 frames | 238 | 4.2 / 4.6 ms | 4 | 25,000 | 4 / 1 | 1.5 |
+
+- Measured by the agent: `resetFrameStats()`, two left-drags across a 1247 × 1512 CSS px canvas, then `frameStats()` (191 frames). The display's refresh rate is still the limit.
+- [Screenshot](screenshots/2026-11-08-M2-T2-galaxy.jpg): Playwright's Chromium at 1440 × 900, DPR 1, the starting camera.
+- Not yet measured by the owner, in Safari, or on the built-in display.

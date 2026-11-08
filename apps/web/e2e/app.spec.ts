@@ -37,7 +37,7 @@ test.describe('the app shell', () => {
     expect(await framesDuring(page, IDLE_CHECK_MS)).toBe(0);
   });
 
-  test('draws the placeholder sky in a single draw call', async ({ page }) => {
+  test('draws only the sky, in a single draw call, where there is no view', async ({ page }) => {
     await page.goto('/');
     await waitForFirstFrame(page);
 

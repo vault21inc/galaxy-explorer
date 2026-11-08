@@ -4,13 +4,12 @@ import { useState } from 'react';
 import { useQuality, useQualityPreset } from '@/state/quality.ts';
 import { attachCanvas, DIAGNOSTICS_ENABLED, loadTestHooks } from './diagnostics.ts';
 import { FrameProbe } from './frame-probe.tsx';
-import { PlaceholderSky } from './placeholder-sky.tsx';
+import { Sky } from './sky.tsx';
+import { ViewHost } from './view-host.tsx';
 import {
   CAMERA_DRAGGING_SMOOTH_TIME_S,
   CAMERA_FAR,
   CAMERA_FOV_DEG,
-  CAMERA_MAX_DISTANCE,
-  CAMERA_MIN_DISTANCE,
   CAMERA_NEAR,
   CAMERA_SMOOTH_TIME_S,
   CAMERA_START_DISTANCE,
@@ -21,7 +20,7 @@ import {
 
 /**
  * The app's one 3D canvas (rendering.md §3). It stays mounted while routes change; the views
- * (M2 on) swap inside it.
+ * swap inside it (`<ViewHost>`).
  *
  * Why it's cheap when nothing moves:
  * - `frameloop="demand"`: React Three Fiber draws a frame only after `invalidate()` is called,
@@ -63,10 +62,10 @@ export function Stage() {
         draggingSmoothTime={CAMERA_DRAGGING_SMOOTH_TIME_S}
         dollyToCursor
         infinityDolly={false}
-        minDistance={CAMERA_MIN_DISTANCE}
-        maxDistance={CAMERA_MAX_DISTANCE}
       />
-      <PlaceholderSky />
+      <Sky />
+      {/* The current view, which sets its own camera limits (rendering.md §4–5). */}
+      <ViewHost />
       {DIAGNOSTICS_ENABLED && <FrameProbe />}
     </Canvas>
   );
