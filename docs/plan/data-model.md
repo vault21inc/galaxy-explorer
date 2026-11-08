@@ -242,7 +242,7 @@ create table entity_images (
   entity_id   uuid not null references entities on delete cascade deferrable,
   asset_id    uuid not null references assets on delete restrict deferrable,
   role        text not null default 'gallery'
-              check (role in ('gallery', 'cover', 'surface_texture', 'cloud_texture')),
+              check (role in ('gallery', 'cover', 'surface_texture', 'cloud_texture', 'region_texture')), -- region_texture: M4-T6
   caption     jsonb,                                    -- RichText
   is_spoiler  boolean not null default false,
   sort_key    numeric not null default 0,
@@ -430,11 +430,20 @@ const Appearance = z.object({
   showOrbit: z.boolean(),                              // draw this object's orbit ring in the system view
   star: z.object({ temperatureK: z.number().min(1_500).max(50_000), glow: z.number().min(0).max(3) }).partial(),
   planet: PlanetAppearance,                            // planets and moons
-  region: z.object({                                   // nebulae and anomalies
-    radius: z.number().positive(),                     // in the parent frame's unit (ly in the galaxy)
-    shape: z.enum(['sphere', 'disc']),
+  region: z.object({                                   // nebulae and anomalies (M4-T6, D-25)
+    radius: z.number().positive(),                     // in the parent frame's unit (ly in the galaxy); a rift's half-width
+    shape: z.enum(['sphere', 'disc', 'storm', 'rift']),
     density: z.number().min(0).max(1),
-    color: HexColor,
+    color: HexColor,                                   // a storm's interior color
+    // storm: a top-down disc
+    innerRadius: z.number().min(0).max(0.9),           // the darker core, as a share of the radius
+    rimColor: HexColor,
+    filaments: z.number().min(0).max(1),
+    gaps: z.array(z.object({ angleDeg: z.number(), widthDeg: z.number().min(1).max(120) })).max(4),
+    texture: z.enum(['procedural', 'upload']),         // 'upload' uses entity_images role 'region_texture'
+    rotationDeg: z.number(),
+    // rift: a band along a curve
+    path: z.array(z.tuple([z.number(), z.number()])).min(2).max(64), // [x, z] in ly, relative to the object
   }).partial(),
 }).partial();
 

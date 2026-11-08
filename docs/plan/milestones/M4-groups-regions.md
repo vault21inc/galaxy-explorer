@@ -13,8 +13,9 @@
 2. Box-select systems, press ⌘/Ctrl + G, and create sub-sector "Helican" in gold. Create a sector containing two sub-sectors; its outline encloses both.
 3. Move a system to another sub-sector when prompted.
 4. Hide the Political layer.
-5. Add a nebula and resize it.
-6. Draw a route through four systems.
+5. Add a nebula and resize it. Recreate the Eye of Terror as a storm disc seen from above: a bright rim around a darker core, with a gap in the rim for the Cadian Gate. Then try it with an uploaded top-down image instead.
+6. Draw the Great Rift as a rift region along a curve across the galaxy.
+7. Draw a route through four systems.
 
 **Out of scope:** Voronoi-style territories and freeform drawn areas (later shape renderers).
 
@@ -104,15 +105,40 @@
 
 ### M4-T6 Regions
 
-- Nebula and anomaly objects get the full editor:
+**Where:** `packages/domain/src/schemas/appearance.ts`, `apps/web/src/render/regions/`, `src/panels/appearance/`, `src/editor/`.
+
+- **Nebula and anomaly objects get the full editor:**
   - creation through the Add menu;
   - a radius handle in edit mode (drag a ring billboard on the plane);
-  - appearance fields: color, density, radius, shape.
+  - appearance fields for the region's shape, color, density and radius, plus each shape's own fields below.
+- **Four shapes** (`appearance.region.shape`, D-25):
+
+  | Shape | Looks like | Drawn as |
+  |---|---|---|
+  | `sphere` | a round cloud (M2-T3) | billboards in `RegionCloud` |
+  | `disc` | a flattened cloud (M2-T3) | billboards in `RegionCloud` |
+  | `storm` | a large storm seen from above, such as the Eye of Terror: a bright, clumpy rim around a darker core, radial filaments, and optional gaps in the rim (the Cadian Gate) | a flat textured disc in the galactic plane, plus a few billboards for depth when the camera tilts |
+  | `rift` | a band along a curve, such as the Great Rift (Cicatrix Maledictum) or a streak-shaped storm | billboards along the curve in `RegionCloud`, plus a flat ribbon on the plane |
+
+- **Storm discs** (`StormDiscs`, new renderer):
+  - Each storm's top-down texture is baked once (rendering.md §9) from its fields: `innerRadius` (the hollow core, as a share of the radius), `color` (the interior) and `rimColor`, `filaments` (0–1), and `gaps` (up to 4, each an angle and a width in degrees). Generated textures are radially symmetric, so `rotationDeg` turns the whole disc.
+  - `texture: 'upload'` uses the object's image with the new role `region_texture` instead of baking: a top-down picture of the storm, placed by the region's radius and `rotationDeg`. This needs the role added to `IMAGE_ROLES`, with a migration for the check constraint.
+  - All storm discs are one draw call. Each texture becomes a layer of one texture array (a baked layer, or the uploaded image resampled into it), and an instanced quad picks its layer. If texture arrays prove awkward in Safari, fall back to one draw per storm disc and note it; storms are few.
+  - Drawn like the galaxy disc: additive for nebulae, darker normal blending for anomalies (premultiplied alpha, as in `RegionCloud`), and without writing depth.
+- **Rifts:**
+  - `path` holds 2–64 points `[x, z]`, in light-years relative to the object's position. A Catmull-Rom curve through them is the rift's center line, and `radius` is its half-width.
+  - Edited by clicking points onto the plane and dragging their handles; Delete removes the selected point.
+  - Billboards are spread along the curve by length, in `RegionCloud`'s one draw call. One merged ribbon mesh for all rifts, textured with the region sprite, is one more draw call.
+- **Picking** (rendering.md §10): spheres, discs and storms as projected circles; rifts by on-screen distance to the projected curve, within its width.
 - `RegionCloud` is polished against the references. Nebulae are additive; warp storms use darker tints with normal blending.
+- **Out of scope:** animated (swirling) storms; ambient motion stays opt-in (rendering.md §2).
 
 **Done when:**
 - [ ] E2E: creating a nebula and dragging its radius handle saves the new radius.
-- [ ] 50 regions on the stress map keep the budget.
+- [ ] E2E: a storm with a gap and a rift with four points save, reload and draw; `drawnObject` reports each one's shape, and picking hits a rift along its curve but not beside it.
+- [ ] E2E: an uploaded `region_texture` replaces a storm's baked texture.
+- [ ] Unit tests: the region schema per shape, the rift curve sampling, and the storm bake key.
+- [ ] All regions together take at most 3 draw calls (billboards, storm discs, rift ribbons). 50 regions on the stress map, including 5 storms and 3 rifts, keep the budget.
 
 ### M4-T7 Routes
 

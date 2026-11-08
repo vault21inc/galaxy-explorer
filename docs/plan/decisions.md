@@ -225,3 +225,9 @@ To change a decision, edit its entry, keep the old text on a `Superseded:` line,
   - Presets are data in `@ge/domain` (`galaxy/presets.ts`) that fill in `GalaxySettings`; the map stores only the settings, not which preset they came from.
   - `GalaxySettings` gains `barLengthRadii` (default 0) for barred spirals, the one common shape the M2 formula couldn't make. Ring and irregular galaxies are left for later presets.
   - Extends G1, which planned a procedural spiral per map without saying how its shape is chosen.
+- **D-25 Region shapes for storms and rifts** (2026-11-08, owner's request after M2-T3).
+  - The Eye of Terror seen from above is a ring-shaped storm: a bright rim, a darker core, radial filaments and a gap (the Cadian Gate). Round clouds of billboards can't show that, and the Great Rift is a band across the galaxy, which no round shape can.
+  - Regions gain two shapes: `storm`, a flat disc with a baked or uploaded top-down texture, and `rift`, a band along a curve stored as points in `appearance.region.path`. Details in M4-T6 and data-model §4.
+  - An uploaded image can stand in for a storm's texture, through a new image role, `region_texture`.
+  - A swirling "vortex" shape was considered and dropped: from above the Eye reads as a ring, not a spiral, and animation stays opt-in.
+  - All regions together stay within 3 draw calls.

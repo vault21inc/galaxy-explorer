@@ -162,9 +162,12 @@ void main() {
 **Regions** (`RegionCloud`, nebulae and anomalies):
 
 - 6–20 billboards per region with a baked soft-noise texture, scattered within `region.radius` and capped in on-screen size.
-- Additive for nebulae; normal blending with darker tints for warp storms.
+- Additive for nebulae; normal blending with darker tints for warp storms. Premultiplied-alpha blending does both in one draw call (M2-T3).
 - One draw call for all regions: instanced quads with a per-instance region id and color.
 - Picked as a projected circle.
+- **Storms** (`shape: 'storm'`, M4-T6, D-25): large storms seen from above, such as the Eye of Terror. A flat disc in the galactic plane with a baked top-down texture (rim, darker core, radial filaments, gaps in the rim) or an uploaded image, plus a few billboards for depth. All storm discs share one draw call through a texture array.
+- **Rifts** (`shape: 'rift'`, M4-T6): bands along a curve, such as the Great Rift. Billboards along the curve join `RegionCloud`'s draw call; one merged ribbon mesh draws every rift's flat band. Picked by distance to the projected curve.
+- All regions together: at most 3 draw calls.
 
 **Group outlines** (`GroupOutlines`):
 
