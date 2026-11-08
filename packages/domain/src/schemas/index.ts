@@ -34,3 +34,9 @@ export {
   UniverseRead,
   UniverseUpdate,
 } from './containers.ts';
+export {
+  BatchOperation,
+  BatchRequest,
+  MAX_BATCH_OPERATIONS,
+  OPERATION_REFERENCE,
+} from './batch.ts';

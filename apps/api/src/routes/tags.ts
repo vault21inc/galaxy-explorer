@@ -22,5 +22,6 @@ export function openApiTags(): { name: string; description: string }[] {
       description: 'How entities relate, such as a character involved in an event.',
     },
     { name: 'locations', description: 'Where a place or event is.' },
+    { name: 'batch', description: 'Many operations in one transaction and one undo step.' },
   ];
 }

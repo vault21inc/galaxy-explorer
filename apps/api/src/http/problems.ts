@@ -6,6 +6,7 @@ import {
 } from 'fastify-type-provider-zod';
 import { BatchNotFoundError, databaseErrorOf, RevertConflictError } from '@ge/db';
 import { z } from 'zod';
+import { BatchOperationError } from '../services/batch-service.ts';
 import { NotFound, RuleViolation, VersionConflict } from '../services/errors.ts';
 
 /**
@@ -20,6 +21,8 @@ export const problemSchema = z.object({
   errors: z.array(z.object({ path: z.string(), message: z.string() })).optional(),
   /** On a 409 version conflict: the record as it is now, so the client can merge. */
   current: z.unknown().optional(),
+  /** For a batch request: the index of the operation that failed (0-based). */
+  operationIndex: z.int().optional(),
   /** On a 409 revert conflict: the row that changed since the batch. */
   conflict: z
     .object({ table: z.string(), primaryKey: z.record(z.string(), z.unknown()) })
@@ -34,7 +37,7 @@ export function problem(
   status: number,
   detail?: string,
   errors?: Problem['errors'],
-  extra: Pick<Problem, 'current' | 'conflict'> = {},
+  extra: Pick<Problem, 'current' | 'conflict' | 'operationIndex'> = {},
 ): Problem {
   return {
     type: 'about:blank',
@@ -62,7 +65,10 @@ export function handleError(error: FastifyError, request: FastifyRequest, reply:
   }
 
   const domainProblem = problemForDomainError(error);
-  if (domainProblem) return sendProblem(reply, domainProblem);
+  if (domainProblem) {
+    if (domainProblem.status >= 500) request.log.error({ err: error }, 'batch operation failed');
+    return sendProblem(reply, domainProblem);
+  }
 
   if (isResponseSerializationError(error)) {
     request.log.error({ err: error }, 'response did not match its schema');
@@ -87,6 +93,7 @@ export function handleNotFound(request: FastifyRequest, reply: FastifyReply) {
  * violations that slipped past the service rules. Returns undefined for anything else.
  */
 export function problemForDomainError(error: unknown): Problem | undefined {
+  if (error instanceof BatchOperationError) return problemForOperation(error);
   if (error instanceof RuleViolation) {
     return problem(
       422,
@@ -130,4 +137,38 @@ export function problemForDomainError(error: unknown): Problem | undefined {
     default:
       return undefined;
   }
+}
+
+/** Fields of a batch operation itself, as opposed to its `data`. */
+const OPERATION_FIELDS = new Set([
+  '/id',
+  '/version',
+  '/mapId',
+  '/universeId',
+  '/externalKey',
+  '/kind',
+]);
+
+/**
+ * A failed batch operation: the underlying problem, with the operation's index and its error
+ * paths pointing into the request (`/operations/37/data/parentId`).
+ */
+function problemForOperation(error: BatchOperationError): Problem {
+  const inner = problemForDomainError(error.cause) ?? problem(500);
+  const prefix = `/operations/${String(error.index)}`;
+  return {
+    ...inner,
+    detail: `Operation ${String(error.index)} (${error.op}): ${inner.status === 500 ? 'it failed unexpectedly.' : (inner.detail ?? inner.title)}`,
+    operationIndex: error.index,
+    ...(inner.errors
+      ? {
+          errors: inner.errors.map((issue) => ({
+            ...issue,
+            path: OPERATION_FIELDS.has(issue.path)
+              ? `${prefix}${issue.path}`
+              : `${prefix}/data${issue.path === '/' ? '' : issue.path}`,
+          })),
+        }
+      : {}),
+  };
 }

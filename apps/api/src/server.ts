@@ -13,6 +13,7 @@ import {
 import packageJson from '../package.json' with { type: 'json' };
 import type { Config } from './config.ts';
 import { handleError, handleNotFound } from './http/problems.ts';
+import { batchRoutes } from './routes/batch.ts';
 import { configRoutes } from './routes/config.ts';
 import { containerRoutes } from './routes/containers.ts';
 import { contentRoutes } from './routes/content-routes.ts';
@@ -74,6 +75,7 @@ export async function buildServer(config: Config) {
       await v1.register(configRoutes, { db });
       await v1.register(contentRoutes, { db });
       await v1.register(placementRoutes, { db });
+      await v1.register(batchRoutes, { db });
     },
     { prefix: '/api/v1' },
   );

@@ -286,9 +286,28 @@
 - Limit: 1,000 operations per batch.
 
 **Done when:**
-- [ ] One batch creates a system, its star, three planets and a group with members, and the temporary references resolve.
-- [ ] If operation 37 of 50 fails, nothing is written, and the problem response names the operation index.
-- [ ] A dry run leaves the database unchanged and returns the results plus `impact`.
+- [x] One batch creates a system, its star, three planets and a group with members, and the temporary references resolve.
+- [x] If operation 37 of 50 fails, nothing is written, and the problem response names the operation index.
+- [x] A dry run leaves the database unchanged and returns the results plus `impact`.
+
+**Notes (done 2026-11-08):**
+- **The request shape**, `BatchRequest`, is in `@ge/domain` (`schemas/batch.ts`), one strict shape per operation.
+  - Entity operations: `create` (with `mapId` or `universeId`), `update` (`id`, `version`), `delete` (`id`, `version`), `upsert` (`externalKey`, plus a scope).
+  - Aspect operations: `setLocation`, `addMembers`, `removeMembers` (a list of object ids), `setFacts` (a list) and `addLink`, `addRelation`.
+  - `data` is the same body as the matching single-resource route. It's checked by that route's service once references are resolved.
+- **Temporary references:** `"$op:N"` is replaced anywhere in an operation (`id`, `mapId`, or deep inside `data`) by the id operation N returned: the entity, link or relation it created or changed. Only earlier operations can be referred to.
+- **Execution** (`services/batch-service.ts`): operations run in order in one `withBatch`, through the same services as the single routes, so every rule applies. The batch is listed in the universe of the first entity it touches.
+- **Errors:** any failure rolls everything back. The problem response carries `operationIndex`, a detail such as "Operation 37 (create): …", and error paths pointing into the request (`/operations/37/data/parentId`, or `/operations/0/mapId` for an operation's own fields).
+- **Dry run** executes everything, reads the impact (rows per table and operation) from the batch's `change_log`, then rolls back by throwing a sentinel. It returns `batchId: null` and no `X-GE-Batch-Id` header.
+- **The response** is `{ data: { dryRun, batchId, results: [{ index, op, kind?, id, data }], impact? } }`.
+- **Tests:** 7 integration tests:
+  - the system with star, planets and group, ending in one revertable batch;
+  - 50 operations where number 37 fails: nothing written, index named;
+  - a validation error inside `data`;
+  - a dry run delete, which shows the cascade to the child;
+  - every operation type in one request;
+  - forward and self references;
+  - request validation: unknown op, unregistered kind, missing scope, more than 1,000 operations.
 
 ### M1-T8 History endpoints
 
