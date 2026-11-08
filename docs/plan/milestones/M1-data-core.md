@@ -340,8 +340,28 @@
 - Requesting the system view of a non-system, or the orbit view of a type without one, returns 400 with a clear problem.
 
 **Done when:**
-- [ ] Snapshot tests pass against the demo seed.
-- [ ] With the stress seed (5,000 objects), the galaxy payload builds in under 300 ms locally and is under 500 kB gzipped.
+- [x] Snapshot tests pass against the demo seed. *The seeds arrive later, in M1-T11, so the snapshot uses a deterministic fixture built in the test; M1-T11 switches it to the demo seed.*
+- [x] With the stress seed (5,000 objects), the galaxy payload builds in under 300 ms locally and is under 500 kB gzipped. *Measured on a generated map of the stress seed's size: **51 ms median, 389 kB gzipped** (2.1 MB raw), on the owner's Mac.*
+
+**Notes (done 2026-11-08):**
+- **Payload schemas** (`GalaxyView`, `SystemView`, `OrbitView` and their parts) are in `@ge/domain`, so M1-T10's client and the web app share them.
+- **Additions to architecture §6:**
+  - every record carries `nameRedacted`, its plain-text name with every spoiler blacked out. A whole-record spoiler is a full bar, and inline name spoilers become bars in place. 3D labels need it: `namePlain` alone can't show which part of a name to hide;
+  - objects carry `size`, the resolved size in the view's unit, or null where the type isn't drawn as a body;
+  - system and orbit payloads include `map` and `ancestors` (outermost first) for breadcrumbs.
+- **Galaxy:** top-level objects only, all groups with their members, the universe's group types, and `routes: []` until M4. Members whose object the reader can't see (drafts) are left out, so they don't shape outlines.
+- **System and orbit:** the subject and its direct children, resolved for that view. The subject's base type must open the requested view; otherwise the 400 says which view it opens, if any, for example "Gudrun I is a planet, which opens the orbit view, not the system view." The `explorable` flag isn't enforced here; it governs navigation in the UI.
+- **Pins** (orbit only) are places and events located on the subject's surface or at the body, plus events located at one of those places, which take the place's coordinates. `locationSpoiler` is set if either location is a spoiler.
+- **Drafts** are filtered for readers who don't ask for them, using the same rules as entity reads.
+- **`spoilers=exclude`:** `namePlain` becomes `nameRedacted`, spoiler memberships are removed, and pins with a spoiler location aren't sent.
+- **Tests:** 7 integration tests:
+  - a snapshot of all three payloads for a 20-operation fixture (ids replaced by stable labels);
+  - galaxy contents and drafts;
+  - system children with subtype ← object appearance layering;
+  - orbit pins, including events at places, and moon breadcrumbs;
+  - `spoilers=exclude`;
+  - the 400 and 404 cases;
+  - the 5,000-object benchmark, which prints its numbers and has a looser time budget in CI.
 
 ### M1-T10 API client package
 
@@ -373,7 +393,7 @@
 
 **Done when:**
 - [ ] Running either seed twice yields identical data.
-- [ ] Later e2e and performance tests use these seeds.
+- [ ] Later e2e and performance tests use these seeds, starting with M1-T9's view snapshot (`apps/api/test/views.int.test.ts`) and stress benchmark (`views-stress.int.test.ts`), which use stand-in fixtures until the seeds exist.
 
 ---
 

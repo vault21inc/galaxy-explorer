@@ -40,3 +40,13 @@ export {
   MAX_BATCH_OPERATIONS,
   OPERATION_REFERENCE,
 } from './batch.ts';
+export {
+  GalaxyView,
+  OrbitView,
+  SystemView,
+  ViewGroup,
+  ViewGroupMember,
+  ViewGroupType,
+  ViewObject,
+  ViewPin,
+} from './views.ts';

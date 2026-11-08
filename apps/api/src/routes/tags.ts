@@ -24,5 +24,6 @@ export function openApiTags(): { name: string; description: string }[] {
     { name: 'locations', description: 'Where a place or event is.' },
     { name: 'batch', description: 'Many operations in one transaction and one undo step.' },
     { name: 'history', description: 'Every change, what it did, and undo and redo.' },
+    { name: 'views', description: 'Render-ready payloads for the galaxy, system and orbit views.' },
   ];
 }

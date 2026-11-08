@@ -1,0 +1,119 @@
+import { z } from 'zod';
+import { HexColor } from '../colors.ts';
+import { Uuid } from '../ids.ts';
+import { BASE_TYPES } from '../registry/object-types.ts';
+import { Appearance } from './appearance.ts';
+import { LOCATION_MODES } from './aspects.ts';
+import { GroupStyle } from './styles.ts';
+import { GalaxySettings, Underlay } from './map-settings.ts';
+
+/**
+ * View payloads (architecture.md §6): what one view loads in one request. Compact and ready to
+ * draw: appearances are resolved, positions are arrays, and there are no rich-text bodies. The
+ * info panel fetches the full entity when something is selected.
+ */
+
+/** How a record is named in a view: plain text, plus what to show while spoilers are hidden. */
+const Named = {
+  namePlain: z.string(),
+  /** The whole name is a potential spoiler. */
+  nameSpoiler: z.boolean(),
+  /** The name with every spoiler (whole or inline) blacked out: what labels show by default. */
+  nameRedacted: z.string(),
+  /** The whole record is a potential spoiler. */
+  isSpoiler: z.boolean(),
+};
+
+/** `[x, y, z]` in the parent's frame and unit (data-model §5). */
+const Position = z.tuple([z.number(), z.number(), z.number()]);
+
+export const ViewObject = z.object({
+  id: Uuid,
+  baseType: z.enum(BASE_TYPES),
+  subtypeId: Uuid.nullable(),
+  ...Named,
+  status: z.enum(['draft', 'published']),
+  explorable: z.boolean(),
+  position: Position,
+  /** Resolved: type defaults ← subtype defaults ← the object's overrides (data-model §6). */
+  appearance: Appearance,
+  /** Displayed size in this view's unit, or null where the type isn't drawn as a body. */
+  size: z.number().nullable(),
+});
+export type ViewObject = z.infer<typeof ViewObject>;
+
+export const ViewGroupMember = z.object({ objectId: Uuid, isSpoiler: z.boolean() });
+
+export const ViewGroup = z.object({
+  id: Uuid,
+  ...Named,
+  status: z.enum(['draft', 'published']),
+  groupTypeId: Uuid,
+  parentGroupId: Uuid.nullable(),
+  outlineColor: HexColor,
+  style: GroupStyle,
+  members: z.array(ViewGroupMember),
+});
+
+export const ViewGroupType = z.object({
+  id: Uuid,
+  name: z.string(),
+  layer: z.string(),
+  parentGroupTypeId: Uuid.nullable(),
+  defaultColor: HexColor,
+  sortKey: z.number(),
+});
+
+export const GalaxyView = z.object({
+  map: z.object({
+    id: Uuid,
+    ...Named,
+    galaxySettings: GalaxySettings,
+    underlay: Underlay.nullable(),
+    underlayAssetId: Uuid.nullable(),
+  }),
+  /** Top-level objects: what sits directly in the galaxy. */
+  objects: z.array(ViewObject),
+  groups: z.array(ViewGroup),
+  /** Arrive in M4. */
+  routes: z.array(z.never()),
+  groupTypes: z.array(ViewGroupType),
+});
+export type GalaxyView = z.infer<typeof GalaxyView>;
+
+/** The chain from the galaxy down to the subject, for breadcrumbs (ux.md §1). */
+const Ancestor = z.object({ id: Uuid, baseType: z.enum(BASE_TYPES), ...Named });
+
+const Subject = ViewObject.extend({ parentId: Uuid.nullable() });
+
+export const SystemView = z.object({
+  map: z.object({ id: Uuid, ...Named }),
+  /** Outermost first, ending with the subject's parent; empty for a top-level subject. */
+  ancestors: z.array(Ancestor),
+  subject: Subject,
+  /** The subject's direct children: stars, planets, belts, stations… */
+  children: z.array(ViewObject),
+});
+export type SystemView = z.infer<typeof SystemView>;
+
+/** A place or event shown as a pin on the globe (E3, E4). */
+export const ViewPin = z.object({
+  id: Uuid,
+  kind: z.enum(['place', 'event']),
+  ...Named,
+  status: z.enum(['draft', 'published']),
+  /** How it's located: on the surface (lat/lon), at the body, or at a place on the surface. */
+  mode: z.enum(LOCATION_MODES),
+  latDeg: z.number().nullable(),
+  lonDeg: z.number().nullable(),
+  /** For mode 'place': the place it's at, whose coordinates it uses. */
+  placeId: Uuid.nullable(),
+  /** The location itself is a spoiler: the pin isn't drawn while spoilers are hidden (P2). */
+  locationSpoiler: z.boolean(),
+  categoryId: Uuid.nullable(),
+  dateText: z.string().nullable(),
+});
+export type ViewPin = z.infer<typeof ViewPin>;
+
+export const OrbitView = SystemView.extend({ pins: z.array(ViewPin) });
+export type OrbitView = z.infer<typeof OrbitView>;

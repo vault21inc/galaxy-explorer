@@ -7,7 +7,13 @@ import {
 import { BatchNotFoundError, databaseErrorOf, RevertConflictError } from '@ge/db';
 import { z } from 'zod';
 import { BatchOperationError } from '../services/batch-service.ts';
-import { NotFound, RevertConflicts, RuleViolation, VersionConflict } from '../services/errors.ts';
+import {
+  InvalidRequest,
+  NotFound,
+  RevertConflicts,
+  RuleViolation,
+  VersionConflict,
+} from '../services/errors.ts';
 
 /**
  * Every error response is an RFC 9457 "problem details" document
@@ -108,6 +114,7 @@ export function problemForDomainError(error: unknown): Problem | undefined {
       error.path ? [{ path: error.path, message: error.message }] : undefined,
     );
   }
+  if (error instanceof InvalidRequest) return problem(400, error.message);
   if (error instanceof NotFound || error instanceof BatchNotFoundError)
     return problem(404, error.message);
   if (error instanceof VersionConflict)

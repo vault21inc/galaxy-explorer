@@ -55,3 +55,8 @@ export class RevertConflicts extends Error {
     this.conflicts = conflicts;
   }
 }
+
+/** The request is well-formed but asks for something that doesn't make sense: 400. */
+export class InvalidRequest extends Error {
+  override readonly name = 'InvalidRequest';
+}

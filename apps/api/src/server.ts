@@ -21,6 +21,7 @@ import { entityRoutes } from './routes/entities.ts';
 import { healthRoutes } from './routes/health.ts';
 import { historyRoutes } from './routes/history.ts';
 import { placementRoutes } from './routes/placement-routes.ts';
+import { viewRoutes } from './routes/views.ts';
 import { openApiTags } from './routes/tags.ts';
 
 /**
@@ -78,6 +79,7 @@ export async function buildServer(config: Config) {
       await v1.register(placementRoutes, { db });
       await v1.register(batchRoutes, { db });
       await v1.register(historyRoutes, { db });
+      await v1.register(viewRoutes, { db });
     },
     { prefix: '/api/v1' },
   );
