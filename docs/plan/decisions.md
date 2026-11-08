@@ -167,6 +167,7 @@ To change a decision, edit its entry, keep the old text on a `Superseded:` line,
   - Edit mode takes over only plain left-drag: on empty space it draws a selection box, and on a selected object it moves it.
   - Cmd replaces Ctrl on Macs, where Ctrl-click opens the context menu.
   - All of this lives in one bindings table in code; see [ux.md §3](ux.md#3-input-bindings).
+  - Implemented in M2-T4 (`apps/web/src/input/bindings.ts`). The owner's manual check with a mouse and a trackpad in Chrome and Safari (2026-11-08) needed no changes to the bindings or the speeds.
 - **D-13 Frontend libraries.**
   - React Router (single-page mode).
   - TanStack Query for server data.

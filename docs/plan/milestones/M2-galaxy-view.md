@@ -164,9 +164,9 @@
   - right-drag and Cmd/Ctrl-drag move the target;
   - the wheel over an off-center object moves the target toward it;
   - arrow keys pan.
-- [ ] The commit message notes a manual check with a mouse and with a trackpad in Chrome and Safari. *Pending the owner: an agent can't use a physical mouse or trackpad. Record the result here and any binding changes under D-12.*
+- [x] The commit message notes a manual check with a mouse and with a trackpad in Chrome and Safari. *2026-11-08: the owner checked drag, right-drag, Cmd- and Option-drag, wheel, trackpad scroll and pinch, and the camera keys in Chrome and Safari, and reported that all of it feels right. No bindings or speeds changed.*
 
-**Notes (done 2026-11-08, apart from the manual check):**
+**Notes (done 2026-11-08):**
 - **`input/bindings.ts`** holds ux.md §3 as 23 rows of data, first match wins, plus the camera keys of ux.md §4. `resolveBinding(gesture, keys, mode, target, platform)` is pure.
   - "Primary" is Cmd on macOS and Ctrl elsewhere.
   - On a Mac, Ctrl-click is the context menu in edit mode and nothing in view mode; Ctrl-drag does nothing. It's never multi-select.
