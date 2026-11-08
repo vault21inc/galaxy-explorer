@@ -1,12 +1,26 @@
+import { useMemo } from 'react';
 import { useViewPayload } from '@/api/hooks.ts';
 import { GalaxyBackground } from '@/render/galaxy/galaxy-background.tsx';
+import { partitionByRenderer } from '@/render/registry.ts';
 
 /**
- * The galaxy view (rendering.md §6), drawn inside the canvas. It reads the same payload the
- * map page loads, from TanStack Query's cache. M2-T3 adds the objects and regions.
+ * The galaxy view (rendering.md §6), drawn inside the canvas: the background, then each
+ * renderer from the registry with the objects it draws. It reads the same payload the map page
+ * loads, from TanStack Query's cache.
  */
 export default function GalaxyLevel({ subjectId }: { subjectId: string }) {
   const view = useViewPayload('galaxy', subjectId);
+  const groups = useMemo(
+    () => (view.data ? partitionByRenderer('galaxy', view.data.objects) : []),
+    [view.data],
+  );
   if (!view.data) return null;
-  return <GalaxyBackground mapId={subjectId} settings={view.data.map.galaxySettings} />;
+  return (
+    <>
+      <GalaxyBackground mapId={subjectId} settings={view.data.map.galaxySettings} />
+      {groups.map(({ renderer, objects }) => (
+        <renderer.component key={renderer.name} objects={objects} />
+      ))}
+    </>
+  );
 }

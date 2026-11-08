@@ -172,3 +172,49 @@ export const GALAXY_GLOW_MAX_PX = 480;
 
 /** Baked textures kept on the GPU; the least recently used is disposed past this. */
 export const BAKE_CACHE_SIZE = 48;
+
+// ---------------------------------------------------------------------------------------------
+// Objects in the galaxy view (rendering.md §6)
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Every body stays between these on-screen heights, in CSS pixels, whatever the camera distance:
+ * zoomed far out, a 120 ly system would be a fraction of a pixel, and close up it would fill
+ * the screen. The shader and the CPU (test hooks now, picking in M2-T5) clamp the same way.
+ */
+export const GALAXY_BODY_MIN_PX = 8;
+export const GALAXY_BODY_MAX_PX = 40;
+
+/**
+ * The color of anything hidden as a potential spoiler (ux.md §6): a neutral grey that reads as
+ * "something is here" without telling what.
+ */
+export const REDACTION_COLOR = '#6b7280';
+
+/**
+ * Regions (nebulae, anomalies) are clouds of soft billboards (rendering.md §6). Each region gets
+ * between REGION_BILLBOARDS_MIN and _MAX of them, more for denser regions.
+ */
+export const REGION_BILLBOARDS_MIN = 6;
+export const REGION_BILLBOARDS_MAX = 20;
+
+/** Each billboard's on-screen radius, in CSS pixels: never smaller or larger than these. */
+export const REGION_BILLBOARD_MIN_PX = 3;
+export const REGION_BILLBOARD_MAX_PX = 320;
+
+/** How strongly one billboard shows; overlapping ones add up. */
+export const REGION_BILLBOARD_OPACITY = 0.32;
+
+/**
+ * How each region type blends (rendering.md §6). Nebulae glow: their light adds to what's
+ * behind. Anomalies (warp storms) are darker, tinted clouds drawn over it. `tint` multiplies
+ * the region's color.
+ */
+export const REGION_STYLES: Record<string, { additive: boolean; tint: number }> = {
+  nebula: { additive: true, tint: 1 },
+  anomaly: { additive: false, tint: 0.55 },
+};
+export const DEFAULT_REGION_STYLE = { additive: true, tint: 1 };
+
+/** The baked soft-noise sprite every region billboard uses, in pixels per side. */
+export const REGION_SPRITE_PX = 256;

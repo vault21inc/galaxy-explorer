@@ -83,3 +83,15 @@ The demo map's background: the baked disc, the core glow, 20,000 depth stars and
 - Measured by the agent: `resetFrameStats()`, two left-drags across a 1247 × 1512 CSS px canvas, then `frameStats()` (191 frames). The display's refresh rate is still the limit.
 - [Screenshot](screenshots/2026-11-08-M2-T2-galaxy.jpg): Playwright's Chromium at 1440 × 900, DPR 1, the starting camera.
 - Not yet measured by the owner, in Safari, or on the built-in display.
+
+### Bodies and regions (M2-T3)
+
+The stress map: 5,000 objects (4,887 bodies in one draw call, 113 regions in one more) over the galaxy background.
+
+| Date | Commit | Browser | Display | Idle | Moving: fps | Moving: median / p95 frame | Draw calls | Triangles | Points | Geo / tex | DPR at rest |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 2026-11-08 | M2-T3 | Claude app's built-in browser (Chromium) | external, 240 Hz | 0 frames | 238 | 4.2 / 4.5 ms | 6 | 394,020 | 25,000 | 6 / 2 | 1.5 |
+
+- Measured by the agent on `/u/stress-test/main`: `resetFrameStats()`, two left-drags and a wheel zoom across a 923 × 1512 CSS px canvas, then `frameStats()` (321 frames). Still display-limited.
+- The background alone (M2-T2) was 4 draw calls at 4.2 / 4.6 ms.
+- Not yet measured by the owner, in Safari, or on the built-in display; M2-T8's `pnpm perf` makes this repeatable.

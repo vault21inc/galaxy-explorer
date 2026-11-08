@@ -302,6 +302,8 @@ interface GeTestHooks {
   hoveredId(): string | null;
   visibleLabels(): { id: string; text: string }[];
   screenPositionOf(id: string): { x: number; y: number } | null;   // CSS px, for clicking in tests
+  screenRadiusOf(id: string): number | null;                       // CSS px, with the renderer's clamp (M2-T3)
+  drawnObject(id: string): { renderer: string; state: 'normal' | 'redacted' | 'draft'; color: string; … } | null;
   cameraPose(): { position: [number, number, number]; target: [number, number, number] };
   renderInfo(): { calls: number; triangles: number; geometries: number; textures: number };
   flyTo(id: string): Promise<void>;

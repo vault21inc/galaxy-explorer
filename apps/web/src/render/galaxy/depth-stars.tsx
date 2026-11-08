@@ -3,7 +3,7 @@ import { useMemo, useRef } from 'react';
 import { AdditiveBlending, type ShaderMaterial } from 'three';
 import { GALAXY_STAR_MAX_PX, GALAXY_STAR_MIN_PX } from '../tuning.ts';
 import type { GalaxyPoints } from './galaxy-points.ts';
-import { worldPerPxAt1 } from './screen-scale.ts';
+import { worldPerPxAt1 } from '../screen-scale.ts';
 
 /**
  * The depth stars (rendering.md §6): up to 20,000 points in one draw call, giving the flat

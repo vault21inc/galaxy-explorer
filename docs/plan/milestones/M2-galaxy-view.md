@@ -117,9 +117,32 @@
 - The renderer registry (rendering.md §4) with its `galaxy` entries.
 
 **Done when:**
-- [ ] The stress map's bodies take **one** draw call, and regions take one more.
-- [ ] Zoomed out to the maximum, every object is still at least `MIN_BODY_PX` tall. An e2e test checks it with `screenPositionOf` and the projected radius.
-- [ ] Spoiler objects render in the redaction color while spoilers are hidden.
+- [x] The stress map's bodies take **one** draw call, and regions take one more.
+- [x] Zoomed out to the maximum, every object is still at least `MIN_BODY_PX` tall. An e2e test checks it with `screenPositionOf` and the projected radius.
+- [x] Spoiler objects render in the redaction color while spoilers are hidden.
+
+**Notes (done 2026-11-08):**
+- **The renderer registry** (`render/registry.ts`): galaxy → `default: InstancedBodies`, `nebula` and `anomaly: RegionCloud`. `partitionByRenderer` groups a view's objects by renderer, and the galaxy level draws each renderer once with its objects. The draw calls are one per renderer, not per object.
+- **`InstancedBodies`:**
+  - one icosphere (80 triangles) instanced per object, with `aCenter`, `aRadius`, `aColor` and `aState` per instance;
+  - the vertex shader is rendering.md §6's, keeping bodies between `GALAXY_BODY_MIN_PX` (8) and `GALAXY_BODY_MAX_PX` (40) tall;
+  - a lit-core-and-rim fake, with no scene lights;
+  - drafts are a checkerboard of skipped pixels, so they stay in the one opaque draw call.
+- **Spoilers:** a hidden spoiler object is drawn in `REDACTION_COLOR` at the minimum size, so neither its color nor its size gives it away.
+  - `state/spoilers.ts` holds the policy, hidden by default. M2-T7 adds the toggle, persistence and per-item reveals.
+  - Buffers rebuild only when the payload or the policy changes.
+- **`RegionCloud`:** 6–20 billboards per region, by density, scattered by a generator seeded with the region's id, all in one instanced draw.
+  - The soft-noise sprite is baked once (256²) through `bake()`.
+  - Premultiplied-alpha blending lets one draw call both add light (nebulae) and cover (anomalies, darker tints), per instance.
+  - Billboards are clamped to 3–320 px.
+- **The scene index** (`render/scene-index.ts`): each renderer publishes what it drew (center, radius, clamp, state, color). The new test hooks read it: `screenPositionOf`, `screenRadiusOf` and `drawnObject` (rendering.md §14). M2-T5's picker will read it too. `body-scale.ts` is the shader's clamp on the CPU.
+- **`screen-scale.ts`** moved from `render/galaxy/` to `render/`, since every renderer uses it.
+- **The e2e database now has the stress map too:** Playwright's API server seeds demo, then stress.
+- **For M2-T4:** zooming toward the cursor with the wheel can carry the target through the disc and below the galactic plane, leaving the camera looking away from the galaxy. Keep the target on the plane, or on the hovered object.
+- **Tests:**
+  - 15 unit tests: body buffers and spoilers, the size clamp, renderer partitioning, region billboards (counts, bounds, determinism, blending, spoilers);
+  - 3 e2e tests: the stress map's 6 draw calls in all, minimum size at maximum zoom-out, and spoiler redaction;
+  - `galaxy.spec.ts` now measures the background on the empty "After the Fall" map, and expects the region sprite's texture.
 
 ### M2-T4 Camera and input bindings
 

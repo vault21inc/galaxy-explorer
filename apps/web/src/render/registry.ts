@@ -1,0 +1,43 @@
+import type { BaseType, ViewLevel, ViewObject } from '@ge/domain';
+import type { ComponentType } from 'react';
+import { INSTANCED_BODIES, InstancedBodies } from './bodies/instanced-bodies.tsx';
+import { REGION_CLOUD, RegionCloud } from './regions/region-cloud.tsx';
+import type { RendererProps } from './renderer-types.ts';
+
+/**
+ * Which component draws each base type in each view (architecture.md §3.5, rendering.md §4):
+ * the extension point for new looks (O3). A renderer draws all of its objects at once, so a
+ * view makes one draw call per renderer, not per object. The system and orbit views add their
+ * entries in M5 and M6.
+ */
+export interface RendererDef {
+  /** Stable name: the React key, and the renderer's name in the scene index. */
+  name: string;
+  component: ComponentType<RendererProps>;
+}
+
+const instancedBodies: RendererDef = { name: INSTANCED_BODIES, component: InstancedBodies };
+const regionCloud: RendererDef = { name: REGION_CLOUD, component: RegionCloud };
+
+type LevelRenderers = Partial<Record<BaseType, RendererDef>> & { default: RendererDef };
+
+export const renderers: Partial<Record<ViewLevel, LevelRenderers>> = {
+  galaxy: { default: instancedBodies, nebula: regionCloud, anomaly: regionCloud },
+};
+
+/** The view's objects grouped by the renderer that draws them, in first-seen order. */
+export function partitionByRenderer(
+  level: ViewLevel,
+  objects: readonly ViewObject[],
+): { renderer: RendererDef; objects: ViewObject[] }[] {
+  const entries = renderers[level];
+  if (!entries) return [];
+  const groups = new Map<string, { renderer: RendererDef; objects: ViewObject[] }>();
+  for (const object of objects) {
+    const renderer = entries[object.baseType] ?? entries.default;
+    const group = groups.get(renderer.name) ?? { renderer, objects: [] };
+    group.objects.push(object);
+    groups.set(renderer.name, group);
+  }
+  return [...groups.values()];
+}

@@ -1,7 +1,10 @@
 import { CameraControlsImpl } from '@react-three/drei';
 import { Vector3 } from 'three';
+import { clampedRadiusPx } from './bodies/body-scale.ts';
 import { canvasState, frameTimeline, renderInfo, type RenderInfo } from './diagnostics.ts';
 import type { FrameStats } from './frame-timeline.ts';
+import { drawnObject, type DrawnObject } from './scene-index.ts';
+import { worldPerPxAt1 } from './screen-scale.ts';
 
 /**
  * `window.__GE_TEST__`: lets end-to-end tests and `pnpm perf` read 3D state instead of guessing
@@ -19,6 +22,15 @@ export interface GeTestHooks {
   resetFrameStats(): void;
   /** Where the camera is and what it looks at, in scene units. */
   cameraPose(): { position: [number, number, number]; target: [number, number, number] } | null;
+  /**
+   * Where an object's center is on the page, in CSS pixels (for real mouse events), or null if
+   * it isn't drawn or is off screen or behind the camera.
+   */
+  screenPositionOf(id: string): { x: number; y: number } | null;
+  /** The object's on-screen radius in CSS pixels, with its renderer's clamp applied. */
+  screenRadiusOf(id: string): number | null;
+  /** How an object is drawn: its renderer, state (normal, redacted, draft) and color. */
+  drawnObject(id: string): DrawnObject | null;
 }
 
 declare global {
@@ -38,7 +50,44 @@ export function installTestHooks(): void {
       frameTimeline.reset(performance.now());
     },
     cameraPose,
+    screenPositionOf,
+    screenRadiusOf,
+    drawnObject: (id) => drawnObject(id) ?? null,
   };
+}
+
+// Scratch vectors: the hooks may be called in tight loops by tests.
+const scratch = new Vector3();
+
+function screenPositionOf(id: string): { x: number; y: number } | null {
+  const state = canvasState();
+  const object = drawnObject(id);
+  if (!state || !object) return null;
+  // project() maps a world point to normalized device coordinates: -1 to 1 across the canvas,
+  // and z from -1 (near plane) to 1 (far plane). Outside those ranges it isn't visible.
+  scratch.set(...object.center).project(state.camera);
+  if (Math.abs(scratch.x) > 1 || Math.abs(scratch.y) > 1 || Math.abs(scratch.z) > 1) return null;
+  const rect = state.gl.domElement.getBoundingClientRect();
+  return {
+    x: rect.left + ((scratch.x + 1) / 2) * rect.width,
+    // Device coordinates point up; page coordinates point down.
+    y: rect.top + ((1 - scratch.y) / 2) * rect.height,
+  };
+}
+
+function screenRadiusOf(id: string): number | null {
+  const state = canvasState();
+  const object = drawnObject(id);
+  if (!state || !object) return null;
+  // Depth: the distance in front of the camera, as the shaders compute it (view-space -z).
+  scratch.set(...object.center).applyMatrix4(state.camera.matrixWorldInverse);
+  return clampedRadiusPx(
+    object.radius,
+    -scratch.z,
+    worldPerPxAt1(state.camera, state.size.height),
+    object.minRadiusPx,
+    object.maxRadiusPx,
+  );
 }
 
 function cameraPose() {

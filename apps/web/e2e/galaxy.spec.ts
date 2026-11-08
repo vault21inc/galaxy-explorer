@@ -11,7 +11,8 @@ test.describe('the galaxy background', () => {
   test('draws the disc, glow, depth stars and sky within its draw-call budget', async ({
     page,
   }) => {
-    await page.goto('/u/example-universe/main');
+    // "After the Fall" has no objects, so every draw call is the background's.
+    await page.goto('/u/example-universe/after-the-fall');
     await waitForFirstFrame(page);
     // The depth stars arrive from the worker a moment after the disc.
     await expect
@@ -57,18 +58,20 @@ test.describe('the galaxy background', () => {
       .poll(async () => (await info())?.points, { timeout: 15_000 })
       .toBe(SKY_POINTS + DEPTH_STARS);
 
-    // "After the Fall" has its own galaxy settings, so its own disc.
+    // "After the Fall" has its own galaxy settings, so its own disc: three textures with the
+    // first map's disc and the region sprite.
     await page.getByRole('button', { name: 'Map: The Present Era' }).click();
     await page.getByRole('menuitemradio', { name: 'After the Fall' }).click();
     await expect(page).toHaveURL(/after-the-fall$/);
-    await expect.poll(async () => (await info())?.textures, { timeout: 15_000 }).toBe(2);
+    await expect.poll(async () => (await info())?.textures, { timeout: 15_000 }).toBe(3);
 
-    // Back on the first map, its disc comes from the bake cache: still two textures. The
-    // geometries are the sky, disc, glow and depth stars, so the other map's were disposed.
+    // Back on the first map, its disc comes from the bake cache: still three textures. The
+    // geometries are the sky, disc, glow, depth stars, bodies and regions, so the other map's
+    // were disposed.
     // Polled as a whole: until the first frame after Back, the numbers describe the other map.
     await page.goBack();
     await expect
       .poll(info, { timeout: 15_000 })
-      .toMatchObject({ points: SKY_POINTS + DEPTH_STARS, textures: 2, geometries: 4 });
+      .toMatchObject({ points: SKY_POINTS + DEPTH_STARS, textures: 3, geometries: 6 });
   });
 });

@@ -4,7 +4,7 @@ import { useMemo, useRef } from 'react';
 import { AdditiveBlending, type ShaderMaterial } from 'three';
 import { hexToLinear, mixRgb } from '../color.ts';
 import { GALAXY_GLOW_MAX_PX, GALAXY_GLOWS } from '../tuning.ts';
-import { worldPerPxAt1 } from './screen-scale.ts';
+import { worldPerPxAt1 } from '../screen-scale.ts';
 
 /**
  * Soft light over the galaxy's core (rendering.md §6): a few camera-facing squares ("billboards")
