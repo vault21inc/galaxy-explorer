@@ -1,6 +1,7 @@
 import { AdaptiveDpr, CameraControls, PerformanceMonitor } from '@react-three/drei';
 import { Canvas, type RootState } from '@react-three/fiber';
 import { useState } from 'react';
+import { InputBindings } from '@/input/input-bindings.tsx';
 import { useQuality, useQualityPreset } from '@/state/quality.ts';
 import { attachCanvas, DIAGNOSTICS_ENABLED, loadTestHooks } from './diagnostics.ts';
 import { FrameProbe } from './frame-probe.tsx';
@@ -63,6 +64,8 @@ export function Stage() {
         dollyToCursor
         infinityDolly={false}
       />
+      {/* Assigns the camera controls' buttons per press from the bindings table (ux.md §3). */}
+      <InputBindings mode="view" />
       <Sky />
       {/* The current view, which sets its own camera limits (rendering.md §4–5). */}
       <ViewHost />

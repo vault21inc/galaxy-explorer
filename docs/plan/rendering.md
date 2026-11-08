@@ -275,6 +275,9 @@ Input mapping comes from the bindings table (ux.md §3). camera-controls has no 
 - **Keyboard:** arrow keys pan (`truck`), `+`/`−` zoom (`dolly`), Home or H resets the view, and F frames the selection (`fitToSphere`).
 - **Pivot:** selecting an object sets the orbit point to it (`setOrbitPoint`); otherwise zoom-to-cursor moves the target.
 - **Wheel input:** `deltaMode` values (lines or pages) are converted to pixels before reaching the controls, and ctrl+wheel (pinch) is scaled so pinch and wheel feel alike. Test this in Safari specifically.
+  - The app intercepts every wheel event and re-sends it in pixels without `ctrlKey`, because camera-controls turns ctrl+wheel into a field-of-view zoom (M2-T4).
+  - Safari's `gesturechange` pinch events become the same wheel events.
+- **Target bounds:** zooming toward the cursor moves the target, so each view bounds it (`setBoundary`). The galaxy view keeps it within ±0.05 radii of the plane, so it can't sink through the disc (M2-T4).
 
 ## 13. Resource lifecycle and quality settings
 

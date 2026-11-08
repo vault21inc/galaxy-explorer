@@ -115,12 +115,26 @@ export const GALAXY_MIN_DISTANCE_LY = 20;
 export const GALAXY_MAX_DISTANCE_RADII = 3;
 
 /**
- * Near and far clipping distances. Far covers the far edge of the disc from the maximum
- * distance. Near is fixed for now; M2-T4 makes it follow the camera's distance to its target
- * (rendering.md §5) so depth precision holds when zoomed in close.
+ * Clipping planes that follow the camera (rendering.md §5). Depth precision depends on
+ * far ÷ near, so instead of one fixed pair for every zoom level, near is a fixed fraction of the
+ * distance to the target and far reaches just past the galaxy:
+ * - near = distance × GALAXY_NEAR_FRACTION, but at least GALAXY_MIN_NEAR_LY;
+ * - far = distance + GALAXY_FAR_BEYOND_RADII × radius.
+ * GALAXY_NEAR_RADII and GALAXY_FAR_RADII are the planes before the first camera update.
  */
+export const GALAXY_NEAR_FRACTION = 1 / 1_000;
+export const GALAXY_MIN_NEAR_LY = 0.01;
+export const GALAXY_FAR_BEYOND_RADII = 3;
 export const GALAXY_NEAR_RADII = 1 / 5_000;
 export const GALAXY_FAR_RADII = 6;
+
+/**
+ * The camera's target (the point it orbits and zooms toward) stays within this box: the disc's
+ * radius × 1.2 across, and this many radii above and below the plane. Zooming toward the cursor
+ * moves the target toward the cursor, and without a floor it could sink through the disc until
+ * the camera looked away from the galaxy.
+ */
+export const GALAXY_TARGET_HEIGHT_RADII = 0.05;
 
 /**
  * How far the camera may tilt, in degrees from straight down (0) to straight up (180). Never
@@ -218,3 +232,32 @@ export const DEFAULT_REGION_STYLE = { additive: true, tint: 1 };
 
 /** The baked soft-noise sprite every region billboard uses, in pixels per side. */
 export const REGION_SPRITE_PX = 256;
+
+// ---------------------------------------------------------------------------------------------
+// Input (ux.md §3–4, rendering.md §12)
+// ---------------------------------------------------------------------------------------------
+
+/** A press that moves less than this, in CSS pixels, before release is a click, not a drag. */
+export const CLICK_MAX_MOVE_PX = 4;
+
+/** One "line" of wheel scrolling (Firefox with a mouse reports lines), in CSS pixels. */
+export const WHEEL_LINE_PX = 16;
+
+/** The largest zoom step one wheel event may cause, in pixels of wheel delta. */
+export const WHEEL_MAX_PX = 200;
+
+/**
+ * Pinch-to-zoom scaling. Chrome and Firefox send a trackpad pinch as ctrl+wheel events whose
+ * deltaY is about −100 × ln(scale change). Safari sends `gesturechange` events with the scale
+ * itself. Both are turned into wheel pixels so a pinch zooms as fast as scrolling:
+ * GESTURE_LOG_SCALE_TO_PX pixels per unit of ln(scale) (200 ≈ doubling the pinch halves the
+ * distance), and PINCH_TO_WHEEL_PX = 200 ÷ 100 for the ctrl+wheel form.
+ */
+export const GESTURE_LOG_SCALE_TO_PX = 200;
+export const PINCH_TO_WHEEL_PX = 2;
+
+/** Arrow keys pan by this fraction of the camera's distance to its target per press. */
+export const KEY_PAN_FRACTION = 0.1;
+
+/** `+` and `−` move the camera this much closer or farther per press (1.25 = 25 %). */
+export const KEY_ZOOM_FACTOR = 1.25;

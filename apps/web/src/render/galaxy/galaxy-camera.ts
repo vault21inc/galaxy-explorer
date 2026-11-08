@@ -1,12 +1,17 @@
 import type { ResolvedGalaxySettings } from '@ge/domain';
 import type { ViewCameraConfig } from '../camera/use-view-camera.ts';
 import {
+  GALAXY_DISC_EXTENT_RADII,
+  GALAXY_FAR_BEYOND_RADII,
   GALAXY_FAR_RADII,
   GALAXY_MAX_DISTANCE_RADII,
   GALAXY_MIN_DISTANCE_LY,
+  GALAXY_MIN_NEAR_LY,
+  GALAXY_NEAR_FRACTION,
   GALAXY_NEAR_RADII,
   GALAXY_START_DISTANCE_RADII,
   GALAXY_START_TILT_DEG,
+  GALAXY_TARGET_HEIGHT_RADII,
   POLAR_MAX_DEG,
   POLAR_MIN_DEG,
 } from '../tuning.ts';
@@ -22,14 +27,22 @@ export function galaxyCamera(mapId: string, settings: ResolvedGalaxySettings): V
   const radius = settings.radiusLy;
   const distance = GALAXY_START_DISTANCE_RADII * radius;
   const tilt = GALAXY_START_TILT_DEG * DEG;
+  const across = GALAXY_DISC_EXTENT_RADII * radius;
+  const height = GALAXY_TARGET_HEIGHT_RADII * radius;
   return {
     key: `${mapId}:${radius.toString()}`,
     near: GALAXY_NEAR_RADII * radius,
     far: GALAXY_FAR_RADII * radius,
+    clipping: {
+      nearFraction: GALAXY_NEAR_FRACTION,
+      minNear: GALAXY_MIN_NEAR_LY,
+      farBeyond: GALAXY_FAR_BEYOND_RADII * radius,
+    },
     minDistance: GALAXY_MIN_DISTANCE_LY,
     maxDistance: GALAXY_MAX_DISTANCE_RADII * radius,
     minPolarAngle: POLAR_MIN_DEG * DEG,
     maxPolarAngle: POLAR_MAX_DEG * DEG,
+    targetBounds: { min: [-across, -height, -across], max: [across, height, across] },
     // +Y is galactic north (data-model §5): up by cos(tilt), toward the viewer by sin(tilt).
     position: [0, distance * Math.cos(tilt), distance * Math.sin(tilt)],
     target: [0, 0, 0],

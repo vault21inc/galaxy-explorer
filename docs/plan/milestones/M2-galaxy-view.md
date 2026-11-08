@@ -158,13 +158,36 @@
   - keyboard camera keys (arrows, `+`/`−`, H/Home).
 
 **Done when:**
-- [ ] Unit tests cover every row of the bindings table on macOS and Windows. Cmd and Ctrl must swap correctly, and Ctrl-click on a Mac must never be treated as multi-select.
-- [ ] E2E checks:
+- [x] Unit tests cover every row of the bindings table on macOS and Windows. Cmd and Ctrl must swap correctly, and Ctrl-click on a Mac must never be treated as multi-select.
+- [x] E2E checks:
   - left-drag changes the azimuth;
   - right-drag and Cmd/Ctrl-drag move the target;
   - the wheel over an off-center object moves the target toward it;
   - arrow keys pan.
-- [ ] The commit message notes a manual check with a mouse and with a trackpad in Chrome and Safari.
+- [ ] The commit message notes a manual check with a mouse and with a trackpad in Chrome and Safari. *Pending the owner: an agent can't use a physical mouse or trackpad. Record the result here and any binding changes under D-12.*
+
+**Notes (done 2026-11-08, apart from the manual check):**
+- **`input/bindings.ts`** holds ux.md §3 as 23 rows of data, first match wins, plus the camera keys of ux.md §4. `resolveBinding(gesture, keys, mode, target, platform)` is pure.
+  - "Primary" is Cmd on macOS and Ctrl elsewhere.
+  - On a Mac, Ctrl-click is the context menu in edit mode and nothing in view mode; Ctrl-drag does nothing. It's never multi-select.
+  - `detectPlatform()` reads `navigator.userAgentData` or the user agent ("Macintosh" covers Safari and iPads). The test hooks expose it, so e2e tests press the key the app expects.
+- **`useInputBindings`** applies the table to camera-controls, which has a fixed action per mouse button and no notion of modifier keys:
+  - **Per press:** on each pointer press, just before camera-controls sees it, the press's action is looked up with the keys held at that moment and assigned to that button. This replaces "reassign `mouseButtons` when modifiers change": it can't be stale and needs no key tracking.
+  - **Touch:** one finger rotates; two fingers pan and pinch-zoom together.
+  - **Wheel:** events become pixels (`deltaMode` lines and pages, 200 px cap) and are re-sent without `ctrlKey`. camera-controls turns ctrl+wheel (a trackpad pinch) into a field-of-view zoom rather than a dolly.
+  - **Safari pinch:** `gesturestart`/`gesturechange` become the same wheel events at the pinch point. A pinch is scaled to zoom as fast as scrolling: 200 px per unit of ln(scale), and ctrl+wheel × 2.
+  - **Right-click:** the browser's menu is suppressed on the canvas.
+- **`useCameraKeys`:** arrows pan by 10 % of the distance, `+`/`−` zoom by 25 %, and H or Home eases back to the view's starting pose.
+  - Ignored with Cmd/Ctrl/Alt held, which keeps the browser's page zoom.
+  - Ignored in text fields and in widgets with their own arrow keys (menus, trees, dialogs, sliders, radio groups).
+- **The camera:**
+  - **Clipping:** near and far follow the camera on every camera-controls update. Near is distance ÷ 1,000 (at least 0.01 ly); far is distance + 3 radii.
+  - **Target bounds:** the target is kept inside a box 1.2 radii across and ±0.05 radii high (`setBoundary`). This fixes M2-T3's finding that zooming toward the cursor could carry the target under the disc.
+  - `ViewCameraConfig` carries the clipping rule and the bounds; `resetViewCamera` uses the stored starting pose.
+- **`input/click.ts`** has the 4 px click-versus-drag test for M2-T5's selection.
+- **Tests:**
+  - 75 unit tests: every table row on both platforms, the Cmd/Ctrl swap, Ctrl-click on a Mac, platform detection, wheel and pinch normalization, click versus drag;
+  - 8 e2e tests: rotate, right-drag pan, primary-drag pan, the suppressed menu, wheel toward an object, the keys, keys ignored while typing, and the target staying near the plane.
 
 ### M2-T5 Picking, hover and selection
 

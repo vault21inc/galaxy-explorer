@@ -1,5 +1,6 @@
 import { CameraControlsImpl } from '@react-three/drei';
 import { Vector3 } from 'three';
+import { detectPlatform, type Platform } from '@/input/platform.ts';
 import { clampedRadiusPx } from './bodies/body-scale.ts';
 import { canvasState, frameTimeline, renderInfo, type RenderInfo } from './diagnostics.ts';
 import type { FrameStats } from './frame-timeline.ts';
@@ -31,6 +32,8 @@ export interface GeTestHooks {
   screenRadiusOf(id: string): number | null;
   /** How an object is drawn: its renderer, state (normal, redacted, draft) and color. */
   drawnObject(id: string): DrawnObject | null;
+  /** The keyboard convention the app detected: Cmd is primary on 'mac', Ctrl elsewhere. */
+  platform(): Platform;
 }
 
 declare global {
@@ -53,6 +56,7 @@ export function installTestHooks(): void {
     screenPositionOf,
     screenRadiusOf,
     drawnObject: (id) => drawnObject(id) ?? null,
+    platform: () => detectPlatform(),
   };
 }
 
