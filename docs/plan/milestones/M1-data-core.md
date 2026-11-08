@@ -202,7 +202,7 @@
   - HTML is cleaned with sanitize-html and `RICH_TEXT_POLICY`, and every link is checked again with `isAllowedLinkUrl`;
   - images outside `/media/` are dropped, and SVG, MathML, iframes and similar tags are removed with their contents;
   - Markdown and plain text are stored as written. The Markdown renderer (M3) must ignore raw HTML and use `isAllowedLinkUrl` for link targets.
-  - The policy allows `<strong>` and `<em>` but not `<b>` and `<i>` (ux.md §8), so bold and italic pasted as `<b>`/`<i>` lose their formatting, though the text is kept.
+  - `<b>` and `<i>` were added to the policy on 2026-11-08 at the owner's request, so bold and italic pasted from wikis keep their formatting (ux.md §8).
 - **How the rules were interpreted:**
   - **Group types with no parent type** make top-level groups only.
   - **Cycles:** a group or object can't end up inside itself. Self-nesting group types such as a Region inside a Region make this reachable for groups.

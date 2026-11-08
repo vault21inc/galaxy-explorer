@@ -163,7 +163,7 @@ How hidden content looks (P2, black out rather than remove):
   - A Preview toggle shows the rendered output.
   - A **Spoiler** switch for the whole field, and a **"Mark as spoiler"** button that wraps the selected text: `||…||` in Markdown, `<span data-spoiler>…</span>` in HTML.
 - **Switching format** keeps the source text and warns that formatting may not carry over. Nothing is converted automatically.
-- **Allowed HTML:** `p, br, strong, em, u, s, blockquote, ul, ol, li, h2, h3, h4, a[href], code, pre, table, thead, tbody, tr, th, td, hr, span[data-spoiler], img[src, alt]`. Image sources must be this site's `/media/` URLs. Everything else is removed on save, and the editor shows what was removed.
+- **Allowed HTML:** `p, br, strong, em, b, i, u, s, blockquote, ul, ol, li, h2, h3, h4, a[href], code, pre, table, thead, tbody, tr, th, td, hr, span[data-spoiler], img[src, alt]`. Image sources must be this site's `/media/` URLs. Everything else is removed on save, and the editor shows what was removed.
 
 ## 9. Moving between views
 

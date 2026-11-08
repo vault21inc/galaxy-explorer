@@ -77,7 +77,7 @@ describe('HTML sanitizing (XSS corpus)', () => {
 
   it('keeps everything the policy allows', () => {
     const html =
-      '<h2>Title</h2><p><strong>b</strong> <em>i</em> <u>u</u> <s>s</s> <code>c</code></p>' +
+      '<h2>Title</h2><p><strong>b</strong> <em>i</em> <b>b</b> <i>i</i> <u>u</u> <s>s</s> <code>c</code></p>' +
       '<blockquote>q</blockquote><ul><li>one</li></ul><ol><li>two</li></ol>' +
       '<p><a href="https://example.com/x">link</a> <a href="/u/a/b">local</a> <a href="mailto:a@b.c">mail</a></p>' +
       '<p><span data-spoiler>secret</span></p><pre>pre</pre><hr />' +
@@ -100,7 +100,8 @@ describe('sanitizeRichTextFields', () => {
       baseType: 'planet',
     };
     const clean = sanitizeRichTextFields(schemasFor('celestial_object').create, input);
-    expect(clean.name.source).toBe('Gudrun');
+    // <b> is allowed; its event handler isn't.
+    expect(clean.name.source).toBe('<b>Gudrun</b>');
     expect(clean.summary.source).toBe(input.summary.source);
     expect(clean.description).toBeNull();
   });

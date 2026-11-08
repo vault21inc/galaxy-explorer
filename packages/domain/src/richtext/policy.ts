@@ -8,6 +8,10 @@ export const RICH_TEXT_POLICY = {
     'br',
     'strong',
     'em',
+    // HTML pasted from wikis often uses <b> and <i> for bold and italic; they carry no more
+    // risk than <strong> and <em>.
+    'b',
+    'i',
     'u',
     's',
     'blockquote',
