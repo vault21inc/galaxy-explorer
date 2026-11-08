@@ -68,6 +68,7 @@ export function buildBodyBuffers(
       maxRadiusPx: GALAXY_BODY_MAX_PX / 2,
       state,
       color,
+      pickPriority: 1,
     });
   });
   return buffers;

@@ -208,8 +208,33 @@
 - Fill in the `__GE_TEST__` hooks `selectedIds`, `hoveredId`, `screenPositionOf`, `cameraPose`, `flyTo`.
 
 **Done when:**
-- [ ] E2E: clicking an object selects it, Shift-click adds a second, and Esc clears both. The selection survives a reload through the URL.
-- [ ] Micro-benchmark: picking among 5,000 items takes under 1 ms per pointer move.
+- [x] E2E: clicking an object selects it, Shift-click adds a second, and Esc clears both. The selection survives a reload through the URL.
+- [x] Micro-benchmark: picking among 5,000 items takes under 1 ms per pointer move. *0.16 µs per pick; a full rebuild takes 0.82 ms (`apps/web/test/screen-picker.test.ts`, owner's Mac).*
+
+**Notes (done 2026-11-08):**
+- **`ScreenPicker`** (`render/picking/screen-picker.ts`):
+  - projects every drawn object from the scene index to a screen circle, using its renderer's clamp and at least 10 px;
+  - buckets the circles in a 64 px grid, where each circle goes into every cell it overlaps, so a pick checks one cell;
+  - among overlapping circles, bodies beat regions (`pickPriority`), then the nearer center wins, then the nearer depth;
+  - `pickRect` is ready for M3's box selection.
+- **Rebuilt lazily** (`picking.ts`): on a pick, only if the view-projection matrix, the canvas size or the scene index changed since the last build. That meets "only after frames in which the camera or data changed" without rebuilding on frames nobody picks in.
+- **Hover:** a vanilla zustand store outside React (`state/hover.ts`). The pointer cursor and the rings subscribe to it directly, and pointer moves are ignored while a button is held. The e2e test checks that hovering renders nothing while the pointer is still.
+- **Selection:** a zustand store whose `select(ids, { add, toggle })` is the one way to select (`state/selection.ts`). `useSelectionUrlSync` keeps it in step with `?select=` both ways:
+  - it uses `replace`, so Back moves between maps, not clicks;
+  - a new map's address has no `select`, so switching maps clears the selection;
+  - leaving the map page clears it too.
+- **Input:**
+  - a press released within 4 px is a click and resolves through the bindings table: select, toggle (Shift, or Cmd/Ctrl), or clear on empty space;
+  - each press now also passes its real target (empty, object or selected) to `resolveBinding`;
+  - a double-click flies to the object with `fitToSphere`, framing at least 1,500 ly. Entering views is M5.
+  - Keys: Esc clears the selection; F frames it (ux.md §4).
+- **`SelectionRings`:** hover and selection rings, instanced camera-facing squares in one draw call on top of everything. Each ring is drawn by the fragment shader at the object's clamped on-screen radius + 4 px, and its buffers rewrite only when the hover, the selection or the drawn objects change.
+- **Accessibility:** an `aria-live` region announces "Selected Aster, System" (ux.md §10), with hidden spoiler names kept hidden.
+- **Test hooks:** `selectedIds`, `hoveredId` and `flyTo` are added; `screenPositionOf` and `cameraPose` already existed.
+- **Tests:**
+  - 6 unit tests for the picker, including the benchmark;
+  - 6 e2e tests: click, Shift-click, Esc and the URL; reload; empty-space click and Cmd/Ctrl toggle; hover cursor, ring and idle; double-click fly-to; F;
+  - `galaxy.spec.ts` now expects the rings' geometry.
 
 ### M2-T6 Label layer
 

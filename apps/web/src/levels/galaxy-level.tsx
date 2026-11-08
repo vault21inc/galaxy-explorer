@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useViewPayload } from '@/api/hooks.ts';
 import { GalaxyBackground } from '@/render/galaxy/galaxy-background.tsx';
+import { SelectionRings } from '@/render/picking/selection-rings.tsx';
 import { partitionByRenderer } from '@/render/registry.ts';
 
 /**
@@ -21,6 +22,7 @@ export default function GalaxyLevel({ subjectId }: { subjectId: string }) {
       {groups.map(({ renderer, objects }) => (
         <renderer.component key={renderer.name} objects={objects} />
       ))}
+      <SelectionRings />
     </>
   );
 }

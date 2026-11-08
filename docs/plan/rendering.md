@@ -238,7 +238,7 @@ Procedural looks are generated once on the GPU and reused (D-10):
 ## 10. Picking
 
 - **`ScreenPicker`** (`render/picking/`):
-  - It's rebuilt once per rendered frame in which the camera or data changed.
+  - It's rebuilt once per rendered frame in which the camera or data changed. In practice it's rebuilt lazily, at the next pick after such a frame (M2-T5): 0.8 ms for 5,000 items.
   - It projects every pickable item in the current view into a `Float32Array` of screen x, screen y and pick radius in px. Pickables are body centers, region circles, pins and route midpoints.
   - It buckets them into a 64 px uniform grid.
   - A pointer move finds the nearest item within `max(radiusPx, 10 px)` by checking neighboring grid cells: O(1) on average, under 1 ms for 5,000 items.

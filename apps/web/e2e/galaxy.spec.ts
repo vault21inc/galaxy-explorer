@@ -66,12 +66,12 @@ test.describe('the galaxy background', () => {
     await expect.poll(async () => (await info())?.textures, { timeout: 15_000 }).toBe(3);
 
     // Back on the first map, its disc comes from the bake cache: still three textures. The
-    // geometries are the sky, disc, glow, depth stars, bodies and regions, so the other map's
-    // were disposed.
+    // geometries are the sky, disc, glow, depth stars, bodies, regions and selection rings, so
+    // the other map's were disposed.
     // Polled as a whole: until the first frame after Back, the numbers describe the other map.
     await page.goBack();
     await expect
       .poll(info, { timeout: 15_000 })
-      .toMatchObject({ points: SKY_POINTS + DEPTH_STARS, textures: 3, geometries: 6 });
+      .toMatchObject({ points: SKY_POINTS + DEPTH_STARS, textures: 3, geometries: 7 });
   });
 });

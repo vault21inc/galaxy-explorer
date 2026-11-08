@@ -1,7 +1,9 @@
 import { CameraControlsImpl } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { useEffect } from 'react';
+import { pickAt } from '@/render/picking/picking.ts';
 import { GESTURE_LOG_SCALE_TO_PX } from '@/render/tuning.ts';
+import { useSelection } from '@/state/selection.ts';
 import { resolveBinding, type Gesture, type HeldKeys, type Mode } from './bindings.ts';
 import { buttonAction, touchActions, wheelAction } from './camera-actions.ts';
 import { detectPlatform } from './platform.ts';
@@ -64,8 +66,15 @@ export function useInputBindings(mode: Mode): void {
       if (event.pointerType === 'touch' || !onCanvas(event)) return;
       const gesture = BUTTON_GESTURES[event.button];
       if (!gesture) return;
-      // M2-T5's picker supplies the real target; until then every press starts on empty space.
-      const action = buttonAction(resolveBinding(gesture, event, mode, 'empty', platform));
+      // What the press starts on decides some edit-mode drags (move versus box-select).
+      const hit = pickAt(get(), event.clientX, event.clientY);
+      const target =
+        hit === null
+          ? 'empty'
+          : useSelection.getState().selectedIds.includes(hit.id)
+            ? 'selected'
+            : 'object';
+      const action = buttonAction(resolveBinding(gesture, event, mode, target, platform));
       if (event.button === 0) controls.mouseButtons.left = action;
       else if (event.button === 1) controls.mouseButtons.middle = action;
       else controls.mouseButtons.right = action;

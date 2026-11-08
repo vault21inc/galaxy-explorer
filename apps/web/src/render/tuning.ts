@@ -261,3 +261,32 @@ export const KEY_PAN_FRACTION = 0.1;
 
 /** `+` and `−` move the camera this much closer or farther per press (1.25 = 25 %). */
 export const KEY_ZOOM_FACTOR = 1.25;
+
+// ---------------------------------------------------------------------------------------------
+// Picking, hover and selection (rendering.md §6, §10)
+// ---------------------------------------------------------------------------------------------
+
+/** The picker's grid cell, in CSS pixels. */
+export const PICK_CELL_PX = 64;
+
+/**
+ * The smallest pick circle, in CSS pixels: an 8 px body is still easy to hit with a 10 px
+ * radius around its center.
+ */
+export const PICK_MIN_RADIUS_PX = 10;
+
+/** Rings around hovered and selected objects: the gap outside the body and the line width, px. */
+export const RING_GAP_PX = 4;
+export const RING_WIDTH_PX = 1.5;
+
+/** Ring colors: hover is a soft white; the selection uses the accent (ux.md §11). */
+export const HOVER_RING_COLOR = '#ffffff';
+export const HOVER_RING_OPACITY = 0.55;
+export const SELECTION_RING_COLOR = '#4fd1ff';
+export const SELECTION_RING_OPACITY = 1;
+
+/**
+ * Flying to an object (double-click, F) frames a sphere of at least this radius around it,
+ * so a 120 ly system arrives with its neighborhood in view instead of filling the screen.
+ */
+export const FLY_TO_MIN_RADIUS_LY = 1_500;

@@ -1,16 +1,20 @@
 import { CameraControlsImpl } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { useEffect } from 'react';
+import { flyTo } from '@/render/camera/fly-to.ts';
 import { resetViewCamera } from '@/render/camera/use-view-camera.ts';
+import { drawnObject, type DrawnObject } from '@/render/scene-index.ts';
+import { useSelection } from '@/state/selection.ts';
 import { KEY_PAN_FRACTION, KEY_ZOOM_FACTOR } from '@/render/tuning.ts';
 import { KEY_BINDINGS, type KeyAction } from './bindings.ts';
 
 /**
- * Keyboard camera keys (ux.md §4): arrows pan, `+`/`−` zoom, H or Home resets the view. Steps
- * scale with the camera's distance to its target, so a press feels the same zoomed in or out.
- * Keys are ignored while focus is in a text field or a widget that uses arrows itself.
+ * Keyboard shortcuts (ux.md §4): arrows pan, `+`/`−` zoom, H or Home resets the view, F frames
+ * the selection and Esc clears it. Camera steps scale with the camera's distance to its target,
+ * so a press feels the same zoomed in or out. Keys are ignored while focus is in a text field
+ * or a widget that uses arrows itself.
  */
-export function useCameraKeys(): void {
+export function useKeyboard(): void {
   const get = useThree((state) => state.get);
   const controlsReady = useThree((state) => state.controls !== null);
 
@@ -38,6 +42,16 @@ export function useCameraKeys(): void {
           return camera.dolly(-camera.distance * (KEY_ZOOM_FACTOR - 1), true);
         case 'reset-view':
           resetViewCamera(camera);
+          return;
+        case 'frame-selection': {
+          const selected = useSelection
+            .getState()
+            .selectedIds.map((id) => drawnObject(id))
+            .filter((object): object is DrawnObject => object !== undefined);
+          return flyTo(camera, selected);
+        }
+        case 'clear-selection':
+          useSelection.getState().clear();
           return;
       }
     };

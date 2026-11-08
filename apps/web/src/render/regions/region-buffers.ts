@@ -107,6 +107,7 @@ export function buildRegionBuffers(
       maxRadiusPx: REGION_BILLBOARD_MAX_PX,
       state: redacted ? 'redacted' : object.status === 'draft' ? 'draft' : 'normal',
       color: hex,
+      pickPriority: 0,
     });
   }
   return buffers;

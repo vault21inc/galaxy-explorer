@@ -4,7 +4,9 @@ import { useViewPayload } from '@/api/hooks.ts';
 import { errorMessage, RouteStates } from '@/app/route-states.tsx';
 import { StatusPanel } from '@/app/status-panel.tsx';
 import { useUniverseRoute } from '@/app/use-universe-route.ts';
+import { SelectionAnnouncer } from '@/app/selection-announcer.tsx';
 import { useNavigation } from '@/state/navigation.ts';
+import { useSelectionUrlSync } from '@/state/selection-url.ts';
 
 /**
  * `/u/:universeSlug/:mapSlug`: the galaxy view of one map. It loads the galaxy view payload
@@ -17,6 +19,7 @@ export function MapPage() {
   const mapId = route.status === 'ready' ? route.map?.id : undefined;
   const view = useViewPayload('galaxy', mapId);
   const show = useNavigation((state) => state.show);
+  useSelectionUrlSync();
 
   useEffect(() => {
     if (mapId === undefined) return;
@@ -42,5 +45,5 @@ export function MapPage() {
       </StatusPanel>
     );
   }
-  return null;
+  return <SelectionAnnouncer objects={view.data.objects} />;
 }

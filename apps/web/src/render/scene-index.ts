@@ -1,7 +1,7 @@
 /**
  * What the current view has drawn, by entity id, on the CPU (rendering.md §10, §14): each
- * object's world center, its world radius and the on-screen clamp its renderer applies. The test
- * hooks read it now; the screen-space picker (M2-T5) will too.
+ * object's world center, its world radius and the on-screen clamp its renderer applies. The
+ * screen-space picker (render/picking/), the selection rings and the test hooks read it.
  *
  * Renderers publish their whole list whenever they rebuild their buffers, which happens only
  * when the payload or the spoiler policy changes, never per frame.
@@ -22,16 +22,36 @@ export interface DrawnObject {
   state: DrawnState;
   /** The color it's drawn in, as `#rrggbb`. */
   color: string;
+  /**
+   * When pick circles overlap, the higher priority wins: a system inside a nebula is picked
+   * before the nebula. Bodies are 1, regions (areas) 0.
+   */
+  pickPriority: number;
 }
 
 const sources = new Map<string, readonly DrawnObject[]>();
 let byId: Map<string, DrawnObject> | null = null;
+let version = 0;
+const listeners = new Set<() => void>();
+
+/** Increases whenever any renderer publishes, so the picker knows to rebuild. */
+export function drawnVersion(): number {
+  return version;
+}
+
+/** Calls `listener` after every publish; returns the unsubscribe function. */
+export function onDrawnChange(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
 
 /** Replaces one renderer's objects; null removes them (the renderer unmounted). */
 export function publishDrawn(renderer: string, objects: readonly DrawnObject[] | null): void {
   if (objects) sources.set(renderer, objects);
   else sources.delete(renderer);
   byId = null;
+  version++;
+  for (const listener of listeners) listener();
 }
 
 export function drawnObject(id: string): DrawnObject | undefined {

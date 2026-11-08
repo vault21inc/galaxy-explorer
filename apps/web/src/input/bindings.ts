@@ -151,9 +151,17 @@ export function resolveBinding(
   return row?.action ?? 'none';
 }
 
-/** Keyboard camera keys (ux.md §4). Keys are `KeyboardEvent.key` values. */
+/** Keyboard shortcuts for the camera and the selection (ux.md §4). Keys are `KeyboardEvent.key` values. */
 export type KeyAction =
-  'pan-up' | 'pan-down' | 'pan-left' | 'pan-right' | 'zoom-in' | 'zoom-out' | 'reset-view';
+  | 'pan-up'
+  | 'pan-down'
+  | 'pan-left'
+  | 'pan-right'
+  | 'zoom-in'
+  | 'zoom-out'
+  | 'reset-view'
+  | 'frame-selection'
+  | 'clear-selection';
 
 export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
   ArrowUp: 'pan-up',
@@ -167,4 +175,8 @@ export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
   h: 'reset-view',
   H: 'reset-view',
   Home: 'reset-view',
+  f: 'frame-selection',
+  F: 'frame-selection',
+  // Esc clears the selection; with nothing selected it will go up one view (M5).
+  Escape: 'clear-selection',
 };

@@ -1,6 +1,9 @@
 import { CameraControlsImpl } from '@react-three/drei';
 import { Vector3 } from 'three';
 import { detectPlatform, type Platform } from '@/input/platform.ts';
+import { hoverStore } from '@/state/hover.ts';
+import { useSelection } from '@/state/selection.ts';
+import { flyTo } from './camera/fly-to.ts';
 import { clampedRadiusPx } from './bodies/body-scale.ts';
 import { canvasState, frameTimeline, renderInfo, type RenderInfo } from './diagnostics.ts';
 import type { FrameStats } from './frame-timeline.ts';
@@ -34,6 +37,12 @@ export interface GeTestHooks {
   drawnObject(id: string): DrawnObject | null;
   /** The keyboard convention the app detected: Cmd is primary on 'mac', Ctrl elsewhere. */
   platform(): Platform;
+  /** The selection, in order. */
+  selectedIds(): string[];
+  /** The object under the pointer, or null. */
+  hoveredId(): string | null;
+  /** Flies the camera to an object, as a double-click does; resolves when it has settled. */
+  flyTo(id: string): Promise<void>;
 }
 
 declare global {
@@ -57,6 +66,13 @@ export function installTestHooks(): void {
     screenRadiusOf,
     drawnObject: (id) => drawnObject(id) ?? null,
     platform: () => detectPlatform(),
+    selectedIds: () => [...useSelection.getState().selectedIds],
+    hoveredId: () => hoverStore.getState().hoveredId,
+    flyTo: async (id) => {
+      const object = drawnObject(id);
+      const controls = canvasState()?.controls;
+      if (object && controls instanceof CameraControlsImpl) await flyTo(controls, [object]);
+    },
   };
 }
 

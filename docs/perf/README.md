@@ -95,3 +95,12 @@ The stress map: 5,000 objects (4,887 bodies in one draw call, 113 regions in one
 - Measured by the agent on `/u/stress-test/main`: `resetFrameStats()`, two left-drags and a wheel zoom across a 923 × 1512 CSS px canvas, then `frameStats()` (321 frames). Still display-limited.
 - The background alone (M2-T2) was 4 draw calls at 4.2 / 4.6 ms.
 - Not yet measured by the owner, in Safari, or on the built-in display; M2-T8's `pnpm perf` makes this repeatable.
+
+### Picking, hover and selection (M2-T5)
+
+| Date | Commit | Browser | Display | Idle | Moving: median / p95 frame | Draw calls | Notes |
+|---|---|---|---|---|---|---|---|
+| 2026-11-08 | M2-T5 | Playwright's Chromium, headed, 1440 × 900 | external, 240 Hz | 0 frames, also while hovering | 4.2 / 4.7 ms (744 frames) | 7 (6 + the rings) | stress map; three drags and wheel zooms; the same with 50 objects selected |
+
+- **The picker** (`apps/web/test/screen-picker.test.ts`) over 5,000 stress-like objects at 1440 × 900: a rebuild takes 0.82 ms and a pick 0.16 µs.
+- The rings are one draw call however many are selected: 2 triangles per ring.
