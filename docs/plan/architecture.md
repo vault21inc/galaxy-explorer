@@ -269,8 +269,9 @@ The system and orbit payloads have the same shape: the subject, its direct child
 |---|---|---|---|
 | Server, on write | stored as is | stored as is | sanitized with `sanitize-html` using `RICH_TEXT_POLICY` from `@ge/domain` |
 | Derived on write | `toPlainText()` → `name_plain` (and search text, M7) | same | same |
-| Client render | text with line breaks | `react-markdown` + `remark-gfm` + `remark-spoiler` (ours), `skipHtml` | DOMPurify with the same policy (defense in depth) → `html-react-parser`, which maps `span[data-spoiler]` to `<Redactable>` |
+| Client render | `richTextTree()` → React | `richTextTree()` (remark-parse + `remark-gfm` + `remark-spoiler`, raw HTML skipped) → React | `richTextTree()` (htmlparser2, keeping only what `RICH_TEXT_POLICY` allows: defense in depth) → React |
 
+- **One renderer for all three formats** (M2-T7, D-26): `richTextTree()` in `@ge/domain` turns any `RichText` into a small tree of allowed elements, text and numbered spoilers, and `RichTextView` renders the tree as React elements. No HTML string is ever set on the page, so markup the policy doesn't allow can't run even if it got past the server. Spoiler nodes become `<Redactable>`.
 - **Inline spoilers:** `||hidden text||` in Markdown, `<span data-spoiler>hidden text</span>` in HTML. Plain text has field-level spoilers only.
 - **Links** are rendered with `target="_blank" rel="noopener noreferrer nofollow ugc"`. Images inside rich text are allowed only from this site's `/media/` URLs.
 - **Names** use the same type, but 3D labels, sorting and breadcrumbs use the plain-text projection.

@@ -1,4 +1,4 @@
-import type { EntityKind, ViewLevel } from '@ge/domain';
+import type { ConfigResource, EntityKind, ViewLevel } from '@ge/domain';
 import type { EntityOptions, ListFilters, ReadOptions } from './requests.ts';
 
 /**
@@ -13,6 +13,8 @@ export const queryKeys = {
     [kind, 'list', scope, filters] as const,
   view: (level: ViewLevel, subjectId: string, options: ReadOptions = {}) =>
     ['view', level, subjectId, options] as const,
+  configList: (resource: ConfigResource, universeId: string) =>
+    [resource, 'list', { universeId }] as const,
   universes: () => ['universe', 'list'] as const,
   maps: (universeId: string) => ['map', 'list', { universeId }] as const,
 };

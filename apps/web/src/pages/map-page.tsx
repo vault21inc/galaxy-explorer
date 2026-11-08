@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { useParams } from 'react-router';
 import { useViewPayload } from '@/api/hooks.ts';
 import { errorMessage, RouteStates } from '@/app/route-states.tsx';
@@ -6,7 +6,11 @@ import { StatusPanel } from '@/app/status-panel.tsx';
 import { useUniverseRoute } from '@/app/use-universe-route.ts';
 import { SelectionAnnouncer } from '@/app/selection-announcer.tsx';
 import { useNavigation } from '@/state/navigation.ts';
+import { useSelection } from '@/state/selection.ts';
 import { useSelectionUrlSync } from '@/state/selection-url.ts';
+
+// Loaded on first use: it brings the rich-text parsers, which the galaxy view doesn't need.
+const InfoPanel = lazy(() => import('@/panels/info-panel.tsx'));
 
 /**
  * `/u/:universeSlug/:mapSlug`: the galaxy view of one map. It loads the galaxy view payload
@@ -19,6 +23,7 @@ export function MapPage() {
   const mapId = route.status === 'ready' ? route.map?.id : undefined;
   const view = useViewPayload('galaxy', mapId);
   const show = useNavigation((state) => state.show);
+  const hasSelection = useSelection((state) => state.selectedIds.length > 0);
   useSelectionUrlSync();
 
   useEffect(() => {
@@ -45,5 +50,14 @@ export function MapPage() {
       </StatusPanel>
     );
   }
-  return <SelectionAnnouncer objects={view.data.objects} />;
+  return (
+    <>
+      <SelectionAnnouncer objects={view.data.objects} />
+      {hasSelection && (
+        <Suspense fallback={null}>
+          <InfoPanel universeId={route.universe.id} objects={view.data.objects} />
+        </Suspense>
+      )}
+    </>
+  );
 }

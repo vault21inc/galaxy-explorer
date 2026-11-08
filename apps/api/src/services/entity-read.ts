@@ -88,7 +88,7 @@ export async function getEntity<K extends EntityKind>(
   const [row] = await loadRows(ex, kind, eq(entities.id, id), options.viewer);
   if (!row) throw new NotFound(entityKinds[kind].label.one.toLowerCase(), id);
   const read = toRead(kind, row.entity, row.extension);
-  return { ...read, ...(await loadAspects(ex, kind, id, options.include ?? [])) };
+  return { ...read, ...(await loadAspects(ex, kind, id, options.include ?? [], options.viewer)) };
 }
 
 export interface ListOptions {
@@ -147,13 +147,14 @@ async function loadAspects(
   kind: EntityKind,
   id: string,
   include: readonly EntityInclude[],
+  viewer: Viewer,
 ) {
   const result: Partial<Record<EntityInclude, unknown>> = {};
   const want = new Set(include);
   if (want.has('facts')) result.facts = await listFacts(ex, id);
   if (want.has('images')) result.images = await listImages(ex, id);
   if (want.has('links')) result.links = await listLinks(ex, id);
-  if (want.has('relations')) result.relations = await listRelations(ex, id);
+  if (want.has('relations')) result.relations = await listRelations(ex, id, viewer);
   if (want.has('location')) result.location = await getLocation(ex, id);
   if (want.has('members') && kind === 'group') result.members = await listMembers(ex, id);
   return result;

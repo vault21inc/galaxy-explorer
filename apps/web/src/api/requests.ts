@@ -1,6 +1,8 @@
 import {
+  configResources,
   entityKinds,
   viewLevels,
+  type ConfigResource,
   type EntityInclude,
   type EntityKind,
   type ViewLevel,
@@ -103,4 +105,13 @@ function definedOnly(options: object): Query {
       (entry): entry is [string, Query[string]] => entry[1] !== undefined,
     ),
   );
+}
+
+/** A universe's list of a config resource, such as its field definitions (architecture.md §5). */
+export function configListRequest(resource: ConfigResource, universeId: string): RequestSpec {
+  return {
+    template: `/api/v1/universes/{universeId}/${configResources[resource].plural}`,
+    path: { universeId },
+    query: { limit: 1_000 },
+  };
 }

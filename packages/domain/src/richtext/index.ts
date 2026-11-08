@@ -11,3 +11,4 @@ export {
   rt,
   type RichTextFormat,
 } from './schema.ts';
+export { richTextTree, type RichNode, type RichTag } from './tree.ts';

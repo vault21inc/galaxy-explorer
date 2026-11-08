@@ -1,8 +1,15 @@
 import openapiDocument from '@ge/api-client/openapi.json' with { type: 'json' };
-import { ENTITY_INCLUDES, ENTITY_KINDS, entityKinds, VIEW_LEVELS } from '@ge/domain';
+import {
+  CONFIG_RESOURCES,
+  ENTITY_INCLUDES,
+  ENTITY_KINDS,
+  entityKinds,
+  VIEW_LEVELS,
+} from '@ge/domain';
 import { describe, expect, it } from 'vitest';
 import { queryKeys } from '../src/api/keys.ts';
 import {
+  configListRequest,
   entityListRequest,
   entityRequest,
   viewRequest,
@@ -44,6 +51,10 @@ describe('registry-derived requests', () => {
     expectDocumented(
       entityListRequest(kind, scope as never, { q: 'hive', limit: 10, spoilers: 'exclude' }),
     );
+  });
+
+  it.each(CONFIG_RESOURCES)('%s: the config list request is a documented route', (resource) => {
+    expectDocumented(configListRequest(resource, ID));
   });
 
   it.each(VIEW_LEVELS)('%s: the view request is a documented route', (level) => {

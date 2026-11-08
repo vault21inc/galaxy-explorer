@@ -161,7 +161,15 @@ export async function seedDemo(db: Database) {
     const aster = await system('aster', 'Aster', 8_200, 40, -3_100, {
       summary: md('Capital of the **Inner Reach**.'),
     });
-    const brennan = await system('brennan', 'Brennan', -12_400, -60, 6_800);
+    // Hostile HTML, planted on purpose (M2-T7): the server's sanitizer and the browser's
+    // renderer must both leave it inert. The e2e suite checks no script runs.
+    const brennan = await system('brennan', 'Brennan', -12_400, -60, 6_800, {
+      description: html(
+        '<p>A trade hub on the Reach. <img src="x" onerror="alert(1)"><script>alert(2)</script>' +
+          '<a href="javascript:alert(3)">Old charts</a> are still sold here. ' +
+          '<span data-spoiler onclick="alert(4)">Smugglers run it.</span></p>',
+      ),
+    });
     const corvid = await system('corvid', 'Corvid', 21_500, 120, 14_800);
     const dalmatia = await system('dalmatia', 'Dalmatia', -3_000, 10, -22_000);
     // A whole entity can be a spoiler.

@@ -13,6 +13,7 @@ export {
   configSchemasFor,
   ENTITY_STATUSES,
   schemasFor,
+  type ConfigReadOf,
   type ConfigSchemas,
   type EntityReadOf,
   type EntitySchemas,

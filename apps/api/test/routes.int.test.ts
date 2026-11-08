@@ -265,6 +265,54 @@ describe('aspects', () => {
       await api.expect(404, 'GET', '/entities/019a5b3c-7d2e-7f00-8a1b-2c3d4e5f6a7b/links');
     }));
 
+  it('name the entity at the other end of a relation, and keep its secrets', () =>
+    run(async (api, db) => {
+      const s = await scene(api, db);
+      const relation = (
+        await api.expect(201, 'POST', `/entities/${s.characterId}/relations`, {
+          relationType: 'participant',
+          toEntityId: s.eventId,
+        })
+      ).body.data;
+      // The write response already carries the other end, seen from the writer's entity.
+      expect(relation.other).toMatchObject({ id: s.eventId, kind: 'event', isSpoiler: false });
+
+      const fromEvent = (await api.expect(200, 'GET', `/entities/${s.eventId}/relations`)).body
+        .data;
+      expect(fromEvent).toEqual([
+        expect.objectContaining({
+          other: {
+            id: s.characterId,
+            kind: 'character',
+            namePlain: expect.any(String) as string,
+            isSpoiler: false,
+            nameSpoiler: false,
+          },
+        }),
+      ]);
+
+      // A spoiler at the other end: its name is blacked out under spoilers=exclude.
+      const character = (await api.expect(200, 'GET', `/characters/${s.characterId}`)).body.data;
+      await api.expect(200, 'PATCH', `/characters/${s.characterId}`, {
+        isSpoiler: true,
+        version: character.version,
+      });
+      const hidden = (
+        await api.expect(200, 'GET', `/events/${s.eventId}?include=relations&spoilers=exclude`)
+      ).body.data;
+      expect(hidden.relations[0].other.namePlain).toMatch(/^▇+$/);
+
+      // A draft at the other end isn't visible to readers, so neither is the relation.
+      const event = (await api.expect(200, 'GET', `/events/${s.eventId}`)).body.data;
+      await api.expect(200, 'PATCH', `/events/${s.eventId}`, {
+        status: 'draft',
+        version: event.version,
+      });
+      expect(
+        (await api.expect(200, 'GET', `/entities/${s.characterId}/relations`)).body.data,
+      ).toEqual([]);
+    }));
+
   it('turn a rule violation into 422 problem+json naming the field', () =>
     run(async (api, db) => {
       const s = await scene(api, db);

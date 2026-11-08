@@ -27,7 +27,15 @@ import {
   updateRelation,
 } from '../services/aspects/content.ts';
 import { requireOwner } from '../services/aspects/owner.ts';
-import { listFacts, listImages, listLinks, listRelations } from '../services/aspects/read.ts';
+import {
+  listFacts,
+  listImages,
+  listLinks,
+  listRelations,
+  withOtherEnds,
+} from '../services/aspects/read.ts';
+import { SEES_EVERYTHING, visibleTo } from '../services/visibility.ts';
+import { actorOf } from '../http/batch.ts';
 import { ASPECT_DOC, aspectWriter, deleted, entityParams, list } from './aspect-helpers.ts';
 
 /** Images, links, facts and relations of any entity, under `/entities/{entityId}/…` (data-model §3.4). */
@@ -275,7 +283,8 @@ export const contentRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, {
     },
     async (request) => {
       await requireOwner(db, request.params.entityId);
-      return { data: await listRelations(db, request.params.entityId) } as never;
+      const viewer = visibleTo(actorOf(request));
+      return { data: await listRelations(db, request.params.entityId, viewer) } as never;
     },
   );
   app.post(
@@ -292,9 +301,15 @@ export const contentRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, {
       },
     },
     async (request, reply) => {
-      const data = await write(request, reply, request.params.entityId, 'Add relation', (tx) =>
-        addRelation(tx, request.params.entityId, request.body),
-      );
+      const { entityId } = request.params;
+      // Writers are editors, who see drafts at the other end too.
+      const data = await write(request, reply, entityId, 'Add relation', async (tx) => {
+        const relation = await addRelation(tx, entityId, request.body);
+        // The insert returns its row; an empty result would be a database fault.
+        if (!relation) throw new Error('Adding the relation returned no row.');
+        const [withOther] = await withOtherEnds(tx, entityId, [relation], SEES_EVERYTHING);
+        return withOther;
+      });
       return reply.code(201).send({ data } as never);
     },
   );
@@ -312,9 +327,12 @@ export const contentRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, {
       },
     },
     async (request, reply) => {
-      const data = await write(request, reply, request.params.entityId, 'Edit relation', (tx) =>
-        updateRelation(tx, request.params.relationId, request.body),
-      );
+      const { entityId, relationId } = request.params;
+      const data = await write(request, reply, entityId, 'Edit relation', async (tx) => {
+        const relation = await updateRelation(tx, relationId, request.body);
+        const [withOther] = await withOtherEnds(tx, entityId, [relation], SEES_EVERYTHING);
+        return withOther;
+      });
       return { data } as never;
     },
   );

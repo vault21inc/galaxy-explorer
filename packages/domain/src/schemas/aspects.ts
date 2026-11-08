@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { Uuid } from '../ids.ts';
 import { HTTP_URL_PATTERN } from '../patterns.ts';
+import { ENTITY_KINDS } from '../registry/entity-kinds.ts';
 import { RELATION_TYPES } from '../registry/relation-types.ts';
 import { RichText } from '../richtext/schema.ts';
 import { FieldValue } from './field-value.ts';
@@ -107,6 +108,18 @@ export const RelationWrite = z.strictObject({
   isSpoiler: isSpoiler.optional(),
   sortKey: sortKey.optional(),
 });
+/**
+ * The entity at a relation's other end, from the reading entity's side: enough to name and link
+ * it without another request. `isSpoiler` and `nameSpoiler` say whether its name is hidden
+ * while spoilers are (its record key is its id, `spoilerKeys.record`).
+ */
+export const RelationEnd = z.object({
+  id: Uuid,
+  kind: z.enum(ENTITY_KINDS),
+  namePlain: z.string(),
+  isSpoiler: z.boolean(),
+  nameSpoiler: z.boolean(),
+});
 export const RelationRead = z.object({
   id: Uuid,
   relationType: z.enum(RELATION_TYPES),
@@ -115,6 +128,7 @@ export const RelationRead = z.object({
   role: RichText.nullable(),
   isSpoiler,
   sortKey,
+  other: RelationEnd,
 });
 
 /** Where a place or event is: one shape per mode, so each mode's required fields are clear. */

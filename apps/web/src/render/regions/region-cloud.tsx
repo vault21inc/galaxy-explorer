@@ -9,7 +9,7 @@ import {
   PlaneGeometry,
   type ShaderMaterial,
 } from 'three';
-import { useSpoilers } from '@/state/spoilers.ts';
+import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { bake } from '../bake/bake.ts';
 import { bakeCache } from '../bake/bake-cache.ts';
 import type { RendererProps } from '../renderer-types.ts';
@@ -74,10 +74,10 @@ const FRAGMENT_SHADER = /* glsl */ `
 
 export function RegionCloud({ objects }: RendererProps) {
   const gl = useThree((state) => state.gl);
-  const showSpoilers = useSpoilers((state) => state.showSpoilers);
+  const policy = useSpoilerPolicy();
   const buffers = useMemo(
-    () => buildRegionBuffers(objects, { showSpoilers }, REGION_CLOUD),
-    [objects, showSpoilers],
+    () => buildRegionBuffers(objects, policy, REGION_CLOUD),
+    [objects, policy],
   );
 
   const geometry = useMemo(() => {

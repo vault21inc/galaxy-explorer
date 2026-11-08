@@ -1,5 +1,7 @@
 import { Link } from 'react-router';
 import { useUniverses } from '@/api/containers.ts';
+import { containerName } from '@/lib/container-name.ts';
+import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { errorMessage } from '@/app/route-states.tsx';
 import { StatusPanel } from '@/app/status-panel.tsx';
 import { NewUniverseForm } from './new-universe-form.tsx';
@@ -7,6 +9,7 @@ import { NewUniverseForm } from './new-universe-form.tsx';
 /** `/`: every universe, and a form to start a new one (ux.md §9). */
 export function HomePage() {
   const universes = useUniverses();
+  const policy = useSpoilerPolicy();
 
   if (universes.error) {
     return (
@@ -37,7 +40,7 @@ export function HomePage() {
                   to={`/u/${universe.slug}`}
                   className="block rounded-md px-2 py-1.5 hover:bg-accent focus-visible:bg-accent"
                 >
-                  {universe.namePlain}
+                  {containerName(universe, policy)}
                 </Link>
               </li>
             ))}

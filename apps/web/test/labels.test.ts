@@ -126,21 +126,29 @@ describe('solveLabels', () => {
 });
 
 describe('labelText', () => {
-  const item = { namePlain: 'The Maw', nameRedacted: '▇▇▇▇▇▇', isSpoiler: false };
+  const item = {
+    id: 'maw',
+    namePlain: 'The Maw',
+    nameRedacted: '▇▇▇▇▇▇',
+    isSpoiler: false,
+    nameSpoiler: false,
+  };
+  const hidden = { showAll: false, revealed: new Set<string>() };
 
   it('shows the redacted name while spoilers are hidden', () => {
-    expect(labelText(item, { showSpoilers: false })).toBe('▇▇▇▇▇▇');
+    expect(labelText(item, hidden)).toBe('▇▇▇▇▇▇');
   });
 
   it('shows the plain name once spoilers are shown', () => {
-    expect(labelText(item, { showSpoilers: true })).toBe('The Maw');
+    expect(labelText(item, { showAll: true, revealed: new Set() })).toBe('The Maw');
+  });
+
+  it('shows a name revealed in the panel', () => {
+    expect(labelText(item, { showAll: false, revealed: new Set(['maw/name']) })).toBe('The Maw');
   });
 
   it('turns a whole hidden item into a bar, never its name', () => {
-    const text = labelText(
-      { ...item, isSpoiler: true, nameRedacted: 'The Maw' },
-      { showSpoilers: false },
-    );
+    const text = labelText({ ...item, isSpoiler: true, nameRedacted: 'The Maw' }, hidden);
     expect(text).toMatch(/^▇+$/);
   });
 });

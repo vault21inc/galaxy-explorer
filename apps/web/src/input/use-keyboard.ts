@@ -5,6 +5,7 @@ import { flyTo } from '@/render/camera/fly-to.ts';
 import { resetViewCamera } from '@/render/camera/use-view-camera.ts';
 import { drawnObject, type DrawnObject } from '@/render/scene-index.ts';
 import { useLabels } from '@/state/labels.ts';
+import { useSpoilers } from '@/state/spoilers.ts';
 import { useSelection } from '@/state/selection.ts';
 import { KEY_PAN_FRACTION, KEY_ZOOM_FACTOR } from '@/render/tuning.ts';
 import { KEY_BINDINGS, type KeyAction } from './bindings.ts';
@@ -57,6 +58,9 @@ export function useKeyboard(): void {
         case 'cycle-labels':
           useLabels.getState().cycle();
           return;
+        case 'toggle-spoilers':
+          useSpoilers.getState().toggle();
+          return;
         case 'show-all-labels':
           // Released in onKeyUp; holding the key repeats keydown, which changes nothing.
           useLabels.getState().setShowAllHeld(true);
@@ -72,6 +76,8 @@ export function useKeyboard(): void {
       if (!action) return;
       // Space and Enter press a focused button or link; leave them to it.
       if (event.key === ' ' && isPressable(event.target)) return;
+      // "S" alone (Caps Lock) isn't the shortcut: it needs Shift.
+      if (action === 'toggle-spoilers' && !event.shiftKey) return;
       event.preventDefault(); // arrows would scroll the page
       void perform(action);
     };

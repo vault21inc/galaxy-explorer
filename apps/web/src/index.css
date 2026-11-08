@@ -92,3 +92,54 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
+
+/*
+ * Rendered rich text (richtext/rich-text-view.tsx): readable spacing for the elements the
+ * policy allows (ux.md §8), without a typography plugin.
+ */
+@layer components {
+  .rich-text {
+    @apply text-sm leading-relaxed;
+  }
+  .rich-text > * + * {
+    @apply mt-2;
+  }
+  .rich-text h2 {
+    @apply text-base font-semibold;
+  }
+  .rich-text h3,
+  .rich-text h4 {
+    @apply text-sm font-semibold;
+  }
+  .rich-text ul {
+    @apply list-disc pl-5;
+  }
+  .rich-text ol {
+    @apply list-decimal pl-5;
+  }
+  .rich-text a {
+    @apply text-primary underline underline-offset-2;
+  }
+  .rich-text blockquote {
+    @apply border-l-2 border-border pl-3 text-muted-foreground;
+  }
+  .rich-text code {
+    @apply rounded bg-muted px-1 font-mono text-[0.85em];
+  }
+  .rich-text pre {
+    @apply overflow-x-auto rounded bg-muted p-2;
+  }
+  .rich-text pre code {
+    @apply bg-transparent p-0;
+  }
+  .rich-text table {
+    @apply w-full text-left text-xs;
+  }
+  .rich-text th,
+  .rich-text td {
+    @apply border-b border-border py-1 pr-2;
+  }
+  .rich-text img {
+    @apply max-w-full rounded;
+  }
+}

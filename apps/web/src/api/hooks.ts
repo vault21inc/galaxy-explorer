@@ -1,8 +1,17 @@
-import type { EntityInclude, EntityKind, EntityReadOf, ViewLevel, ViewPayload } from '@ge/domain';
+import type {
+  ConfigReadOf,
+  ConfigResource,
+  EntityInclude,
+  EntityKind,
+  EntityReadOf,
+  ViewLevel,
+  ViewPayload,
+} from '@ge/domain';
 import { skipToken, useQuery } from '@tanstack/react-query';
 import { fetchData } from './fetch-data.ts';
 import { queryKeys } from './keys.ts';
 import {
+  configListRequest,
   entityListRequest,
   entityRequest,
   viewRequest,
@@ -73,6 +82,30 @@ export function useViewPayload<L extends ViewLevel>(
       subjectId === undefined
         ? skipToken
         : ({ signal }) => fetchData<ViewPayload<L>>(viewRequest(level, subjectId, options), signal),
+    staleTime: Infinity,
+  });
+}
+
+/**
+ * All of a universe's records of a config resource (field definitions, object subtypes…).
+ * There are few, so one page holds them; they change only when the owner edits settings.
+ */
+export function useConfigList<R extends ConfigResource>(
+  resource: R,
+  universeId: string | undefined,
+) {
+  return useQuery({
+    queryKey: queryKeys.configList(resource, universeId ?? ''),
+    queryFn:
+      universeId === undefined
+        ? skipToken
+        : async ({ signal }) =>
+            (
+              await fetchData<{ data: ConfigReadOf<R>[] }>(
+                configListRequest(resource, universeId),
+                signal,
+              )
+            ).data,
     staleTime: Infinity,
   });
 }

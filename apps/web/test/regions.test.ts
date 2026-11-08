@@ -7,7 +7,7 @@ import {
 } from '../src/render/tuning.ts';
 import { viewObject } from './view-fixtures.ts';
 
-const hidden = { showSpoilers: false };
+const hidden = { showAll: false, revealed: new Set<string>() };
 const region = (id: string, baseType: 'nebula' | 'anomaly', density: number, extra = {}) =>
   viewObject(id, baseType, {
     size: null,

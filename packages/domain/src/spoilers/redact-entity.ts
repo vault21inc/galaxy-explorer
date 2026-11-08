@@ -1,5 +1,6 @@
 import type { RichText } from '../richtext/schema.ts';
 import { isHidden, spoilerKeys, type SpoilerPolicy } from './policy.ts';
+import { redactionBar } from '../richtext/redaction-bar.ts';
 import { blackedOut, redactOptionalRichText, syncPlainName } from './redact-rich-text.ts';
 
 /**
@@ -44,6 +45,8 @@ export interface RedactableRelation extends Flagged {
   id: string;
   relationType: string;
   role?: RichText | null;
+  /** The entity at the other end (RelationRead.other); its name follows its own flags. */
+  other?: { id: string; namePlain: string; isSpoiler: boolean; nameSpoiler: boolean };
 }
 export interface RedactableMember extends Flagged {
   objectId: string;
@@ -143,7 +146,11 @@ export function redactEntity<E extends RedactableEntity>(
       const key = spoilerKeys.relation(relation.id);
       return hidden(relation.isSpoiler, key)
         ? placeholder(relation, ['id', 'relationType'])
-        : { ...relation, role: redactOptionalRichText(relation.role, policy, `${key}/role`) };
+        : {
+            ...relation,
+            role: redactOptionalRichText(relation.role, policy, `${key}/role`),
+            ...(relation.other ? { other: redactRelationEnd(relation.other, policy) } : {}),
+          };
     });
   }
   if (entity.members) {
@@ -174,4 +181,17 @@ function isTextValue(value: unknown): value is { type: 'text'; text: RichText } 
     (value as { type?: unknown }).type === 'text' &&
     typeof (value as { text?: unknown }).text === 'object'
   );
+}
+
+/** A relation's other end with its name blacked out when that entity or its name is hidden. */
+function redactRelationEnd<O extends NonNullable<RedactableRelation['other']>>(
+  other: O,
+  policy: SpoilerPolicy,
+): O {
+  const hiddenName = isHidden(
+    other.isSpoiler || other.nameSpoiler,
+    spoilerKeys.record(other.id),
+    policy,
+  );
+  return hiddenName ? { ...other, namePlain: redactionBar(other.namePlain) } : other;
 }

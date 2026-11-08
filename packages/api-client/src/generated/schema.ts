@@ -1465,6 +1465,15 @@ export interface components {
             role: components["schemas"]["RichTextInput"] | null;
             isSpoiler: boolean;
             sortKey: number;
+            other: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                kind: "celestial_object" | "group" | "place" | "event" | "character";
+                namePlain: string;
+                isSpoiler: boolean;
+                nameSpoiler: boolean;
+            };
         };
         RelationWriteInput: {
             /** @enum {string} */
@@ -2833,6 +2842,15 @@ export interface components {
             role: components["schemas"]["RichText"] | null;
             isSpoiler: boolean;
             sortKey: number;
+            other: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                kind: "celestial_object" | "group" | "place" | "event" | "character";
+                namePlain: string;
+                isSpoiler: boolean;
+                nameSpoiler: boolean;
+            };
         };
         RelationWrite: {
             /** @enum {string} */

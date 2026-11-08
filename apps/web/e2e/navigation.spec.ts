@@ -14,6 +14,13 @@ async function switchMap(page: Page, from: string, to: string): Promise<void> {
 }
 
 test.describe('routes and navigation', () => {
+  // The second demo map is a whole-map spoiler; its name shows only with spoilers shown.
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('ge.spoilers', JSON.stringify({ state: { showAll: true }, version: 1 }));
+    });
+  });
+
   test('opens a map, switches maps, and Back and Forward follow', async ({ page }) => {
     await page.goto(`${DEMO}/${MAIN.slug}`);
     await expect(page.locator('canvas')).toBeVisible();

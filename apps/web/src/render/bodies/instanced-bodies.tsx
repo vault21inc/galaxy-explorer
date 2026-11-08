@@ -6,7 +6,7 @@ import {
   InstancedBufferGeometry,
   type ShaderMaterial,
 } from 'three';
-import { useSpoilers } from '@/state/spoilers.ts';
+import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import type { RendererProps } from '../renderer-types.ts';
 import { publishDrawn } from '../scene-index.ts';
 import { worldPerPxAt1 } from '../screen-scale.ts';
@@ -76,10 +76,10 @@ const FRAGMENT_SHADER = /* glsl */ `
 const SPHERE_DETAIL = 1;
 
 export function InstancedBodies({ objects }: RendererProps) {
-  const showSpoilers = useSpoilers((state) => state.showSpoilers);
+  const policy = useSpoilerPolicy();
   const buffers = useMemo(
-    () => buildBodyBuffers(objects, { showSpoilers }, INSTANCED_BODIES),
-    [objects, showSpoilers],
+    () => buildBodyBuffers(objects, policy, INSTANCED_BODIES),
+    [objects, policy],
   );
 
   // Built with `new`, so disposed by hand when replaced or unmounted (rendering.md §13).

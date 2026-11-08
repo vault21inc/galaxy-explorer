@@ -8,6 +8,13 @@ const DEPTH_STARS = 20_000;
 const BACKGROUND_DRAW_CALL_BUDGET = 5;
 
 test.describe('the galaxy background', () => {
+  // The second demo map is a whole-map spoiler; its name shows only with spoilers shown.
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('ge.spoilers', JSON.stringify({ state: { showAll: true }, version: 1 }));
+    });
+  });
+
   test('draws the disc, glow, depth stars and sky within its draw-call budget', async ({
     page,
   }) => {

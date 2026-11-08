@@ -85,6 +85,8 @@ export type EntityReadOf<K extends EntityKind> = z.infer<EntitySchemas<K>['read'
 export type ConfigSchemas<R extends ConfigResource> = ReturnType<
   typeof deriveConfig<(typeof configResources)[R]['schema']['shape']>
 >;
+/** A config resource's read shape, such as a field definition as the API returns it. */
+export type ConfigReadOf<R extends ConfigResource> = z.infer<ConfigSchemas<R>['read']>;
 
 const entitySchemas = Object.fromEntries(
   Object.entries(entityKinds).map(([kind, def]) => [

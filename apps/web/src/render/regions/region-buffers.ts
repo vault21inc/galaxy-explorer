@@ -1,4 +1,4 @@
-import type { ViewObject } from '@ge/domain';
+import type { SpoilerPolicy, ViewObject } from '@ge/domain';
 import { seededRandom } from '@ge/domain/galaxy';
 import { hexToLinear } from '../color.ts';
 import { labelText } from '../labels/label-text.ts';
@@ -13,7 +13,7 @@ import {
   REGION_BILLBOARDS_MIN,
   REGION_STYLES,
 } from '../tuning.ts';
-import { bodyState, type SpoilerPolicy } from '../bodies/body-buffers.ts';
+import { bodyState } from '../bodies/body-buffers.ts';
 
 /**
  * Per-billboard data for RegionCloud (rendering.md §6): every region becomes 6–20 soft

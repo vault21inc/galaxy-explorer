@@ -6,8 +6,8 @@ import { partitionByRenderer } from '../src/render/registry.ts';
 import { REDACTION_COLOR } from '../src/render/tuning.ts';
 import { viewObject } from './view-fixtures.ts';
 
-const hidden = { showSpoilers: false };
-const shown = { showSpoilers: true };
+const hidden = { showAll: false, revealed: new Set<string>() };
+const shown = { showAll: true, revealed: new Set<string>() };
 
 describe('buildBodyBuffers', () => {
   const objects = [

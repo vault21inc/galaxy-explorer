@@ -291,13 +291,42 @@
 - The spoiler policy store: default hidden; the top-bar toggle and Shift + S; remembered per browser in `localStorage` (wrap access in try/catch); per-item reveals.
 
 **Done when:**
-- [ ] Component tests cover each row of ux.md §6 that applies to the panel (text, whole entity, fact, link, relation).
-- [ ] E2E:
+- [x] Component tests cover each row of ux.md §6 that applies to the panel (text, whole entity, fact, link, relation).
+- [x] E2E:
   - a spoiler in the demo seed is hidden by default;
   - clicking the bar reveals only that item;
   - the toggle reveals everything;
   - a reload keeps the toggle state.
-- [ ] Hostile HTML planted in the seed renders inert, checked with an `alert` spy.
+- [x] Hostile HTML planted in the seed renders inert, checked with an `alert` spy.
+
+**Notes (done 2026-11-08):**
+- **Rich text is rendered from a tree, not from HTML (D-26).** `richTextTree(richText)` in `@ge/domain` turns all three formats into one small tree that holds only what `RICH_TEXT_POLICY` allows.
+  - **Markdown** goes through the existing `parseMarkdown` (GFM and `||spoiler||`). Raw HTML is skipped, headings start at h2, and disallowed links and images keep their text.
+  - **HTML** goes through htmlparser2. Disallowed tags are unwrapped, and `script`, `style`, `iframe` and the like are dropped with their content. No attribute survives except a checked `href`, `src` or `alt`.
+  - **Plain** text splits into paragraphs and line breaks.
+  - Inline spoilers are numbered in document order, nested ones belonging to the outer, as in `markdownToPlainText`.
+
+  `RichTextView` turns the tree into React elements and never sets HTML, so react-markdown, DOMPurify and html-react-parser weren't needed; architecture.md §9 is updated.
+- **`<Redactable>`** shows a hidden item as a bar about as long as its text, a button with "Potential spoiler: click to reveal". Shown spoiler content carries an eye-slash marker.
+- **Spoiler policy** (`state/spoilers.ts`): the domain's `SpoilerPolicy`, with `showAll` remembered per browser (try/catch storage) and `revealed` kept for the session.
+  - The top-bar "Spoilers: Hidden / Shown" toggle and Shift + S switch `showAll`.
+  - The bodies, regions, labels, announcer and switchers now read the same policy. Revealing an entity in the panel also reveals its body and label; revealing its name reveals the label.
+- **The switchers and the home page** show hidden spoiler universe and map names as bars. This closes the gap noted in M2-T1: "After the Fall" is a bar by default. The navigation and galaxy e2e tests start with spoilers shown.
+- **The info panel** (`panels/`) is lazy-loaded on the first selection, as its own chunk of 63.7 kB gzipped (it holds the rich-text parsers).
+  - **Sections:** the panel-sections registry lists header, summary, description, images (a count until M3), facts, links and relations. A kind gets an aspect's section only if the entity-kinds registry gives it that aspect, and the sections it shows decide `include`.
+  - **Layout:** collapsible and closable; a bottom sheet under 768 px.
+  - **Several selected objects** show a list.
+- **Relations name their other end:** `RelationRead.other` = `{ id, kind, namePlain, isSpoiler, nameSpoiler }`, from the reading entity's side.
+  - A relation whose other end the viewer can't see (a draft, for readers) is left out, so drafts no longer leak through relations.
+  - `spoilers=exclude` blacks out a hidden other-end name (`redactEntity`).
+  - New `useConfigList(resource, universeId)`, derived from the config-resources registry, supplies field definitions and subtypes.
+- **Hostile HTML in the seed:** Brennan's description carries an `onerror` image, a script, a `javascript:` link and a spoiler span with `onclick`. The server's sanitizer removes them on write, and the tree renderer would drop them anyway; a unit test feeds it the raw HTML.
+- **Tests:**
+  - 7 domain unit tests for `richTextTree`, including hostile HTML;
+  - 8 component tests: the ux.md §6 rows, rendered to static markup with explicit policies, plus `RichTextView` formats and hostile HTML;
+  - 2 more `labelText` cases and the config-list request paths;
+  - 1 API integration test (other ends, spoiler names under `exclude`, draft ends left out);
+  - 5 e2e tests in `spoilers.spec.ts` and an axe check with the panel open.
 
 ### M2-T8 Performance gate
 

@@ -163,7 +163,8 @@ export type KeyAction =
   | 'frame-selection'
   | 'clear-selection'
   | 'cycle-labels'
-  | 'show-all-labels';
+  | 'show-all-labels'
+  | 'toggle-spoilers';
 
 export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
   ArrowUp: 'pan-up',
@@ -185,4 +186,6 @@ export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
   l: 'cycle-labels',
   L: 'cycle-labels',
   ' ': 'show-all-labels',
+  // Shift + S shows or hides potential spoilers (ux.md §6); with Shift held, the key is "S".
+  S: 'toggle-spoilers',
 };

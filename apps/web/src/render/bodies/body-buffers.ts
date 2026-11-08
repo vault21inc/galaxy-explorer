@@ -1,4 +1,4 @@
-import type { ViewObject } from '@ge/domain';
+import { isHidden, spoilerKeys, type SpoilerPolicy, type ViewObject } from '@ge/domain';
 import { hexToLinear } from '../color.ts';
 import { labelText } from '../labels/label-text.ts';
 import type { DrawnObject, DrawnState } from '../scene-index.ts';
@@ -26,12 +26,9 @@ export interface BodyBuffers {
   drawn: DrawnObject[];
 }
 
-export interface SpoilerPolicy {
-  showSpoilers: boolean;
-}
-
+/** How an object is drawn: hidden spoilers stay hidden until shown or revealed (ux.md §6). */
 export function bodyState(object: ViewObject, policy: SpoilerPolicy): DrawnState {
-  if (object.isSpoiler && !policy.showSpoilers) return 'redacted';
+  if (isHidden(object.isSpoiler, spoilerKeys.record(object.id), policy)) return 'redacted';
   return object.status === 'draft' ? 'draft' : 'normal';
 }
 

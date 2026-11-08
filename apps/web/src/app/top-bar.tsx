@@ -1,13 +1,16 @@
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useUniverses } from '@/api/containers.ts';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu.tsx';
+import { containerName } from '@/lib/container-name.ts';
+import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { QualityPopover } from './quality-popover.tsx';
+import { SpoilerToggle } from './spoiler-toggle.tsx';
 import { Switcher } from './switcher.tsx';
 import { useUniverseRoute } from './use-universe-route.ts';
 
 /**
  * The top bar (ux.md §1): the app's name, the universe and map switchers, the breadcrumbs and
- * the settings. M2-T7 adds the spoiler toggle; M3 the edit toggle; M7 search.
+ * the spoiler toggle and the settings. M3 adds the edit toggle; M7 search.
  */
 export function TopBar() {
   const { universeSlug } = useParams();
@@ -24,6 +27,7 @@ export function TopBar() {
       </Link>
       {universeSlug !== undefined && <UniverseControls universeSlug={universeSlug} />}
       <div className="ml-auto flex items-center gap-1">
+        <SpoilerToggle />
         <QualityPopover />
       </div>
     </header>
@@ -35,6 +39,7 @@ function UniverseControls({ universeSlug }: { universeSlug: string }) {
   const navigate = useNavigate();
   const keep = useKeptParams();
   const universes = useUniverses();
+  const policy = useSpoilerPolicy();
   // Resolved without the map, so a mistyped map slug still shows the switchers to recover.
   const route = useUniverseRoute(universeSlug);
   if (route.status !== 'ready') return null;
@@ -45,10 +50,10 @@ function UniverseControls({ universeSlug }: { universeSlug: string }) {
       <Switcher
         label="Universe"
         value={route.universe.slug}
-        current={route.universe.namePlain}
+        current={containerName(route.universe, policy)}
         options={(universes.data ?? []).map((item) => ({
           value: item.slug,
-          label: item.namePlain,
+          label: containerName(item, policy),
         }))}
         onSelect={(slug) => void navigate(`/u/${slug}${keep}`)}
         footer={
@@ -61,8 +66,11 @@ function UniverseControls({ universeSlug }: { universeSlug: string }) {
         <Switcher
           label="Map"
           value={map?.slug ?? ''}
-          current={map?.namePlain ?? 'Choose a map'}
-          options={route.maps.map((item) => ({ value: item.slug, label: item.namePlain }))}
+          current={map ? containerName(map, policy) : 'Choose a map'}
+          options={route.maps.map((item) => ({
+            value: item.slug,
+            label: containerName(item, policy),
+          }))}
           onSelect={(slug) => void navigate(`/u/${universeSlug}/${slug}${keep}`)}
         />
       )}
