@@ -34,3 +34,24 @@ export class VersionConflict extends Error {
     this.current = current;
   }
 }
+
+/** A revert is blocked because these rows changed after the batch (409). */
+export class RevertConflicts extends Error {
+  override readonly name = 'RevertConflicts';
+  readonly conflicts: {
+    table: string;
+    primaryKey: Record<string, unknown>;
+    entityId: string | null;
+    name: string | null;
+  }[];
+
+  constructor(conflicts: RevertConflicts['conflicts']) {
+    const names = conflicts
+      .map((conflict) => conflict.name)
+      .filter((name): name is string => Boolean(name));
+    super(
+      `Can't revert: ${names.length > 0 ? names.join(', ') : 'some records'} changed after this batch. Revert the later changes first.`,
+    );
+    this.conflicts = conflicts;
+  }
+}

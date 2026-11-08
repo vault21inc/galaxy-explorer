@@ -142,6 +142,23 @@ describe.each(ENTITY_KINDS)('contract: %s', (kind) => {
       expect((await api.expect(204, 'DELETE', url, { version: 2 })).batchId).toMatch(UUID);
     }));
 
+  it("6c. lists every write in the universe's history", () =>
+    run(async (api) => {
+      const { entity, response, plural, world } = await created(api, kind);
+      const edit = await api.expect(200, 'PATCH', `/${plural}/${entity.id as string}`, {
+        version: 1,
+        isSpoiler: true,
+      });
+      const removal = await api.expect(204, 'DELETE', `/${plural}/${entity.id as string}`, {
+        version: 2,
+      });
+      const history = await api.expect(200, 'GET', `/universes/${world.universeId}/history`);
+      const ids = history.body.data.map((batch: { id: string }) => batch.id);
+      expect(ids).toEqual(
+        expect.arrayContaining([response.batchId, edit.batchId, removal.batchId]),
+      );
+    }));
+
   it('6b. upserts by external key: creates once, then updates the same entity', () =>
     run(async (api) => {
       const { scope, plural, body } = await created(api, kind);

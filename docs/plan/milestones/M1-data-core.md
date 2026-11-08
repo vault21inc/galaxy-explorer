@@ -316,7 +316,19 @@
 - `POST /history/{batchId}/revert` returns the new batch id. On a conflict it returns 409 listing the conflicting entities.
 
 **Done when:**
-- [ ] Integration tests cover listing, detail, revert, revert-of-revert (redo) and the 409 response shape.
+- [x] Integration tests cover listing, detail, revert, revert-of-revert (redo) and the 409 response shape.
+
+**Notes (done 2026-11-08):**
+- **The list** (`GET /universes/{id}/history`) sorts newest first by batch id: ids are UUIDv7, so id order is time order and the cursor is an id. It filters by `actorType`, `actorLabel`, `from` and `to`. Each batch shows `revertsBatchId` and `revertedBy` (the batches that reverted it).
+- **The detail** (`GET /history/{batchId}`) groups the change log by entity. Extension-table rows count as the entity's own fields. Aspect rows roll up to the entity they belong to, as "2 members added", "link removed" or "location set". Simple values show old→new ("Gudrun: x 120→140, name changed"); rich text and documents show "changed". Deleted entities are named from the log. Changes to universes, maps, settings and assets are listed separately under `other`. The wording logic is pure (`services/history-summary.ts`) and unit-tested.
+- **Revert** (`POST /history/{batchId}/revert`) returns 201 with the new batch id (also in `X-GE-Batch-Id`).
+  - On a conflict it returns 409 with `conflicts: [{ table, primaryKey, entityId, name }]` listing every conflicting row, not only the first one the database stopped at. The list comes from applying `ge_revert_batch`'s rules to each row's last change in the batch, compared with the current rows.
+  - The single-row `conflict` field from M1-T5 became this `conflicts` list.
+- **Bug fixed:** batches from the generated entity routes weren't linked to their universe, so plain object or place edits were missing from the universe's history. Creates now take the universe from the map (or path), and updates and deletes from the entity. A new contract step (6c) checks this for every kind and config resource.
+- **Tests:**
+  - 4 unit tests for the summary wording;
+  - 6 integration tests: listing with every filter and cursor pages; detail for an edit, a creation and a universe; revert and redo; restoring a deleted object with its child; a 409 listing two conflicting entities with nothing changed; 404;
+  - 9 contract tests for step 6c.
 
 ### M1-T9 View payload endpoints
 

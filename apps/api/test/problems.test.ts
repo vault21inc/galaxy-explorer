@@ -31,7 +31,10 @@ describe('problemForDomainError (architecture.md §12)', () => {
     [
       'RevertConflictError',
       new RevertConflictError('entities', { id: 'e1' }),
-      { status: 409, conflict: { table: 'entities', primaryKey: { id: 'e1' } } },
+      {
+        status: 409,
+        conflicts: [{ table: 'entities', primaryKey: { id: 'e1' }, entityId: null, name: null }],
+      },
     ],
     [
       'a unique violation',

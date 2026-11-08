@@ -94,6 +94,15 @@ describe.each(CONFIG_RESOURCES)('contract: %s', (resource) => {
       );
     }));
 
+  it("6c. lists every write in the universe's history", () =>
+    run(async (api) => {
+      const { item, response, plural, world } = await created(api, resource);
+      const removal = await api.expect(204, 'DELETE', `/${plural}/${item.id as string}`);
+      const history = await api.expect(200, 'GET', `/universes/${world.universeId}/history`);
+      const ids = history.body.data.map((batch: { id: string }) => batch.id);
+      expect(ids).toEqual(expect.arrayContaining([response.batchId, removal.batchId]));
+    }));
+
   it('7. reverting the batch restores the previous state', () =>
     run(async (api, db) => {
       const { item, plural } = await created(api, resource);

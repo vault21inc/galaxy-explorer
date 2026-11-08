@@ -149,4 +149,5 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-07:** M1-T4 done: the audit trigger on every content table, `withBatch`, `revertBatch` (undo, and redo as the revert of a revert, with conflict detection), `AUDITED_TABLES` and `CLONE_SPEC`.
 - **2026-11-07:** M1-T5 done: the generic entity service, aspect services, registry-driven rules, HTML sanitizing (XSS corpus), draft visibility and typed errors.
 - **2026-11-08:** M1-T6 done: REST routes generated from the registries (83 operations in Swagger), hand-written universe, map, aspect and member routes, and the generic contract suite for every kind and config resource.
-- **2026-11-08:** M1-T7 done: `POST /api/v1/batch` runs up to 1,000 operations as one change, with `$op:N` references, errors naming the failing operation, and dry runs that report their impact. Next: **M1-T8**, the history endpoints.
+- **2026-11-08:** M1-T7 done: `POST /api/v1/batch` runs up to 1,000 operations as one change, with `$op:N` references, errors naming the failing operation, and dry runs that report their impact.
+- **2026-11-08:** M1-T8 done: history list, per-entity batch summaries, and revert/redo over HTTP with a 409 that lists every conflicting entity. Next: **M1-T9**, the view payload endpoints.

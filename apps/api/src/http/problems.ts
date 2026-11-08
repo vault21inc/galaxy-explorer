@@ -7,7 +7,7 @@ import {
 import { BatchNotFoundError, databaseErrorOf, RevertConflictError } from '@ge/db';
 import { z } from 'zod';
 import { BatchOperationError } from '../services/batch-service.ts';
-import { NotFound, RuleViolation, VersionConflict } from '../services/errors.ts';
+import { NotFound, RevertConflicts, RuleViolation, VersionConflict } from '../services/errors.ts';
 
 /**
  * Every error response is an RFC 9457 "problem details" document
@@ -23,9 +23,16 @@ export const problemSchema = z.object({
   current: z.unknown().optional(),
   /** For a batch request: the index of the operation that failed (0-based). */
   operationIndex: z.int().optional(),
-  /** On a 409 revert conflict: the row that changed since the batch. */
-  conflict: z
-    .object({ table: z.string(), primaryKey: z.record(z.string(), z.unknown()) })
+  /** On a 409 revert conflict: the rows that changed since the batch, and their entities. */
+  conflicts: z
+    .array(
+      z.object({
+        table: z.string(),
+        primaryKey: z.record(z.string(), z.unknown()),
+        entityId: z.string().nullable(),
+        name: z.string().nullable(),
+      }),
+    )
     .optional(),
 });
 
@@ -37,7 +44,7 @@ export function problem(
   status: number,
   detail?: string,
   errors?: Problem['errors'],
-  extra: Pick<Problem, 'current' | 'conflict' | 'operationIndex'> = {},
+  extra: Pick<Problem, 'current' | 'conflicts' | 'operationIndex'> = {},
 ): Problem {
   return {
     type: 'about:blank',
@@ -105,9 +112,12 @@ export function problemForDomainError(error: unknown): Problem | undefined {
     return problem(404, error.message);
   if (error instanceof VersionConflict)
     return problem(409, error.message, undefined, { current: error.current });
+  if (error instanceof RevertConflicts) {
+    return problem(409, error.message, undefined, { conflicts: error.conflicts });
+  }
   if (error instanceof RevertConflictError) {
     return problem(409, error.message, undefined, {
-      conflict: { table: error.table, primaryKey: error.primaryKey },
+      conflicts: [{ table: error.table, primaryKey: error.primaryKey, entityId: null, name: null }],
     });
   }
   if (error instanceof z.ZodError) {

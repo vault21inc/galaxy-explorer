@@ -1,4 +1,5 @@
-import type { Database } from '@ge/db';
+import { schema, type Database } from '@ge/db';
+import { eq } from 'drizzle-orm';
 import { ENTITY_KINDS, entityKinds, schemasFor, type EntityKind } from '@ge/domain';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
@@ -48,6 +49,25 @@ function registerKind(app: App, db: Database, kind: EntityKind): void {
   const scopePath = scoped ? '/maps/:mapId' : '/universes/:universeId';
   const scopeOf = (params: { mapId?: string; universeId?: string }) =>
     scoped ? { mapId: params.mapId ?? '' } : { universeId: params.universeId ?? '' };
+  /**
+   * The universe a write belongs to, so its batch shows in that universe's history. Unknown
+   * ids give no universe here; the service then answers 404.
+   */
+  const universeOfScope = async (params: { mapId?: string; universeId?: string }) => {
+    if (!scoped) return { universeId: params.universeId ?? null };
+    const [map] = await db
+      .select({ universeId: schema.maps.universeId })
+      .from(schema.maps)
+      .where(eq(schema.maps.id, params.mapId ?? ''));
+    return { universeId: map?.universeId ?? null };
+  };
+  const universeOfEntity = async (id: string) => {
+    const [entity] = await db
+      .select({ universeId: schema.entities.universeId })
+      .from(schema.entities)
+      .where(eq(schema.entities.id, id));
+    return { universeId: entity?.universeId ?? null };
+  };
   const docs = (summary: string, extra = '') => ({
     tags: [plural],
     summary,
@@ -103,8 +123,13 @@ function registerKind(app: App, db: Database, kind: EntityKind): void {
       },
     },
     async (request, reply) => {
-      const data = await inBatch(db, request, reply, `Create ${one}`, {}, (tx) =>
-        createEntity(tx, kind, scopeOf(request.params), request.body as never),
+      const data = await inBatch(
+        db,
+        request,
+        reply,
+        `Create ${one}`,
+        await universeOfScope(request.params),
+        (tx) => createEntity(tx, kind, scopeOf(request.params), request.body as never),
       );
       return reply.code(201).send({ data } as never);
     },
@@ -135,7 +160,7 @@ function registerKind(app: App, db: Database, kind: EntityKind): void {
         request,
         reply,
         `Upsert ${one} ${externalKey}`,
-        {},
+        await universeOfScope(params),
         (tx) => upsertEntityByKey(tx, kind, scopeOf(params), externalKey, request.body as never),
       );
       return reply.code(created ? 201 : 200).send({ data: entity } as never);
@@ -178,8 +203,13 @@ function registerKind(app: App, db: Database, kind: EntityKind): void {
       },
     },
     async (request, reply) => {
-      const data = await inBatch(db, request, reply, `Edit ${one}`, {}, (tx) =>
-        updateEntity(tx, kind, request.params.id, request.body as never),
+      const data = await inBatch(
+        db,
+        request,
+        reply,
+        `Edit ${one}`,
+        await universeOfEntity(request.params.id),
+        (tx) => updateEntity(tx, kind, request.params.id, request.body as never),
       );
       return { data } as never;
     },
@@ -200,8 +230,13 @@ function registerKind(app: App, db: Database, kind: EntityKind): void {
       },
     },
     async (request, reply) => {
-      await inBatch(db, request, reply, `Delete ${one}`, {}, (tx) =>
-        deleteEntity(tx, kind, request.params.id, request.body.version),
+      await inBatch(
+        db,
+        request,
+        reply,
+        `Delete ${one}`,
+        await universeOfEntity(request.params.id),
+        (tx) => deleteEntity(tx, kind, request.params.id, request.body.version),
       );
       return reply.code(204).send(null);
     },

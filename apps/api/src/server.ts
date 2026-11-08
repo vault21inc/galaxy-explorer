@@ -19,6 +19,7 @@ import { containerRoutes } from './routes/containers.ts';
 import { contentRoutes } from './routes/content-routes.ts';
 import { entityRoutes } from './routes/entities.ts';
 import { healthRoutes } from './routes/health.ts';
+import { historyRoutes } from './routes/history.ts';
 import { placementRoutes } from './routes/placement-routes.ts';
 import { openApiTags } from './routes/tags.ts';
 
@@ -76,6 +77,7 @@ export async function buildServer(config: Config) {
       await v1.register(contentRoutes, { db });
       await v1.register(placementRoutes, { db });
       await v1.register(batchRoutes, { db });
+      await v1.register(historyRoutes, { db });
     },
     { prefix: '/api/v1' },
   );
