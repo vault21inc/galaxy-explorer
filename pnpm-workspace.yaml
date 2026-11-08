@@ -27,3 +27,9 @@ savePrefix: ''
 # script to double-check its platform binary, which pnpm already installs, so it stays off.
 allowBuilds:
   esbuild: false
+
+# openapi-typescript 7 declares TypeScript 5 as a peer, but generates the API client correctly
+# with our TypeScript 6 (M1-T10); CI's freshness check would show any difference.
+peerDependencyRules:
+  allowedVersions:
+    openapi-typescript>typescript: '6'

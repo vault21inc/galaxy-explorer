@@ -4,15 +4,18 @@ import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 import { createDatabase } from '@ge/db';
 import Fastify from 'fastify';
+import { openApiComponents } from '@ge/domain';
+import { z } from 'zod';
 import {
   jsonSchemaTransform,
+  jsonSchemaTransformObject,
   serializerCompiler,
   validatorCompiler,
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import packageJson from '../package.json' with { type: 'json' };
 import type { Config } from './config.ts';
-import { handleError, handleNotFound } from './http/problems.ts';
+import { handleError, handleNotFound, problemSchema } from './http/problems.ts';
 import { batchRoutes } from './routes/batch.ts';
 import { configRoutes } from './routes/config.ts';
 import { containerRoutes } from './routes/containers.ts';
@@ -28,7 +31,15 @@ import { openApiTags } from './routes/tags.ts';
  * Builds the API without listening on a port, so tests can call `app.inject()`.
  * `src/main.ts` adds the listening and signal handling.
  */
+/** Names the shared shapes in Zod's registry, which the OpenAPI document turns into components. */
+function registerComponents(): void {
+  for (const [id, schema] of Object.entries({ ...openApiComponents(), Problem: problemSchema })) {
+    if (!z.globalRegistry.has(schema)) z.globalRegistry.add(schema, { id });
+  }
+}
+
 export async function buildServer(config: Config) {
+  registerComponents();
   const app = Fastify({
     logger: {
       level: config.logLevel,
@@ -65,6 +76,8 @@ export async function buildServer(config: Config) {
       tags: openApiTags(),
     },
     transform: jsonSchemaTransform,
+    // Named shapes become components/schemas and are referenced, not repeated per route.
+    transformObject: jsonSchemaTransformObject,
   });
   await app.register(fastifySwaggerUi, { routePrefix: '/api/docs' });
 

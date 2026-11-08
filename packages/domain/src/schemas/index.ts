@@ -50,3 +50,4 @@ export {
   ViewObject,
   ViewPin,
 } from './views.ts';
+export { openApiComponents } from './components.ts';

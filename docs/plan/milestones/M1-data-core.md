@@ -373,8 +373,25 @@
 - CI regenerates the client and fails if the result differs from what's committed.
 
 **Done when:**
-- [ ] A test calls the health and objects endpoints through the typed client.
-- [ ] Changing a route schema without regenerating fails CI.
+- [x] A test calls the health and objects endpoints through the typed client.
+- [x] Changing a route schema without regenerating fails CI.
+
+**Notes (done 2026-11-08):**
+- **`pnpm api:generate`:**
+  1. `apps/api/src/openapi-cli.ts` builds the server in-process with a dummy database URL (the pool connects lazily, so nothing is contacted) and writes `packages/api-client/openapi.json`;
+  2. openapi-typescript 7.13.0 writes `src/generated/schema.ts`, with `--default-non-nullable false` so fields with a server default (such as `RichText.spoiler`) stay optional in request bodies.
+  - Both generated files are skipped by Prettier and ESLint.
+- **Shared component schemas:** the OpenAPI document now names its shared shapes once under `components/schemas` (`RichText`, `Appearance`, the aspect, universe, map, batch and view shapes, each kind's `…Create`, `…Update`, `…Read` and `…Detail`, and `Problem`) and refers to them, instead of repeating them in every route. `openApiComponents()` in `@ge/domain` lists them, and the API registers them at startup. The document shrank from 3.2 MB to 719 kB, and the types from 919 kB to 346 kB. Zod adds `…Input` variants where a shape differs between requests and responses.
+- **`createApiClient({ baseUrl, getAuthHeader?, onBatch?, fetch? })`** returns the typed openapi-fetch client, with middleware that adds the `Authorization` header and reports every `X-GE-Batch-Id` to `onBatch`, which is what the editor's undo stack needs.
+- **`unwrap(call)`** returns the payload inside `{ data }` (lists keep `nextCursor`) and throws `ApiError { status, problem }` for problem responses, so the request and response types stay exact for each path. Wrapping every client method instead would have meant re-implementing openapi-fetch's generic types.
+- **Where the test lives:** the client may not import the API or the database (architecture §2). Its integration test therefore resets a `ge_client_test` database and starts the real API as a child process on port 3102, as Playwright does, and talks to it over HTTP.
+- **The freshness check:** `pnpm api:check` regenerates and runs `git diff --exit-code` on the generated files, and CI runs it after install. It was checked both ways: it passes on a clean tree, and fails, showing the stale lines, after a route summary changes without regenerating.
+- **Dependencies:** openapi-fetch 0.17.0; openapi-typescript 7.13.0 (dev), whose TypeScript 5 peer range is widened to 6 in `pnpm-workspace.yaml`; and @types/node in api-client, for the test setup. The api-client tsconfig gains the DOM types, for `fetch`, `Request` and `Response`.
+- **Tests:** 4 integration tests through the typed client:
+  - health;
+  - universe, map and object create, get with `include`, list with `parentId=null`, update, delete, and the 5 batch ids reported;
+  - `ApiError` for a 404 and a 422 with paths;
+  - the `Authorization` header.
 
 ### M1-T11 Seeds
 

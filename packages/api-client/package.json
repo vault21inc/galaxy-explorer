@@ -10,13 +10,20 @@
   "scripts": {
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --project unit --passWithNoTests",
+    "generate": "openapi-typescript openapi.json --output src/generated/schema.ts --default-non-nullable false",
+    "test:integration": "vitest run --project integration"
   },
   "devDependencies": {
     "@ge/config": "workspace:*",
+    "@types/node": "catalog:",
     "eslint": "catalog:",
+    "openapi-typescript": "7.13.0",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"
+  },
+  "dependencies": {
+    "openapi-fetch": "0.17.0"
   }
 }

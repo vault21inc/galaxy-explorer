@@ -17,11 +17,24 @@ import { redactedItem } from '../http/schemas.ts';
 
 const listOf = <T extends z.ZodType>(item: T) => z.array(z.union([item, redactedItem])).optional();
 
+const responses = new Map<EntityKind, z.ZodType>();
+
 /**
  * What a read returns: the kind's read schema, plus the aspects `include` asked for. Under
- * `spoilers=exclude` an aspect item may be a redacted placeholder instead.
+ * `spoilers=exclude` an aspect item may be a redacted placeholder instead. Built once per kind
+ * and named (`CelestialObjectDetail`), so the OpenAPI document defines it once.
  */
 export function entityResponse(kind: EntityKind) {
+  const existing = responses.get(kind);
+  if (existing) return existing as ReturnType<typeof buildResponse>;
+  const schema = buildResponse(kind);
+  const id = `${kind.replace(/(^|_)([a-z])/g, (_match, _sep, letter: string) => letter.toUpperCase())}Detail`;
+  if (!z.globalRegistry.has(schema)) z.globalRegistry.add(schema, { id });
+  responses.set(kind, schema);
+  return schema;
+}
+
+function buildResponse(kind: EntityKind) {
   return schemasFor(kind).read.extend({
     facts: listOf(FactRead),
     images: listOf(ImageRead),

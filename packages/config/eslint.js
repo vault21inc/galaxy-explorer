@@ -24,7 +24,8 @@ export function configFor(packageName, packageDir, { react = false } = {}) {
   }
 
   return defineConfig(
-    { ignores: ['dist/', 'coverage/'] },
+    // src/generated/ holds generated code, such as the API client's types (M1-T10).
+    { ignores: ['dist/', 'coverage/', 'src/generated/'] },
     js.configs.recommended,
     tseslint.configs.strictTypeChecked,
     tseslint.configs.stylisticTypeChecked,

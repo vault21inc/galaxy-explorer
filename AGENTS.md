@@ -30,13 +30,14 @@ Run from the repository root. Each one listed here exists and runs; the last tab
 | `pnpm build` | production build of the web app into `apps/web/dist` |
 | `pnpm db:migrate` / `pnpm db:reset` | apply migrations / drop, create and migrate the dev database (local databases only) |
 | `pnpm db:generate` | generate a migration from `packages/db/src/schema` with drizzle-kit; add `--custom` for an empty one to write by hand |
+| `pnpm api:generate` | regenerate `packages/api-client` (`openapi.json` and `src/generated/schema.ts`) from the API's routes; **run it after changing any route or API schema, and commit the result** |
+| `pnpm api:check` | regenerate the client and fail if it differs from what's committed (CI runs this) |
 
 Added by later tasks; update this file when you add one:
 
 | Command | Does | Added in |
 |---|---|---|
 | `pnpm db:seed demo` / `pnpm db:seed stress` | seed the demo universe / the 5,000-object performance map; `db:reset` then seeds too | M1-T11 |
-| `pnpm api:generate` | regenerate `packages/api-client` from the API's OpenAPI document | M1-T10 |
 | `pnpm perf` | scripted performance run on the owner's Mac, checked against the budgets ([docs/perf/README.md](docs/perf/README.md)) | M2-T8 |
 
 ## Non-negotiables

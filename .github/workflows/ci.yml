@@ -64,6 +64,11 @@ jobs:
       - name: Format check, lint, typecheck and unit tests
         run: pnpm check
 
+      # The client is generated from the API's routes (M1-T10). A route change without
+      # `pnpm api:generate` leaves the committed client stale, which fails here.
+      - name: API client is up to date
+        run: pnpm api:check
+
       - name: Integration tests
         run: pnpm test:integration
 
