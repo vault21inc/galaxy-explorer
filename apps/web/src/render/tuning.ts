@@ -51,6 +51,14 @@ export const QUALITY_LEVELS = ['low', 'medium', 'high'] as const satisfies reado
 export const DEFAULT_QUALITY: QualityLevel = 'medium';
 
 /**
+ * Stepping down automatically (rendering.md §13): if the median frame rate stays below
+ * QUALITY_FLOOR_FPS for QUALITY_WINDOW_MS of rendering, the quality drops one level. It never
+ * steps up on its own; the reader can raise it again in the settings.
+ */
+export const QUALITY_FLOOR_FPS = 45;
+export const QUALITY_WINDOW_MS = 2_000;
+
+/**
  * While the camera moves, the pixel ratio drops to this fraction of its resting value
  * (R3F's `performance.min`, applied by drei's `<AdaptiveDpr>`), then returns when the camera
  * settles. Lighter while moving, crisp when still.

@@ -17,6 +17,8 @@ coverage/
 playwright-report/
 test-results/
 blob-report/
+# Raw `pnpm perf` results; the report in docs/perf/ is what's committed
+scripts/perf/results/
 
 # Personal Claude Code settings
 .claude/settings.local.json

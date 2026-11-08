@@ -1,4 +1,4 @@
-import { AdaptiveDpr, CameraControls, PerformanceMonitor } from '@react-three/drei';
+import { AdaptiveDpr, CameraControls } from '@react-three/drei';
 import { Canvas, type RootState } from '@react-three/fiber';
 import { useState } from 'react';
 import { InputBindings } from '@/input/input-bindings.tsx';
@@ -6,6 +6,7 @@ import { useQuality, useQualityPreset } from '@/state/quality.ts';
 import { attachCanvas, DIAGNOSTICS_ENABLED, loadTestHooks } from './diagnostics.ts';
 import { FrameProbe } from './frame-probe.tsx';
 import { LabelDriver } from './labels/label-driver.tsx';
+import { QualityGuard } from './quality-guard.tsx';
 import { Sky } from './sky.tsx';
 import { ViewHost } from './view-host.tsx';
 import {
@@ -53,9 +54,8 @@ export function Stage() {
       performance={{ min: MOVING_RESOLUTION_FACTOR }}
       onCreated={onCreated}
     >
-      {/* Watches the frame rate while frames render. M2 connects `onDecline` to the quality
-          setting, stepping down one level when it stays low (rendering.md §13). */}
-      <PerformanceMonitor />
+      {/* Steps the quality down when frames stay slow (rendering.md §13). */}
+      <QualityGuard />
       <AdaptiveDpr />
       <CameraControls
         makeDefault

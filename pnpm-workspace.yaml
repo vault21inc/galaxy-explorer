@@ -1,10 +1,13 @@
 packages:
   - apps/*
   - packages/*
+  - scripts/*
 
 # Tool versions, pinned once for every package. Package manifests refer to them as "catalog:".
 catalog:
   '@eslint/js': 10.0.1
+  # Used by the web app's end-to-end tests and by `pnpm perf`.
+  '@playwright/test': 1.65.0
   '@types/node': 26.6.6
   eslint: 10.14.0
   '@types/pg': 8.23.1

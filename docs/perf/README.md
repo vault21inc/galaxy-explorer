@@ -49,11 +49,22 @@ Until `pnpm perf` exists (M2-T8):
 
 ## `pnpm perf`
 
-Added in M2-T8 (rendering.md §14). It will:
-1. seed the stress map (5,000 objects, 300 groups, 50 routes);
-2. run a scripted 20-second camera path in a real, visible browser;
-3. check the numbers against the budget;
-4. write a dated report to this folder.
+Added in M2-T8 (rendering.md §14). Run it on the reference Mac, with nothing else heavy running, and with the browser windows on the built-in display: they open on the screen that has focus.
+
+1. Builds the web app with the test hooks and starts it on port 4174, with its own API on 3103.
+2. Resets the `ge_perf` database on the test server and seeds the stress map.
+3. Drives a visible Google Chrome, then WebKit, along the scripted path:
+   - loads the stress map, and times the first frame that shows the background, every body and region, and the depth stars;
+   - sits idle for 3 s;
+   - orbits, pans, and zooms toward the cursor (pointer steps 16 ms apart);
+   - orbits again holding Space, with every label shown;
+   - sits idle 3 s after each phase.
+4. Writes `docs/perf/<date>-M2.md` (`PERF_LABEL` changes the milestone) with every budget of rendering.md §2 it can measure, and exits with an error if one is missed. Raw results stay in `scripts/perf/results/` (not committed).
+
+Reading it:
+- **Frame times can't beat the display.** On a 240 Hz external display the median is 4.2 ms; Playwright's WebKit draws at 60 Hz, so its median is one 16.7 ms frame.
+- **WebKit rounds timers to whole milliseconds,** so its numbers carry ±1 ms. The 60 fps check allows that, and its label timings aren't judged.
+- **Playwright's WebKit is not Safari.** It's the same engine, but a Safari reading with `?perf=1` on the built-in display is the real check (the owner's, in the milestone report).
 
 ## Baselines
 

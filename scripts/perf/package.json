@@ -1,0 +1,20 @@
+{
+  "name": "@ge/perf",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "`pnpm perf`: the scripted performance run against the budgets (rendering.md §2, §14).",
+  "scripts": {
+    "perf": "playwright test -c playwright.config.ts && node report.ts",
+    "report": "node report.ts",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@ge/config": "workspace:*",
+    "@playwright/test": "catalog:",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:"
+  }
+}

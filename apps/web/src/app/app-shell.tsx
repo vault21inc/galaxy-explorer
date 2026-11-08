@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Outlet, useSearchParams } from 'react-router';
 import { LabelLayer } from '@/render/labels/label-layer.tsx';
 import { Stage } from '@/render/stage.tsx';
+import { QualityNotice } from './quality-notice.tsx';
 import { TopBar } from './top-bar.tsx';
 
 // Loaded only in development, and only when `?perf=1` asks for it.
@@ -25,6 +26,7 @@ export function AppShell() {
       <LabelLayer />
       <TopBar />
       <Outlet />
+      <QualityNotice />
       {showPerfHud && (
         <Suspense fallback={null}>
           <PerfHud />

@@ -23,8 +23,11 @@ export interface GeTestHooks {
   /** Frames rendered since the page loaded. */
   readonly frameCount: number;
   renderInfo(): RenderInfo | undefined;
-  /** Frame-time statistics since the last `resetFrameStats()`. */
-  frameStats(): FrameStats;
+  /**
+   * Frame-time statistics since the last `resetFrameStats()`, or since `sinceMs` (a
+   * `performance.now()` time) when given.
+   */
+  frameStats(sinceMs?: number): FrameStats;
   resetFrameStats(): void;
   /** Where the camera is and what it looks at, in scene units. */
   cameraPose(): { position: [number, number, number]; target: [number, number, number] } | null;
@@ -64,7 +67,8 @@ export function installTestHooks(): void {
       return frameTimeline.frameCount;
     },
     renderInfo,
-    frameStats: () => frameTimeline.stats(),
+    frameStats: (sinceMs?: number) =>
+      sinceMs === undefined ? frameTimeline.stats() : frameTimeline.stats(sinceMs),
     resetFrameStats: () => {
       frameTimeline.reset(performance.now());
     },

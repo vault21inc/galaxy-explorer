@@ -35,7 +35,7 @@ These are **acceptance criteria**. A milestone that touches 3D isn't done until 
 ### Hard rules
 
 1. **Render on demand.** The canvas uses `frameloop="demand"`. Anything that changes the picture calls `invalidate()`. Frames render continuously only while the camera moves or a transition plays; ambient motion (planet spin, cloud drift) is opt-in and capped at 30 fps.
-2. **Cap the pixel ratio.** DPR is limited to 1.5 by default and drops during interaction (drei `<PerformanceMonitor>` plus `<AdaptiveDpr>`). The picture is crisp when still and lighter while moving. Only the "High" quality setting allows 2.
+2. **Cap the pixel ratio.** DPR is limited to 1.5 by default and drops during interaction (camera-controls' `regress` plus drei's `<AdaptiveDpr>`; the quality guard of §13 steps the setting down if frames stay slow). The picture is crisp when still and lighter while moving. Only the "High" quality setting allows 2.
 3. **No per-frame React work.** Camera pose, hover, projected positions and label placement live in refs or zustand transient subscriptions, never in React state that re-renders components each frame.
 4. **No allocations in `useFrame`.** Reuse vectors and matrices from module-level scratch objects.
 5. **Instance or merge anything repeated more than about 20 times:** bodies, pins, selection rings, belt particles, orbit rings, group outlines, routes.
@@ -63,7 +63,7 @@ Each rule removes one of the usual causes of a hot, laggy three.js page: continu
   performance={{ min: 0.5 }}             // allow AdaptiveDpr to lower resolution while moving
   onCreated={({ gl }) => gl.setClearColor('#03050a')}
 >
-  <PerformanceMonitor onDecline={quality.stepDown} />
+  <QualityGuard />                       // steps quality down when frames stay slow (§13)
   <AdaptiveDpr />
   <ViewHost />                           // renders the current view from the levels registry (§4)
   <FrameProbe />                         // counts frames for the HUD and test hooks (§14)
@@ -295,7 +295,9 @@ Input mapping comes from the bindings table (ux.md §3). camera-controls has no 
 | Medium (default) | ≤ 1.5, lower while moving | on | 20,000 | 2,048 × 1,024 | |
 | High | ≤ 2 | on | 40,000 | 4,096 × 2,048 | |
 
-  `PerformanceMonitor` steps down one setting if the median fps stays below 45 for 2 seconds of interaction, and shows a small notice. It never steps up automatically.
+  The quality guard steps down one setting if the median fps stays below 45 for 2 seconds of interaction, and shows a small notice. It never steps up automatically.
+  - It's our own `FrameRateGuard` (M2-T8), not drei's `PerformanceMonitor`. That one counts frames per 250 ms window and keeps its first timestamp across idle time, so under on-demand rendering every pause would read as a low frame rate. The guard measures intervals between rendered frames and skips idle gaps, as the HUD does.
+  - It's off under automation (`navigator.webdriver`), so tests and `pnpm perf` measure the default quality.
 
 ## 14. Test hooks and performance measurement
 
@@ -322,7 +324,7 @@ interface GeTestHooks {
 ```
 
 - **E2E tests** click and drag at `screenPositionOf(id)` with real mouse events, then assert through the hooks: for example, after a double-click, `level()` is `system`.
-- **`pnpm perf`** (Playwright, headed, on the owner's Mac):
+- **`pnpm perf`** (Playwright, headed, on the owner's Mac; `scripts/perf/`, M2-T8):
   1. Seeds the stress map.
   2. Runs a scripted 20 s path: orbit, pan, zoom to cursor, enter a system, enter a planet, exit twice.
   3. Records `frameStats()` and `renderInfo()` per phase.

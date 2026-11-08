@@ -56,4 +56,10 @@ export const WORKSPACE_PACKAGES = [
     dir: 'apps/mcp',
     mustNotImport: ['@ge/db', '@ge/api', '@ge/web'],
   },
+  {
+    name: '@ge/perf',
+    dir: 'scripts/perf',
+    // `pnpm perf` drives the built app in a browser, like a reader: no workspace code.
+    mustNotImport: ['@ge/domain', '@ge/db', '@ge/api', '@ge/api-client', '@ge/web', '@ge/mcp'],
+  },
 ];

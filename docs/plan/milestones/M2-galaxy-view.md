@@ -337,11 +337,43 @@
   2. Runs Playwright headed on Chrome, then WebKit.
   3. Follows the scripted path from rendering.md §14 (galaxy-only parts for now).
   4. Writes `docs/perf/<date>-M2.md` with median and p95 frame times, draw calls, idle frames and the first-frame time.
-- Wire up the quality settings (rendering.md §13): `PerformanceMonitor` stepping down, `AdaptiveDpr`.
+- Wire up the quality settings (rendering.md §13): stepping down when frames stay slow (`PerformanceMonitor` in the plan; our own guard, see the notes), `AdaptiveDpr`.
 - Fix whatever misses the budget.
 
 **Done when:**
-- [ ] The galaxy view meets **every** galaxy-view row of rendering.md §2 on the reference Mac in Chrome and Safari, and the report is committed.
+- [ ] The galaxy view meets **every** galaxy-view row of rendering.md §2 on the reference Mac in Chrome and Safari, and the report is committed. *`pnpm perf` passes every row it measures in Google Chrome and Playwright's WebKit ([2026-11-08-M2.md](../../perf/2026-11-08-M2.md)). Still to do: the owner's reading in Safari itself, on the built-in display (the windows opened on the 240 Hz external display).*
+
+**Notes (2026-11-08):**
+- **`pnpm perf`** (`scripts/perf/`, a new workspace package, `@ge/perf`) is a Playwright run. It builds the app with the test hooks, uses its own `ge_perf` database (reset and seeded with the stress map) and ports 3103 and 4174, and drives the installed Google Chrome, then WebKit, headed at 1440 × 900, DPR 2. `report.ts` writes `docs/perf/<date>-M2.md` and exits with an error on a missed budget.
+- **The path** (galaxy-only parts of rendering.md §14):
+  - the first galaxy frame (background, every body and region, the depth stars), timed in the page from navigation;
+  - 3 s idle;
+  - orbit, pan and zoom toward the cursor, as "interaction";
+  - an orbit with Space held (label updates);
+  - 3 s idle after each phase.
+
+  It also records the display's refresh rate, draw calls, triangles and points, and geometries and textures at the start and the end.
+- **What's checked:** idle frames, the interaction median (60 fps) and p95 (25 ms), draw calls (≤ 50), the first frame (≤ 2 s), label updates (≤ 2 ms, Chromium only: WebKit's timer is too coarse), geometries and textures stable, and initial JavaScript (≤ 600 kB gzipped, with the galaxy view in its own chunk).
+  - WebKit gets 1 ms of leeway on the 60 fps median: it rounds `performance.now()`, so its 60 Hz frames read 16/17 ms.
+  - View transitions and 20 view round trips arrive with M5.
+- **Results:** every measured row passes.
+
+  | | Chrome 156 (238 Hz) | WebKit 27.2 (59 Hz) |
+  |---|---|---|
+  | Interaction, median / p95 | 4.2 / 4.7 ms | 17.0 / 18.0 ms |
+  | Draw calls | 6 | 6 |
+  | First galaxy frame | about 450 ms | about 490 ms |
+  | Label updates, p95 | 1.0 ms with about 110 labels | |
+  | Idle | 0 frames | 0 frames |
+  | Initial JavaScript | 439 kB gzipped | |
+
+  Nothing missed the budget, so nothing needed fixing.
+- **The quality guard** (rendering.md §13) is our own `FrameRateGuard`, not drei's `PerformanceMonitor`. That one counts frames per 250 ms window and keeps its first timestamp across idle time, so on-demand rendering's pauses read as low frame rates and would step quality down for nothing.
+  - The guard takes intervals between rendered frames, skips idle gaps (as the HUD does), and steps down one level when the median stays under 45 fps for 2 s of rendering. It shows a dismissible notice and never steps up.
+  - It's off under automation (`navigator.webdriver`): the e2e tests render in software, and `pnpm perf` must measure the default quality.
+  - `AdaptiveDpr` with camera-controls' `regress` was already in place (M0-T6).
+- **Test hooks:** `frameStats(sinceMs)` can read a window spanning several phases.
+- **Tests:** 5 unit tests for the guard and the step-down. `pnpm perf` itself is the gate; CI doesn't run it, because it needs the reference Mac and a display.
 
 ---
 

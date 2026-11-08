@@ -10,7 +10,12 @@ import {
 
 interface QualityState {
   level: QualityLevel;
+  /** A short message after an automatic step-down, until dismissed. Not remembered. */
+  notice: string | null;
   setLevel: (level: QualityLevel) => void;
+  /** Lowers the level by one, if it can, and says so. */
+  stepDown: () => void;
+  dismissNotice: () => void;
 }
 
 /**
@@ -19,10 +24,23 @@ interface QualityState {
  */
 export const useQuality = create<QualityState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       level: DEFAULT_QUALITY,
+      notice: null,
       setLevel: (level) => {
         set({ level });
+      },
+      stepDown: () => {
+        const index = QUALITY_LEVELS.indexOf(get().level);
+        const lower = QUALITY_LEVELS[index - 1];
+        if (!lower) return;
+        set({
+          level: lower,
+          notice: `Quality lowered to ${lower[0]?.toUpperCase() ?? ''}${lower.slice(1)} to keep the view smooth.`,
+        });
+      },
+      dismissNotice: () => {
+        set({ notice: null });
       },
     }),
     {
