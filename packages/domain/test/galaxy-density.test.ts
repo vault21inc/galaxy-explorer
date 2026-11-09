@@ -55,9 +55,13 @@ describe('sampleGalaxyPosition', () => {
 });
 
 describe('the central bar (D-24)', () => {
-  /** FNV-1a over the float bits of the first 1,000 positions: any change changes the hash. */
+  /**
+   * FNV-1a over the first 1,000 positions as 32-bit floats: any real change changes the hash.
+   * Not 64-bit: the last bits of Math.log and Math.cos differ between platforms (macOS and the
+   * Linux CI), which 32-bit rounding hides, as in the web app's pinned point hash.
+   */
   const hashOf = (settings: ReturnType<typeof resolveGalaxySettings>, seed: number) => {
-    const values = new Float64Array(sample(1_000, settings, seed).flat());
+    const values = new Float32Array(sample(1_000, settings, seed).flat());
     let hash = 0x811c9dc5;
     for (const word of new Uint32Array(values.buffer)) {
       hash ^= word;
@@ -68,9 +72,9 @@ describe('the central bar (D-24)', () => {
 
   it('without a bar, the sampler draws exactly what it drew before bars existed', () => {
     // Pinned before the bar was added: existing maps and the stress seed stay as they were.
-    expect(hashOf(GALAXY_DEFAULTS, 1)).toBe('2bc19a5f');
-    expect(hashOf(resolveGalaxySettings({ arms: 0, seed: 5 }), 5)).toBe('faaccee6');
-    expect(hashOf(resolveGalaxySettings({ arms: 2, armTwist: 0.6 }), 9)).toBe('69f6ee3e');
+    expect(hashOf(GALAXY_DEFAULTS, 1)).toBe('00235d92');
+    expect(hashOf(resolveGalaxySettings({ arms: 0, seed: 5 }), 5)).toBe('948101d8');
+    expect(hashOf(resolveGalaxySettings({ arms: 2, armTwist: 0.6 }), 9)).toBe('f7990c4b');
   });
 
   it('puts stars along the X axis near the center', () => {
