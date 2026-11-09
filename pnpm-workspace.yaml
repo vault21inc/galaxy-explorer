@@ -19,7 +19,7 @@ catalog:
   # typescript-eslint 8 supports TypeScript below 6.1, so TypeScript 7 (the native port) waits for it.
   typescript: 6.0.3
   typescript-eslint: 8.72.1
-  vite: 8.3.5
+  vite: 8.3.6
   vitest: 5.1.0
   zod: 4.6.7
 
