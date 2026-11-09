@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { flyTo } from '@/render/camera/fly-to.ts';
 import { resetViewCamera } from '@/render/camera/use-view-camera.ts';
 import { drawnObject, type DrawnObject } from '@/render/scene-index.ts';
+import { useEditor } from '@/state/editor.ts';
 import { useLabels } from '@/state/labels.ts';
 import { useSpoilers } from '@/state/spoilers.ts';
 import { useSelection } from '@/state/selection.ts';
@@ -57,6 +58,9 @@ export function useKeyboard(): void {
           return;
         case 'cycle-labels':
           useLabels.getState().cycle();
+          return;
+        case 'toggle-edit':
+          useEditor.getState().toggle();
           return;
         case 'toggle-spoilers':
           useSpoilers.getState().toggle();

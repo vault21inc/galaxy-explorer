@@ -22,7 +22,7 @@ interface RedactableProps {
  * spoiler content carries a small eye-slash marker, so readers know it was flagged.
  */
 export function Redactable({ flagged, revealKey, hiddenText, block, children }: RedactableProps) {
-  const { policy, reveal } = useSpoilerContext();
+  const { policy, reveal, marked } = useSpoilerContext();
   if (!flagged) return <>{children}</>;
   if (isHidden(true, revealKey, policy)) {
     const Wrapper = block ? 'div' : 'span';
@@ -56,15 +56,17 @@ export function Redactable({ flagged, revealKey, hiddenText, block, children }: 
       className="mx-0.5 inline size-3 align-baseline text-muted-foreground"
     />
   );
+  // In edit mode spoiler content sits on a subtle striped background (ux.md §6).
+  const striped = marked ? 'spoiler-marked' : undefined;
   return block ? (
-    <div className="relative">
+    <div className={cn('relative', striped)} data-spoiler-marked={marked ? '' : undefined}>
       {children}
       <span className="absolute -top-0.5 -right-1">{marker}</span>
     </div>
   ) : (
-    <>
+    <span className={striped} data-spoiler-marked={marked ? '' : undefined}>
       {children}
       {marker}
-    </>
+    </span>
   );
 }

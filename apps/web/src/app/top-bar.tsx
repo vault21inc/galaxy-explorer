@@ -4,16 +4,17 @@ import { DropdownMenuItem } from '@/components/ui/dropdown-menu.tsx';
 import { containerName } from '@/lib/container-name.ts';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { QualityPopover } from './quality-popover.tsx';
+import { EditToggle } from './edit-toggle.tsx';
 import { SpoilerToggle } from './spoiler-toggle.tsx';
 import { Switcher } from './switcher.tsx';
 import { useUniverseRoute } from './use-universe-route.ts';
 
 /**
  * The top bar (ux.md §1): the app's name, the universe and map switchers, the breadcrumbs and
- * the spoiler toggle and the settings. M3 adds the edit toggle; M7 search.
+ * the edit toggle (on a map), the spoiler toggle and the settings. M7 adds search.
  */
 export function TopBar() {
-  const { universeSlug } = useParams();
+  const { universeSlug, mapSlug } = useParams();
   return (
     <header className="pointer-events-none absolute inset-x-0 top-0 flex items-center gap-2 px-4 py-3">
       <Link
@@ -27,6 +28,7 @@ export function TopBar() {
       </Link>
       {universeSlug !== undefined && <UniverseControls universeSlug={universeSlug} />}
       <div className="ml-auto flex items-center gap-1">
+        {mapSlug !== undefined && <EditToggle />}
         <SpoilerToggle />
         <QualityPopover />
       </div>

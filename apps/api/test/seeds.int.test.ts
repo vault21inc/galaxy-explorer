@@ -36,7 +36,7 @@ describe('demo seed', () => {
         sql`select kind, count(*)::int as n from entities group by kind order by kind`,
       );
       expect(Object.fromEntries(kinds.rows.map((row) => [row.kind, row.n]))).toEqual({
-        celestial_object: 25,
+        celestial_object: 26,
         character: 2,
         event: 4,
         group: 3,
@@ -46,7 +46,7 @@ describe('demo seed', () => {
         sql`select base_type, count(*)::int as n from celestial_objects group by base_type`,
       );
       expect(Object.fromEntries(types.rows.map((row) => [row.base_type, row.n]))).toEqual({
-        system: 6,
+        system: 7,
         star: 6,
         planet: 7,
         moon: 2,

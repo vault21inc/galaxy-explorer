@@ -1,8 +1,9 @@
-import type { SpoilerPolicy } from '@ge/domain';
+import { SHOW_SPOILERS, type SpoilerPolicy } from '@ge/domain';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import { safeStorage } from '@/lib/safe-storage.ts';
+import { useEditor } from './editor.ts';
 
 interface SpoilerState {
   /** "Spoilers: Shown": off by default for every visitor (ux.md §6, P3). Remembered per browser. */
@@ -49,8 +50,13 @@ export const useSpoilers = create<SpoilerState>()(
 
 /**
  * The policy as the domain's redaction functions take it. The object stays the same while
- * neither field changes, so it's safe in hook dependencies.
+ * neither field changes, so it's safe in hook dependencies. Edit mode shows everything
+ * (ux.md §2, §6): the editor marks spoiler content instead of hiding it.
  */
 export function useSpoilerPolicy(): SpoilerPolicy {
-  return useSpoilers(useShallow((state) => ({ showAll: state.showAll, revealed: state.revealed })));
+  const editing = useEditor((state) => state.editing);
+  const policy = useSpoilers(
+    useShallow((state) => ({ showAll: state.showAll, revealed: state.revealed })),
+  );
+  return editing ? SHOW_SPOILERS : policy;
 }

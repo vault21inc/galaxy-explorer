@@ -178,6 +178,11 @@ export async function seedDemo(db: Database) {
       summary: plain('Where the Outer Reach fell silent.'),
     });
     const fenwick = await system('fenwick', 'Fenwick', -24_000, 80, -14_500);
+    // A draft: readers never see it, editors see it in edit mode (M3-T1).
+    await system('halcyon', 'Halcyon', 30_000, 0, 21_000, {
+      status: 'draft',
+      summary: plain('Still being charted.'),
+    });
     await star('aster-star', 'Aster', aster, 5_800);
     await star('brennan-star', 'Brennan', brennan, 3_200);
     await star('corvid-star', 'Corvid', corvid, 9_500);

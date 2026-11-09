@@ -163,4 +163,5 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-08:** M2-T6 done: the label layer (hover, groups and all; L and Space), with no overlaps and 0.7 ms per update at 200 labels.
 - **2026-11-08:** M2-T7 done: the info panel, one rich-text renderer for all three formats (D-26), and spoilers hidden by default, revealed per item or with the toggle.
 - **2026-11-08:** M2-T8 done: `pnpm perf`; every galaxy-view budget met in Chrome, WebKit and the owner's Safari ([report](../perf/2026-11-08-M2.md)).
-- **2026-11-08:** **M2 complete.** Next: **M3-T1**, edit mode: the start of building a galaxy by hand.
+- **2026-11-08:** **M2 complete.**
+- **2026-11-08:** M3-T1 done: edit mode (✎ and E), box selection, the edit toolbar, drafts and marked spoilers in edit mode, and `authMode` in `/api/health`.

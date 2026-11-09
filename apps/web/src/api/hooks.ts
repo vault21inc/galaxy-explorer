@@ -83,6 +83,11 @@ export function useViewPayload<L extends ViewLevel>(
         ? skipToken
         : ({ signal }) => fetchData<ViewPayload<L>>(viewRequest(level, subjectId, options), signal),
     staleTime: Infinity,
+    // Entering or leaving edit mode refetches with or without drafts; meanwhile the view keeps
+    // showing what it had, instead of going blank. Only for the same subject: another map's
+    // payload must never stand in.
+    placeholderData: (previous, previousQuery) =>
+      previousQuery?.queryKey[2] === subjectId ? previous : undefined,
   });
 }
 

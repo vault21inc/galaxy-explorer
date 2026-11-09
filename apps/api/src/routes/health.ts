@@ -7,12 +7,18 @@ const healthResponse = z.object({
     status: z.enum(['ok', 'degraded']),
     db: z.enum(['ok', 'down']),
     version: z.string(),
+    /**
+     * How the API authenticates (architecture.md §7). With `none`, every request may edit,
+     * which is how the web app decides to offer edit mode until logins arrive in M8.
+     */
+    authMode: z.enum(['none', 'required']),
   }),
 });
 
 export interface HealthRouteOptions {
   db: Database;
   version: string;
+  authMode: 'none' | 'required';
 }
 
 /** `GET /api/health`: liveness for humans, uptime monitors and deploy scripts. */
@@ -36,6 +42,7 @@ export const healthRoutes: FastifyPluginCallbackZod<HealthRouteOptions> = (app, 
           status: dbUp ? 'ok' : 'degraded',
           db: dbUp ? 'ok' : 'down',
           version: options.version,
+          authMode: options.authMode,
         },
       });
     },

@@ -4045,6 +4045,8 @@ export interface operations {
                             /** @enum {string} */
                             db: "ok" | "down";
                             version: string;
+                            /** @enum {string} */
+                            authMode: "none" | "required";
                         };
                     };
                 };
@@ -4062,6 +4064,8 @@ export interface operations {
                             /** @enum {string} */
                             db: "ok" | "down";
                             version: string;
+                            /** @enum {string} */
+                            authMode: "none" | "required";
                         };
                     };
                 };

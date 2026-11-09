@@ -13515,12 +13515,20 @@
                         },
                         "version": {
                           "type": "string"
+                        },
+                        "authMode": {
+                          "type": "string",
+                          "enum": [
+                            "none",
+                            "required"
+                          ]
                         }
                       },
                       "required": [
                         "status",
                         "db",
-                        "version"
+                        "version",
+                        "authMode"
                       ],
                       "additionalProperties": false
                     }
@@ -13559,12 +13567,20 @@
                         },
                         "version": {
                           "type": "string"
+                        },
+                        "authMode": {
+                          "type": "string",
+                          "enum": [
+                            "none",
+                            "required"
+                          ]
                         }
                       },
                       "required": [
                         "status",
                         "db",
-                        "version"
+                        "version",
+                        "authMode"
                       ],
                       "additionalProperties": false
                     }

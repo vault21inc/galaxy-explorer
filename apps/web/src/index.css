@@ -143,3 +143,16 @@
     @apply max-w-full rounded;
   }
 }
+
+/*
+ * Spoiler content in edit mode (ux.md §6): a subtle diagonal stripe behind it, so the editor
+ * sees what readers will find hidden.
+ */
+@utility spoiler-marked {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgb(255 255 255 / 0.06) 0 6px,
+    transparent 6px 12px
+  );
+  border-radius: 2px;
+}

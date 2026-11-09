@@ -27,8 +27,25 @@
   4. Show spoiler content with its striped marker (ux.md §6).
 
 **Done when:**
-- [ ] E2E: in edit mode a left-drag on empty space draws a selection box instead of rotating; turning edit mode off restores rotation.
-- [ ] Drafts appear only in edit mode.
+- [x] E2E: in edit mode a left-drag on empty space draws a selection box instead of rotating; turning edit mode off restores rotation.
+- [x] Drafts appear only in edit mode.
+
+**Notes (done 2026-11-08):**
+- **`/api/health` reports `authMode`.** `useCanEdit()` is true while it's `none`; M8 adds the owner's session.
+- **The edit toggle** (✎ Edit) sits in the top bar on map pages, and E works while it's shown. `state/editor.ts` holds `editing` and `available`. Leaving the map pages leaves edit mode; switching maps keeps it.
+- **Input:** the input mode follows the store, so the bindings table hands plain left-drag to the editor: `box-select` on empty space, `move` on an object (M3-T3).
+- **Box selection works already** (`editor/use-box-select.ts`), though M3-T5 lists it. The rectangle is a DOM element moved with styles. Releasing selects every object whose projected center is inside it (`ScreenPicker.pickRect`), and Shift adds to the selection. M3-T5 keeps ⌘/Ctrl + A, delete, duplicate and the context menu.
+- **The bottom toolbar** has ux.md §1's items. Select is active; the others are shown disabled, naming the task that brings them, so the layout won't shift. It also shows on an empty map, where Add will be needed.
+- **The outliner** is M3-T9; nothing stands in for it yet.
+- **Drafts:**
+  - in edit mode, reads ask for `includeDrafts=true` (`useReadOptions`), which gives edit mode its own cache entries, so drafts never linger after leaving it;
+  - the view keeps its current payload while the other one loads, for the same subject only;
+  - drafts draw with M2-T3's see-through checkerboard, and the panel shows the "Draft" badge;
+  - the demo seed gains a draft system, Halcyon, so 26 objects now (readers' payloads and snapshots are unchanged).
+- **Spoilers in edit mode:** the effective policy is "show all", so bodies, labels and the panel show everything. Spoiler content gets a subtle striped background (`spoiler-marked`), and a flagged whole entry says so. The spoiler toggle is disabled until edit mode ends.
+- **Tests:**
+  - 3 unit tests: the box helpers and the editor store;
+  - 5 e2e tests: E and the toggle, box select instead of rotate and rotation back after, drafts only in edit mode, marked spoilers, and no toggle off the map pages.
 
 ### M3-T2 Create objects
 
@@ -92,7 +109,7 @@
 
 **Where:** `apps/web/src/editor/tools/box-select.ts`, `src/editor/actions/`.
 
-- Box select: left-drag on empty space in edit mode; Shift adds to the selection. Projected centers are tested against the rectangle. ⌘/Ctrl + A selects everything in the view.
+- Box select: left-drag on empty space in edit mode; Shift adds to the selection. Projected centers are tested against the rectangle. *Done in M3-T1.* ⌘/Ctrl + A selects everything in the view.
 - Delete (Delete/Backspace or the context menu):
   1. A **dry-run batch** (M1-T7) returns the impact.
   2. The confirmation dialog lists it (ux.md §5).

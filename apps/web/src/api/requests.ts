@@ -18,6 +18,8 @@ import {
 /** What every read accepts (architecture.md §5). Spoiler handling arrives in M2-T7. */
 export interface ReadOptions {
   spoilers?: 'include' | 'exclude';
+  /** Editors only: include unpublished drafts (edit mode, architecture.md §10). */
+  includeDrafts?: true;
 }
 
 export interface EntityOptions extends ReadOptions {

@@ -20,7 +20,7 @@ describe('GET /api/health', () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.json()).toEqual({
-        data: { status: 'ok', db: 'ok', version: '0.0.0' },
+        data: { status: 'ok', db: 'ok', version: '0.0.0', authMode: 'none' },
       });
     }));
 
@@ -29,7 +29,7 @@ describe('GET /api/health', () => {
 
     expect(response.statusCode).toBe(503);
     expect(response.json()).toEqual({
-      data: { status: 'degraded', db: 'down', version: '0.0.0' },
+      data: { status: 'degraded', db: 'down', version: '0.0.0', authMode: 'none' },
     });
   });
 });

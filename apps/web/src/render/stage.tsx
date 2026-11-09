@@ -2,6 +2,7 @@ import { AdaptiveDpr, CameraControls } from '@react-three/drei';
 import { Canvas, type RootState } from '@react-three/fiber';
 import { useState } from 'react';
 import { InputBindings } from '@/input/input-bindings.tsx';
+import { useEditor } from '@/state/editor.ts';
 import { useQuality, useQualityPreset } from '@/state/quality.ts';
 import { attachCanvas, DIAGNOSTICS_ENABLED, loadTestHooks } from './diagnostics.ts';
 import { FrameProbe } from './frame-probe.tsx';
@@ -37,6 +38,7 @@ import {
  */
 export function Stage() {
   const { dprRange } = useQualityPreset();
+  const editing = useEditor((state) => state.editing);
   // WebGL fixes antialiasing when the context is created, so read it once: a change in the
   // quality popover applies on the next load.
   const [antialias] = useState(() => QUALITY_PRESETS[useQuality.getState().level].antialias);
@@ -66,7 +68,7 @@ export function Stage() {
         infinityDolly={false}
       />
       {/* Assigns the camera controls' buttons per press from the bindings table (ux.md §3). */}
-      <InputBindings mode="view" />
+      <InputBindings mode={editing ? 'edit' : 'view'} />
       <Sky />
       {/* The current view, which sets its own camera limits (rendering.md §4–5). */}
       <ViewHost />

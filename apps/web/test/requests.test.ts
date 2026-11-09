@@ -43,7 +43,13 @@ const ID = '019a5b3c-7d2e-7f00-8a1b-2c3d4e5f6a7b';
 
 describe('registry-derived requests', () => {
   it.each(ENTITY_KINDS)('%s: the detail request is a documented route', (kind) => {
-    expectDocumented(entityRequest(kind, ID, { include: ENTITY_INCLUDES, spoilers: 'exclude' }));
+    expectDocumented(
+      entityRequest(kind, ID, {
+        include: ENTITY_INCLUDES,
+        spoilers: 'exclude',
+        includeDrafts: true,
+      }),
+    );
   });
 
   it.each(ENTITY_KINDS)('%s: the list request is a documented route', (kind) => {
@@ -58,7 +64,7 @@ describe('registry-derived requests', () => {
   });
 
   it.each(VIEW_LEVELS)('%s: the view request is a documented route', (level) => {
-    expectDocumented(viewRequest(level, ID, { spoilers: 'exclude' }));
+    expectDocumented(viewRequest(level, ID, { spoilers: 'exclude', includeDrafts: true }));
   });
 
   it('sends includes sorted and comma-separated, and leaves out unset options', () => {

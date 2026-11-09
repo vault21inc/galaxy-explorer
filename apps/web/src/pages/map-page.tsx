@@ -1,10 +1,12 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { useParams } from 'react-router';
 import { useViewPayload } from '@/api/hooks.ts';
+import { useReadOptions } from '@/api/read-options.ts';
 import { errorMessage, RouteStates } from '@/app/route-states.tsx';
 import { StatusPanel } from '@/app/status-panel.tsx';
 import { useUniverseRoute } from '@/app/use-universe-route.ts';
 import { SelectionAnnouncer } from '@/app/selection-announcer.tsx';
+import { EditToolbar } from '@/editor/edit-toolbar.tsx';
 import { useNavigation } from '@/state/navigation.ts';
 import { useSelection } from '@/state/selection.ts';
 import { useSelectionUrlSync } from '@/state/selection-url.ts';
@@ -21,7 +23,7 @@ export function MapPage() {
   const { universeSlug = '', mapSlug = '' } = useParams();
   const route = useUniverseRoute(universeSlug, mapSlug);
   const mapId = route.status === 'ready' ? route.map?.id : undefined;
-  const view = useViewPayload('galaxy', mapId);
+  const view = useViewPayload('galaxy', mapId, useReadOptions());
   const show = useNavigation((state) => state.show);
   const hasSelection = useSelection((state) => state.selectedIds.length > 0);
   useSelectionUrlSync();
@@ -45,14 +47,18 @@ export function MapPage() {
   if (!view.data) return <StatusPanel tone="loading" title="Loading the galaxy…" />;
   if (view.data.objects.length === 0) {
     return (
-      <StatusPanel tone="empty" title="This map is empty">
-        Objects are added in edit mode, which arrives in M3.
-      </StatusPanel>
+      <>
+        <StatusPanel tone="empty" title="This map is empty">
+          Objects are added in edit mode, with the toolbar's Add button (arriving in M3-T2).
+        </StatusPanel>
+        <EditToolbar />
+      </>
     );
   }
   return (
     <>
       <SelectionAnnouncer objects={view.data.objects} />
+      <EditToolbar />
       {hasSelection && (
         <Suspense fallback={null}>
           <InfoPanel universeId={route.universe.id} objects={view.data.objects} />

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useViewPayload } from '@/api/hooks.ts';
+import { useReadOptions } from '@/api/read-options.ts';
 import { GalaxyBackground } from '@/render/galaxy/galaxy-background.tsx';
 import { SelectionRings } from '@/render/picking/selection-rings.tsx';
 import { partitionByRenderer } from '@/render/registry.ts';
@@ -10,7 +11,7 @@ import { partitionByRenderer } from '@/render/registry.ts';
  * loads, from TanStack Query's cache.
  */
 export default function GalaxyLevel({ subjectId }: { subjectId: string }) {
-  const view = useViewPayload('galaxy', subjectId);
+  const view = useViewPayload('galaxy', subjectId, useReadOptions());
   const groups = useMemo(
     () => (view.data ? partitionByRenderer('galaxy', view.data.objects) : []),
     [view.data],

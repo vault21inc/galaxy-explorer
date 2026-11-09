@@ -164,7 +164,8 @@ export type KeyAction =
   | 'clear-selection'
   | 'cycle-labels'
   | 'show-all-labels'
-  | 'toggle-spoilers';
+  | 'toggle-spoilers'
+  | 'toggle-edit';
 
 export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
   ArrowUp: 'pan-up',
@@ -188,4 +189,7 @@ export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
   ' ': 'show-all-labels',
   // Shift + S shows or hides potential spoilers (ux.md §6); with Shift held, the key is "S".
   S: 'toggle-spoilers',
+  // E toggles edit mode where it's offered (ux.md §4).
+  e: 'toggle-edit',
+  E: 'toggle-edit',
 };

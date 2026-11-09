@@ -1,5 +1,6 @@
 import type { EntityKind } from '@ge/domain';
 import { useConfigList, useEntity } from '@/api/hooks.ts';
+import { useReadOptions } from '@/api/read-options.ts';
 import { errorMessage } from '@/app/route-states.tsx';
 import { EntityDetails } from './entity-details.tsx';
 import { includesFor } from './sections.ts';
@@ -20,7 +21,8 @@ export function EntityPanel({
   id: string;
   universeId: string;
 }) {
-  const entity = useEntity(kind, id, { include: includesFor(kind) });
+  const readOptions = useReadOptions();
+  const entity = useEntity(kind, id, { ...readOptions, include: includesFor(kind) });
   const fieldDefinitions = useConfigList('field_definitions', universeId);
   const subtypes = useConfigList('object_subtypes', universeId);
 

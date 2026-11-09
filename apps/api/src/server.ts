@@ -82,7 +82,11 @@ export async function buildServer(config: Config) {
   await app.register(fastifySwaggerUi, { routePrefix: '/api/docs' });
 
   app.get('/api/openapi.json', { schema: { hide: true } }, () => app.swagger());
-  await app.register(healthRoutes, { db, version: packageJson.version });
+  await app.register(healthRoutes, {
+    db,
+    version: packageJson.version,
+    authMode: config.authMode,
+  });
   await app.register(
     async (v1) => {
       await v1.register(containerRoutes, { db });
