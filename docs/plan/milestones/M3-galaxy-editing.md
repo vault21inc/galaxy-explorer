@@ -370,8 +370,25 @@
 - Shown always in edit mode, and through the "List" button in view mode.
 
 **Done when:**
-- [ ] Component tests cover keyboard navigation.
-- [ ] E2E: selecting in the outliner selects in 3D and the reverse; axe reports no violations on the shell with the outliner open.
+- [x] Component tests cover keyboard navigation.
+- [x] E2E: selecting in the outliner selects in 3D and the reverse; axe reports no violations on the shell with the outliner open.
+
+**Notes (done 2026-11-09):**
+- **The tree** (`panels/outliner/`): an ARIA tree (`role="tree"`, multi-selectable, one row reachable by Tab) of the view's objects, sorted by what's shown.
+  - Each row has its type, a Draft badge, and a spoiler marker.
+  - A hidden spoiler shows the same redaction bar as its 3D label (`labelText`) and is named "Hidden potential spoiler, System". The filter matches only what's shown, so it can't reveal a hidden name (ux.md §6).
+  - Flat until M4's groups. The Unplaced section is a marked place in the component for M6.
+- **Keyboard** (`outliner-keys.ts`, pure):
+  - arrows and Home/End move focus; Space selects; Shift with an arrow or Space adds to the selection; Cmd/Ctrl + Space toggles; Escape clears;
+  - Enter selects until entering arrives in M5;
+  - clicks select, with Shift to add and Cmd/Ctrl to toggle.
+  - Camera keys don't fire inside the tree (`ignoresCameraKeys` already skips `role="tree"`).
+- **Selection** is the selection store's, both ways; a canvas selection scrolls its row into view.
+- **Where:** in edit mode the outliner is always on the left, unless History or Map settings is open there; closing those brings it back (`state/side-panel.ts`). In view mode a List button opens it, with a close button.
+- **Fixes:** a row's accessible name comes from its visible content, after axe's `label-content-name-mismatch` rule. The edit-mode box-select test starts its drag right of the outliner, which now covers the canvas's top-left corner in edit mode.
+- **Tests:**
+  - 10 component and unit tests: every key of the tree; the tree's roles, sorting, Tab stop, Draft badge and hidden spoiler;
+  - 4 e2e tests: selection both ways, the keyboard (and no camera movement), the filter, and List with axe clean.
 
 ---
 

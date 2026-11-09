@@ -49,8 +49,10 @@ test.describe('edit mode (ux.md §2)', () => {
     await page.keyboard.press('e');
     const box = await page.locator('canvas').boundingBox();
     if (!box) throw new Error('The canvas has no size.');
-    // From the empty top-left corner to the middle: a box over the upper-left quarter.
-    const from = { x: box.x + 20, y: box.y + 70 };
+    // From just right of the outliner (which edit mode shows on the left, M3-T9) to the middle:
+    // a box over most of the upper-left quarter.
+    const outliner = await page.getByRole('complementary', { name: 'Outliner' }).boundingBox();
+    const from = { x: (outliner ? outliner.x + outliner.width : box.x) + 20, y: box.y + 70 };
     const to = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
     const before = await azimuth(page);
 

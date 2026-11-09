@@ -25,7 +25,7 @@ What the app looks like and how it responds to the mouse, trackpad, touch and ke
   - the spoiler toggle;
   - the edit toggle, owner only.
 - **Right panel:** about 380 px wide, collapsible. It shows the selection's details, or for several selected items, a summary with bulk actions. On screens narrower than 768 px it becomes a bottom sheet.
-- **Left outliner:** a tree of the current view's contents, grouped by group. It's always available in edit mode, and in view mode through a "List" button. It is also the accessible alternative to the canvas (§10).
+- **Left outliner:** a tree of the current view's contents, grouped by group. It's always available in edit mode, and in view mode through a "List" button. It is also the accessible alternative to the canvas (§10). The History and Map settings panels open in its place, one at a time; closing them brings the outliner back.
 - **Bottom toolbar:** edit mode only.
 - **Overlays:** the shortcut help (`?`) and toasts in the bottom-right corner.
 

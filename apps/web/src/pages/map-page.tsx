@@ -9,6 +9,7 @@ import { SelectionAnnouncer } from '@/app/selection-announcer.tsx';
 import { EditorActions } from '@/editor/actions/editor-actions.tsx';
 import { EditToolbar } from '@/editor/edit-toolbar.tsx';
 import { HistoryPanel } from '@/panels/history/history-panel.tsx';
+import { OutlinerSlot } from '@/panels/outliner/outliner-slot.tsx';
 import { useEditor } from '@/state/editor.ts';
 import { useHistory } from '@/state/history.ts';
 import { useNavigation } from '@/state/navigation.ts';
@@ -83,6 +84,7 @@ export function MapPage() {
   return (
     <>
       <SelectionAnnouncer objects={view.data.objects} />
+      <OutlinerSlot objects={view.data.objects} />
       <EditToolbar />
       {mapId && <EditorActions mapId={mapId} objects={view.data.objects} />}
       {editing && <HistoryPanel universeId={route.universe.id} />}
