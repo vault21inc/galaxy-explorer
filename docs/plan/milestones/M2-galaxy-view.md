@@ -341,7 +341,7 @@
 - Fix whatever misses the budget.
 
 **Done when:**
-- [ ] The galaxy view meets **every** galaxy-view row of rendering.md §2 on the reference Mac in Chrome and Safari, and the report is committed. *`pnpm perf` passes every row it measures in Google Chrome and Playwright's WebKit ([2026-11-08-M2.md](../../perf/2026-11-08-M2.md)). Still to do: the owner's reading in Safari itself, on the built-in display (the windows opened on the 240 Hz external display).*
+- [x] The galaxy view meets **every** galaxy-view row of rendering.md §2 on the reference Mac in Chrome and Safari, and the report is committed. *`pnpm perf` passes every row it measures in Google Chrome and Playwright's WebKit ([2026-11-08-M2.md](../../perf/2026-11-08-M2.md)). The owner's reading in Safari 26 on the built-in display, stress map, High quality (DPR 2, 40,000 depth stars): 59 fps, 17.0 / 18.0 ms median / p95, 6 draw calls, idle afterwards.*
 
 **Notes (2026-11-08):**
 - **`pnpm perf`** (`scripts/perf/`, a new workspace package, `@ge/perf`) is a Playwright run. It builds the app with the test hooks, uses its own `ge_perf` database (reset and seeded with the stress map) and ports 3103 and 4174, and drives the installed Google Chrome, then WebKit, headed at 1440 × 900, DPR 2. `report.ts` writes `docs/perf/<date>-M2.md` and exits with an error on a missed budget.
@@ -358,14 +358,14 @@
   - View transitions and 20 view round trips arrive with M5.
 - **Results:** every measured row passes.
 
-  | | Chrome 156 (238 Hz) | WebKit 27.2 (59 Hz) |
-  |---|---|---|
-  | Interaction, median / p95 | 4.2 / 4.7 ms | 17.0 / 18.0 ms |
-  | Draw calls | 6 | 6 |
-  | First galaxy frame | about 450 ms | about 490 ms |
-  | Label updates, p95 | 1.0 ms with about 110 labels | |
-  | Idle | 0 frames | 0 frames |
-  | Initial JavaScript | 439 kB gzipped | |
+  | | Chrome 156 (238 Hz) | WebKit 27.2 (59 Hz) | Safari 26, built-in display (owner) |
+  |---|---|---|---|
+  | Interaction, median / p95 | 4.1 / 5.1 ms | 16.0 / 19.0 ms | 17.0 / 18.0 ms (59 fps), at High quality |
+  | Draw calls | 6 | 6 | 6 |
+  | First galaxy frame | 452 ms | 503 ms | |
+  | Label updates, p95 | 0.9 ms with 110 labels | | |
+  | Idle | 0 frames | 0 frames | idle |
+  | Initial JavaScript | 439 kB gzipped | | |
 
   Nothing missed the budget, so nothing needed fixing.
 - **The quality guard** (rendering.md §13) is our own `FrameRateGuard`, not drei's `PerformanceMonitor`. That one counts frames per 250 ms window and keeps its first timestamp across idle time, so on-demand rendering's pauses read as low frame rates and would step quality down for nothing.
@@ -374,11 +374,14 @@
   - `AdaptiveDpr` with camera-controls' `regress` was already in place (M0-T6).
 - **Test hooks:** `frameStats(sinceMs)` can read a window spanning several phases.
 - **Tests:** 5 unit tests for the guard and the step-down. `pnpm perf` itself is the gate; CI doesn't run it, because it needs the reference Mac and a display.
+- **Safari renders at 60 fps on a 120 Hz display.** That's Safari's choice, not ours: it holds `requestAnimationFrame` near 60 fps unless its "Prefer Page Rendering Updates near 60fps" feature flag is turned off (Develop › Feature Flags). Chrome follows the display, 120 or 240 Hz. The budget is a floor of 60 fps, which Safari meets.
 
 ---
 
 ## Milestone acceptance
 
-- [ ] All tasks are checked off; CI is green.
-- [ ] The performance report is committed.
-- [ ] The owner has tried the demo with their own mouse and trackpad, and any adjustments to the bindings are recorded under D-12 in decisions.md.
+- [x] All tasks are checked off; CI is green.
+- [x] The performance report is committed. *[2026-11-08-M2.md](../../perf/2026-11-08-M2.md), plus the owner's Safari reading in M2-T8's notes.*
+- [x] The owner has tried the demo with their own mouse and trackpad, and any adjustments to the bindings are recorded under D-12 in decisions.md. *2026-11-08: the owner reported that everything feels right; no bindings changed (D-12).*
+
+**M2 completed 2026-11-08.**

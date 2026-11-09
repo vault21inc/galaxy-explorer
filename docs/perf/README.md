@@ -128,4 +128,4 @@ The stress map: 5,000 objects (4,887 bodies in one draw call, 113 regions in one
 
 ### Galaxy view gate (M2-T8)
 
-`pnpm perf` reports: [2026-11-08-M2.md](2026-11-08-M2.md), every measured budget met in Google Chrome 156 and Playwright's WebKit 27.2 on the stress map (windows on the 240 Hz external display). Safari itself on the built-in display is the owner's reading still to take.
+`pnpm perf` reports: [2026-11-08-M2.md](2026-11-08-M2.md), every measured budget met in Google Chrome 156 and Playwright's WebKit 27.2 on the stress map (windows on the 240 Hz external display). The owner's Safari 26 reading on the built-in display, stress map, High quality (DPR 2): 59 fps, 17.0 / 18.0 ms median / p95, 6 draw calls, idle afterwards. Safari holds pages near 60 fps on a 120 Hz display unless its "Prefer Page Rendering Updates near 60fps" feature flag is off; Chrome follows the display.

@@ -154,4 +154,13 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-08:** M1-T9 done: galaxy, system and orbit view payloads with resolved appearance, pins, draft filtering and `spoilers=exclude`; 5,000 objects build in 51 ms and gzip to 389 kB.
 - **2026-11-08:** M1-T10 done: the typed API client generated from the OpenAPI document (`pnpm api:generate`), with `createApiClient`/`unwrap`/`ApiError`, and a CI check that fails when it's stale.
 - **2026-11-08:** M1-T11 done: `pnpm db:seed demo` and `pnpm db:seed stress`, both idempotent; `db:reset` seeds the demo.
-- **2026-11-08:** **M1 complete.** Next: **M2-T1**, the app shell, routing and data hooks: the start of the galaxy view.
+- **2026-11-08:** **M1 complete.**
+- **2026-11-08:** M2-T1 done: routes with loading, error and empty states, universe and map switchers, the quality setting, and query hooks generated from the registries.
+- **2026-11-08:** M2-T2 done: the galaxy background (a baked disc, 20,000 depth stars from a Web Worker, core glows, an infinitely distant sky) in 4 draw calls.
+- **2026-11-08:** M2-T3 done: every body in one instanced draw that keeps objects 8–40 px tall, regions in one more, the renderer registry, and spoiler objects in the redaction color.
+- **2026-11-08:** M2-T4 done: the input bindings table (macOS and Windows), per-press camera actions, wheel and pinch normalization, camera keys, and clipping planes that follow the camera.
+- **2026-11-08:** M2-T5 done: screen-space picking (0.16 µs per pick among 5,000), hover and selection rings, `?select=` links, double-click and F to fly to objects.
+- **2026-11-08:** M2-T6 done: the label layer (hover, groups and all; L and Space), with no overlaps and 0.7 ms per update at 200 labels.
+- **2026-11-08:** M2-T7 done: the info panel, one rich-text renderer for all three formats (D-26), and spoilers hidden by default, revealed per item or with the toggle.
+- **2026-11-08:** M2-T8 done: `pnpm perf`; every galaxy-view budget met in Chrome, WebKit and the owner's Safari ([report](../perf/2026-11-08-M2.md)).
+- **2026-11-08:** **M2 complete.** Next: **M3-T1**, edit mode: the start of building a galaxy by hand.
