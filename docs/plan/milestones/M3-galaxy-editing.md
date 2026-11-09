@@ -171,7 +171,27 @@
 - Context menu on right-click without dragging: Rename, Duplicate, Delete, Enter (M5), and Add to group ▸ (M4).
 
 **Done when:**
-- [ ] E2E: box-selecting 3 of 5 objects selects exactly those 3. Deleting one with children shows the impact counts and removes it; duplicating creates offset copies.
+- [x] E2E: box-selecting 3 of 5 objects selects exactly those 3. Deleting one with children shows the impact counts and removes it; duplicating creates offset copies.
+
+**Notes (done 2026-11-08):**
+- **Shortcuts:** `EDIT_KEY_BINDINGS` in `input/bindings.ts`, with `resolveEditKey`: ⌘/Ctrl + A, ⌘/Ctrl + D, and Delete or Backspace. They work only in edit mode, not while typing, and the primary key must match the platform exactly, with Shift and Alt up.
+- **`EditorActions`** (`editor/actions/`), on the map page, runs them from the keyboard or the context menu.
+  - **Select all** selects every object in the view.
+  - **Delete:**
+    - a dry-run batch first; the dialog shows its impact in words (`summarizeImpact` and `describeImpact`): "2 child objects, 3 group memberships; 4 places or events become unplaced", or "Nothing else is affected";
+    - Delete stays disabled until the count is in;
+    - confirming sends the same batch for real ("Delete “West 1”" or "Delete 3 objects") and drops the deleted objects from the selection.
+  - **Duplicate:**
+    - reads each object with its facts, then creates the copies in one batch (`duplicateOperations`): every writable field from the create schema except `externalKey`, the name plus " copy", x + 20, then `setFacts` on `$op:N`;
+    - relations, memberships and children aren't copied (ux.md §5);
+    - the copies become the selection.
+- **Context menu:** a right-click (or a Mac Ctrl-click) without dragging on an object in edit mode. It selects the object unless it's already in the selection, then offers Rename (focuses the name field), Duplicate and Delete. Enter joins with the system view (M5), and Add to group ▸ with groups (M4).
+- **API fix:** a batch whose operations were all deletes wasn't listed in any universe's history, because a delete returns no data to read the universe from. `deleteEntity` now returns the universe, and the batch records it (integration test added). Undo (M3-T6) needs this.
+- **Tests:**
+  - 10 unit tests: shortcuts per platform, delete request and impact text, duplicate operations and names;
+  - 1 API test;
+  - 7 e2e tests, each on its own universe: box-select 3 of 5, select all, delete with children (impact, cascade, history), Cancel, duplicate two (offsets, one batch, selection), the context menu's Rename, and nothing outside edit mode.
+- **Bundle:** initial JavaScript 445 kB gzipped (was 441 kB); the dialog now ships in the first chunk.
 
 ### M3-T6 Undo, redo and the history panel
 

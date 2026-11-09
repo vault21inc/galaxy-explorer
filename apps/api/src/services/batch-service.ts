@@ -50,15 +50,18 @@ export async function runOperations(
   let universeRecorded = false;
   for (const [index, raw] of operations.entries()) {
     let result: OperationResult;
+    let touched: string | undefined;
     try {
       const operation = resolveReferences(raw, results, index);
-      result = { index, ...(await runOne(tx, operation)) };
+      const { universeId: deletedFrom, ...rest } = await runOne(tx, operation);
+      result = { index, ...rest };
+      touched = deletedFrom;
     } catch (error) {
       throw new BatchOperationError(index, raw.op, error);
     }
     results.push(result);
     // List the batch in the history of the universe its first entity belongs to.
-    const universeId = (result.data as { universeId?: unknown } | null)?.universeId;
+    const universeId = touched ?? (result.data as { universeId?: unknown } | null)?.universeId;
     if (!universeRecorded && typeof universeId === 'string') {
       await tx
         .update(schema.changeBatches)
@@ -114,10 +117,13 @@ function scopeOf(
   return { universeId: operation.universeId };
 }
 
-async function runOne(
-  tx: Executor,
-  operation: BatchOperation,
-): Promise<Omit<OperationResult, 'index'>> {
+/**
+ * One operation's result, plus the universe it touched when the result doesn't say (a delete
+ * returns no data), so the batch still lands in that universe's history.
+ */
+type RunResult = Omit<OperationResult, 'index'> & { universeId?: string };
+
+async function runOne(tx: Executor, operation: BatchOperation): Promise<RunResult> {
   switch (operation.op) {
     case 'create': {
       const entity = await createEntity(
@@ -140,9 +146,15 @@ async function runOne(
       });
       return { op: 'update', kind: operation.kind, id: operation.id, data: entity };
     }
-    case 'delete':
-      await deleteEntity(tx, operation.kind, operation.id, operation.version);
-      return { op: 'delete', kind: operation.kind, id: operation.id, data: null };
+    case 'delete': {
+      const { universeId } = await deleteEntity(
+        tx,
+        operation.kind,
+        operation.id,
+        operation.version,
+      );
+      return { op: 'delete', kind: operation.kind, id: operation.id, data: null, universeId };
+    }
     case 'upsert': {
       const { entity } = await upsertEntityByKey(
         tx,

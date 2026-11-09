@@ -155,9 +155,10 @@ export async function deleteEntity(
   kind: EntityKind,
   id: string,
   version: number,
-): Promise<void> {
+): Promise<{ universeId: string }> {
   const current = await getEntity(tx, kind, id, { viewer: SEES_EVERYTHING });
   if (coreOf(current).version !== version) throw new VersionConflict(current);
+  const { universeId } = coreOf(current);
   if (kind === 'celestial_object') {
     const subtree = sql`(
       with recursive subtree(id) as (
@@ -169,6 +170,8 @@ export async function deleteEntity(
   } else {
     await tx.delete(entities).where(eq(entities.id, id));
   }
+  // What was deleted belonged here: a batch of deletes is listed in this universe's history.
+  return { universeId };
 }
 
 /**

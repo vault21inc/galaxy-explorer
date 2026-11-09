@@ -6,6 +6,7 @@ import { errorMessage, RouteStates } from '@/app/route-states.tsx';
 import { StatusPanel } from '@/app/status-panel.tsx';
 import { useUniverseRoute } from '@/app/use-universe-route.ts';
 import { SelectionAnnouncer } from '@/app/selection-announcer.tsx';
+import { EditorActions } from '@/editor/actions/editor-actions.tsx';
 import { EditToolbar } from '@/editor/edit-toolbar.tsx';
 import { useNavigation } from '@/state/navigation.ts';
 import { useSelection } from '@/state/selection.ts';
@@ -59,6 +60,7 @@ export function MapPage() {
     <>
       <SelectionAnnouncer objects={view.data.objects} />
       <EditToolbar />
+      {mapId && <EditorActions mapId={mapId} objects={view.data.objects} />}
       {hasSelection && (
         <Suspense fallback={null}>
           <InfoPanel universeId={route.universe.id} objects={view.data.objects} />

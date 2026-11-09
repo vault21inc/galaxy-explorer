@@ -5,6 +5,7 @@ import { flyTo } from '@/render/camera/fly-to.ts';
 import { pickAt } from '@/render/picking/picking.ts';
 import { hoverStore, setHovered } from '@/state/hover.ts';
 import { gizmoBusy } from '@/editor/gizmo-state.ts';
+import { useContextMenu } from '@/state/context-menu.ts';
 import { useEditor } from '@/state/editor.ts';
 import { useSelection } from '@/state/selection.ts';
 import { resolveBinding, type Gesture, type Mode, type Target } from './bindings.ts';
@@ -16,6 +17,8 @@ import { detectPlatform } from './platform.ts';
  * - pointer moves with no button held pick the object under the pointer: the hover store and
  *   the pointer cursor follow it;
  * - a press released within 4 px is a click: select, toggle or clear, as the bindings say;
+ * - in edit mode a right-click (or a Mac Ctrl-click) on an object opens the context menu,
+ *   selecting the object first unless it's already part of the selection;
  * - a double-click flies to the object (entering it arrives in M5).
  */
 export function usePointerSelection(mode: Mode): void {
@@ -62,7 +65,13 @@ export function usePointerSelection(mode: Mode): void {
       if (started?.pointerId !== event.pointerId || started.button !== event.button) return;
       if (!isClick(started, { x: event.clientX, y: event.clientY })) return;
       const gesture: Gesture | null =
-        event.pointerType === 'touch' ? 'tap' : event.button === 0 ? 'left-click' : null;
+        event.pointerType === 'touch'
+          ? 'tap'
+          : event.button === 0
+            ? 'left-click'
+            : event.button === 2
+              ? 'right-click'
+              : null;
       if (!gesture) return;
       const hit = pickAt(get(), event.clientX, event.clientY);
       const action = resolveBinding(gesture, event, mode, targetOf(hit?.id ?? null), platform);
@@ -72,6 +81,9 @@ export function usePointerSelection(mode: Mode): void {
         else selection.clear();
       } else if (action === 'toggle-select' && hit) {
         selection.select([hit.id], { toggle: true });
+      } else if (action === 'context-menu' && hit) {
+        if (!selection.selectedIds.includes(hit.id)) selection.select([hit.id]);
+        useContextMenu.getState().open(event.clientX, event.clientY);
       }
     };
     const onDoubleClick = (event: MouseEvent) => {

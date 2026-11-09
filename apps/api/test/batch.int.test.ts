@@ -203,6 +203,23 @@ describe('POST /batch', () => {
       expect((await api.expect(200, 'GET', `/maps/${w.mapId}/objects`)).body.data).toHaveLength(2);
     }));
 
+  it("lists a batch of deletes in the deleted entities' universe history", () =>
+    run(async (api) => {
+      const w = await world(api);
+      const system = (
+        await api.expect(201, 'POST', `/maps/${w.mapId}/objects`, {
+          name: rt.plain('Gudrun'),
+          baseType: 'system',
+        })
+      ).body.data;
+      await api.expect(200, 'POST', '/batch', {
+        description: 'Delete “Gudrun”',
+        operations: [{ op: 'delete', kind: 'celestial_object', id: system.id, version: 1 }],
+      });
+      const history = await api.expect(200, 'GET', `/universes/${w.universeId}/history`);
+      expect(history.body.data[0]).toMatchObject({ description: 'Delete “Gudrun”' });
+    }));
+
   it('runs update, delete, upsert and the aspect operations', () =>
     run(async (api) => {
       const w = await world(api);
