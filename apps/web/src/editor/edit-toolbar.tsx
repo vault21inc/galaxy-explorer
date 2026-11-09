@@ -11,7 +11,9 @@ import {
 import { Button } from '@/components/ui/button.tsx';
 import { objectTypes } from '@ge/domain';
 import { useEditor } from '@/state/editor.ts';
+import { useHistory } from '@/state/history.ts';
 import { AddMenu } from './add-menu.tsx';
+import { useUndoRedo } from './use-undo.ts';
 
 interface Tool {
   label: string;
@@ -19,6 +21,8 @@ interface Tool {
   /** The task that brings it; until then the button is shown but disabled. */
   arrives?: string;
   active?: boolean;
+  /** Its shortcut, for the tooltip. */
+  keys?: string;
 }
 
 /** The toolbar's items in ux.md §1's order. */
@@ -27,9 +31,9 @@ const TOOLS: readonly Tool[] = [
   { label: 'Group', icon: Group, arrives: 'M4' },
   { label: 'Route', icon: Route, arrives: 'M4' },
   { label: 'Map', icon: MapIcon, arrives: 'M3-T8' },
-  { label: 'Undo', icon: Undo2, arrives: 'M3-T6' },
-  { label: 'Redo', icon: Redo2, arrives: 'M3-T6' },
-  { label: 'History', icon: History, arrives: 'M3-T6' },
+  { label: 'Undo', icon: Undo2, keys: '⌘/Ctrl + Z' },
+  { label: 'Redo', icon: Redo2, keys: '⌘/Ctrl + Shift + Z' },
+  { label: 'History', icon: History },
 ];
 
 /**
@@ -41,29 +45,57 @@ export function EditToolbar() {
   const placing = useEditor((state) => state.placing);
   const gridSize = useEditor((state) => state.gridSize);
   const setGridSize = useEditor((state) => state.setGridSize);
+  const history = useUndoRedo();
+  const historyOpen = useHistory((state) => state.panelOpen);
   if (!editing) return null;
+
+  /** What the working tools do; the others are placeholders until their task. */
+  const behaviour = (label: string) => {
+    switch (label) {
+      case 'Undo':
+        return { onClick: history.undo, disabled: !history.canUndo };
+      case 'Redo':
+        return { onClick: history.redo, disabled: !history.canRedo };
+      case 'History':
+        return {
+          onClick: () => {
+            useHistory.getState().setPanelOpen(!historyOpen);
+          },
+          pressed: historyOpen,
+        };
+      default:
+        return {};
+    }
+  };
   return (
     <div
       role="toolbar"
       aria-label="Edit tools"
       className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-lg border bg-card p-1"
     >
-      {TOOLS.map(({ label, icon: Icon, arrives, active }) => (
-        <span key={label} className="contents">
-          <Button
-            variant={active && !placing ? 'secondary' : 'ghost'}
-            size="sm"
-            aria-pressed={active ? !placing : undefined}
-            disabled={arrives !== undefined}
-            title={arrives ? `${label}: arrives in ${arrives}` : label}
-            className="gap-1.5"
-          >
-            <Icon aria-hidden />
-            {label}
-          </Button>
-          {label === 'Select' && <AddMenu />}
-        </span>
-      ))}
+      {TOOLS.map(({ label, icon: Icon, arrives, active, keys }) => {
+        const { onClick, disabled = false, pressed } = behaviour(label);
+        const on = (active === true && !placing) || pressed === true;
+        return (
+          <span key={label} className="contents">
+            <Button
+              variant={on ? 'secondary' : 'ghost'}
+              size="sm"
+              aria-pressed={active || pressed !== undefined ? on : undefined}
+              disabled={arrives !== undefined || disabled}
+              title={
+                arrives ? `${label}: arrives in ${arrives}` : keys ? `${label} (${keys})` : label
+              }
+              className="gap-1.5"
+              onClick={onClick}
+            >
+              <Icon aria-hidden />
+              {label}
+            </Button>
+            {label === 'Select' && <AddMenu />}
+          </span>
+        );
+      })}
       <label
         className="flex items-center gap-1.5 px-2 text-xs text-muted-foreground"
         title="Hold Shift while dragging to snap to this grid"

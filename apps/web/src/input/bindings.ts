@@ -199,14 +199,18 @@ export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
   N: 'add-object',
 };
 
-/** Edit-mode commands on the selection (ux.md §4), run by the editor actions (editor/actions/). */
-export type EditKeyAction = 'select-all' | 'duplicate' | 'delete';
+/** Edit-mode commands (ux.md §4), run by the editor actions (editor/actions/). */
+export type EditKeyAction = 'select-all' | 'duplicate' | 'delete' | 'undo' | 'redo';
 
 interface EditKeyBinding {
-  /** `KeyboardEvent.key`, compared without case. */
+  /** `KeyboardEvent.key`, compared without case (Shift makes it "Z"). */
   key: string;
   /** Needs Cmd on macOS, Ctrl elsewhere. */
   primary: boolean;
+  /** Needs Shift. */
+  shift?: boolean;
+  /** Only on this platform. */
+  platform?: Platform;
   action: EditKeyAction;
 }
 
@@ -216,23 +220,30 @@ export const EDIT_KEY_BINDINGS: readonly EditKeyBinding[] = [
   { key: 'd', primary: true, action: 'duplicate' },
   { key: 'Delete', primary: false, action: 'delete' },
   { key: 'Backspace', primary: false, action: 'delete' },
+  { key: 'z', primary: true, action: 'undo' },
+  { key: 'z', primary: true, shift: true, action: 'redo' },
+  // Windows and Linux also redo with Ctrl + Y.
+  { key: 'y', primary: true, platform: 'other', action: 'redo' },
 ];
 
 /**
- * The edit-mode command for a key press, or null. The primary modifier must match exactly, and
- * Shift and Alt must be up, so ⌘⇧D or Ctrl+Alt+A stay free for later shortcuts.
+ * The edit-mode command for a key press, or null. The primary modifier and Shift must match
+ * the row exactly and Alt must be up, so ⌘⇧D or Ctrl+Alt+A stay free for later shortcuts.
  */
 export function resolveEditKey(
   event: HeldKeys & { key: string },
   platform: Platform,
 ): EditKeyAction | null {
-  if (event.shiftKey || event.altKey) return null;
+  if (event.altKey) return null;
   // On a Mac, Ctrl isn't the primary key; held with a letter it's a different shortcut.
   if (platform === 'mac' && event.ctrlKey) return null;
   const primary = isPrimaryModifier(event, platform);
   const row = EDIT_KEY_BINDINGS.find(
     (binding) =>
-      binding.key.toLowerCase() === event.key.toLowerCase() && binding.primary === primary,
+      binding.key.toLowerCase() === event.key.toLowerCase() &&
+      binding.primary === primary &&
+      (binding.shift ?? false) === event.shiftKey &&
+      (binding.platform === undefined || binding.platform === platform),
   );
   return row?.action ?? null;
 }

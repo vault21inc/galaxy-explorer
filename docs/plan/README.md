@@ -169,3 +169,4 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-08:** M3-T3 done: dragging the selection across the plane (Shift snaps to the grid), a height gizmo, typed positions, and one batch per move.
 - **2026-11-08:** M3-T4 done: edit forms generated from the registry (D-27), a rich-text editor with CodeMirror, Preview and Mark as spoiler, save on blur, and the "Changed elsewhere" dialog.
 - **2026-11-08:** M3-T5 done: ⌘/Ctrl + A, delete with a dry-run impact dialog, ⌘/Ctrl + D duplicates as one batch, and the right-click menu (Rename, Duplicate, Delete).
+- **2026-11-08:** M3-T6 done: undo and redo (⌘/Ctrl + Z, ⌘/Ctrl + Shift + Z) over this session's batches, and the History panel with Revert on any batch.

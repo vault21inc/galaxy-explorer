@@ -202,9 +202,28 @@
 - After a revert, invalidate the affected queries, determined from the batch detail's entity kinds. A 409 conflict shows a toast naming the conflicting entity.
 
 **Done when:**
-- [ ] E2E: create, move and rename, then undo three times back to nothing, then redo three times back to the end state.
-- [ ] Reverting an older batch from the History panel works.
-- [ ] A conflicting revert shows the conflict and changes nothing.
+- [x] E2E: create, move and rename, then undo three times back to nothing, then redo three times back to the end state.
+- [x] Reverting an older batch from the History panel works.
+- [x] A conflicting revert shows the conflict and changes nothing.
+
+**Notes (done 2026-11-08):**
+- **The stacks** (`state/history.ts`): the API client's `onBatch` records every write's batch id. It skips the revert route, whose batches undo and redo manage themselves.
+  - Recording happens only while a universe's map is open; opening another universe starts afresh, and pages without one keep the stacks.
+  - A new edit clears redo.
+- **Undo and redo** (`editor/use-undo.ts`): ⌘/Ctrl + Z, ⌘/Ctrl + Shift + Z, Ctrl + Y elsewhere (`EDIT_KEY_BINDINGS`), and the toolbar's Undo and Redo, which are disabled when there's nothing to do.
+  - Presses queue, so three quick ⌘Z are three undos. Undo reverts the top batch and keeps the revert's id; redo reverts that.
+  - `useRevert` reads the batch detail first. Afterwards it refreshes the entity kinds, settings, maps and universes the batch touched, plus every view and the history (`affectedQueries`), and drops entities the revert deleted from the selection.
+  - A 409 leaves the stacks alone and shows the API's message, which names what changed since.
+- **The History panel** (`panels/history/`): the toolbar's History opens it on the left (the outliner's place until M3-T9). It lists every batch in the universe, newest first and from any session or token, with actor, description and relative time, and pages with "Show older changes".
+  - Revert on any batch; it's disabled once a batch has been reverted.
+  - A revert from the panel is pushed onto the undo stack, so ⌘Z takes it back.
+  - The list refetches on every recorded change.
+- **Fixes:**
+  - Undo works on an empty map: the editor actions are rendered there too, so deleting the last object can be undone.
+  - The Add menu no longer takes focus back from a new object's name field when its closing animation ends after a quick click.
+- **Tests:**
+  - 12 unit tests: the undo and redo keys per platform, the stacks, affected queries, created entities, relative time;
+  - 3 e2e tests: create, move, rename, then 3 undos and 3 redos; reverting an older batch from another session in the panel, then ⌘Z on that; a conflicting revert.
 
 ### M3-T7 Assets and image upload
 

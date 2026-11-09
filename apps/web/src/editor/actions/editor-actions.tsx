@@ -6,16 +6,18 @@ import { ignoresCameraKeys } from '@/input/use-keyboard.ts';
 import { useContextMenu } from '@/state/context-menu.ts';
 import { useEditor } from '@/state/editor.ts';
 import { useSelection } from '@/state/selection.ts';
+import { useUndoRedo } from '../use-undo.ts';
 import { DeleteDialog } from './delete-dialog.tsx';
 import { ObjectContextMenu } from './object-context-menu.tsx';
 import { useDeleteObjects } from './use-delete-objects.ts';
 import { useDuplicateObjects } from './use-duplicate-objects.ts';
 
 /**
- * Commands on the selection in edit mode (M3-T5, ux.md §4–5), from the keyboard or the context
- * menu: ⌘/Ctrl + A selects everything in the view, ⌘/Ctrl + D duplicates, Delete or Backspace
- * deletes after a confirmation that counts what goes with it. Rendered by the map page, which
- * has the view's objects (with the versions a delete needs).
+ * Commands in edit mode (ux.md §4–5), from the keyboard or the context menu: ⌘/Ctrl + A
+ * selects everything in the view, ⌘/Ctrl + D duplicates, Delete or Backspace deletes after a
+ * confirmation that counts what goes with it (M3-T5); ⌘/Ctrl + Z undoes and ⌘/Ctrl + Shift + Z
+ * (or Ctrl + Y) redoes (M3-T6). In a text field these keys are the field's own. Rendered by
+ * the map page, which has the view's objects (with the versions a delete needs).
  */
 export function EditorActions({
   mapId,
@@ -28,6 +30,7 @@ export function EditorActions({
   const selectedIds = useSelection((state) => state.selectedIds);
   const remove = useDeleteObjects();
   const duplicate = useDuplicateObjects(mapId);
+  const history = useUndoRedo();
 
   const selected = () => {
     const ids = new Set(useSelection.getState().selectedIds);
@@ -43,6 +46,12 @@ export function EditorActions({
         return;
       case 'delete':
         remove.request(selected());
+        return;
+      case 'undo':
+        history.undo();
+        return;
+      case 'redo':
+        history.redo();
         return;
     }
   };

@@ -8,6 +8,9 @@ import { useUniverseRoute } from '@/app/use-universe-route.ts';
 import { SelectionAnnouncer } from '@/app/selection-announcer.tsx';
 import { EditorActions } from '@/editor/actions/editor-actions.tsx';
 import { EditToolbar } from '@/editor/edit-toolbar.tsx';
+import { HistoryPanel } from '@/panels/history/history-panel.tsx';
+import { useEditor } from '@/state/editor.ts';
+import { useHistory } from '@/state/history.ts';
 import { useNavigation } from '@/state/navigation.ts';
 import { useSelection } from '@/state/selection.ts';
 import { useSelectionUrlSync } from '@/state/selection-url.ts';
@@ -27,7 +30,18 @@ export function MapPage() {
   const view = useViewPayload('galaxy', mapId, useReadOptions());
   const show = useNavigation((state) => state.show);
   const hasSelection = useSelection((state) => state.selectedIds.length > 0);
+  const editing = useEditor((state) => state.editing);
+  const universeId = route.status === 'ready' ? route.universe.id : undefined;
   useSelectionUrlSync();
+
+  // Edits on this page are undo steps for this universe (M3-T6).
+  useEffect(() => {
+    if (universeId === undefined) return;
+    useHistory.getState().setScope(universeId);
+    return () => {
+      useHistory.getState().setScope(null);
+    };
+  }, [universeId]);
 
   useEffect(() => {
     if (mapId === undefined) return;
@@ -53,6 +67,9 @@ export function MapPage() {
           Objects are added in edit mode, with the toolbar's Add button (arriving in M3-T2).
         </StatusPanel>
         <EditToolbar />
+        {/* Nothing to select here, but undo still works (after deleting the last object). */}
+        {mapId && <EditorActions mapId={mapId} objects={view.data.objects} />}
+        {editing && <HistoryPanel universeId={route.universe.id} />}
       </>
     );
   }
@@ -61,6 +78,7 @@ export function MapPage() {
       <SelectionAnnouncer objects={view.data.objects} />
       <EditToolbar />
       {mapId && <EditorActions mapId={mapId} objects={view.data.objects} />}
+      {editing && <HistoryPanel universeId={route.universe.id} />}
       {hasSelection && (
         <Suspense fallback={null}>
           <InfoPanel universeId={route.universe.id} objects={view.data.objects} />
