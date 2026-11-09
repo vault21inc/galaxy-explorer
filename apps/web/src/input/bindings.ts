@@ -165,7 +165,8 @@ export type KeyAction =
   | 'cycle-labels'
   | 'show-all-labels'
   | 'toggle-spoilers'
-  | 'toggle-edit';
+  | 'toggle-edit'
+  | 'add-object';
 
 export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
   ArrowUp: 'pan-up',
@@ -181,7 +182,8 @@ export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
   Home: 'reset-view',
   f: 'frame-selection',
   F: 'frame-selection',
-  // Esc clears the selection; with nothing selected it will go up one view (M5).
+  // Esc cancels placing an object, or clears the selection; with nothing selected it will go
+  // up one view (M5).
   Escape: 'clear-selection',
   // Labels (ux.md §7): L cycles hover → groups → all; Space shows all while held.
   l: 'cycle-labels',
@@ -192,4 +194,7 @@ export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
   // E toggles edit mode where it's offered (ux.md §4).
   e: 'toggle-edit',
   E: 'toggle-edit',
+  // N opens the Add menu in edit mode (ux.md §4).
+  n: 'add-object',
+  N: 'add-object',
 };

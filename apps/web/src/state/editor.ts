@@ -1,3 +1,4 @@
+import type { BaseType } from '@ge/domain';
 import { create } from 'zustand';
 
 interface EditorState {
@@ -8,24 +9,49 @@ interface EditorState {
    * view to edit. Set by the edit toggle while it's mounted; the E key reads it.
    */
   available: boolean;
+  /** Placing a new object: its base type, while the ghost follows the pointer (M3-T2). */
+  placing: BaseType | null;
+  /** The Add menu is open (the toolbar button or N). */
+  addMenuOpen: boolean;
+  /** An object just created, whose name field should take focus once its panel shows. */
+  focusNameOf: string | null;
   setEditing: (editing: boolean) => void;
   toggle: () => void;
   setAvailable: (available: boolean) => void;
+  startPlacing: (baseType: BaseType) => void;
+  cancelPlacing: () => void;
+  setAddMenuOpen: (open: boolean) => void;
+  setFocusNameOf: (id: string | null) => void;
 }
+
+/** Leaving edit mode ends whatever the editor was in the middle of. */
+const IDLE = { editing: false, placing: null, addMenuOpen: false } as const;
 
 /** Edit mode. It changes on a click or the E key, never per frame. */
 export const useEditor = create<EditorState>()((set, get) => ({
-  editing: false,
+  ...IDLE,
   available: false,
+  focusNameOf: null,
   setEditing: (editing) => {
-    set({ editing: editing && get().available });
+    set(editing && get().available ? { editing: true } : IDLE);
   },
   toggle: () => {
-    const { editing, available } = get();
-    set({ editing: !editing && available });
+    get().setEditing(!get().editing);
   },
   setAvailable: (available) => {
     // Leaving a page that offers editing also leaves edit mode.
-    set(available ? { available } : { available, editing: false });
+    set(available ? { available } : { available, ...IDLE });
+  },
+  startPlacing: (baseType) => {
+    if (get().editing) set({ placing: baseType, addMenuOpen: false });
+  },
+  cancelPlacing: () => {
+    set({ placing: null });
+  },
+  setAddMenuOpen: (open) => {
+    set({ addMenuOpen: open && get().editing });
+  },
+  setFocusNameOf: (id) => {
+    set({ focusNameOf: id });
   },
 }));

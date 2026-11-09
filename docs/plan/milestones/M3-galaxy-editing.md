@@ -60,8 +60,26 @@
 - Esc cancels placement.
 
 **Done when:**
-- [ ] E2E: adding a system at a clicked point puts it within 1 % of the camera distance of that point. It is selected and its name field is focused.
-- [ ] A failed create (simulated with a 500) leaves no ghost and shows a toast.
+- [x] E2E: adding a system at a clicked point puts it within 1 % of the camera distance of that point. It is selected and its name field is focused.
+- [x] A failed create (simulated with a 500) leaves no ghost and shows a toast.
+
+**Notes (done 2026-11-08):**
+- **Add ▾** in the toolbar (and N) lists `placeableTypes(level)`: the base types whose parents include the view's subject, from the object-types registry. In the galaxy view: system, planet, station, nebula, anomaly, black hole and marker.
+- **The placement ghost** (`editor/placement.tsx`) is a see-through sphere of the type's color and clamped size, following `workPlanePoint()`: the camera ray through the pointer, meeting y = 0.
+  - A click (under 4 px of movement) creates the object.
+  - Esc or a right-click cancels; the toolbar says "Click to place a system · Esc cancels".
+  - Selection and box selection ignore the pointer while placing.
+- **Creating** (`useCreateObject`) is one POST with the batch description "Add system", through generic create and update helpers derived from the entity-kinds registry (`entityCreateRequest`, `entityUpdateRequest`, `useUpdateEntity`). Their paths are checked against the OpenAPI document.
+  - New objects are named "New system" and so on, and are explorable when their type opens a view.
+  - The cached galaxy payload gets an optimistic entry, resolved with `resolveAppearance`; a failure restores it and shows a toast.
+  - On success the object is selected and its name field focused, and the views refetch.
+- **A minimal name field** in the panel in edit mode, for plain-text names: Enter or leaving the field saves with `version`, Esc reverts. M3-T4 replaces it with the full rich-text field and the 409 dialog; for now, failures show a toast.
+- **Toasts** (`state/toasts.ts`, `app/toaster.tsx`) sit bottom right (ux.md §1). Errors stay until dismissed; others go after 5 s.
+- **Test hooks:** `workPlanePointAt(clientX, clientY)` and `placement()`.
+- **Tests:**
+  - 6 unit tests: placeable types per view, default names, the work-plane ray;
+  - write paths for every kind checked against `openapi.json`;
+  - 3 e2e tests, each on its own new universe: create at a point, selected, name focused, rename updates the label; Esc cancels; a failed create rolls back and shows a toast.
 
 ### M3-T3 Move objects
 

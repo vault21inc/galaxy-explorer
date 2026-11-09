@@ -10,7 +10,9 @@ import { describe, expect, it } from 'vitest';
 import { queryKeys } from '../src/api/keys.ts';
 import {
   configListRequest,
+  entityCreateRequest,
   entityListRequest,
+  entityUpdateRequest,
   entityRequest,
   viewRequest,
   type RequestSpec,
@@ -41,7 +43,25 @@ function expectDocumented(spec: RequestSpec): void {
 
 const ID = '019a5b3c-7d2e-7f00-8a1b-2c3d4e5f6a7b';
 
+/** A write operation documented at the template, with exactly these path parameters. */
+function expectDocumentedWrite(spec: RequestSpec, method: 'post' | 'patch'): void {
+  const operation = (
+    openapi.paths[spec.template] as Record<string, { parameters?: Parameter[] }> | undefined
+  )?.[method];
+  expect(operation, `${method.toUpperCase()} ${spec.template} is in openapi.json`).toBeDefined();
+  const pathNames = (operation?.parameters ?? [])
+    .filter((parameter) => parameter.in === 'path')
+    .map((parameter) => parameter.name);
+  expect(Object.keys(spec.path).sort()).toEqual(pathNames.sort());
+}
+
 describe('registry-derived requests', () => {
+  it.each(ENTITY_KINDS)('%s: create and update are documented routes', (kind) => {
+    const scope = entityKinds[kind].scope === 'map' ? { mapId: ID } : { universeId: ID };
+    expectDocumentedWrite(entityCreateRequest(kind, scope as never), 'post');
+    expectDocumentedWrite(entityUpdateRequest(kind, ID), 'patch');
+  });
+
   it.each(ENTITY_KINDS)('%s: the detail request is a documented route', (kind) => {
     expectDocumented(
       entityRequest(kind, ID, {

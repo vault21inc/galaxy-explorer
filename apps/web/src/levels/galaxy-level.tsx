@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useViewPayload } from '@/api/hooks.ts';
 import { useReadOptions } from '@/api/read-options.ts';
+import { Placement } from '@/editor/placement.tsx';
 import { GalaxyBackground } from '@/render/galaxy/galaxy-background.tsx';
 import { SelectionRings } from '@/render/picking/selection-rings.tsx';
 import { partitionByRenderer } from '@/render/registry.ts';
@@ -24,6 +25,7 @@ export default function GalaxyLevel({ subjectId }: { subjectId: string }) {
         <renderer.component key={renderer.name} objects={objects} />
       ))}
       <SelectionRings />
+      <Placement mapId={subjectId} />
     </>
   );
 }

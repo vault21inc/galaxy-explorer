@@ -20,3 +20,30 @@ export async function fetchData<T>(spec: RequestSpec, signal?: AbortSignal): Pro
   const init = { params: { path: spec.path, query: spec.query }, ...(signal ? { signal } : {}) };
   return (await unwrap(looseGet(spec.template, init))) as T;
 }
+
+type LooseWrite = (
+  path: string,
+  init: { params: { path: Record<string, string> }; body: unknown; headers?: HeadersInit },
+) => Promise<{ data?: unknown; error?: unknown; response: Response }>;
+
+const loosePost: LooseWrite = (path, init) => api.POST(path as never, init as never);
+const loosePatch: LooseWrite = (path, init) => api.PATCH(path as never, init as never);
+
+/**
+ * Sends a write built in requests.ts (POST to create, PATCH to update) through the same
+ * untyped door, with an optional batch description for the history (architecture.md §5).
+ */
+export async function sendWrite<T>(
+  method: 'POST' | 'PATCH',
+  spec: RequestSpec,
+  body: unknown,
+  description?: string,
+): Promise<T> {
+  const send = method === 'POST' ? loosePost : loosePatch;
+  const init = {
+    params: { path: spec.path },
+    body,
+    ...(description ? { headers: { 'X-GE-Batch-Description': description } } : {}),
+  };
+  return (await unwrap(send(spec.template, init))) as T;
+}

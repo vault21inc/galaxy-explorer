@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { flyTo } from '@/render/camera/fly-to.ts';
 import { pickAt } from '@/render/picking/picking.ts';
 import { hoverStore, setHovered } from '@/state/hover.ts';
+import { useEditor } from '@/state/editor.ts';
 import { useSelection } from '@/state/selection.ts';
 import { resolveBinding, type Gesture, type Mode, type Target } from './bindings.ts';
 import { isClick } from './click.ts';
@@ -50,6 +51,8 @@ export function usePointerSelection(mode: Mode): void {
     const onPointerUp = (event: PointerEvent) => {
       const started = press;
       press = null;
+      // While an object is being placed, clicks belong to the placement.
+      if (useEditor.getState().placing) return;
       if (started?.pointerId !== event.pointerId || started.button !== event.button) return;
       if (!isClick(started, { x: event.clientX, y: event.clientY })) return;
       const gesture: Gesture | null =
@@ -66,6 +69,7 @@ export function usePointerSelection(mode: Mode): void {
       }
     };
     const onDoubleClick = (event: MouseEvent) => {
+      if (useEditor.getState().placing) return;
       const hit = pickAt(get(), event.clientX, event.clientY);
       if (!hit) return;
       const action = resolveBinding('double-click', event, mode, targetOf(hit.id), platform);

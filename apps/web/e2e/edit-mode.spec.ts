@@ -132,7 +132,8 @@ test.describe('edit mode (ux.md §2)', () => {
     await expect(panel).toContainText('This entry contains potential spoilers.');
 
     await page.keyboard.press('e');
-    await expect(panel).toContainText('Erebus');
+    // In edit mode the name is an editable field (M3-T2).
+    await expect(panel.getByLabel('Name', { exact: true })).toHaveValue('Erebus');
     await expect(panel.locator('[data-spoiler-marked]').first()).toBeVisible();
     await expect(page.getByRole('button', { name: 'Spoilers: Shown' })).toBeDisabled();
     expect(

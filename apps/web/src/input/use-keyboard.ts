@@ -54,7 +54,11 @@ export function useKeyboard(): void {
           return flyTo(camera, selected);
         }
         case 'clear-selection':
-          useSelection.getState().clear();
+          if (useEditor.getState().placing) useEditor.getState().cancelPlacing();
+          else useSelection.getState().clear();
+          return;
+        case 'add-object':
+          useEditor.getState().setAddMenuOpen(true);
           return;
         case 'cycle-labels':
           useLabels.getState().cycle();

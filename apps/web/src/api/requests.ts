@@ -117,3 +117,16 @@ export function configListRequest(resource: ConfigResource, universeId: string):
     query: { limit: 1_000 },
   };
 }
+
+/** Creating an entity of a kind in its map, or its universe for universe-scoped kinds. */
+export function entityCreateRequest<K extends EntityKind>(
+  kind: K,
+  scope: EntityScope<K>,
+): RequestSpec {
+  return { ...entityListRequest(kind, scope), query: {} };
+}
+
+/** Updating (PATCH) one entity of a kind. */
+export function entityUpdateRequest(kind: EntityKind, id: string): RequestSpec {
+  return { ...entityRequest(kind, id), query: {} };
+}

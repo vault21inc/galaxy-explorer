@@ -1,5 +1,7 @@
 import { CameraControlsImpl } from '@react-three/drei';
 import { Vector3 } from 'three';
+import { placementGhost } from '@/editor/placement.tsx';
+import { toNdc, workPlanePoint } from '@/editor/work-plane.ts';
 import { detectPlatform, type Platform } from '@/input/platform.ts';
 import { hoverStore } from '@/state/hover.ts';
 import { useSelection } from '@/state/selection.ts';
@@ -48,6 +50,10 @@ export interface GeTestHooks {
   hoveredId(): string | null;
   /** Flies the camera to an object, as a double-click does; resolves when it has settled. */
   flyTo(id: string): Promise<void>;
+  /** Where a page point meets the work plane (y = 0), as placing an object computes it. */
+  workPlanePointAt(clientX: number, clientY: number): [number, number, number] | null;
+  /** The placement ghost: its type and position, or null when nothing is being placed. */
+  placement(): { baseType: string; position: [number, number, number] } | null;
   /** The labels on screen after the last frame. */
   visibleLabels(): { id: string; text: string }[];
   /** Label-update durations since the last reset (budget: 2 ms per frame, rendering.md §11). */
@@ -79,6 +85,12 @@ export function installTestHooks(): void {
     platform: () => detectPlatform(),
     selectedIds: () => [...useSelection.getState().selectedIds],
     hoveredId: () => hoverStore.getState().hoveredId,
+    workPlanePointAt: (clientX, clientY) => {
+      const state = canvasState();
+      if (!state) return null;
+      return workPlanePoint(state.camera, toNdc(clientX, clientY, state.gl.domElement));
+    },
+    placement: () => placementGhost(),
     visibleLabels: () => visibleLabels().map(({ id, text }) => ({ id, text })),
     labelStats: () => labelTimeline.stats(),
     resetLabelStats: () => {
