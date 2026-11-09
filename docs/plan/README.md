@@ -171,3 +171,4 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-08:** M3-T5 done: ⌘/Ctrl + A, delete with a dry-run impact dialog, ⌘/Ctrl + D duplicates as one batch, and the right-click menu (Rename, Duplicate, Delete).
 - **2026-11-08:** M3-T6 done: undo and redo (⌘/Ctrl + Z, ⌘/Ctrl + Shift + Z) over this session's batches, and the History panel with Revert on any batch.
 - **2026-11-08:** M3-T7 done: image uploads (WebP variants, metadata stripped, deduplicated), the image library and picker, and the Images section with captions, credits, cover and spoiler blur.
+- **2026-11-09:** M3-T8 done: Map settings with seven galaxy presets, sliders previewed live (one reused 512² bake), a central bar in the sampler and the disc, and a reference underlay in edit mode.

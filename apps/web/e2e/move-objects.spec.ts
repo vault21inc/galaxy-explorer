@@ -1,5 +1,6 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import { waitForFirstFrame, waitForIdle } from './test-hooks.ts';
+import { getJson } from './api.ts';
 
 type Vec3 = [number, number, number];
 const plain = (source: string) => ({ format: 'plain', source, spoiler: false });
@@ -36,7 +37,7 @@ async function setUp(request: APIRequestContext) {
 
 async function positionOf(request: APIRequestContext, id: string): Promise<Vec3> {
   const object = (
-    (await (await request.get(`/api/v1/objects/${id}`)).json()) as {
+    (await getJson(request, `/api/v1/objects/${id}`)) as {
       data: { x: number; y: number; z: number };
     }
   ).data;
@@ -44,7 +45,7 @@ async function positionOf(request: APIRequestContext, id: string): Promise<Vec3>
 }
 
 async function batches(request: APIRequestContext, universeId: string) {
-  const history = (await (await request.get(`/api/v1/universes/${universeId}/history`)).json()) as {
+  const history = (await getJson(request, `/api/v1/universes/${universeId}/history`)) as {
     data: { description: string }[];
   };
   return history.data;

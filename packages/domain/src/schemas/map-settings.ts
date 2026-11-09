@@ -15,6 +15,11 @@ export const GalaxySettings = z
     armTwist: z.number().min(0).max(3),
     armSpread: z.number().min(0).max(1),
     bulgeRadiusLy: z.number().min(0),
+    /**
+     * Half the length of a central bar, as a share of the radius (D-24). Default 0: no bar.
+     * The arms start at the bar's ends.
+     */
+    barLengthRadii: z.number().min(0).max(0.6),
     /** Capped further by the quality setting (rendering.md §13). */
     starPoints: z.int().min(1_000).max(50_000),
     colors: z.object({ core: HexColor, arm: HexColor, dust: HexColor }),

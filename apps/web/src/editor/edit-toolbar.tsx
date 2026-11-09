@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button.tsx';
 import { objectTypes } from '@ge/domain';
 import { useEditor } from '@/state/editor.ts';
-import { useHistory } from '@/state/history.ts';
+import { useSidePanel } from '@/state/side-panel.ts';
 import { AddMenu } from './add-menu.tsx';
 import { useUndoRedo } from './use-undo.ts';
 
@@ -30,7 +30,7 @@ const TOOLS: readonly Tool[] = [
   { label: 'Select', icon: MousePointer2, active: true },
   { label: 'Group', icon: Group, arrives: 'M4' },
   { label: 'Route', icon: Route, arrives: 'M4' },
-  { label: 'Map', icon: MapIcon, arrives: 'M3-T8' },
+  { label: 'Map', icon: MapIcon },
   { label: 'Undo', icon: Undo2, keys: '⌘/Ctrl + Z' },
   { label: 'Redo', icon: Redo2, keys: '⌘/Ctrl + Shift + Z' },
   { label: 'History', icon: History },
@@ -46,7 +46,7 @@ export function EditToolbar() {
   const gridSize = useEditor((state) => state.gridSize);
   const setGridSize = useEditor((state) => state.setGridSize);
   const history = useUndoRedo();
-  const historyOpen = useHistory((state) => state.panelOpen);
+  const leftPanel = useSidePanel((state) => state.left);
   if (!editing) return null;
 
   /** What the working tools do; the others are placeholders until their task. */
@@ -59,9 +59,16 @@ export function EditToolbar() {
       case 'History':
         return {
           onClick: () => {
-            useHistory.getState().setPanelOpen(!historyOpen);
+            useSidePanel.getState().toggle('history');
           },
-          pressed: historyOpen,
+          pressed: leftPanel === 'history',
+        };
+      case 'Map':
+        return {
+          onClick: () => {
+            useSidePanel.getState().toggle('map-settings');
+          },
+          pressed: leftPanel === 'map-settings',
         };
       default:
         return {};

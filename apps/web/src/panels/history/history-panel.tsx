@@ -7,6 +7,7 @@ import { errorMessage } from '@/app/route-states.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { useRevert } from '@/editor/use-undo.ts';
 import { useHistory } from '@/state/history.ts';
+import { useSidePanel } from '@/state/side-panel.ts';
 import { useToasts } from '@/state/toasts.ts';
 import { relativeTime } from './relative-time.ts';
 
@@ -31,13 +32,12 @@ function useNow(intervalMs = 30_000): number {
  * batch") changes nothing and says so in a toast.
  */
 export function HistoryPanel({ universeId }: { universeId: string }) {
-  const open = useHistory((state) => state.panelOpen);
+  const open = useSidePanel((state) => state.left === 'history');
   if (!open) return null;
   return <HistoryList universeId={universeId} />;
 }
 
 function HistoryList({ universeId }: { universeId: string }) {
-  const setPanelOpen = useHistory((state) => state.setPanelOpen);
   const changes = useHistory((state) => state.changes);
   const revert = useRevert();
   const [reverting, setReverting] = useState<string | null>(null);
@@ -82,7 +82,7 @@ function HistoryList({ universeId }: { universeId: string }) {
           size="icon-sm"
           aria-label="Close history"
           onClick={() => {
-            setPanelOpen(false);
+            useSidePanel.getState().close();
           }}
         >
           <X aria-hidden />

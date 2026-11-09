@@ -315,9 +315,51 @@
 - **Not covered:** ring and irregular galaxies. Each would be another shape term in the sampler and the shader; add them as later presets if wanted.
 
 **Done when:**
-- [ ] Unit tests: every preset parses as `GalaxySettings`; a bar puts disc stars along the X axis near the center (density test, as in `galaxy-density.test.ts`); with no bar, the sampler's first 1,000 positions are unchanged.
-- [ ] E2E: picking a preset and moving a slider changes the disc (its bake key and `renderInfo()`), survives a reload, and undoes in one step. While dragging, the texture count stays at most one above its starting value.
-- [ ] E2E: the underlay is visible in edit mode, invisible in view mode, and its settings persist after a reload.
+- [x] Unit tests: every preset parses as `GalaxySettings`; a bar puts disc stars along the X axis near the center (density test, as in `galaxy-density.test.ts`); with no bar, the sampler's first 1,000 positions are unchanged.
+- [x] E2E: picking a preset and moving a slider changes the disc (its bake key and `renderInfo()`), survives a reload, and undoes in one step. While dragging, the texture count stays at most one above its starting value.
+- [x] E2E: the underlay is visible in edit mode, invisible in view mode, and its settings persist after a reload.
+
+**Notes (done 2026-11-09):**
+- **The bar** (`barLengthRadii`, 0–0.6, default 0):
+  - In the sampler, a quarter of the disc's stars go to an elongated, flattened ellipsoid along X (triangle-shaped along it, `GALAXY_SHAPE.barWidth` across).
+  - The spiral is measured from the bar's ends, so arm 0 starts at +X.
+  - The disc shader mirrors both and dims arm light inside the bar.
+  - With no bar the sampler takes the same path and draws the same random numbers. Hashes of the first 1,000 positions were pinned before the change (three settings), and the web app's pinned point hash is unchanged.
+- **Presets** (`galaxy/presets.ts`): the seven from the table, as partial settings. Grand-design equals the defaults.
+- **The Map settings panel** (`panels/map-settings/`, lazy-loaded), from the toolbar's Map button on the left. History and Map settings share the left side, one at a time (`state/side-panel.ts`).
+  - Preset thumbnails are drawn on a 2D canvas from `sampleGalaxyPosition`, with no WebGL.
+  - The sliders take their limits from the schema (the bulge capped at 60,000 ly); radius and thickness use a log scale. A linear slider's arrow key moves one step.
+  - Also: three colors (preview while picking, save on blur), the seed with Shuffle, and Reset to default (an empty document; a set `starPoints` is kept).
+  - Every save is one PATCH, so one batch, queued with the last version seen (`useMapSave`).
+- **Live preview** (`state/galaxy-preview.ts`):
+  - Sliders write the preview on every step and save on release (the input's native `change`).
+  - The disc re-bakes the preview at 512² into one reused target after 150 ms of rest (`bakeInto`), and the glow follows. The depth stars keep the saved settings until the save, then regenerate in the worker.
+  - The preview ends once the saved map has refetched, so nothing jumps back.
+  - Test hook `galaxyDisc()` gives the bake key and whether it's the preview.
+- **Underlay:**
+  - choose or upload with the M3-T7 picker; it starts 2.4 radii wide, centred, at 50% opacity;
+  - width, rotation (previewed), X and Z offsets, opacity (previewed), shown, replace and remove;
+  - drawn only in edit mode, as one plane at render order −10 with depth testing and writing off;
+  - test hook `underlay()`.
+- **Fixes found on the way:**
+  - The empty-map hint still said Add was "arriving in M3-T2".
+  - e2e reads used in polls go through `e2e/api.ts` with a 3 s timeout. A read through `vite preview`'s proxy stalled once under parallel load and used up a whole poll. That also explains one earlier unexplained M3-T6 failure.
+- **Tests:**
+  - domain: 9 new tests (the pinned no-bar hashes, the bar's density, presets parsing and resolving);
+  - web unit: 3 tests (slider scales, the preview store);
+  - e2e: 3 tests: a preset, a dragged slider (preview, at most one extra texture), reload and undo; undo of a preset; the underlay in edit mode only, persisting.
+- **Performance** (`pnpm perf`, owner's Mac, Chrome and Playwright WebKit): all budgets pass.
+
+  | | Before (M3-T3) | After |
+  |---|---|---|
+  | Chrome median / p95 | 4.2 / 4.8 ms | 4.2 / 4.7 ms |
+  | WebKit median / p95 | 17.0 / 18.0 ms | 17.0 / 18.0 ms |
+  | Draw calls | 6 | 6 |
+  | Frames rendered while idle | 0 | 0 |
+  | Initial JavaScript, gzipped | 441 kB | 452 kB |
+
+  - The underlay adds one draw call in edit mode only.
+  - The first galaxy frame was 531 ms in Chrome and 511 ms in WebKit, under its budget.
 
 ### M3-T9 Outliner
 

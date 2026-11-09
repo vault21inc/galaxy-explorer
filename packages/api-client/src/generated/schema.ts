@@ -1378,6 +1378,7 @@ export interface components {
             armTwist?: number;
             armSpread?: number;
             bulgeRadiusLy?: number;
+            barLengthRadii?: number;
             starPoints?: number;
             colors?: {
                 core: string;
@@ -2799,6 +2800,7 @@ export interface components {
             armTwist?: number;
             armSpread?: number;
             bulgeRadiusLy?: number;
+            barLengthRadii?: number;
             starPoints?: number;
             colors?: {
                 core: string;

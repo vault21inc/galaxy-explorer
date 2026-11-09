@@ -1,5 +1,6 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import { waitForFirstFrame } from './test-hooks.ts';
+import { getJson } from './api.ts';
 
 /** Images (M3-T7): upload one to an object, credit it, and hide it as a spoiler. */
 
@@ -34,9 +35,8 @@ async function setUp(request: APIRequestContext) {
 }
 
 async function imagesOf(request: APIRequestContext, id: string) {
-  const response = await request.get(`/api/v1/objects/${id}?include=images`);
   return (
-    (await response.json()) as {
+    (await getJson(request, `/api/v1/objects/${id}?include=images`)) as {
       data: { images: { isSpoiler: boolean; role: string; asset: { credit: string | null } }[] };
     }
   ).data.images;

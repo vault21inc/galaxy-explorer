@@ -17,6 +17,8 @@ import { useSelectionUrlSync } from '@/state/selection-url.ts';
 
 // Loaded on first use: it brings the rich-text parsers, which the galaxy view doesn't need.
 const InfoPanel = lazy(() => import('@/panels/info-panel.tsx'));
+// Edit mode only: the galaxy presets, sliders and underlay controls (M3-T8).
+const MapSettingsPanel = lazy(() => import('@/panels/map-settings/map-settings-panel.tsx'));
 
 /**
  * `/u/:universeSlug/:mapSlug`: the galaxy view of one map. It loads the galaxy view payload
@@ -64,12 +66,17 @@ export function MapPage() {
     return (
       <>
         <StatusPanel tone="empty" title="This map is empty">
-          Objects are added in edit mode, with the toolbar's Add button (arriving in M3-T2).
+          Add objects in edit mode (E) with the toolbar’s Add button, or press N.
         </StatusPanel>
         <EditToolbar />
         {/* Nothing to select here, but undo still works (after deleting the last object). */}
         {mapId && <EditorActions mapId={mapId} objects={view.data.objects} />}
         {editing && <HistoryPanel universeId={route.universe.id} />}
+        {editing && mapId && (
+          <Suspense fallback={null}>
+            <MapSettingsPanel universeId={route.universe.id} mapId={mapId} />
+          </Suspense>
+        )}
       </>
     );
   }
@@ -79,6 +86,11 @@ export function MapPage() {
       <EditToolbar />
       {mapId && <EditorActions mapId={mapId} objects={view.data.objects} />}
       {editing && <HistoryPanel universeId={route.universe.id} />}
+      {editing && mapId && (
+        <Suspense fallback={null}>
+          <MapSettingsPanel universeId={route.universe.id} mapId={mapId} />
+        </Suspense>
+      )}
       {hasSelection && (
         <Suspense fallback={null}>
           <InfoPanel universeId={route.universe.id} objects={view.data.objects} />

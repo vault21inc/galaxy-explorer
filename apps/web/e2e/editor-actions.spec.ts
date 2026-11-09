@@ -1,5 +1,6 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import { waitForFirstFrame, waitForIdle } from './test-hooks.ts';
+import { getJson } from './api.ts';
 
 /**
  * Commands on the selection in edit mode (M3-T5): box select, select all, delete with its
@@ -88,14 +89,15 @@ const selectedIds = (page: Page) =>
   page.evaluate(() => [...(window.__GE_TEST__?.selectedIds() ?? [])].sort());
 
 async function galaxyObjects(request: APIRequestContext, mapId: string) {
-  const view = (await (
-    await request.get(`/api/v1/maps/${mapId}/views/galaxy?includeDrafts=true`)
-  ).json()) as { data: { objects: { id: string; namePlain: string; position: number[] }[] } };
+  const view = (await getJson(
+    request,
+    `/api/v1/maps/${mapId}/views/galaxy?includeDrafts=true`,
+  )) as { data: { objects: { id: string; namePlain: string; position: number[] }[] } };
   return view.data.objects;
 }
 
 async function historyOf(request: APIRequestContext, universeId: string) {
-  const history = (await (await request.get(`/api/v1/universes/${universeId}/history`)).json()) as {
+  const history = (await getJson(request, `/api/v1/universes/${universeId}/history`)) as {
     data: { description: string }[];
   };
   return history.data.map((batch) => batch.description);

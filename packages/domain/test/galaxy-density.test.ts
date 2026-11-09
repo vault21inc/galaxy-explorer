@@ -4,7 +4,9 @@ import {
   resolveGalaxySettings,
   sampleGalaxyPosition,
 } from '../src/galaxy/density.ts';
+import { GALAXY_PRESETS } from '../src/galaxy/presets.ts';
 import { gaussian, seededRandom } from '../src/random.ts';
+import { GalaxySettings } from '../src/schemas/map-settings.ts';
 
 const sample = (count: number, settings = GALAXY_DEFAULTS, seed = 1) => {
   const random = seededRandom(seed);
@@ -49,6 +51,61 @@ describe('sampleGalaxyPosition', () => {
     const left = sample(4_000, elliptical).filter(([x]) => x < 0).length;
     expect(left / 4_000).toBeGreaterThan(0.45);
     expect(left / 4_000).toBeLessThan(0.55);
+  });
+});
+
+describe('the central bar (D-24)', () => {
+  /** FNV-1a over the float bits of the first 1,000 positions: any change changes the hash. */
+  const hashOf = (settings: ReturnType<typeof resolveGalaxySettings>, seed: number) => {
+    const values = new Float64Array(sample(1_000, settings, seed).flat());
+    let hash = 0x811c9dc5;
+    for (const word of new Uint32Array(values.buffer)) {
+      hash ^= word;
+      hash = Math.imul(hash, 0x01000193) >>> 0;
+    }
+    return hash.toString(16).padStart(8, '0');
+  };
+
+  it('without a bar, the sampler draws exactly what it drew before bars existed', () => {
+    // Pinned before the bar was added: existing maps and the stress seed stay as they were.
+    expect(hashOf(GALAXY_DEFAULTS, 1)).toBe('2bc19a5f');
+    expect(hashOf(resolveGalaxySettings({ arms: 0, seed: 5 }), 5)).toBe('faaccee6');
+    expect(hashOf(resolveGalaxySettings({ arms: 2, armTwist: 0.6 }), 9)).toBe('69f6ee3e');
+  });
+
+  it('puts stars along the X axis near the center', () => {
+    const barred = resolveGalaxySettings({ barLengthRadii: 0.3, arms: 2 });
+    const plain = resolveGalaxySettings({ arms: 2 });
+    // Of the stars within the bar's length of the center, outside the bulge's core, the share
+    // closer to the X axis than to the Z axis: about half without a bar, far more with one.
+    const alongX = (settings: typeof barred) => {
+      const reach = 0.3 * settings.radiusLy;
+      const near = sample(20_000, settings).filter(([x, , z]) => {
+        const r = Math.hypot(x, z);
+        return r > settings.bulgeRadiusLy * 0.5 && r < reach;
+      });
+      return near.filter(([x, , z]) => Math.abs(x) > Math.abs(z)).length / near.length;
+    };
+    expect(alongX(plain)).toBeLessThan(0.6);
+    expect(alongX(barred)).toBeGreaterThan(0.75);
+  });
+});
+
+describe('presets', () => {
+  it.each(GALAXY_PRESETS.map((preset) => [preset.label, preset] as const))(
+    '%s parses as GalaxySettings and resolves to a full shape',
+    (_label, preset) => {
+      expect(GalaxySettings.parse(preset.settings)).toEqual(preset.settings);
+      expect(Object.keys(resolveGalaxySettings(preset.settings)).sort()).toEqual(
+        Object.keys(GALAXY_DEFAULTS).sort(),
+      );
+    },
+  );
+
+  it('have unique ids, and the first is the defaults', () => {
+    expect(new Set(GALAXY_PRESETS.map((preset) => preset.id)).size).toBe(GALAXY_PRESETS.length);
+    const first = resolveGalaxySettings(GALAXY_PRESETS[0]?.settings);
+    expect(first).toEqual(GALAXY_DEFAULTS);
   });
 });
 

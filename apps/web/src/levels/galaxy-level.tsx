@@ -6,6 +6,9 @@ import { Placement } from '@/editor/placement.tsx';
 import { GalaxyBackground } from '@/render/galaxy/galaxy-background.tsx';
 import { SelectionRings } from '@/render/picking/selection-rings.tsx';
 import { partitionByRenderer } from '@/render/registry.ts';
+import { UnderlayImage } from '@/render/galaxy/underlay.tsx';
+import { useEditor } from '@/state/editor.ts';
+import { useGalaxyPreview } from '@/state/galaxy-preview.ts';
 
 /**
  * The galaxy view (rendering.md §6), drawn inside the canvas: the background, then each
@@ -14,14 +17,28 @@ import { partitionByRenderer } from '@/render/registry.ts';
  */
 export default function GalaxyLevel({ subjectId }: { subjectId: string }) {
   const view = useViewPayload('galaxy', subjectId, useReadOptions());
+  const preview = useGalaxyPreview((state) =>
+    state.preview?.mapId === subjectId ? state.preview : null,
+  );
   const groups = useMemo(
     () => (view.data ? partitionByRenderer('galaxy', view.data.objects) : []),
     [view.data],
   );
+  const editing = useEditor((state) => state.editing);
   if (!view.data) return null;
+  const { underlayAssetId } = view.data.map;
+  const underlay = preview?.underlay ?? view.data.map.underlay;
   return (
     <>
-      <GalaxyBackground mapId={subjectId} settings={view.data.map.galaxySettings} />
+      {/* The reference underlay is an editing aid: edit mode only (M3-T8). */}
+      {editing && underlay?.visible && underlayAssetId && (
+        <UnderlayImage underlay={underlay} assetId={underlayAssetId} />
+      )}
+      <GalaxyBackground
+        mapId={subjectId}
+        settings={view.data.map.galaxySettings}
+        preview={preview?.galaxySettings ?? null}
+      />
       {groups.map(({ renderer, objects }) => (
         <renderer.component key={renderer.name} objects={objects} />
       ))}

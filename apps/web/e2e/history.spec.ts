@@ -1,5 +1,6 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import { waitForFirstFrame, waitForIdle } from './test-hooks.ts';
+import { getJson } from './api.ts';
 
 /**
  * Undo, redo and the History panel (M3-T6), each test on a fresh universe so its history is
@@ -32,21 +33,21 @@ interface Drawn {
 }
 
 async function objectsOf(request: APIRequestContext, mapId: string): Promise<Drawn[]> {
-  const view = (await (
-    await request.get(`/api/v1/maps/${mapId}/views/galaxy?includeDrafts=true`)
-  ).json()) as { data: { objects: Drawn[] } };
+  const view = (await getJson(
+    request,
+    `/api/v1/maps/${mapId}/views/galaxy?includeDrafts=true`,
+  )) as { data: { objects: Drawn[] } };
   return view.data.objects;
 }
 
 async function nameOf(request: APIRequestContext, id: string) {
-  return (
-    (await (await request.get(`/api/v1/objects/${id}`)).json()) as { data: { namePlain: string } }
-  ).data.namePlain;
+  return ((await getJson(request, `/api/v1/objects/${id}`)) as { data: { namePlain: string } }).data
+    .namePlain;
 }
 
 /** Renames through the API, as another session or an API token would. */
 async function renameElsewhere(request: APIRequestContext, id: string, name: string) {
-  const { data } = (await (await request.get(`/api/v1/objects/${id}`)).json()) as {
+  const { data } = (await getJson(request, `/api/v1/objects/${id}`)) as {
     data: { version: number; namePlain: string };
   };
   const response = await request.patch(`/api/v1/objects/${id}`, {

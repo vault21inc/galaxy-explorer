@@ -10,4 +10,5 @@ export {
   sampleGalaxyPosition,
   type ResolvedGalaxySettings,
 } from './density.ts';
+export { GALAXY_PRESETS, type GalaxyPreset } from './presets.ts';
 export { gaussian, seededRandom } from '../random.ts';

@@ -24,6 +24,7 @@ export const GALAXY_DEFAULTS: ResolvedGalaxySettings = {
   armTwist: 1.2,
   armSpread: 0.35,
   bulgeRadiusLy: 7_500,
+  barLengthRadii: 0,
   colors: {
     core: HexColor.parse('#ffd9a0'),
     arm: HexColor.parse('#a9c8ff'),
@@ -46,6 +47,12 @@ export const GALAXY_SHAPE = {
   bulgeSigma: 0.5,
   /** The bulge is a slightly flattened ball: its height is this share of its width. */
   bulgeFlattening: 0.6,
+  /** With a bar, this share of the disc's stars belong to the bar instead (D-24). */
+  barFraction: 0.25,
+  /** The bar's half-width across its length, as a share of its half-length. */
+  barWidth: 0.22,
+  /** The bar's thickness, as a share of the disc's. */
+  barThickness: 0.6,
 } as const;
 
 export function resolveGalaxySettings(settings: GalaxySettings = {}): ResolvedGalaxySettings {
@@ -62,6 +69,8 @@ export function sampleGalaxyPosition(
   random: () => number,
 ): [Ly, Ly, Ly] {
   const { radiusLy, thicknessLy, arms, armTwist, armSpread, bulgeRadiusLy } = settings;
+  // Half the bar's length, in light-years; 0 without a bar.
+  const barLy = settings.barLengthRadii * radiusLy;
 
   if (random() < GALAXY_SHAPE.bulgeFraction) {
     // The bulge: a slightly flattened ball, densest at the center.
@@ -76,6 +85,18 @@ export function sampleGalaxyPosition(
     ];
   }
 
+  // The bar (D-24): an elongated, flattened ellipsoid through the center along the X axis.
+  // Without a bar this draws nothing, so galaxies without one sample exactly as before.
+  if (barLy > 0 && random() < GALAXY_SHAPE.barFraction) {
+    // Along the bar: dense in the middle, thinning toward its ends (a triangle-shaped spread,
+    // the sum of two uniform numbers).
+    const along = (random() + random() - 1) * barLy;
+    const across =
+      gaussian(random) * barLy * GALAXY_SHAPE.barWidth * (1 - 0.6 * Math.abs(along / barLy));
+    const up = gaussian(random) * (thicknessLy / 2) * GALAXY_SHAPE.barThickness;
+    return [along, up, across];
+  }
+
   // The disc: radius drawn from an exponential falloff, cut off at the galaxy's edge.
   let r = radiusLy;
   while (r >= radiusLy) r = -GALAXY_SHAPE.discScaleLength * radiusLy * Math.log(1 - random());
@@ -85,9 +106,13 @@ export function sampleGalaxyPosition(
     angle = 2 * Math.PI * random(); // elliptical: no arms
   } else {
     // A logarithmic spiral turns by the same angle for each doubling of the radius. Normalized
-    // so the arm makes `armTwist` turns between `armStart` and the edge.
+    // so the arm makes `armTwist` turns between `armStart` and the edge. With a bar the arms
+    // begin at its ends: the spiral is measured from the bar's half-length outward, and arm 0
+    // (at angle 0, along +X) starts at the bar's end. Without a bar, `barLy` is 0 and this is
+    // the plain spiral.
     const start = GALAXY_SHAPE.armStart * radiusLy;
-    const progress = Math.log(1 + r / start) / Math.log(1 + radiusLy / start);
+    const progress =
+      Math.log(1 + Math.max(r - barLy, 0) / start) / Math.log(1 + (radiusLy - barLy) / start);
     const arm = Math.floor(random() * arms);
     const scatter = gaussian(random) * armSpread * (Math.PI / arms);
     angle = (arm * 2 * Math.PI) / arms + progress * armTwist * 2 * Math.PI + scatter;

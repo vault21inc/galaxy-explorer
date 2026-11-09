@@ -22,6 +22,8 @@ const FRAGMENT_SHADER = /* glsl */ `
   uniform float uTwist;        // turns of the spiral from armStart to the edge
   uniform float uSpread;       // arm width, as in the sampler
   uniform float uBulge;        // bulge radius, in radii
+  uniform float uBar;          // half the bar's length, in radii; 0 without a bar (D-24)
+  uniform float uBarWidth;     // the bar's half-width, as a share of uBar
   uniform float uArmStart;
   uniform float uScaleLength;
   uniform float uBulgeSigma;
@@ -67,8 +69,9 @@ const FRAGMENT_SHADER = /* glsl */ `
   // Gaussian scatter. 'shift' moves the arms around the center, for the dust lanes.
   float armDensity(float r, float theta, float sigma, float shift) {
     // The sampler's spiral: the same angle for each doubling of the radius, normalized so the
-    // arm makes uTwist turns between armStart and the edge.
-    float progress = log(1.0 + r / uArmStart) / log(1.0 + 1.0 / uArmStart);
+    // arm makes uTwist turns between armStart and the edge. With a bar the spiral is measured
+    // from the bar's end, as in the sampler; with uBar = 0 this is the plain spiral.
+    float progress = log(1.0 + max(r - uBar, 0.0) / uArmStart) / log(1.0 + (1.0 - uBar) / uArmStart);
     float sum = 0.0;
     for (int k = 0; k < MAX_ARMS; k++) {
       if (float(k) >= uArms) break;
@@ -108,6 +111,17 @@ const FRAGMENT_SHADER = /* glsl */ `
     armLight *= (1.0 - uNoiseAmount) + uNoiseAmount * 2.0 * clumps;
     float dustAmount = clamp(dust * (0.5 + patches), 0.0, 1.0) * 0.85;
 
+    // The bar: a band along X, widest in the middle and narrowing toward its ends (the
+    // sampler's shape), fading out past its ends. Nothing when uBar is 0.
+    float bar = 0.0;
+    if (uBar > 0.0) {
+      float along = abs(x) / uBar;
+      float halfWidth = max(uBar * uBarWidth * (1.0 - 0.6 * min(along, 1.0)), 1e-4);
+      bar = exp(-0.5 * (z * z) / (halfWidth * halfWidth)) * (1.0 - smoothstep(0.75, 1.1, along));
+      // Inside the bar the arms haven't started yet: no arm light there.
+      armLight *= smoothstep(uBar * 0.6, uBar * 1.1, r) * 0.85 + 0.15;
+    }
+
     // The bulge: a Gaussian ball, as in the sampler.
     float bulgeSigma = max(uBulge * uBulgeSigma, 1e-4);
     float bulge = exp(-0.5 * (r * r) / (bulgeSigma * bulgeSigma));
@@ -118,6 +132,7 @@ const FRAGMENT_SHADER = /* glsl */ `
     light = mix(light, light * uDust * 2.0, dustAmount);
     light *= 1.0 - dustAmount * 0.75;
     light += uCore * bulge * 0.55;
+    light += mix(uArm, uCore, 0.6) * bar * 0.45;
 
     // Stored as the square root of linear light: 8 bits per channel would band in the dim
     // outer disc otherwise. The disc's draw shader squares it back.
@@ -136,6 +151,8 @@ export function discBakeDefinition(settings: ResolvedGalaxySettings): BakeDefini
       uTwist: { value: settings.armTwist },
       uSpread: { value: settings.armSpread },
       uBulge: { value: settings.bulgeRadiusLy / settings.radiusLy },
+      uBar: { value: settings.barLengthRadii },
+      uBarWidth: { value: GALAXY_SHAPE.barWidth },
       uArmStart: { value: GALAXY_SHAPE.armStart },
       uScaleLength: { value: GALAXY_SHAPE.discScaleLength },
       uBulgeSigma: { value: GALAXY_SHAPE.bulgeSigma },

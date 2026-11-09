@@ -122,7 +122,9 @@ Data is stored in the same frames (data-model.md §5), so no conversion happens 
 
 **Background** (`render/galaxy/`): generated from `map.galaxySettings` (G1). The owner shapes it in the Map settings panel, from named presets and sliders, including an optional central bar (M3-T8, D-24).
 
-- **Disc:** one horizontal plane, 1.2 × the galaxy radius, with a texture baked once per settings hash (§9). The texture is a top-down log-spiral density with core, arm and dust colors. It's drawn additively with depth writes off.
+- **Disc:** one horizontal plane, 1.2 × the galaxy radius, with a texture baked once per settings hash (§9). The texture is a top-down log-spiral density with core, arm and dust colors, and an optional central bar along X whose ends the arms start from (D-24). It's drawn additively with depth writes off.
+- **Live preview (M3-T8):** while a Map settings slider is dragged, the disc re-bakes the previewed settings at 512² into one reused render target, 150 ms after the last step; the full 2,048² bake goes through the cache only once the change is saved. The depth stars keep the saved settings and regenerate in the worker after the save. A drag therefore adds at most one texture.
+- **Reference underlay (edit mode only):** one textured plane in the galactic plane, drawn first (render order −10) without depth testing or writing, so everything else lands on top.
 - **Depth stars:** at most 20,000 `THREE.Points` sampled from the same density function by a seeded PRNG in a Web Worker. They form a thin disc plus a bulge, colored by radius, sized with attenuation but capped at 3 px. They're one draw call and give the disc thickness and parallax.
 - **Core glow:** 1–3 large soft sprites, capped on-screen size.
 - **Sky:** about 5,000 static points on a large sphere for the distant starfield; one draw call.

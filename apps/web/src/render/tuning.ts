@@ -157,6 +157,15 @@ export const GALAXY_DISC_EXTENT_RADII = 1.2;
 /** The baked disc texture's width and height, in pixels (rendering.md §9). */
 export const GALAXY_DISC_TEXTURE_PX = 2_048;
 
+/**
+ * The disc's live preview while a galaxy slider is dragged (M3-T8): a quarter of the full
+ * size each way, so a re-bake costs a sixteenth.
+ */
+export const GALAXY_DISC_PREVIEW_PX = 512;
+
+/** How long the preview waits after the last slider step before re-baking, in milliseconds. */
+export const GALAXY_PREVIEW_DEBOUNCE_MS = 150;
+
 /** The disc's brightness when drawn; 1 adds the baked colors at full strength. */
 export const GALAXY_DISC_INTENSITY = 0.8;
 

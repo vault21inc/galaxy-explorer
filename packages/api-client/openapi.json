@@ -275,6 +275,11 @@
             "type": "number",
             "minimum": 0
           },
+          "barLengthRadii": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.6
+          },
           "starPoints": {
             "type": "integer",
             "minimum": 1000,
@@ -7224,6 +7229,11 @@
           "bulgeRadiusLy": {
             "type": "number",
             "minimum": 0
+          },
+          "barLengthRadii": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.6
           },
           "starPoints": {
             "type": "integer",

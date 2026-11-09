@@ -1,6 +1,6 @@
 import { unwrap, type components } from '@ge/api-client';
 import type { EntityKind, ImageRole } from '@ge/domain';
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { skipToken, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './client.ts';
 import { queryKeys } from './keys.ts';
 import { refreshAfterWrite } from './refresh.ts';
@@ -31,6 +31,19 @@ export async function uploadAsset(universeId: string, file: File): Promise<Asset
     }),
   );
   return result as Asset;
+}
+
+/** One asset by id, or nothing while there's no id. */
+export function useAsset(assetId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['asset', 'detail', assetId ?? ''],
+    queryFn: assetId
+      ? ({ signal }) =>
+          unwrap(api.GET('/api/v1/assets/{assetId}', { params: { path: { assetId } }, signal }))
+      : skipToken,
+    // An asset's files never change; its credit rarely does, and writes refresh ['asset'].
+    staleTime: Infinity,
+  });
 }
 
 /** The universe's images, newest first, a page at a time: the asset picker's library. */

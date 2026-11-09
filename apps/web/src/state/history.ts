@@ -11,14 +11,11 @@ interface HistoryState {
   redo: readonly string[];
   /** Bumped on every recorded change, so the History panel can refetch. */
   changes: number;
-  /** The History panel is open. */
-  panelOpen: boolean;
   setScope: (universeId: string | null) => void;
   /** A new edit: it can be undone, and what was undone can no longer be redone. */
   record: (batchId: string) => void;
   /** Moves a batch between the stacks after an undo or redo (internal to use-undo.ts). */
   set: (stacks: { undo: readonly string[]; redo: readonly string[] }) => void;
-  setPanelOpen: (open: boolean) => void;
 }
 
 /**
@@ -33,7 +30,6 @@ export const useHistory = create<HistoryState>()((set, get) => ({
   undo: [],
   redo: [],
   changes: 0,
-  panelOpen: false,
   setScope: (universeId) => {
     // Leaving for a page without a universe keeps the stacks for coming back.
     if (universeId === null || universeId === get().stacksFor) {
@@ -48,8 +44,5 @@ export const useHistory = create<HistoryState>()((set, get) => ({
   },
   set: ({ undo, redo }) => {
     set({ undo, redo, changes: get().changes + 1 });
-  },
-  setPanelOpen: (panelOpen) => {
-    set({ panelOpen });
   },
 }));

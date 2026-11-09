@@ -8,6 +8,8 @@ import { detectPlatform, type Platform } from '@/input/platform.ts';
 import { hoverStore } from '@/state/hover.ts';
 import { useSelection } from '@/state/selection.ts';
 import { flyTo } from './camera/fly-to.ts';
+import { galaxyDiscState } from './galaxy/galaxy-disc.tsx';
+import { underlayState } from './galaxy/underlay.tsx';
 import { visibleLabels } from './labels/label-driver.tsx';
 import { labelTimeline } from './labels/label-stats.ts';
 import { clampedRadiusPx } from './bodies/body-scale.ts';
@@ -65,6 +67,20 @@ export interface GeTestHooks {
   gizmoHandleAt(): { x: number; y: number } | null;
   /** The gizmo axis under the pointer ("Y"), or null. */
   gizmoAxis(): string | null;
+  /**
+   * The galaxy disc on screen: its bake key (everything that shapes its pixels) and whether
+   * it's the live preview of unsaved settings (M3-T8). Null outside the galaxy view.
+   */
+  galaxyDisc(): { key: string; preview: boolean } | null;
+  /** The reference underlay as drawn (edit mode only), or null when it isn't (M3-T8). */
+  underlay(): {
+    assetId: string;
+    widthLy: number;
+    rotationDeg: number;
+    offsetX: number;
+    offsetZ: number;
+    opacity: number;
+  } | null;
   /** The labels on screen after the last frame. */
   visibleLabels(): { id: string; text: string }[];
   /** Label-update durations since the last reset (budget: 2 ms per frame, rendering.md §11). */
@@ -104,6 +120,13 @@ export function installTestHooks(): void {
     placement: () => placementGhost(),
     gizmoHandleAt,
     gizmoAxis: () => gizmoAxis(),
+    galaxyDisc: () => galaxyDiscState(),
+    underlay: () => {
+      const state = underlayState();
+      if (!state) return null;
+      const { assetId, widthLy, rotationDeg, offsetX, offsetZ, opacity } = state;
+      return { assetId, widthLy, rotationDeg, offsetX, offsetZ, opacity };
+    },
     visibleLabels: () => visibleLabels().map(({ id, text }) => ({ id, text })),
     labelStats: () => labelTimeline.stats(),
     resetLabelStats: () => {

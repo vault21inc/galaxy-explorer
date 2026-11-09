@@ -47,7 +47,14 @@ export function bake(
   widthPx: number,
   heightPx: number,
 ): WebGLRenderTarget {
-  const target = new WebGLRenderTarget(widthPx, heightPx, {
+  const target = bakeTarget(widthPx, heightPx);
+  bakeInto(gl, definition, target);
+  return target;
+}
+
+/** An empty target for bakes: 8-bit RGBA with mipmaps, no depth buffer. */
+export function bakeTarget(widthPx: number, heightPx: number): WebGLRenderTarget {
+  return new WebGLRenderTarget(widthPx, heightPx, {
     format: RGBAFormat,
     type: UnsignedByteType,
     depthBuffer: false,
@@ -57,7 +64,18 @@ export function bake(
     minFilter: LinearMipmapLinearFilter,
     magFilter: LinearFilter,
   });
+}
 
+/**
+ * Renders the definition into an existing target, replacing what was there. The live preview
+ * of galaxy settings re-bakes into one reused target this way, so dragging a slider never
+ * creates textures (M3-T8).
+ */
+export function bakeInto(
+  gl: WebGLRenderer,
+  definition: BakeDefinition,
+  target: WebGLRenderTarget,
+): void {
   const geometry = new BufferGeometry();
   // x, y, z per corner: three.js reads positions as 3D even when the shader uses only x and y.
   geometry.setAttribute(
@@ -83,5 +101,4 @@ export function bake(
 
   geometry.dispose();
   material.dispose();
-  return target;
 }
