@@ -131,14 +131,32 @@
 - After saving, the server returns the sanitized value, and the form shows what was removed if it differs.
 
 **Done when:**
-- [ ] Component tests:
+- [x] Component tests:
   - each format renders its editor;
   - Mark as spoiler wraps the selection correctly in Markdown and HTML;
   - forms generate for every registered kind, with no per-kind form files.
-- [ ] E2E:
+- [x] E2E:
   - renaming an object updates its label;
   - a Markdown description renders formatted in view mode;
   - marking a phrase as a spoiler blacks it out in view mode.
+
+**Notes (done 2026-11-08):**
+- **Forms as data (D-27):** each entity kind's `form` in `@ge/domain` lists its own fields and widgets; `formGroups` wraps them in the shared fields (name, summary, description; status and "Whole entry is a spoiler"; then appearance). `fieldSchema(kind, path)` finds a field's Zod schema, also inside documents (`appearance.scale.galaxy`), for validation, limits and nullability.
+  - Objects: subtype (from the universe's subtypes for its base type), Explorable (only for types with `explorableAs`), position, color, size per view, label priority. Groups: group type and outline color; the parent group waits for M4. Events: date text, sort key, category. Places and characters: the shared fields.
+- **The web side** (`panels/entity-form/`): `EntityForm` renders each field with its widget from `widgets.ts`. In edit mode it replaces the panel's name and text sections (sections gain a `mode`), and the position section became `PositionField`.
+  - Widgets: `RichTextField` (names and texts), `SwitchField`, `SelectField`, `ColorField` (picker and hex), `PerViewScaleField` (a logarithmic slider per view the type is drawn in), `PositionField`, and `TextField` (text and numbers, limits from the schema). Inherited appearance values are dimmed, with Reset once overridden.
+- **The rich-text editor** (`richtext/editor/`): format menu, a one-line input for names, a textarea for plain text, CodeMirror 6 for Markdown and HTML (lazy-loaded, 167 kB gzipped, never for readers), Preview, the field's Spoiler switch, and Mark as spoiler, which also unwraps when pressed again. Switching formats keeps the text and says formatting may not carry over.
+- **Saving:** a field saves when focus leaves it (names also on Enter), and also if it disappears with an edit in it, since a click on the canvas can close the panel without moving focus. Saves queue per form and send the last version seen. A 409 opens "Changed elsewhere" with now-and-yours values: Reload or Overwrite. Saved HTML is compared with what was sent, and a note names what the sanitizer removed.
+- **Fixes found on the way:**
+  - The batch description header couldn't carry “quotes” or non-Latin names (header values are Latin-1), so it's now percent-encoded (D-27, architecture.md §5).
+  - `refreshAfterWrite` cancels reads still in flight before invalidating. TanStack Query reuses an in-flight fetch for a query that has no data yet, so leaving edit mode right after a save could show the old text. Create, move and update all use it.
+- **Tests:**
+  - 6 domain tests per kind (every field's path and widget against the update schema), plus helpers;
+  - 15 unit tests: Mark as spoiler, removed markup, field paths;
+  - 17 component tests: the form for every kind, each format's editor;
+  - 1 API test: a percent-encoded description;
+  - 5 e2e tests, each on its own universe: renaming updates the label, Markdown renders, a marked phrase is blacked out, each format's editor and the removed-HTML note, Reload and Overwrite on a conflict.
+- **Bundle:** initial JavaScript unchanged at 441 kB gzipped; the info panel chunk is 71 kB, CodeMirror's 167 kB.
 
 ### M3-T5 Multi-select, box select, delete, duplicate, context menu
 

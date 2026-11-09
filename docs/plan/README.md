@@ -167,3 +167,4 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-08:** M3-T1 done: edit mode (✎ and E), box selection, the edit toolbar, drafts and marked spoilers in edit mode, and `authMode` in `/api/health`.
 - **2026-11-08:** M3-T2 done: the Add menu (and N), a placement ghost on the galaxy plane, optimistic creation with rollback, a name field for renaming, and toasts.
 - **2026-11-08:** M3-T3 done: dragging the selection across the plane (Shift snaps to the grid), a height gizmo, typed positions, and one batch per move.
+- **2026-11-08:** M3-T4 done: edit forms generated from the registry (D-27), a rich-text editor with CodeMirror, Preview and Mark as spoiler, save on blur, and the "Changed elsewhere" dialog.

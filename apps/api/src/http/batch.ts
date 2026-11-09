@@ -12,8 +12,27 @@ export function actorOf(_request: FastifyRequest): Actor {
 }
 
 /**
+ * The `X-GE-Batch-Description` header, decoded. HTTP header values are limited to Latin-1, so
+ * clients percent-encode the text as UTF-8 (`encodeURIComponent`): names in any script, and
+ * typographic quotes, survive. Plain ASCII without `%` reads the same either way; a value that
+ * isn't valid percent-encoding is used as sent.
+ */
+export function batchDescriptionOf(request: FastifyRequest): string | undefined {
+  const raw = request.headers['x-ge-batch-description'];
+  if (typeof raw !== 'string') return undefined;
+  let text = raw;
+  try {
+    text = decodeURIComponent(raw);
+  } catch {
+    // Not percent-encoded: keep it as it came.
+  }
+  text = text.trim();
+  return text ? text.slice(0, 200) : undefined;
+}
+
+/**
  * Runs a mutating request as one change batch (architecture.md §4–5). The client may describe
- * it with `X-GE-Batch-Description` ("Moved 12 objects"); the response carries `X-GE-Batch-Id`,
+ * it with `X-GE-Batch-Description` ("Moved 12 objects", percent-encoded UTF-8); the response carries `X-GE-Batch-Id`,
  * which is what undo reverts. `universeOf` names the universe whose history lists the batch,
  * when it's only known from the result (a new universe).
  */
@@ -25,11 +44,10 @@ export async function inBatch<T>(
   options: { universeId?: string | null },
   fn: (tx: Transaction, batchId: string) => Promise<T>,
 ): Promise<T> {
-  const custom = request.headers['x-ge-batch-description'];
   const { result, batchId } = await withBatch(
     db,
     actorOf(request),
-    typeof custom === 'string' && custom.trim() ? custom.trim().slice(0, 200) : description,
+    batchDescriptionOf(request) ?? description,
     fn,
     { universeId: options.universeId ?? null },
   );

@@ -26,6 +26,18 @@ export {
   type EntityKind,
   type EntityKindDef,
 } from './entity-kinds.ts';
+export {
+  fieldPaths,
+  formGroups,
+  STATUS_LABELS,
+  type EntityFormDef,
+  type FormCondition,
+  type FormFieldDef,
+  type FormGroup,
+  type FormOptions,
+  type FormWidget,
+} from './entity-forms.ts';
+export { fieldSchema, numberLimits, unwrapField } from './form-schema.ts';
 export { celestialObjectExtension, eventExtension, groupExtension } from './extensions.ts';
 export {
   BASE_TYPES,

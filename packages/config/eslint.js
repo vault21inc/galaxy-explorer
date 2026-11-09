@@ -25,7 +25,10 @@ export function configFor(packageName, packageDir, { react = false } = {}) {
 
   return defineConfig(
     // src/generated/ holds generated code, such as the API client's types (M1-T10).
-    { ignores: ['dist/', 'coverage/', 'src/generated/'] },
+    // Generated output. Playwright's report bundles its own trace viewer when traces are on.
+    {
+      ignores: ['dist/', 'coverage/', 'src/generated/', 'playwright-report/', 'test-results/'],
+    },
     js.configs.recommended,
     tseslint.configs.strictTypeChecked,
     tseslint.configs.stylisticTypeChecked,

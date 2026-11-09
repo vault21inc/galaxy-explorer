@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import type { EntityFormDef } from './entity-forms.ts';
 import { celestialObjectExtension, eventExtension, groupExtension } from './extensions.ts';
 
 /**
@@ -28,6 +29,11 @@ export interface EntityKindDef {
    */
   contentFields: readonly string[];
   /**
+   * The editor form's kind-specific fields and their widgets (entity-forms.ts). Data, not
+   * React: the web app renders it, and a test checks every path against the update schema.
+   */
+  form: EntityFormDef;
+  /**
    * For the API documentation, which LLM agents read: what the kind is, its units and its
    * rules, in a few sentences.
    */
@@ -45,6 +51,9 @@ export function defineEntityKinds<const T extends Record<string, EntityKindDef>>
 
 const allAspects = { images: true, links: true, facts: true, relations: true } as const;
 
+/** Kinds whose form has only the shared fields. */
+const SHARED_FORM: EntityFormDef = { details: [], appearance: [] };
+
 export const entityKinds = defineEntityKinds({
   celestial_object: {
     scope: 'map',
@@ -53,6 +62,34 @@ export const entityKinds = defineEntityKinds({
     extension: celestialObjectExtension,
     aspects: { ...allAspects, location: 'none' },
     contentFields: [],
+    form: {
+      details: [
+        {
+          path: 'subtypeId',
+          widget: 'select',
+          label: 'Subtype',
+          options: { from: 'config', resource: 'object_subtypes', matchField: 'baseType' },
+        },
+        {
+          path: 'explorable',
+          widget: 'switch',
+          label: 'Explorable',
+          hint: 'Opens a view of its own.',
+          showWhen: 'explorableType',
+        },
+        { widget: 'position', label: 'Position' },
+      ],
+      appearance: [
+        { path: 'appearance.color', widget: 'color', label: 'Color' },
+        { path: 'appearance.scale', widget: 'perViewScale', label: 'Size' },
+        {
+          path: 'appearance.labelPriority',
+          widget: 'number',
+          label: 'Label priority',
+          hint: 'Higher labels stay visible when labels collide.',
+        },
+      ],
+    },
     description:
       'A celestial object: a system, star, planet, moon, asteroid belt, station, nebula, anomaly, black hole or marker (`baseType`). ' +
       'Objects nest: `parentId` is the object it sits inside, or null for the top level of the galaxy. Which parents a base type allows is fixed (a planet goes in a system or the galaxy; a moon in a planet). ' +
@@ -75,6 +112,18 @@ export const entityKinds = defineEntityKinds({
     extension: groupExtension,
     aspects: { ...allAspects, location: 'none' },
     contentFields: [],
+    // The parent group joins the form with group nesting in M4.
+    form: {
+      details: [
+        {
+          path: 'groupTypeId',
+          widget: 'select',
+          label: 'Group type',
+          options: { from: 'config', resource: 'group_types' },
+        },
+      ],
+      appearance: [{ path: 'outlineColor', widget: 'color', label: 'Outline color' }],
+    },
     description:
       'A named set of top-level objects drawn as a colored outline: a sector, territory or faction. ' +
       "Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. " +
@@ -94,6 +143,7 @@ export const entityKinds = defineEntityKinds({
     extension: null,
     aspects: { ...allAspects, location: 'required' },
     contentFields: [],
+    form: SHARED_FORM,
     description:
       'A lasting place, such as a city, fortress or ruin. Where it is lives in its location (PUT /entities/{id}/location): ' +
       'on a planet or moon at a latitude and longitude, at an object, at a position in space, or at another place.',
@@ -109,6 +159,19 @@ export const entityKinds = defineEntityKinds({
     extension: eventExtension,
     aspects: { ...allAspects, location: 'optional' },
     contentFields: ['dateText', 'dateSort'],
+    form: {
+      details: [
+        { path: 'dateText', widget: 'text', label: 'Date', hint: "In the universe's own format." },
+        { path: 'dateSort', widget: 'number', label: 'Sort key', hint: 'Orders events by date.' },
+        {
+          path: 'categoryId',
+          widget: 'select',
+          label: 'Category',
+          options: { from: 'config', resource: 'event_categories' },
+        },
+      ],
+      appearance: [],
+    },
     description:
       'Something that happened. `dateText` is free text in the universe\'s own date format (such as "240.M41"); `dateSort` is an optional number to order events by. ' +
       'It may have a location like a place, and characters relate to it with the `participant` relation.',
@@ -126,6 +189,7 @@ export const entityKinds = defineEntityKinds({
     extension: null,
     aspects: { ...allAspects, location: 'none' },
     contentFields: [],
+    form: SHARED_FORM,
     description:
       'A person or being, shared by every map of the universe (characters belong to the universe, not to one map). ' +
       'Link a character to the events they took part in with the `participant` relation.',

@@ -11,6 +11,7 @@ import { errorMessage } from '@/app/route-states.tsx';
 import { sendWrite } from '@/api/fetch-data.ts';
 import type { EntityRead } from '@/api/hooks.ts';
 import { queryKeys } from '@/api/keys.ts';
+import { refreshAfterWrite } from '@/api/refresh.ts';
 import { useReadOptions } from '@/api/read-options.ts';
 import { entityCreateRequest } from '@/api/requests.ts';
 import { useEditor } from '@/state/editor.ts';
@@ -69,7 +70,7 @@ export function useCreateObject(mapId: string) {
       useSelection.getState().select([created.id]);
       useEditor.getState().setFocusNameOf(created.id);
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['view'] }),
+    onSettled: () => refreshAfterWrite(queryClient, [['view']]),
   });
 }
 

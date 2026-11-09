@@ -73,7 +73,7 @@ export const entityKinds = defineEntityKinds({
     label: { one: 'Object', many: 'Objects' },
     extension: celestialObjectExtension, // Zod object for the extension table's columns
     aspects: { images: true, links: true, facts: true, relations: true, location: 'none' },
-    form: celestialObjectForm,       // field order and widget hints for the editor (data, not React)
+    form: { details: [...], appearance: [...] }, // fields and widgets for the editor (data, not React; D-27)
   },
   group:     { scope: 'map',      plural: 'groups',     extension: groupExtension, /* … */ },
   route:     { scope: 'map',      plural: 'routes',     extension: routeExtension, /* M4 */ },
@@ -162,6 +162,7 @@ export const configResources = defineConfigResources({
 | Renderers | `src/render/registry.ts` | (view level, base type) → renderer component; this is the O3 extension point for stations, ships and models |
 | Input bindings | `src/input/bindings.ts` | (gesture, modifiers, mode, target) → action ([ux.md §3](ux.md#3-input-bindings)) |
 | Panel sections | `src/panels/sections.ts` | entity kind → ordered panel sections (details, facts, images, links, relations, members, location, history) |
+| Form widgets | `src/panels/entity-form/widgets.ts` | widget name from a kind's `form` (`@ge/domain` entity-forms.ts) → field component; the edit form replaces the name and text sections in edit mode (D-27) |
 
 ### 3.6 Consistency tests
 
@@ -198,7 +199,7 @@ PATCH /api/v1/objects/{id}  { version: 7, name: {...}, x: 120.5 }
 - **Response envelope:** `{ "data": … }` for single items, `{ "data": [...], "nextCursor": "…" | null }` for lists. Lists use cursor pagination with a default `limit` of 100 (maximum 1,000; view payloads aren't paginated).
 - **Errors:** RFC 9457 `application/problem+json`, as `{ type, title, status, detail, errors?: [{ path, message }] }`. A 409 conflict includes the current version of the resource in `current`.
 - **Concurrency:** reads return `version`. `PATCH` and `DELETE` require `version` in the body; a mismatch returns 409.
-- **Batches:** every mutating request is one change batch. Clients may send `X-GE-Batch-Description` (for example "Moved 12 objects"); responses carry `X-GE-Batch-Id`.
+- **Batches:** every mutating request is one change batch. Clients may send `X-GE-Batch-Description` (for example "Moved 12 objects"), percent-encoded as UTF-8 (`encodeURIComponent`) because header values are limited to Latin-1; responses carry `X-GE-Batch-Id`.
 - **Query flags:** `spoilers=include|exclude` (default `include`; see §10), `includeDrafts=true` (only honored for editors).
 - **Idempotent imports:** entities can carry an `externalKey`, unique per map (per universe for universe-scoped kinds). `PUT /api/v1/maps/{mapId}/{plural}/by-key/{externalKey}` (or `/universes/{universeId}/{plural}/by-key/…`) upserts. LLM agents should use this.
 - **OpenAPI:** generated at `/api/openapi.json`; Swagger UI at `/api/docs`. Every route has a stable `operationId` (`objects.create`) and a description written for LLM readers.

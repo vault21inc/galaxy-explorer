@@ -1,10 +1,10 @@
 import { entityKinds, type EntityInclude, type EntityKind, type EntityKindDef } from '@ge/domain';
 import type { ComponentType } from 'react';
+import { EntityForm } from './entity-form/entity-form.tsx';
 import { FactsSection } from './sections/facts-section.tsx';
 import { HeaderSection } from './sections/header-section.tsx';
 import { ImagesSection } from './sections/images-section.tsx';
 import { LinksSection } from './sections/links-section.tsx';
-import { PositionSection } from './sections/position-section.tsx';
 import { RelationsSection } from './sections/relations-section.tsx';
 import { textSection } from './sections/text-section.tsx';
 import type { SectionProps } from './types.ts';
@@ -14,6 +14,8 @@ import type { SectionProps } from './types.ts';
  * which kinds show each. A kind shows an aspect's section only if the entity-kinds registry
  * says it has that aspect, so a new kind gets the right panel with no code here. Members,
  * location and history join in M4, M6 and M3.
+ *
+ * In edit mode the generated form (M3-T4) takes the place of the name and text sections.
  */
 export interface SectionDef {
   id: string;
@@ -21,20 +23,22 @@ export interface SectionDef {
   /** The aspect the section needs loaded with the entity, if any. */
   include?: EntityInclude;
   appliesTo: (kind: EntityKindDef) => boolean;
+  /** Shown only when reading ('view') or only in edit mode ('edit'); both by default. */
+  mode?: 'view' | 'edit';
 }
 
 const always = () => true;
 
 export const PANEL_SECTIONS: readonly SectionDef[] = [
-  { id: 'header', component: HeaderSection, appliesTo: always },
+  { id: 'form', component: EntityForm, appliesTo: always, mode: 'edit' },
+  { id: 'header', component: HeaderSection, appliesTo: always, mode: 'view' },
   {
-    id: 'position',
-    component: PositionSection,
-    // Kinds placed by coordinates: their extension has x, y and z (objects).
-    appliesTo: (kind) => kind.extension !== null && 'x' in kind.extension.shape,
+    id: 'summary',
+    component: textSection('summary', 'text-foreground/90'),
+    appliesTo: always,
+    mode: 'view',
   },
-  { id: 'summary', component: textSection('summary', 'text-foreground/90'), appliesTo: always },
-  { id: 'description', component: textSection('description'), appliesTo: always },
+  { id: 'description', component: textSection('description'), appliesTo: always, mode: 'view' },
   {
     id: 'images',
     component: ImagesSection,
@@ -61,9 +65,14 @@ export const PANEL_SECTIONS: readonly SectionDef[] = [
   },
 ];
 
-export function sectionsFor(kind: EntityKind): readonly SectionDef[] {
+/** A kind's sections, all of them or only those for reading or editing. */
+export function sectionsFor(kind: EntityKind, mode?: 'view' | 'edit'): readonly SectionDef[] {
   const def: EntityKindDef = entityKinds[kind];
-  return PANEL_SECTIONS.filter((section) => section.appliesTo(def));
+  return PANEL_SECTIONS.filter(
+    (section) =>
+      section.appliesTo(def) &&
+      (mode === undefined || section.mode === undefined || section.mode === mode),
+  );
 }
 
 /** The aspects to `include` when loading an entity for its panel. */

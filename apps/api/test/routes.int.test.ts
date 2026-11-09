@@ -107,6 +107,19 @@ describe('universes and maps', () => {
       const [batch] = await db.select().from(schema.changeBatches);
       expect(batch?.description).toBe('Import the 40k setting');
     }));
+
+  it('decode a percent-encoded batch description (header values are Latin-1)', () =>
+    run(async (api, db) => {
+      const response = await api.app.inject({
+        method: 'POST',
+        url: '/api/v1/universes',
+        headers: { 'x-ge-batch-description': encodeURIComponent('Rename “Terra” to 地球') },
+        payload: { slug: 'w', name: rt.plain('W') },
+      });
+      expect(response.statusCode).toBe(201);
+      const [batch] = await db.select().from(schema.changeBatches);
+      expect(batch?.description).toBe('Rename “Terra” to 地球');
+    }));
 });
 
 /** A universe, map, system, planet, event and character to hang aspects on. */

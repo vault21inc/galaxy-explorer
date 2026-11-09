@@ -1,6 +1,7 @@
 import { unwrap } from '@ge/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/client.ts';
+import { refreshAfterWrite } from '@/api/refresh.ts';
 import { errorMessage } from '@/app/route-states.tsx';
 import { setMovePreview } from '@/render/scene-index.ts';
 import { useToasts } from '@/state/toasts.ts';
@@ -38,10 +39,7 @@ export function useSaveMove() {
         }),
       ),
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['view'] }),
-        queryClient.invalidateQueries({ queryKey: ['celestial_object'] }),
-      ]);
+      await refreshAfterWrite(queryClient, [['view'], ['celestial_object']]);
       setMovePreview(null);
     },
     onError: (error) => {

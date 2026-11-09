@@ -1,6 +1,7 @@
 import type { EntityKind } from '@ge/domain';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { sendWrite } from './fetch-data.ts';
+import { refreshAfterWrite } from './refresh.ts';
 import type { EntityRead } from './hooks.ts';
 import { entityUpdateRequest } from './requests.ts';
 
@@ -21,10 +22,6 @@ export function useUpdateEntity<K extends EntityKind>(kind: K) {
       changes: Record<string, unknown> & { version: number };
       description?: string;
     }) => sendWrite<EntityRead<K>>('PATCH', entityUpdateRequest(kind, id), changes, description),
-    onSuccess: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: [kind] }),
-        queryClient.invalidateQueries({ queryKey: ['view'] }),
-      ]),
+    onSuccess: () => refreshAfterWrite(queryClient, [[kind], ['view']]),
   });
 }

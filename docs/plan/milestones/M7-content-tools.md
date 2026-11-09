@@ -118,7 +118,7 @@
   - shared: `batch` (with `dryRun`), `history_list`, `history_revert`, `search`, `view_galaxy`, `view_system`, `view_orbit`, `universes_list`, `maps_list`, `import_dry_run`.
 
   Input schemas come from the same Zod schemas, and descriptions come from the OpenAPI descriptions. All calls go through `@ge/api-client`.
-- Every mutating tool sends `X-GE-Batch-Description: "MCP: <tool> — <summary>"` and returns the batch id, so the owner can revert anything an agent did from the History panel.
+- Every mutating tool sends `X-GE-Batch-Description: "MCP: <tool> — <summary>"` (percent-encoded, D-27) and returns the batch id, so the owner can revert anything an agent did from the History panel.
 - `apps/mcp/README.md` explains how to add the server to Claude Code (`claude mcp add …`) and Claude Desktop, with example prompts.
 
 **Done when:**

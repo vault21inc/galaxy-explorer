@@ -3,6 +3,7 @@ import { EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import { cn } from '@/lib/utils.ts';
 import { useSpoilerContext } from '@/richtext/spoiler-context.tsx';
+import { useEditor } from '@/state/editor.ts';
 import { sectionsFor } from './sections.ts';
 import type { SectionProps } from './types.ts';
 
@@ -13,6 +14,7 @@ import type { SectionProps } from './types.ts';
  */
 export function EntityDetails(props: SectionProps) {
   const { policy, reveal, marked } = useSpoilerContext();
+  const editing = useEditor((state) => state.editing);
   const { entity } = props;
   const recordKey = spoilerKeys.record(entity.id);
 
@@ -52,7 +54,7 @@ export function EntityDetails(props: SectionProps) {
           The whole entry is flagged as a potential spoiler.
         </p>
       )}
-      {sectionsFor(props.kind).map(({ id, component: Section }) => (
+      {sectionsFor(props.kind, editing ? 'edit' : 'view').map(({ id, component: Section }) => (
         <Section key={id} {...props} />
       ))}
     </div>

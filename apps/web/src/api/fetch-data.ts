@@ -31,7 +31,8 @@ const loosePatch: LooseWrite = (path, init) => api.PATCH(path as never, init as 
 
 /**
  * Sends a write built in requests.ts (POST to create, PATCH to update) through the same
- * untyped door, with an optional batch description for the history (architecture.md §5).
+ * untyped door, with an optional batch description for the history (architecture.md §5). The
+ * description is percent-encoded: header values must be Latin-1, and names needn't be.
  */
 export async function sendWrite<T>(
   method: 'POST' | 'PATCH',
@@ -43,7 +44,9 @@ export async function sendWrite<T>(
   const init = {
     params: { path: spec.path },
     body,
-    ...(description ? { headers: { 'X-GE-Batch-Description': description } } : {}),
+    ...(description
+      ? { headers: { 'X-GE-Batch-Description': encodeURIComponent(description) } }
+      : {}),
   };
   return (await unwrap(send(spec.template, init))) as T;
 }

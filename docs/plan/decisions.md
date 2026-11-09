@@ -236,3 +236,7 @@ To change a decision, edit its entry, keep the old text on a `Superseded:` line,
   - `richTextTree()` in `@ge/domain` parses plain, Markdown and HTML into one tree holding only the elements and attributes `RICH_TEXT_POLICY` allows; the web app renders that tree as React elements.
   - This replaces the planned react-markdown, DOMPurify and html-react-parser: no HTML string reaches the page at all, there's one renderer instead of three, inline spoiler numbering matches `markdownToPlainText` by construction, and three dependencies aren't needed.
   - The server still sanitizes on write with sanitize-html (D-07 unchanged); the tree is the browser's second line of defense.
+- **D-27 Editor forms are data in the entity-kinds registry** (2026-11-08, M3-T4).
+  - Each kind's `form` lists its own fields with a widget name (`entity-forms.ts`); `formGroups` adds the shared ones (name, summary, description, status, spoiler flag) in the order of ux.md §5. Limits and nullability come from the kind's Zod update schema (`fieldSchema`), never from the form.
+  - The web app maps widget names to components (`panels/entity-form/widgets.ts`), so a new kind needs no form code and a new widget is one name plus one component.
+  - `X-GE-Batch-Description` is percent-encoded UTF-8 (`encodeURIComponent`), because header values are limited to Latin-1 and names and typographic quotes aren't. The API decodes it and falls back to the raw value.
