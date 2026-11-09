@@ -15,6 +15,8 @@ export const queryKeys = {
     ['view', level, subjectId, options] as const,
   configList: (resource: ConfigResource, universeId: string) =>
     [resource, 'list', { universeId }] as const,
+  /** A universe's image library (M3-T7). */
+  assets: (universeId: string) => ['asset', 'list', { universeId }] as const,
   universes: () => ['universe', 'list'] as const,
   maps: (universeId: string) => ['map', 'list', { universeId }] as const,
 };

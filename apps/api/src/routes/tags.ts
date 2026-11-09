@@ -15,6 +15,7 @@ export function openApiTags(): { name: string; description: string }[] {
       description: resource.description,
     })),
     { name: 'images', description: 'Uploaded images attached to an entity.' },
+    { name: 'assets', description: 'Uploading images, and the universe’s image library.' },
     { name: 'links', description: 'Web links attached to an entity.' },
     { name: 'facts', description: "Values of the universe's custom fields, such as Population." },
     {

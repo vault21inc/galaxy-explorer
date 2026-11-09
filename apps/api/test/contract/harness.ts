@@ -1,11 +1,12 @@
 import { EXAMPLE_ID, rt } from '@ge/domain';
 import { expect } from 'vitest';
+import type { Config } from '../../src/config.ts';
 import { buildServer, type ApiServer } from '../../src/server.ts';
 import { testConfig } from '../helpers.ts';
 
 /** A running API on a test database, called with `inject` (no network). */
-export async function apiOn(url: string): Promise<Api> {
-  const app = await buildServer(testConfig({ databaseUrl: url }));
+export async function apiOn(url: string, overrides: Partial<Config> = {}): Promise<Api> {
+  const app = await buildServer(testConfig({ databaseUrl: url, ...overrides }));
   return new Api(app);
 }
 

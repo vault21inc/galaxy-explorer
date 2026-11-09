@@ -262,7 +262,8 @@ The system and orbit payloads have the same shape: the subject, its direct child
   3. sharp decodes and re-encodes to WebP, which strips EXIF and anything else embedded.
   4. Write the variants: `thumb` (256 px), `display` (1,600 px) and, for surface textures, `texture` (2:1, power-of-two width, at most 4,096 × 2,048).
   5. Deduplicate by the SHA-256 of the original.
-- Keys: `u/{universeId}/{assetId}/{variant}.webp`.
+- Keys: `u/{universeId}/{assetId}/{variant}.webp`. The API's `/media/*` serves only keys of that shape (development and tests).
+- An entity's images carry their asset (`ImageRead.asset`: URLs, size, alt text, credit), so readers draw the gallery from one response.
 - Every asset carries `altText`, `credit`, `sourceUrl` and `license` (A5). The UI shows the credit wherever the image appears.
 
 ## 9. Rich text pipeline

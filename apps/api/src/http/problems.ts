@@ -7,6 +7,7 @@ import {
 import { BatchNotFoundError, databaseErrorOf, RevertConflictError } from '@ge/db';
 import { z } from 'zod';
 import { BatchOperationError } from '../services/batch-service.ts';
+import { UnsupportedImage } from '../storage/image-pipeline.ts';
 import {
   InvalidRequest,
   NotFound,
@@ -115,6 +116,8 @@ export function problemForDomainError(error: unknown): Problem | undefined {
     );
   }
   if (error instanceof InvalidRequest) return problem(400, error.message);
+  // An upload that isn't an image we take: unsupported media type.
+  if (error instanceof UnsupportedImage) return problem(415, error.message);
   if (error instanceof NotFound || error instanceof BatchNotFoundError)
     return problem(404, error.message);
   if (error instanceof VersionConflict)

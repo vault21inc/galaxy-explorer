@@ -18,6 +18,7 @@ const app = await buildServer({
   databaseUrl: 'postgres://unused@127.0.0.1:1/unused',
   authMode: 'none',
   host: '127.0.0.1',
+  mediaDir: '/nonexistent/ge-media',
   port: 0,
   logLevel: 'silent',
 });

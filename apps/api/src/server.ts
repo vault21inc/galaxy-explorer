@@ -1,10 +1,11 @@
 import fastifyCompress from '@fastify/compress';
+import fastifyMultipart from '@fastify/multipart';
 import fastifySensible from '@fastify/sensible';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 import { createDatabase } from '@ge/db';
 import Fastify from 'fastify';
-import { openApiComponents } from '@ge/domain';
+import { MAX_UPLOAD_BYTES, openApiComponents } from '@ge/domain';
 import { z } from 'zod';
 import {
   jsonSchemaTransform,
@@ -16,6 +17,7 @@ import {
 import packageJson from '../package.json' with { type: 'json' };
 import type { Config } from './config.ts';
 import { handleError, handleNotFound, problemSchema } from './http/problems.ts';
+import { assetRoutes, mediaRoutes } from './routes/assets.ts';
 import { batchRoutes } from './routes/batch.ts';
 import { configRoutes } from './routes/config.ts';
 import { containerRoutes } from './routes/containers.ts';
@@ -26,6 +28,7 @@ import { historyRoutes } from './routes/history.ts';
 import { placementRoutes } from './routes/placement-routes.ts';
 import { viewRoutes } from './routes/views.ts';
 import { openApiTags } from './routes/tags.ts';
+import { LocalBlobStore } from './storage/blob-store.ts';
 
 /**
  * Builds the API without listening on a port, so tests can call `app.inject()`.
@@ -62,6 +65,9 @@ export async function buildServer(config: Config) {
 
   await app.register(fastifySensible);
   await app.register(fastifyCompress);
+  // Image uploads (M3-T7): one file of at most 25 MB per request.
+  await app.register(fastifyMultipart, { limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 } });
+  const store = new LocalBlobStore(config.mediaDir);
   await app.register(fastifySwagger, {
     openapi: {
       openapi: '3.1.0',
@@ -97,9 +103,11 @@ export async function buildServer(config: Config) {
       await v1.register(batchRoutes, { db });
       await v1.register(historyRoutes, { db });
       await v1.register(viewRoutes, { db });
+      await v1.register(assetRoutes, { db, store });
     },
     { prefix: '/api/v1' },
   );
+  await app.register(mediaRoutes, { store });
 
   return app;
 }

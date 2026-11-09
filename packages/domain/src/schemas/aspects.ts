@@ -3,6 +3,7 @@ import { Uuid } from '../ids.ts';
 import { HTTP_URL_PATTERN } from '../patterns.ts';
 import { ENTITY_KINDS } from '../registry/entity-kinds.ts';
 import { RELATION_TYPES } from '../registry/relation-types.ts';
+import { RICH_TEXT_POLICY } from '../richtext/policy.ts';
 import { RichText } from '../richtext/schema.ts';
 import { FieldValue } from './field-value.ts';
 
@@ -45,6 +46,71 @@ export const AssetVariants = z.object({
 });
 export type AssetVariants = z.infer<typeof AssetVariants>;
 
+/**
+ * Where a stored file is served (architecture.md §8): this site's `/media/` paths, the only
+ * image sources rich text allows. Fastify serves them in development, Caddy in production.
+ */
+export function mediaUrl(key: string): string {
+  return `${RICH_TEXT_POLICY.imageSourcePrefix}${key}`;
+}
+
+/** The largest upload, in bytes (architecture.md §8). */
+export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+
+const metadataText = (max: number) => z.string().trim().max(max).nullable().optional();
+
+/** What the author says about an image (A5): editable after upload. Empty text clears a field. */
+export const AssetMetadata = z.strictObject({
+  /** Describes the image for screen readers. */
+  altText: metadataText(1_000),
+  /** Who made it; shown under the image wherever it appears. */
+  credit: metadataText(500),
+  sourceUrl: z
+    .string()
+    .max(2_000)
+    .regex(new RegExp(HTTP_URL_PATTERN), 'Use an http or https URL.')
+    .nullable()
+    .optional(),
+  license: metadataText(200),
+});
+
+/** The URLs of an asset's variants, ready for `<img src>`. */
+export const AssetUrls = z.object({ thumb: z.string(), display: z.string() });
+
+/** An uploaded image, as the API returns it (data-model §3.6). */
+export const AssetRead = z.object({
+  id: Uuid,
+  universeId: Uuid,
+  /** Of the stored variants: image/webp. */
+  mimeType: z.string(),
+  /** Of the original, after applying its orientation. */
+  width: z.int().positive(),
+  height: z.int().positive(),
+  /** Of the original upload. */
+  byteSize: z.int().nonnegative(),
+  variants: AssetVariants,
+  originalFilename: z.string().nullable(),
+  altText: z.string().nullable(),
+  credit: z.string().nullable(),
+  sourceUrl: z.string().nullable(),
+  license: z.string().nullable(),
+  createdAt: z.iso.datetime({ offset: true }),
+  urls: AssetUrls,
+});
+export type AssetRead = z.infer<typeof AssetRead>;
+
+/** The parts of an asset a displayed image needs: its files, size and credit. */
+export const ImageAsset = AssetRead.pick({
+  width: true,
+  height: true,
+  altText: true,
+  credit: true,
+  sourceUrl: true,
+  license: true,
+  urls: true,
+});
+export type ImageAsset = z.infer<typeof ImageAsset>;
+
 // ---------------------------------------------------------------------------------------------
 // Aspect read and write shapes, as the API returns and accepts them (architecture.md §5). The
 // entity they belong to comes from the URL (`/entities/{id}/links`), so it isn't in the writes.
@@ -68,6 +134,8 @@ export const ImageRead = z.object({
   caption: RichText.nullable(),
   isSpoiler,
   sortKey,
+  /** The image itself, so readers need no second request. Gone when the image is redacted. */
+  asset: ImageAsset,
 });
 
 export const LinkWrite = z.strictObject({

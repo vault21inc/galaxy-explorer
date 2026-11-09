@@ -1,7 +1,13 @@
 export {
   ACTOR_TYPES,
+  AssetMetadata,
+  AssetRead,
+  AssetUrls,
   AssetVariants,
   ENTITY_INCLUDES,
+  ImageAsset,
+  MAX_UPLOAD_BYTES,
+  mediaUrl,
   FactRead,
   FactWrite,
   ImageRead,

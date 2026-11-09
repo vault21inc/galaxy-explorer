@@ -3,7 +3,7 @@ import type { ComponentType } from 'react';
 import { EntityForm } from './entity-form/entity-form.tsx';
 import { FactsSection } from './sections/facts-section.tsx';
 import { HeaderSection } from './sections/header-section.tsx';
-import { ImagesSection } from './sections/images-section.tsx';
+import { ImagesSection } from './images/images-section.tsx';
 import { LinksSection } from './sections/links-section.tsx';
 import { RelationsSection } from './sections/relations-section.tsx';
 import { textSection } from './sections/text-section.tsx';

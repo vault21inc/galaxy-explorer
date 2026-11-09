@@ -24,6 +24,8 @@ export interface RichTextEditorProps {
   value: RichText | null;
   /** Names: a one-line input, and the text can't be empty. */
   singleLine?: boolean;
+  /** A one-line field in ordinary text (captions), not the large name style. */
+  compact?: boolean;
   /** Clearing the text saves null (summaries and descriptions). */
   nullable?: boolean;
   /** The spoiler key the preview uses (`spoilerKeys.field`). */
@@ -52,6 +54,7 @@ export function RichTextEditor({
   label,
   value,
   singleLine = false,
+  compact = false,
   nullable = false,
   fieldKey,
   hint,
@@ -68,7 +71,15 @@ export function RichTextEditor({
     source: '',
     spoiler: false,
   };
-  const [draft, setDraft] = useState<RichText>(initial);
+  const [draft, setDraftState] = useState<RichText>(initial);
+  // The latest draft, readable at once. Saving reads this, not `draft`: a click that ends
+  // editing right after a change (Mark as spoiler, then Done) can arrive before React has
+  // re-rendered with it, and the blur handler would otherwise save the text before the change.
+  const latest = useRef<RichText>(initial);
+  const setDraft = (next: RichText | ((current: RichText) => RichText)) => {
+    latest.current = typeof next === 'function' ? next(latest.current) : next;
+    setDraftState(latest.current);
+  };
   const [preview, setPreview] = useState(false);
   const [formatChanged, setFormatChanged] = useState(false);
 
@@ -85,13 +96,14 @@ export function RichTextEditor({
   // What was last handed to onCommit, so the same edit is never saved twice.
   const sent = useRef<RichText | null>(value);
   const commit = () => {
-    const source = singleLine ? draft.source.trim() : draft.source;
+    const current = latest.current;
+    const source = singleLine ? current.source.trim() : current.source;
     if (source.trim() === '' && !nullable) {
       // A name can't be empty: put the saved one back.
       setDraft(initial);
       return;
     }
-    const next = source.trim() === '' ? null : { ...draft, source };
+    const next = source.trim() === '' ? null : { ...current, source };
     if (sameRichText(next, sent.current)) return;
     sent.current = next;
     onCommit(next);
@@ -123,8 +135,9 @@ export function RichTextEditor({
 
   const canMark = draft.format !== 'plain' && !preview;
   const mark = () => {
-    if (!handle.current || draft.format === 'plain') return;
-    handle.current.apply(markSpoiler(draft.source, handle.current.selection(), draft.format));
+    const current = latest.current;
+    if (!handle.current || current.format === 'plain') return;
+    handle.current.apply(markSpoiler(current.source, handle.current.selection(), current.format));
   };
 
   return (
@@ -137,7 +150,7 @@ export function RichTextEditor({
       className={cn('flex flex-col gap-1', draft.spoiler && 'spoiler-marked rounded')}
       onBlur={onBlur}
     >
-      <div className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center gap-1">
         <label htmlFor={id} className="text-xs text-muted-foreground label-caps">
           {label}
         </label>
@@ -216,7 +229,12 @@ export function RichTextEditor({
           }}
           value={draft.source}
           maxLength={2_000}
-          className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-lg font-semibold hover:border-input focus-visible:border-ring focus-visible:outline-none"
+          className={cn(
+            'w-full rounded-md border bg-transparent px-1 py-0.5 focus-visible:border-ring focus-visible:outline-none',
+            compact
+              ? 'h-7 border-input px-1.5 text-sm'
+              : 'border-transparent text-lg font-semibold hover:border-input',
+          )}
           onChange={(event) => {
             setSource(event.currentTarget.value);
           }}

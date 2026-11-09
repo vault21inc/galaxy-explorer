@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { ConfigError, loadConfig } from '../src/config.ts';
 
@@ -11,7 +12,13 @@ describe('loadConfig', () => {
       host: '127.0.0.1',
       port: 3100,
       logLevel: 'info',
+      // Relative to the repository root, wherever the API is started from.
+      mediaDir: fileURLToPath(new URL('../../../.data/media', import.meta.url)),
     });
+  });
+
+  it('keeps an absolute media directory as it is', () => {
+    expect(loadConfig({ DATABASE_URL, GE_MEDIA_DIR: '/srv/media' }).mediaDir).toBe('/srv/media');
   });
 
   it('reads the port as a number', () => {

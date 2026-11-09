@@ -1256,6 +1256,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/universes/{universeId}/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a universe's images, newest first
+         * @description Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.
+         */
+        get: operations["assets.list"];
+        put?: never;
+        /**
+         * Upload an image
+         * @description Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.
+         *
+         *     Send `multipart/form-data` with the image in a field named `file`: PNG, JPEG, WebP, AVIF or GIF (first frame), at most 25 MB. The type is read from the bytes, not the name. The same image uploaded again returns the existing asset with 200; a new one is 201. Set alt text and credit afterwards with PATCH /assets/{id}.
+         */
+        post: operations["assets.upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assets/{assetId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an image
+         * @description Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.
+         */
+        get: operations["assets.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change an image's alt text, credit, source or license
+         * @description Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths. Empty text clears a field. The credit is shown under the image wherever it appears.
+         */
+        patch: operations["assets.update"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1401,6 +1451,46 @@ export interface components {
                 height: number;
             };
         };
+        AssetMetadataInput: {
+            altText?: string | null;
+            credit?: string | null;
+            sourceUrl?: string | null;
+            license?: string | null;
+        };
+        AssetReadInput: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            universeId: string;
+            mimeType: string;
+            width: number;
+            height: number;
+            byteSize: number;
+            variants: components["schemas"]["AssetVariantsInput"];
+            originalFilename: string | null;
+            altText: string | null;
+            credit: string | null;
+            sourceUrl: string | null;
+            license: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            urls: {
+                thumb: string;
+                display: string;
+            };
+        };
+        ImageAssetInput: {
+            width: number;
+            height: number;
+            altText: string | null;
+            credit: string | null;
+            sourceUrl: string | null;
+            license: string | null;
+            urls: {
+                thumb: string;
+                display: string;
+            };
+        };
         ImageReadInput: {
             /** Format: uuid */
             entityId: string;
@@ -1411,6 +1501,7 @@ export interface components {
             caption: components["schemas"]["RichTextInput"] | null;
             isSpoiler: boolean;
             sortKey: number;
+            asset: components["schemas"]["ImageAssetInput"];
         };
         ImageWriteInput: {
             /** Format: uuid */
@@ -2781,6 +2872,46 @@ export interface components {
                 height: number;
             };
         };
+        AssetMetadata: {
+            altText?: string | null;
+            credit?: string | null;
+            sourceUrl?: string | null;
+            license?: string | null;
+        };
+        AssetRead: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            universeId: string;
+            mimeType: string;
+            width: number;
+            height: number;
+            byteSize: number;
+            variants: components["schemas"]["AssetVariants"];
+            originalFilename: string | null;
+            altText: string | null;
+            credit: string | null;
+            sourceUrl: string | null;
+            license: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            urls: {
+                thumb: string;
+                display: string;
+            };
+        };
+        ImageAsset: {
+            width: number;
+            height: number;
+            altText: string | null;
+            credit: string | null;
+            sourceUrl: string | null;
+            license: string | null;
+            urls: {
+                thumb: string;
+                display: string;
+            };
+        };
         ImageRead: {
             /** Format: uuid */
             entityId: string;
@@ -2791,6 +2922,7 @@ export interface components {
             caption: components["schemas"]["RichText"] | null;
             isSpoiler: boolean;
             sortKey: number;
+            asset: components["schemas"]["ImageAsset"];
         };
         ImageWrite: {
             /** Format: uuid */
@@ -9889,6 +10021,267 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["OrbitView"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "assets.list": {
+        parameters: {
+            query?: {
+                /** @description The `nextCursor` of the previous page. */
+                cursor?: string;
+                /** @description Items per page (1–1,000). */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                universeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AssetRead"][];
+                        nextCursor: string | null;
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "assets.upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                universeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AssetRead"];
+                    };
+                };
+            };
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AssetRead"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "assets.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AssetRead"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "assets.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetMetadataInput"];
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AssetRead"];
                     };
                 };
             };

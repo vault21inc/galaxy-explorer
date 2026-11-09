@@ -243,13 +243,42 @@
   - credit shown under every displayed image.
 
 **Done when:**
-- [ ] Integration tests:
+- [x] Integration tests:
   - a PNG upload produces WebP variants of the expected sizes;
   - EXIF data is gone;
   - a renamed `.exe` is rejected;
   - a file over 25 MB is rejected;
   - uploading the same file twice returns the same asset.
-- [ ] E2E: adding an image to an object shows it with its credit; flagging it as a spoiler blurs it in view mode.
+- [x] E2E: adding an image to an object shows it with its credit; flagging it as a spoiler blurs it in view mode.
+
+**Notes (done 2026-11-08):**
+- **Storage** (`apps/api/src/storage/`): `BlobStore` and `LocalBlobStore` under `GE_MEDIA_DIR`. The default is `./.data/media`, read from the repository root; e2e runs use `./.data/e2e-media` and clear it at the start.
+  - Keys are `u/{universeId}/{assetId}/{variant}.webp`.
+  - `/media/*` serves only keys of exactly that shape, with immutable caching, in development and tests. Vite already proxies `/media`.
+- **Pipeline** (`image-pipeline.ts`):
+  - file-type sniffs the bytes, accepting PNG, JPEG, WebP, AVIF and GIF (first frame); anything else is 415;
+  - sharp turns the image upright by its EXIF orientation and re-encodes WebP `thumb` (256 px) and `display` (1,600 px), never enlarging;
+  - the metadata is left behind;
+  - a damaged image is 415, and over 25 MB is 413 (@fastify/multipart).
+  - The `texture` variant waits for planet textures (M6).
+- **Routes** (`routes/assets.ts`):
+  - `POST /universes/{id}/assets` takes the file as multipart field `file`. It returns 201 as one batch ("Upload “nebula.png”"), or 200 with the existing asset for the same bytes (SHA-256, also when two uploads race).
+  - `GET /universes/{id}/assets` lists the library, newest first.
+  - `GET` and `PATCH /assets/{id}` read and change alt text, credit, source URL and license; empty text clears a field.
+  - Files are written inside the batch under the new id and deleted if the row isn't stored.
+- **`ImageRead.asset`:** each attached image carries its asset's URLs, size, alt text and credit (`ImageAsset`), so the panel needs no second request. Redaction drops it with the rest of a hidden image. `mediaUrl()` in `@ge/domain` builds the URLs from the rich-text policy's `/media/` prefix.
+- **The panel** (`panels/images/`):
+  - In view mode: the cover across the panel, the gallery two to a row, each with its caption and credit (with license and source link). A hidden spoiler image is heavily blurred under a "Spoiler" chip, without caption or credit, and a click reveals it.
+  - In edit mode (lazy-loaded): Add image opens the picker, which shows the library (images already added are disabled) and takes uploads by the button or by dropping files. Uploaded files are added at once, and the first image becomes the cover.
+  - Per image: credit and alt text (saved on blur, shared by every entity using the image), caption (the rich-text editor, compact), Spoiler, Cover, and Remove.
+- **Fixes found on the way:**
+  - The rich-text editor saves the latest draft from a ref. A click that ends editing right after Mark as spoiler could arrive before React re-rendered, and save the text from before the change. Seen once under parallel e2e load.
+  - The picker doesn't send focus back to "Add image" after a choice, which could swallow typing in the new image's fields.
+- **Tests:**
+  - 10 integration tests: variant sizes, no enlarging, EXIF and orientation, a renamed `.exe`, over 25 MB, the same file twice, the history entry, metadata (and a rejected `javascript:` source), image reads with and without spoilers, `/media/*` refusing other paths;
+  - 1 config test;
+  - 2 e2e tests: upload, credit, spoiler blur and reveal; the library disabling an image already added.
+- **Dependencies (API):** @fastify/multipart 10.1.6, file-type 22.2.0, sharp 0.35.5. Each was the newest release at least two weeks old.
 
 ### M3-T8 Map settings: galaxy shape and reference underlay
 

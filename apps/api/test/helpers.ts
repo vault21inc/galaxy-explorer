@@ -11,6 +11,8 @@ export function testConfig(overrides: Partial<Config> = {}): Config {
     host: '127.0.0.1',
     port: 0,
     logLevel: 'silent',
+    // Tests that upload pass their own temporary directory.
+    mediaDir: '/nonexistent/ge-media',
     ...overrides,
   };
 }

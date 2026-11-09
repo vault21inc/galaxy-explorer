@@ -1,5 +1,6 @@
 import { schema, type Executor } from '@ge/db';
 import { and, asc, eq, inArray, or } from 'drizzle-orm';
+import { assetsById } from '../asset-service.ts';
 import { entityVisible, type Viewer } from '../visibility.ts';
 
 /** The aspect lists, as the API returns them (the Read schemas in @ge/domain). */
@@ -22,12 +23,34 @@ export function listFacts(ex: Executor, entityId: string) {
     .orderBy(asc(fieldValues.sortKey));
 }
 
-export function listImages(ex: Executor, entityId: string) {
-  return ex
+export async function listImages(ex: Executor, entityId: string) {
+  const rows = await ex
     .select()
     .from(entityImages)
     .where(eq(entityImages.entityId, entityId))
     .orderBy(asc(entityImages.sortKey));
+  return withAssets(ex, rows);
+}
+
+/**
+ * Adds each image's asset: its URLs, size and credit (ImageRead.asset), so a reader draws the
+ * gallery from one response.
+ */
+export async function withAssets<Row extends { assetId: string }>(
+  ex: Executor,
+  rows: readonly Row[],
+) {
+  const assets = await assetsById(
+    ex,
+    rows.map((row) => row.assetId),
+  );
+  return rows.map((row) => {
+    const asset = assets.get(row.assetId);
+    // The foreign key keeps every image's asset; a missing one is a bug, not a reader's error.
+    if (!asset) throw new Error(`Image ${row.assetId} has no asset row.`);
+    const { width, height, altText, credit, sourceUrl, license, urls } = asset;
+    return { ...row, asset: { width, height, altText, credit, sourceUrl, license, urls } };
+  });
 }
 
 export function listLinks(ex: Executor, entityId: string) {

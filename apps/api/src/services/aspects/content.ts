@@ -5,6 +5,7 @@ import type { z } from 'zod';
 import { NotFound } from '../errors.ts';
 import { checkAspectAllowed, checkFact, checkImage, checkRelation } from '../rules/aspects.ts';
 import { sanitizeRichTextFields } from '../sanitize.ts';
+import { withAssets } from './read.ts';
 import { requireOwner } from './owner.ts';
 
 /**
@@ -24,11 +25,11 @@ export async function attachImage(
   const image = sanitizeRichTextFields(ImageWrite, ImageWrite.parse(input));
   const owner = await requireOwner(tx, entityId);
   await checkImage(tx, owner, image.assetId);
-  const [row] = await tx
+  const rows = await tx
     .insert(entityImages)
     .values({ ...image, entityId })
     .returning();
-  return row;
+  return (await withAssets(tx, rows))[0];
 }
 
 export async function updateImage(
@@ -40,9 +41,9 @@ export async function updateImage(
   if (patch.assetId !== undefined && patch.assetId !== key.assetId) {
     await checkImage(tx, await requireOwner(tx, key.entityId), patch.assetId);
   }
-  const [row] = await tx.update(entityImages).set(patch).where(imageKey(key)).returning();
-  if (!row) throw new NotFound('image', `${key.entityId}/${key.assetId}/${key.role}`);
-  return row;
+  const rows = await tx.update(entityImages).set(patch).where(imageKey(key)).returning();
+  if (rows.length === 0) throw new NotFound('image', `${key.entityId}/${key.assetId}/${key.role}`);
+  return (await withAssets(tx, rows))[0];
 }
 
 export async function detachImage(
