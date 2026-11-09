@@ -92,12 +92,29 @@
 - The panel's position fields (x, y, z, in the view's unit) save through the same path.
 
 **Done when:**
-- [ ] E2E:
+- [x] E2E:
   - dragging an object follows the cursor on screen, and the database position is updated;
   - dragging two objects keeps their offset;
   - the gizmo changes only y;
   - a typed position applies.
-- [ ] A drag produces exactly one change batch.
+- [x] A drag produces exactly one change batch.
+
+**Notes (done 2026-11-08):**
+- **The move preview** (`scene-index.ts`): a moving set and one delta. Nothing in React or the query cache changes during a drag.
+  - `drawnObject` and `drawnObjects` apply it, so the picker, rings, labels and test hooks follow; `savedObject` gives the saved position.
+  - `InstancedBodies` and `RegionCloud` shift only the moving instances' centers in place (`useMovePreview`) and put them back from a copy, so a drag never rebuilds the buffers.
+- **Dragging on the plane** (`editor/move-tool.tsx`): a press that the bindings resolve to `move` (edit mode, on an object) starts a drag after 4 px.
+  - An unselected object becomes the selection first; the whole selection then moves across the plane at the grabbed object's height.
+  - Shift snaps the grabbed object to the grid (`moveDelta`), so offsets are kept. The grid size is a field in the toolbar, 10 units by default (ux.md §5).
+- **Height:** drei `<TransformControls>` with only the Y arrow, at the selection's center. Its pointer state (`gizmo-state.ts`) keeps selection, box select and plane dragging out of its way.
+- **Saving:** one `POST /batch` per drag (`useSaveMove`), "Moved N objects". The preview stays until the views have refetched, so nothing jumps; a failure ends it, which puts everything back, and shows a toast.
+  - Writes need versions, so **`ViewObject` gains `version`** (view payloads, API and domain); the view snapshot changed only by those lines.
+- **Typed positions:** a Position section in edit mode, from the panel-sections registry, for kinds with x, y and z. Fields save on Enter or blur through the same batch.
+- **Test hooks:** `gizmoHandleAt()` (mirroring three-stdlib's handle scale) and `gizmoAxis()`.
+- **Tests:**
+  - 4 unit tests: `moveDelta`, snapping, the preview;
+  - 4 e2e tests, each on its own universe: drag follows the cursor and saves as one batch; two objects keep their offset; the gizmo changes only y; a typed position applies.
+- **Performance:** `pnpm perf` still passes every budget (Chrome 4.2 / 4.8 ms, 6 draw calls). The galaxy view chunk grows to 18 kB gzipped with TransformControls; initial JavaScript is unchanged.
 
 ### M3-T4 Generated editor forms and rich text editor
 

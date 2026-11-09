@@ -127,6 +127,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 120,
         "status": "published",
         "subtypeId": null,
+        "version": 1,
       },
       {
         "appearance": {
@@ -148,6 +149,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 120,
         "status": "published",
         "subtypeId": null,
+        "version": 1,
       },
       {
         "appearance": {
@@ -169,6 +171,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 120,
         "status": "published",
         "subtypeId": null,
+        "version": 1,
       },
       {
         "appearance": {
@@ -190,6 +193,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 120,
         "status": "published",
         "subtypeId": null,
+        "version": 1,
       },
       {
         "appearance": {
@@ -211,6 +215,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 120,
         "status": "published",
         "subtypeId": null,
+        "version": 1,
       },
       {
         "appearance": {
@@ -232,6 +237,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 120,
         "status": "published",
         "subtypeId": null,
+        "version": 1,
       },
       {
         "appearance": {
@@ -258,6 +264,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 60,
         "status": "published",
         "subtypeId": null,
+        "version": 1,
       },
       {
         "appearance": {
@@ -284,6 +291,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": null,
         "status": "published",
         "subtypeId": null,
+        "version": 1,
       },
       {
         "appearance": {
@@ -310,6 +318,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": null,
         "status": "published",
         "subtypeId": null,
+        "version": 1,
       },
     ],
     "routes": [],
@@ -351,6 +360,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 0.27,
         "status": "published",
         "subtypeId": null,
+        "version": 1,
       },
     ],
     "map": {
@@ -420,6 +430,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
       "size": 1,
       "status": "published",
       "subtypeId": "<id 18>",
+      "version": 1,
     },
   },
   "system": {
@@ -448,6 +459,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 1,
         "status": "published",
         "subtypeId": null,
+        "version": 1,
       },
       {
         "appearance": {
@@ -474,6 +486,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 0.35,
         "status": "published",
         "subtypeId": null,
+        "version": 1,
       },
       {
         "appearance": {
@@ -500,6 +513,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 0.35,
         "status": "published",
         "subtypeId": "<id 18>",
+        "version": 1,
       },
       {
         "appearance": {
@@ -520,6 +534,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 1,
         "status": "published",
         "subtypeId": null,
+        "version": 1,
       },
     ],
     "map": {
@@ -550,6 +565,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
       "size": null,
       "status": "published",
       "subtypeId": null,
+      "version": 1,
     },
   },
 }

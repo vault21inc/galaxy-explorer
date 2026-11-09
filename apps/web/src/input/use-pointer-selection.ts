@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { flyTo } from '@/render/camera/fly-to.ts';
 import { pickAt } from '@/render/picking/picking.ts';
 import { hoverStore, setHovered } from '@/state/hover.ts';
+import { gizmoBusy } from '@/editor/gizmo-state.ts';
 import { useEditor } from '@/state/editor.ts';
 import { useSelection } from '@/state/selection.ts';
 import { resolveBinding, type Gesture, type Mode, type Target } from './bindings.ts';
@@ -41,6 +42,11 @@ export function usePointerSelection(mode: Mode): void {
       setHovered(null);
     };
     const onPointerDown = (event: PointerEvent) => {
+      // A press on the height gizmo is the gizmo's, not a click on what lies behind it.
+      if (gizmoBusy()) {
+        press = null;
+        return;
+      }
       press = {
         x: event.clientX,
         y: event.clientY,

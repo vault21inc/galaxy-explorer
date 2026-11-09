@@ -4,6 +4,7 @@ import { FactsSection } from './sections/facts-section.tsx';
 import { HeaderSection } from './sections/header-section.tsx';
 import { ImagesSection } from './sections/images-section.tsx';
 import { LinksSection } from './sections/links-section.tsx';
+import { PositionSection } from './sections/position-section.tsx';
 import { RelationsSection } from './sections/relations-section.tsx';
 import { textSection } from './sections/text-section.tsx';
 import type { SectionProps } from './types.ts';
@@ -26,6 +27,12 @@ const always = () => true;
 
 export const PANEL_SECTIONS: readonly SectionDef[] = [
   { id: 'header', component: HeaderSection, appliesTo: always },
+  {
+    id: 'position',
+    component: PositionSection,
+    // Kinds placed by coordinates: their extension has x, y and z (objects).
+    appliesTo: (kind) => kind.extension !== null && 'x' in kind.extension.shape,
+  },
   { id: 'summary', component: textSection('summary', 'text-foreground/90'), appliesTo: always },
   { id: 'description', component: textSection('description'), appliesTo: always },
   {

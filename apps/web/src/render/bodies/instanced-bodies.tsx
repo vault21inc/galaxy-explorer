@@ -4,12 +4,14 @@ import {
   IcosahedronGeometry,
   InstancedBufferAttribute,
   InstancedBufferGeometry,
+  type Mesh,
   type ShaderMaterial,
 } from 'three';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import type { RendererProps } from '../renderer-types.ts';
 import { publishDrawn } from '../scene-index.ts';
 import { worldPerPxAt1 } from '../screen-scale.ts';
+import { useMovePreview } from '../use-move-preview.ts';
 import { GALAXY_BODY_MAX_PX, GALAXY_BODY_MIN_PX } from '../tuning.ts';
 import { buildBodyBuffers } from './body-buffers.ts';
 
@@ -102,6 +104,15 @@ export function InstancedBodies({ objects }: RendererProps) {
     [geometry],
   );
 
+  // A copy of the centers: the attribute's array is shifted in place during a move preview.
+  const baseCenters = useMemo(() => buffers.centers.slice(), [buffers]);
+  const ranges = useMemo(
+    () => new Map(buffers.ids.map((id, index) => [id, [index, 1] as const])),
+    [buffers],
+  );
+  const mesh = useRef<Mesh<InstancedBufferGeometry>>(null);
+  useMovePreview(mesh, ranges, baseCenters);
+
   useEffect(() => {
     publishDrawn(INSTANCED_BODIES, buffers.drawn);
     return () => {
@@ -127,7 +138,7 @@ export function InstancedBodies({ objects }: RendererProps) {
   return (
     // The instances are spread over the whole galaxy, but three.js would judge visibility by
     // the one unit sphere at the origin: turn culling off, the shader places everything.
-    <mesh geometry={geometry} frustumCulled={false}>
+    <mesh ref={mesh} geometry={geometry} frustumCulled={false}>
       <shaderMaterial
         ref={material}
         vertexShader={VERTEX_SHADER}

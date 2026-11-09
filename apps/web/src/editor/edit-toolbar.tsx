@@ -39,6 +39,8 @@ const TOOLS: readonly Tool[] = [
 export function EditToolbar() {
   const editing = useEditor((state) => state.editing);
   const placing = useEditor((state) => state.placing);
+  const gridSize = useEditor((state) => state.gridSize);
+  const setGridSize = useEditor((state) => state.setGridSize);
   if (!editing) return null;
   return (
     <div
@@ -62,6 +64,23 @@ export function EditToolbar() {
           {label === 'Select' && <AddMenu />}
         </span>
       ))}
+      <label
+        className="flex items-center gap-1.5 px-2 text-xs text-muted-foreground"
+        title="Hold Shift while dragging to snap to this grid"
+      >
+        Grid
+        <input
+          type="number"
+          min={0}
+          step="any"
+          aria-label="Grid size"
+          defaultValue={gridSize}
+          className="w-16 rounded-md border border-input bg-transparent px-1.5 py-0.5 text-foreground"
+          onChange={(event) => {
+            setGridSize(Number(event.currentTarget.value));
+          }}
+        />
+      </label>
       {placing && (
         <p role="status" className="px-2 text-xs text-muted-foreground">
           Click to place a {objectTypes[placing].label.toLowerCase()} · Esc cancels

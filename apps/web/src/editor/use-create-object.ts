@@ -86,6 +86,7 @@ function optimisticObject({ baseType, position }: NewObject): ViewObject {
     nameRedacted: name,
     isSpoiler: false,
     status: 'published',
+    version: 1,
     explorable: objectTypes[baseType].explorableAs !== null,
     position,
     appearance,

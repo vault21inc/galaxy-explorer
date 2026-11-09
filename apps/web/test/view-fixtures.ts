@@ -14,6 +14,7 @@ export function viewObject(id: string, baseType: BaseType, overrides: Overrides 
     nameRedacted: id,
     isSpoiler: false,
     status: 'published',
+    version: 1,
     explorable: baseType === 'system',
     position: [0, 0, 0],
     appearance: { color: '#ffe6a8' },

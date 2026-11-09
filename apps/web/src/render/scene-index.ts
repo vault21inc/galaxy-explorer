@@ -38,6 +38,46 @@ let byId: Map<string, DrawnObject> | null = null;
 let version = 0;
 const listeners = new Set<() => void>();
 
+/**
+ * A move in progress (M3-T3): these objects are shown shifted by `delta` until the drag is
+ * saved or cancelled. The cached payload stays as it was; the renderers, rings, labels and the
+ * picker apply the shift on the fly, so a drag re-renders nothing in React.
+ */
+export interface MovePreview {
+  ids: ReadonlySet<string>;
+  delta: readonly [number, number, number];
+}
+let preview: MovePreview | null = null;
+const previewListeners = new Set<() => void>();
+
+export function movePreview(): MovePreview | null {
+  return preview;
+}
+
+/** Shows (or, with null, ends) a move preview, and tells every listener. */
+export function setMovePreview(next: MovePreview | null): void {
+  preview = next;
+  version++;
+  for (const listener of previewListeners) listener();
+  for (const listener of listeners) listener();
+}
+
+/** Calls `listener` whenever the move preview changes; returns the unsubscribe function. */
+export function onMovePreview(listener: () => void): () => void {
+  previewListeners.add(listener);
+  return () => {
+    previewListeners.delete(listener);
+  };
+}
+
+/** An object as it's shown: shifted while it's part of a move preview. */
+function shown(object: DrawnObject): DrawnObject {
+  if (!preview?.ids.has(object.id)) return object;
+  const [x, y, z] = object.center;
+  const [dx, dy, dz] = preview.delta;
+  return { ...object, center: [x + dx, y + dy, z + dz] };
+}
+
 /** Increases whenever any renderer publishes, so the picker knows to rebuild. */
 export function drawnVersion(): number {
   return version;
@@ -46,7 +86,9 @@ export function drawnVersion(): number {
 /** Calls `listener` after every publish; returns the unsubscribe function. */
 export function onDrawnChange(listener: () => void): () => void {
   listeners.add(listener);
-  return () => listeners.delete(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 /** Replaces one renderer's objects; null removes them (the renderer unmounted). */
@@ -58,15 +100,24 @@ export function publishDrawn(renderer: string, objects: readonly DrawnObject[] |
   for (const listener of listeners) listener();
 }
 
+/** An object where it's drawn now, including any move in progress. */
 export function drawnObject(id: string): DrawnObject | undefined {
+  const object = savedObject(id);
+  return object ? shown(object) : undefined;
+}
+
+/** An object where it was published: its saved position, ignoring a move in progress. */
+export function savedObject(id: string): DrawnObject | undefined {
   if (!byId) {
     byId = new Map();
-    for (const objects of sources.values())
+    for (const objects of sources.values()) {
       for (const object of objects) byId.set(object.id, object);
+    }
   }
   return byId.get(id);
 }
 
 export function drawnObjects(): DrawnObject[] {
-  return [...sources.values()].flat();
+  const all = [...sources.values()].flat();
+  return preview ? all.map(shown) : all;
 }

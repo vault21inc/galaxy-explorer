@@ -33,6 +33,8 @@ export interface RegionBuffers {
   rotations: Float32Array;
   /** One entry per region, for the scene index. */
   drawn: DrawnObject[];
+  /** Each region's billboards: [first, count] in the buffers. */
+  ranges: Map<string, readonly [number, number]>;
   count: number;
 }
 
@@ -62,11 +64,13 @@ export function buildRegionBuffers(
     additive: new Float32Array(total),
     rotations: new Float32Array(total),
     drawn: [],
+    ranges: new Map(),
     count: total,
   };
 
   let index = 0;
   for (const { object, region, density, count } of plans) {
+    buffers.ranges.set(object.id, [index, count]);
     const redacted = bodyState(object, policy) === 'redacted';
     const style = REGION_STYLES[object.baseType] ?? DEFAULT_REGION_STYLE;
     const radius = region.radius ?? 1_000;

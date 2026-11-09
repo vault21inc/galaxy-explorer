@@ -7,6 +7,7 @@ import {
   OneFactor,
   OneMinusSrcAlphaFactor,
   PlaneGeometry,
+  type Mesh,
   type ShaderMaterial,
 } from 'three';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
@@ -15,6 +16,7 @@ import { bakeCache } from '../bake/bake-cache.ts';
 import type { RendererProps } from '../renderer-types.ts';
 import { publishDrawn } from '../scene-index.ts';
 import { worldPerPxAt1 } from '../screen-scale.ts';
+import { useMovePreview } from '../use-move-preview.ts';
 import { REGION_BILLBOARD_MAX_PX, REGION_BILLBOARD_MIN_PX, REGION_SPRITE_PX } from '../tuning.ts';
 import { buildRegionBuffers } from './region-buffers.ts';
 import { regionSpriteDefinition, regionSpriteKey } from './region-sprite.ts';
@@ -102,6 +104,11 @@ export function RegionCloud({ objects }: RendererProps) {
     [geometry],
   );
 
+  // A copy of the centers: the attribute's array is shifted in place during a move preview.
+  const baseCenters = useMemo(() => buffers.centers.slice(), [buffers]);
+  const mesh = useRef<Mesh<InstancedBufferGeometry>>(null);
+  useMovePreview(mesh, buffers.ranges, baseCenters);
+
   useEffect(() => {
     publishDrawn(REGION_CLOUD, buffers.drawn);
     return () => {
@@ -130,7 +137,7 @@ export function RegionCloud({ objects }: RendererProps) {
   return (
     // Drawn after the background's stars, without writing depth: clouds never hide what's
     // behind them from the depth test. Culling is off, as for the bodies.
-    <mesh geometry={geometry} frustumCulled={false} renderOrder={4}>
+    <mesh ref={mesh} geometry={geometry} frustumCulled={false} renderOrder={4}>
       <shaderMaterial
         ref={material}
         vertexShader={VERTEX_SHADER}

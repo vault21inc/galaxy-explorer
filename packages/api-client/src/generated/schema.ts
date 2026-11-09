@@ -1723,6 +1723,7 @@ export interface components {
             isSpoiler: boolean;
             /** @enum {string} */
             status: "draft" | "published";
+            version: number;
             explorable: boolean;
             position: [
                 number,
@@ -1829,6 +1830,7 @@ export interface components {
                 isSpoiler: boolean;
                 /** @enum {string} */
                 status: "draft" | "published";
+                version: number;
                 explorable: boolean;
                 position: [
                     number,
@@ -1872,6 +1874,7 @@ export interface components {
                 isSpoiler: boolean;
                 /** @enum {string} */
                 status: "draft" | "published";
+                version: number;
                 explorable: boolean;
                 position: [
                     number,
@@ -3100,6 +3103,7 @@ export interface components {
             isSpoiler: boolean;
             /** @enum {string} */
             status: "draft" | "published";
+            version: number;
             explorable: boolean;
             position: [
                 number,
@@ -3206,6 +3210,7 @@ export interface components {
                 isSpoiler: boolean;
                 /** @enum {string} */
                 status: "draft" | "published";
+                version: number;
                 explorable: boolean;
                 position: [
                     number,
@@ -3249,6 +3254,7 @@ export interface components {
                 isSpoiler: boolean;
                 /** @enum {string} */
                 status: "draft" | "published";
+                version: number;
                 explorable: boolean;
                 position: [
                     number,

@@ -34,6 +34,8 @@ export const ViewObject = z.object({
   subtypeId: Uuid.nullable(),
   ...Named,
   status: z.enum(['draft', 'published']),
+  /** For editing straight from the view: writes send the version they read (architecture.md §5). */
+  version: z.int().positive(),
   explorable: z.boolean(),
   position: Position,
   /** Resolved: type defaults ← subtype defaults ← the object's overrides (data-model §6). */

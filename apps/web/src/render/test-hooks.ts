@@ -1,5 +1,7 @@
 import { CameraControlsImpl } from '@react-three/drei';
 import { Vector3 } from 'three';
+import { gizmoAnchor, gizmoAxis } from '@/editor/gizmo-state.ts';
+import { GIZMO_SIZE } from '@/editor/move-tool.tsx';
 import { placementGhost } from '@/editor/placement.tsx';
 import { toNdc, workPlanePoint } from '@/editor/work-plane.ts';
 import { detectPlatform, type Platform } from '@/input/platform.ts';
@@ -54,6 +56,15 @@ export interface GeTestHooks {
   workPlanePointAt(clientX: number, clientY: number): [number, number, number] | null;
   /** The placement ghost: its type and position, or null when nothing is being placed. */
   placement(): { baseType: string; position: [number, number, number] } | null;
+  /**
+   * Where to press on the height gizmo's vertical arrow, in page pixels, or null without a
+   * gizmo. Mirrors three-stdlib's TransformControls: its handles are scaled by
+   * `distance × min(1.9 × tan(fov / 2), 7) × size / 7`, and the Y arrow's pick area runs from
+   * 0.1 to 1.1 of that above the anchor.
+   */
+  gizmoHandleAt(): { x: number; y: number } | null;
+  /** The gizmo axis under the pointer ("Y"), or null. */
+  gizmoAxis(): string | null;
   /** The labels on screen after the last frame. */
   visibleLabels(): { id: string; text: string }[];
   /** Label-update durations since the last reset (budget: 2 ms per frame, rendering.md §11). */
@@ -91,6 +102,8 @@ export function installTestHooks(): void {
       return workPlanePoint(state.camera, toNdc(clientX, clientY, state.gl.domElement));
     },
     placement: () => placementGhost(),
+    gizmoHandleAt,
+    gizmoAxis: () => gizmoAxis(),
     visibleLabels: () => visibleLabels().map(({ id, text }) => ({ id, text })),
     labelStats: () => labelTimeline.stats(),
     resetLabelStats: () => {
@@ -148,4 +161,22 @@ function cameraPose() {
   }
   const { x, y, z } = state.camera.position;
   return { position: [x, y, z] as [number, number, number], target: target.toArray() };
+}
+
+function gizmoHandleAt(): { x: number; y: number } | null {
+  const state = canvasState();
+  const anchor = gizmoAnchor();
+  if (!state || !anchor) return null;
+  const camera = state.camera as typeof state.camera & { fov?: number };
+  const distance = anchor.position.distanceTo(camera.position);
+  const factor =
+    distance * Math.min((1.9 * Math.tan((Math.PI * (camera.fov ?? 45)) / 360)) / camera.zoom, 7);
+  scratch.copy(anchor.position);
+  scratch.y += 0.6 * ((factor * GIZMO_SIZE) / 7);
+  scratch.project(state.camera);
+  const rect = state.gl.domElement.getBoundingClientRect();
+  return {
+    x: rect.left + ((scratch.x + 1) / 2) * rect.width,
+    y: rect.top + ((1 - scratch.y) / 2) * rect.height,
+  };
 }
