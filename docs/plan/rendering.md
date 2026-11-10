@@ -199,7 +199,8 @@ void main() {
   One member gives a circle and two give a capsule, with no special cases.
 - Padding grows with the number of nesting levels beneath the group, so a sector's outline clearly encloses its sub-sectors' outlines.
 - The outline sits at the members' mean height.
-- **Merge all outlines into one `LineSegments2` for solid lines and one for dashed lines**, with per-vertex colors (pixel widths via `LineMaterial`). Fills go into one mesh with vertex colors and alpha. That's two to three draw calls for any number of groups.
+- **Merge all outlines into one `LineSegments2` for solid lines and one for dashed lines**, with per-vertex colors (pixel widths via `LineMaterial`, with a per-segment width attribute so each group keeps its own width). Fills go into one mesh with vertex colors and alpha, drawn in a single pass. That's two to three draw calls for any number of groups.
+- Padding and nesting padding are shares of the galaxy's radius (`tuning.ts`), and dashes are scaled to stay about 10 px on screen.
 - Outlines rebuild only when groups, memberships or positions change.
 - The group label is anchored at the polygon's area centroid and handled by the label layer.
 

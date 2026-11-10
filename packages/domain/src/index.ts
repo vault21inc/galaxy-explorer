@@ -17,6 +17,16 @@ export {
   type ResolvedGalaxySettings,
 } from './galaxy/density.ts';
 export { GALAXY_PRESETS, type GalaxyPreset } from './galaxy/presets.ts';
+export {
+  areaCentroid,
+  chaikin,
+  convexHull,
+  offsetConvex,
+  outlineForGroup,
+  type Outline,
+  type OutlineOptions,
+  type PlanePoint,
+} from './geo/outline.ts';
 export { gaussian, seededRandom } from './random.ts';
 export { Slug, Uuid } from './ids.ts';
 export * from './patterns.ts';

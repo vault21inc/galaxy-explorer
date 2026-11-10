@@ -4,7 +4,6 @@ import { MapPage } from '@/pages/map-page.tsx';
 import { NotFoundPage } from '@/pages/not-found-page.tsx';
 import { ObjectViewPage } from '@/pages/object-view-page.tsx';
 import { UniversePage } from '@/pages/universe-page.tsx';
-import { UniverseSettingsPage } from '@/pages/universe-settings-page.tsx';
 import { AppShell } from './app-shell.tsx';
 
 /**
@@ -17,8 +16,14 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: <HomePage /> },
       { path: '/u/:universeSlug', element: <UniversePage /> },
-      // A static segment ranks above `:mapSlug`, so no map may use the slug `settings`.
-      { path: '/u/:universeSlug/settings', element: <UniverseSettingsPage /> },
+      // A static segment ranks above `:mapSlug`, so no map may use the slug `settings`. Loaded
+      // on first visit: its forms bring the rich-text editor, which the galaxy view doesn't need.
+      {
+        path: '/u/:universeSlug/settings',
+        lazy: async () => ({
+          Component: (await import('@/pages/universe-settings-page.tsx')).UniverseSettingsPage,
+        }),
+      },
       { path: '/u/:universeSlug/:mapSlug', element: <MapPage /> },
       { path: '/u/:universeSlug/:mapSlug/view/:objectId', element: <ObjectViewPage /> },
       { path: '*', element: <NotFoundPage /> },

@@ -5,6 +5,8 @@ import { hoverStore } from '@/state/hover.ts';
 import { effectiveLabelMode, useLabels } from '@/state/labels.ts';
 import { useSelection } from '@/state/selection.ts';
 import { clampedRadiusPx } from '../bodies/body-scale.ts';
+import { drawnGroups } from '../groups/group-index.ts';
+import type { GroupShape } from '../groups/group-shapes.ts';
 import { projected } from '../picking/picking.ts';
 import { drawnObject, type DrawnObject } from '../scene-index.ts';
 import { worldPerPxAt1 } from '../screen-scale.ts';
@@ -61,14 +63,8 @@ function projectOne(state: RootState, object: DrawnObject, perPx: number) {
 const candidates: LabelCandidate[] = [];
 let candidateCount = 0;
 
-function addCandidate(
-  object: DrawnObject,
-  x: number,
-  y: number,
-  radiusPx: number,
-  selected: ReadonlySet<string>,
-  hoveredId: string | null,
-): void {
+/** The next pooled candidate slot, grown on demand; the caller sets every field. */
+function nextSlot(): LabelCandidate {
   let slot = candidates[candidateCount];
   if (!slot) {
     slot = {
@@ -85,6 +81,19 @@ function addCandidate(
     };
     candidates.push(slot);
   }
+  candidateCount++;
+  return slot;
+}
+
+function addCandidate(
+  object: DrawnObject,
+  x: number,
+  y: number,
+  radiusPx: number,
+  selected: ReadonlySet<string>,
+  hoveredId: string | null,
+): void {
+  const slot = nextSlot();
   slot.id = object.id;
   slot.text = object.label;
   slot.kind = 'object';
@@ -95,7 +104,25 @@ function addCandidate(
   slot.hovered = object.id === hoveredId;
   slot.labelPriority = object.labelPriority;
   slot.groupSize = 0;
-  candidateCount++;
+  delete slot.color;
+}
+
+/** A group's label, centred on its outline's centroid, if that's in front of the camera. */
+function addGroupCandidate(state: RootState, group: GroupShape, selected: ReadonlySet<string>) {
+  scratch.set(...group.centroid).project(state.camera);
+  if (scratch.z < -1 || scratch.z > 1) return;
+  const slot = nextSlot();
+  slot.id = group.id;
+  slot.text = group.label;
+  slot.kind = 'group';
+  slot.x = ((scratch.x + 1) / 2) * state.size.width;
+  slot.y = ((1 - scratch.y) / 2) * state.size.height;
+  slot.radiusPx = 0;
+  slot.selected = selected.has(group.id);
+  slot.hovered = false;
+  slot.labelPriority = 0;
+  slot.groupSize = group.memberCount;
+  slot.color = group.color;
 }
 
 /** Chooses and places this frame's labels (rendering.md §11). Runs after each rendered frame. */
@@ -112,7 +139,7 @@ function updateLabels(state: RootState): void {
       addCandidate(object, x, y, radiusPx, selected, hoveredId);
     });
   } else {
-    // Hover and selection only (and group names, from M4, in 'groups' mode).
+    // Hover and selection only.
     const perPx = worldPerPxAt1(state.camera, state.size.height);
     const ids = hoveredId === null ? selected : new Set([...selected, hoveredId]);
     for (const id of ids) {
@@ -120,6 +147,12 @@ function updateLabels(state: RootState): void {
       const at = object ? projectOne(state, object, perPx) : null;
       if (object && at) addCandidate(object, at.x, at.y, at.radiusPx, selected, hoveredId);
     }
+  }
+
+  // Group names: all of them in the 'groups' and 'all' modes, else only a selected group's.
+  const allGroups = mode === 'groups' || mode === 'all';
+  for (const group of drawnGroups()) {
+    if (allGroups || selected.has(group.id)) addGroupCandidate(state, group, selected);
   }
 
   lastPlaced = solveLabels(

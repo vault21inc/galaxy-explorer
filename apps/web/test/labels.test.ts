@@ -119,6 +119,15 @@ describe('solveLabels', () => {
     expect(placed.length).toBe(200);
   });
 
+  it('centres a group label on its outline, in the group color (M4-T3)', () => {
+    const [placed] = solveLabels(
+      [candidate({ kind: 'group', text: 'Helican', x: 300, y: 200, color: '#c8a24a' })],
+      viewport,
+      metrics,
+    );
+    expect(placed).toMatchObject({ left: 300 - 21, top: 200 - 7, width: 42, color: '#c8a24a' });
+  });
+
   it('leaves out labels that would cross the edge of the view', () => {
     expect(solveLabels([candidate({ x: 990, y: 100 })], viewport, metrics)).toEqual([]);
     expect(solveLabels([candidate({ x: 100, y: 2 })], viewport, metrics)).toEqual([]);

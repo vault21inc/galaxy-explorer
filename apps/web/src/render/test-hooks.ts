@@ -9,6 +9,7 @@ import { hoverStore } from '@/state/hover.ts';
 import { useSelection } from '@/state/selection.ts';
 import { flyTo } from './camera/fly-to.ts';
 import { galaxyDiscState } from './galaxy/galaxy-disc.tsx';
+import { drawnGroup } from './groups/group-index.ts';
 import { underlayState } from './galaxy/underlay.tsx';
 import { visibleLabels } from './labels/label-driver.tsx';
 import { labelTimeline } from './labels/label-stats.ts';
@@ -46,6 +47,20 @@ export interface GeTestHooks {
   screenRadiusOf(id: string): number | null;
   /** How an object is drawn: its renderer, state (normal, redacted, draft) and color. */
   drawnObject(id: string): DrawnObject | null;
+  /**
+   * How a group's outline is drawn (M4-T3), or null when it has none: its point count, the
+   * centroid where its label goes, its look, its label text and how many members it encloses.
+   */
+  groupOutline(id: string): {
+    pointCount: number;
+    centroid: [number, number, number];
+    color: string;
+    dashed: boolean;
+    widthPx: number;
+    label: string;
+    memberCount: number;
+    redacted: boolean;
+  } | null;
   /** The keyboard convention the app detected: Cmd is primary on 'mac', Ctrl elsewhere. */
   platform(): Platform;
   /** The selection, in order. */
@@ -109,6 +124,21 @@ export function installTestHooks(): void {
     screenPositionOf,
     screenRadiusOf,
     drawnObject: (id) => drawnObject(id) ?? null,
+    groupOutline: (id) => {
+      const shape = drawnGroup(id);
+      if (!shape) return null;
+      const { points, centroid, color, dashed, widthPx, label, memberCount, redacted } = shape;
+      return {
+        pointCount: points.length,
+        centroid,
+        color,
+        dashed,
+        widthPx,
+        label,
+        memberCount,
+        redacted,
+      };
+    },
     platform: () => detectPlatform(),
     selectedIds: () => [...useSelection.getState().selectedIds],
     hoveredId: () => hoverStore.getState().hoveredId,

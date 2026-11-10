@@ -24,6 +24,8 @@ export interface LabelCandidate {
   labelPriority: number;
   /** For groups: how many members, larger groups first. */
   groupSize: number;
+  /** For groups: the label's color, the group's (rendering.md §11). Objects are white. */
+  color?: string;
 }
 
 export interface PlacedLabel {
@@ -35,6 +37,7 @@ export interface PlacedLabel {
   top: number;
   width: number;
   height: number;
+  color?: string;
 }
 
 export interface LabelViewport {
@@ -146,10 +149,16 @@ export function solveLabels(
     const candidate = candidates[index];
     if (!candidate) continue;
     const height = metrics.heightPx[candidate.kind];
-    const left = candidate.x + candidate.radiusPx + metrics.gapPx;
+    const isGroup = candidate.kind === 'group';
+    // A group's label is centred on its outline's centroid (M4-T3); an object's starts to the
+    // right of its body. Only a group needs its width to know where it starts.
+    const width = isGroup ? metrics.measure(candidate.text, candidate.kind) : 0;
+    const left = isGroup
+      ? candidate.x - width / 2
+      : candidate.x + candidate.radiusPx + metrics.gapPx;
     const top = candidate.y - height / 2;
     // Entirely inside the canvas, so no label is cut off at the edge. The cheap checks come
-    // before measuring the text.
+    // before measuring an object's text.
     if (left < 0 || top < 0 || left >= viewport.widthPx || top + height > viewport.heightPx)
       continue;
     const label: PlacedLabel = {
@@ -158,8 +167,9 @@ export function solveLabels(
       kind: candidate.kind,
       left,
       top,
-      width: metrics.measure(candidate.text, candidate.kind),
+      width: isGroup ? width : metrics.measure(candidate.text, candidate.kind),
       height,
+      ...(candidate.color === undefined ? {} : { color: candidate.color }),
     };
     if (
       label.left + label.width > viewport.widthPx ||

@@ -95,9 +95,19 @@
   - a member whose **membership** is a spoiler is left out of the outline.
 - Group labels feed the label layer at the centroid, uppercase, in the group's color.
 
+**As built:**
+- Files: `packages/domain/src/geo/outline.ts`; `apps/web/src/render/groups/` (`group-shapes.ts` turns the view's groups into shapes, `outline-buffers.ts` merges them, `group-outlines.tsx` draws, `group-index.ts` feeds labels and the test hooks).
+- The offset is 2% larger than the padding, because the arc chords and Chaikin's corner cuts pull the curve inward by up to about 1%. That keeps every member at least the padding inside, as the tests check.
+- Padding is a share of the galaxy's radius: 2%, plus 1.5% per nesting level below (1,000 ly and 750 ly at 50,000 ly), in `tuning.ts`.
+- Each group's line width (`GroupStyle.lineWidthPx`) is a per-segment attribute added to three's `LineMaterial` (`line-material.ts`), so widths don't cost draw calls. Dashes are scaled each frame to stay about 10 px on screen near the camera's target.
+- The fill draws in one pass (`forceSinglePass`); three would otherwise draw a transparent double-sided mesh twice.
+- Labels are centred on the centroid in the group's color; they show in the `groups` and `all` label modes, and for a selected group in any mode.
+- Outlines follow saved positions, not a move in progress: they update when the move is saved.
+- The settings page (M4-T1) is now loaded lazily, which keeps the rich-text editor out of the initial JavaScript again.
+
 **Done when:**
-- [ ] Unit tests for 1, 2, 3, collinear and duplicate points. Every input point lies inside the outline by at least the padding.
-- [ ] The stress map's 300 groups render in at most 3 draw calls, and the galaxy performance budget still holds.
+- [x] Unit tests for 1, 2, 3, collinear and duplicate points. Every input point lies inside the outline by at least the padding.
+- [x] The stress map's 300 groups render in at most 3 draw calls, and the galaxy performance budget still holds.
 
 ### M4-T4 Group details and selection
 

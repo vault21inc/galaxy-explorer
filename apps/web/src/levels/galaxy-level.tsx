@@ -3,7 +3,9 @@ import { useViewPayload } from '@/api/hooks.ts';
 import { useReadOptions } from '@/api/read-options.ts';
 import { MoveTool } from '@/editor/move-tool.tsx';
 import { Placement } from '@/editor/placement.tsx';
+import { resolveGalaxySettings } from '@ge/domain';
 import { GalaxyBackground } from '@/render/galaxy/galaxy-background.tsx';
+import { GroupOutlines } from '@/render/groups/group-outlines.tsx';
 import { SelectionRings } from '@/render/picking/selection-rings.tsx';
 import { partitionByRenderer } from '@/render/registry.ts';
 import { UnderlayImage } from '@/render/galaxy/underlay.tsx';
@@ -38,6 +40,13 @@ export default function GalaxyLevel({ subjectId }: { subjectId: string }) {
         mapId={subjectId}
         settings={view.data.map.galaxySettings}
         preview={preview?.galaxySettings ?? null}
+      />
+      <GroupOutlines
+        groups={view.data.groups}
+        objects={view.data.objects}
+        galaxyRadiusLy={
+          resolveGalaxySettings(preview?.galaxySettings ?? view.data.map.galaxySettings).radiusLy
+        }
       />
       {groups.map(({ renderer, objects }) => (
         <renderer.component key={renderer.name} objects={objects} />

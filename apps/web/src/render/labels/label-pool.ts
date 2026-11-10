@@ -19,6 +19,8 @@ interface Slot {
   id: string | null;
   text: string;
   kind: LabelKind | null;
+  /** A group label's color; objects use their kind's. */
+  color: string | null;
   visible: boolean;
 }
 
@@ -50,7 +52,7 @@ export function mountLabelPool(container: HTMLElement): () => void {
       'position:absolute;left:0;top:0;white-space:nowrap;display:none;will-change:transform;' +
       'text-shadow:0 0 3px rgb(0 0 0 / 0.9),0 0 1px rgb(0 0 0);';
     container.appendChild(element);
-    return { element, id: null, text: '', kind: null, visible: false };
+    return { element, id: null, text: '', kind: null, color: null, visible: false };
   });
   return () => {
     for (const slot of slots) slot.element.remove();
@@ -101,6 +103,12 @@ function place(slot: Slot, label: PlacedLabel): void {
   if (slot.kind !== label.kind) {
     Object.assign(element.style, KIND_STYLES[label.kind]);
     slot.kind = label.kind;
+    slot.color = null;
+  }
+  const color = label.color ?? null;
+  if (color !== null && slot.color !== color) {
+    element.style.color = color;
+    slot.color = color;
   }
   if (slot.text !== label.text) {
     element.textContent = label.text;

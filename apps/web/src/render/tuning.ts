@@ -367,3 +367,26 @@ export const GROUP_LABEL_HEIGHT_PX = 15;
 export const GROUP_LABEL_LETTER_SPACING_EM = 0.08;
 /** Object labels are white at this opacity (rendering.md §11). */
 export const OBJECT_LABEL_OPACITY = 0.85;
+
+// ---- group outlines (rendering.md §6, M4-T3) --------------------------------------------------
+
+/**
+ * How far an outline stays from its members, as a share of the galaxy's radius, so it reads
+ * the same on a small map and a large one: 2% is 1,000 ly in a 50,000 ly galaxy.
+ */
+export const GROUP_OUTLINE_PADDING_SHARE = 0.02;
+/**
+ * Extra padding per nesting level below a group, as a share of the radius, so a sector's
+ * outline clearly encloses its sub-sectors' outlines: 750 ly more per level at 50,000 ly.
+ */
+export const GROUP_OUTLINE_NESTING_SHARE = 0.015;
+/** A group's line width in CSS pixels when its style doesn't set one (GroupStyle). */
+export const GROUP_LINE_WIDTH_PX = 2;
+/** A group's fill opacity when its style doesn't set one: barely there (ux.md §11). */
+export const GROUP_FILL_OPACITY = 0.06;
+/** Dashed outlines: dash and gap length in CSS pixels, at the camera's target distance. */
+export const GROUP_DASH_PX = 10;
+export const GROUP_GAP_PX = 6;
+/** Outlines and fills are flat overlays: drawn after the disc and glow, before bodies. */
+export const GROUP_FILL_RENDER_ORDER = 2.5;
+export const GROUP_LINE_RENDER_ORDER = 3.5;

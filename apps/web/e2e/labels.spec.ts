@@ -67,9 +67,10 @@ test.describe('labels (rendering.md §11, ux.md §7)', () => {
 
   test('L cycles hover → groups → all, and the mode is remembered', async ({ page }) => {
     await openDemo(page);
-    await page.keyboard.press('l'); // groups: no groups until M4, so still nothing
-    await waitForIdle(page);
-    expect(await labels(page)).toEqual([]);
+    await page.keyboard.press('l'); // groups: the demo's sector and its two sub-sectors (M4-T3)
+    await expect
+      .poll(async () => (await labels(page)).map((label) => label.text).sort())
+      .toEqual(['Inner Reach', 'Outer Reach', 'Vela Sector']);
     await page.keyboard.press('l'); // all
     await expect.poll(async () => (await labels(page)).length).toBeGreaterThan(5);
 
@@ -116,6 +117,9 @@ test.describe('labels (rendering.md §11, ux.md §7)', () => {
   test('updating up to 200 labels stays fast', async ({ page, browserName }) => {
     // WebKit rounds performance.now() to whole milliseconds, too coarse for a 2 ms budget.
     test.skip(browserName === 'webkit', 'needs a sub-millisecond timer');
+    // Headless browsers draw in software, where the stress map's 300 overlapping group fills
+    // (M4-T3) cost real fill rate: each frame is slower here, though not on a GPU (`pnpm perf`).
+    test.slow();
     await page.goto('/u/stress-test/main');
     await waitForFirstFrame(page);
     await expect
