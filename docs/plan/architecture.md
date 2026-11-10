@@ -162,9 +162,10 @@ Each resource also lists its settings-page `columns`, as form field definitions 
 |---|---|---|
 | Levels | `src/levels/registry.ts` | view level → lazy-loaded React component, camera limits, enter/exit distances |
 | Renderers | `src/render/registry.ts` | (view level, base type) → renderer component; this is the O3 extension point for stations, ships and models |
-| Input bindings | `src/input/bindings.ts` | (gesture, modifiers, mode, target) → action ([ux.md §3](ux.md#3-input-bindings)) |
+| Input bindings | `src/input/bindings.ts` | (gesture, modifiers, mode, target) → action ([ux.md §3](ux.md#3-input-bindings)); each action → its one-line description, from which the `?` shortcut help is generated (M4-T9, D-30) |
 | Panel sections | `src/panels/sections.ts` | entity kind → ordered panel sections (details, facts, images, links, relations, members, location, history) |
 | Form widgets | `src/panels/entity-form/widgets.ts` | widget name from a kind's `form` (`@ge/domain` entity-forms.ts) → field component; the edit form replaces the name and text sections in edit mode (D-27) |
+| Tours | `src/help/tours.ts` | tour (`reader`, `editor`) → ordered steps: target (a `data-tour` control or a scene-index object), text, what completes the step, what it needs (M8-T10, D-30) |
 
 ### 3.6 Consistency tests
 
@@ -220,7 +221,7 @@ PATCH /api/v1/objects/{id}  { version: 7, name: {...}, x: 120.5 }
 | Batch | `POST /batch` with `{ description, dryRun?, operations: [{ op, kind, id?, version?, data? }] }`: all operations in one transaction and one change batch. `dryRun: true` validates and returns the would-be results, then rolls back. |
 | History | `GET /universes/{universeId}/history`, `GET /history/{batchId}`, `POST /history/{batchId}/revert` |
 | Assets | `GET/POST /universes/{universeId}/assets` (POST is multipart), `GET/PATCH/DELETE /assets/{assetId}`; files are served under `/media/…` |
-| Later | search, import/export, wiki (M7); auth, tokens (M8) |
+| Later | search, import/export, wiki (M7); auth, tokens (M8); `POST /practice-universe`, the editor tour's demo copy (M8-T10) |
 
 ## 6. View payloads
 
@@ -288,7 +289,7 @@ The system and orbit payloads have the same shape: the subject, its direct child
 | | Drafts (`status = 'draft'`) | Spoilers (`is_spoiler` / `spoiler` flags) |
 |---|---|---|
 | Are they secret? | Yes: unpublished work | No: readers may choose to see them |
-| Where filtered | **Server**. Anonymous requests never receive drafts, nor descendants of draft objects or maps. | **Client**, by default. The API returns content with its flags, and the UI blacks it out (instant toggle, no refetch). |
+| Where filtered | **Server**. Anonymous requests never receive drafts, nor descendants of draft objects or maps, nor a universe whose maps are all drafts (M8-T10). | **Client**, by default. The API returns content with its flags, and the UI blacks it out (instant toggle, no refetch). |
 | Server option | `includeDrafts=true` for editors | `spoilers=exclude` makes the server apply the same `redactEntity()` from `@ge/domain` (used by search snippets, SEO pages and cautious API clients) |
 | Edit mode | drafts shown with a "Draft" badge | everything shown, with spoiler content marked |
 

@@ -23,11 +23,12 @@ What the app looks like and how it responds to the mouse, trackpad, touch and ke
   - breadcrumbs (the subject's ancestors, each clickable);
   - search / command palette (M7);
   - the spoiler toggle;
-  - the edit toggle, owner only.
+  - the edit toggle, owner only;
+  - Help: the keyboard shortcuts (M4-T9), and from M8-T10 the guided tours (§12).
 - **Right panel:** about 380 px wide, collapsible. It shows the selection's details, or for several selected items, a summary with bulk actions. On screens narrower than 768 px it becomes a bottom sheet.
 - **Left outliner:** a tree of the current view's contents, grouped by group. It's always available in edit mode, and in view mode through a "List" button. It is also the accessible alternative to the canvas (§10). The History and Map settings panels open in its place, one at a time; closing them brings the outliner back.
 - **Bottom toolbar:** edit mode only.
-- **Overlays:** the shortcut help (`?`) and toasts in the bottom-right corner.
+- **Overlays:** the shortcut help (`?`, §12), a tour's step (§12), and toasts in the bottom-right corner.
 
 ## 2. Modes
 
@@ -75,7 +76,7 @@ They're defined once in `apps/web/src/input/bindings.ts` and resolved by `resolv
 
 ## 4. Keyboard shortcuts
 
-Shortcuts are ignored while focus is in a text field. `?` opens this list as an overlay.
+Shortcuts are ignored while focus is in a text field. `?` opens this list as an overlay (§12). The overlay is generated from the bindings registry, so it shows only what works today; this table also lists what's planned.
 
 | Keys | Action | Mode |
 |---|---|---|
@@ -205,3 +206,17 @@ Design rules:
 - **3D style:** bright small cores with soft glow, crisp thin lines (1–2 px), restrained color. Group fills are barely there (about 6 % opacity) so the stars stay the subject.
 - **Iconography:** Lucide for the UI. Event-category and pin icons come from a bundled set chosen in M6. Options are Lucide (ISC license) or game-icons.net (CC BY 3.0, which needs an attribution line on the site).
 - **Open item:** the owner adds 3–6 reference screenshots to `docs/design/references/` before M2-T3, and the visual tuning in M2 and M5 follows them.
+
+## 12. Help and tours
+
+D-30 has the reasoning.
+
+- **Shortcut help (M4-T9):** `?`, or the Help button in the top bar, opens a panel of every keyboard shortcut and mouse, trackpad and touch gesture.
+  - It is generated from the input-bindings registry (§3, §4), with a one-line description per action, so it lists exactly what works, on this platform (⌘ or Ctrl) and in this mode.
+  - Edit-mode commands appear only for someone who may edit, and the current mode's section comes first.
+- **Guided tours (M8-T10):** two short tours, each a few steps that point at the real controls.
+  - **Reader tour:** moving around, selecting, labels, spoilers, the List, groups and layers, entering a system and a planet, events and search. It runs on the map being viewed and changes nothing.
+  - **Editor tour** (owner): adding, moving and editing objects, grouping, undo and History, settings, regions and routes, and editing in a system and on a globe. It runs in a practice universe of demo content that readers never see, and offers to delete it at the end.
+  - **Offered, never forced:** a dismissible prompt on a reader's first visit and on the owner's first time in edit mode, remembered per browser. Both tours stay in the Help menu.
+  - **A step** is a non-modal popover beside its target, labelled with its number ("Tour, step 3 of 10"), with Back, Next and End; Esc ends the tour. Some steps wait for you to do the thing, such as pressing L. A step whose feature or target is missing is skipped.
+  - **Accessible:** the popover takes focus and reads as text, every step's action has a keyboard path (often the List), and the highlight is visual only. With `prefers-reduced-motion`, nothing animates.

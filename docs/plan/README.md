@@ -96,11 +96,11 @@ Each of these can be revisited later, and the registries leave room for them.
 | [M1](milestones/M1-data-core.md) | Data core and API | the full schema, registries, generated CRUD API, batches and revert, rich text and spoiler foundations, seeds | M0 |
 | [M2](milestones/M2-galaxy-view.md) | Galaxy view | background, bodies, camera and bindings, picking, labels, info panel, spoilers, **first performance gate** | M1 |
 | [M3](milestones/M3-galaxy-editing.md) | Galaxy editing | edit mode, create, move, forms, rich text editor, multi-select, undo/redo, uploads, underlay, outliner | M2 |
-| [M4](milestones/M4-groups-regions.md) | Groups, regions and routes | settings page, groups from selection, outlines, layers, nebulae and warp storms, routes | M3 |
+| [M4](milestones/M4-groups-regions.md) | Groups, regions and routes | settings page, groups from selection, outlines, layers, nebulae and warp storms, routes, a look per kind of body, shortcut help | M3 |
 | [M5](milestones/M5-system-view.md) | System view | navigation and transitions, zoom thresholds, system rendering, editing in systems, leak test | M3 |
 | [M6](milestones/M6-orbit-view-events.md) | Orbit view and events | geo math, planet baking, globes, pins, places, events, characters, events list; **proof of concept complete** | M5 (M4 recommended) |
 | [M7](milestones/M7-content-tools.md) | Content tools and LLM access | facts, subtypes, fill from wiki, import/export, map cloning, search, MCP server, LLM guide | M6 (T7–T8: M1 only) |
-| [M8](milestones/M8-go-public.md) | Going public | login with two-factor codes, tokens, hardening, containers, droplet, deploy, backups, content migration | M6, M7-T4 |
+| [M8](milestones/M8-go-public.md) | Going public | login with two-factor codes, tokens, hardening, containers, droplet, deploy, backups, content migration, guided tours | M6, M7-T4 |
 
 ```
 M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ───────────────┐
@@ -181,3 +181,4 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-10:** M4-T2 done: grouping the selection (⌘/Ctrl + G) in a dialog, with the move question for objects already in a group of that type; Add to group and Remove from group; a group's members panel with each membership's spoiler flag; and deleting a group with its impact.
 - **2026-11-10:** M4-T3 done: group outlines (hull, rounded offset, Chaikin smoothing) nest around their sub-groups, with fills and centred labels in each group's color, in 3 draw calls for any number of groups.
 - **2026-11-10:** M4-T4 done: group labels and outliner rows select groups; a group's panel shows its members, parent and child groups, and its members get rings; the outliner is a tree of layers, group types and groups.
+- **2026-11-10:** D-30: help. The `?` shortcut panel, generated from the bindings registry, is planned as M4-T9; guided reader and editor tours, the editor's in a practice universe, as M8-T10.

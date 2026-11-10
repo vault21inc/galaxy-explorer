@@ -4,7 +4,8 @@
 - anonymous visitors explore published content;
 - only the owner can edit, with a password and two-factor codes;
 - LLM agents use revocable tokens;
-- the content built locally is carried over.
+- the content built locally is carried over;
+- newcomers can learn the app from guided tours (D-30).
 
 **Depends on:** M6, plus M7-T4 for the content migration and M7-T7 for remote MCP.
 **Read first:** [architecture.md §7, §14](../architecture.md), [data-model.md §3.8, §8](../data-model.md), [decisions.md T6, X5, D-15, D-19](../decisions.md).
@@ -14,6 +15,7 @@
 3. The owner logs in with password and TOTP and edits.
 4. An agent with a write token creates an object over remote MCP; revoking the token stops it.
 5. Last night's backup restores into a scratch database.
+6. A first-time visitor takes the reader tour. The owner takes the editor tour in a practice universe, then deletes it.
 
 **Before starting:** the owner picks a domain name and creates a DigitalOcean account and a Spaces bucket. Budget is not a constraint (X5).
 
@@ -149,6 +151,43 @@
 **Done when:**
 - [ ] Sharing a planet URL in a chat app shows its name and image with no spoilers.
 - [ ] The attributions page lists every citation.
+
+### M8-T10 Guided tours
+
+**Where:** `apps/web/src/help/` (the tour registry, the step popover, the highlight), `src/app/top-bar.tsx`, a `data-tour` attribute on each control a step points at, and `apps/api/src/seeds/demo.ts`.
+
+The details are in D-30 and ux.md §12. This is M8's last task, because the tours describe the finished app.
+
+- **The tour registry** (`src/help/tours.ts`) holds the `reader` and `editor` tours, each an ordered list of steps. A step has:
+  - an id, a title and a sentence or two, in the app's own words ("event", never "scene");
+  - a target: a control's `data-tour` name, an object found through the scene index (such as "an explorable system on screen"), or nothing, for a step about the whole view;
+  - what completes it: the Next button, or a change in the app, such as the label mode, the selection, the camera or the view level;
+  - what it needs, if anything: a feature, the owner, edit mode. A step whose need isn't met is skipped.
+- **The reader tour** runs on the current map and writes nothing:
+  1. moving around: drag, right-drag or ⌘/Ctrl-drag, and the wheel;
+  2. selecting a system, and its panel;
+  3. labels (L), and holding Space;
+  4. the spoiler toggle;
+  5. the List;
+  6. groups and the Layers popover;
+  7. entering a system, then a planet (double-click, Enter or zooming in), and going back (Esc or the breadcrumbs);
+  8. the events list;
+  9. search (⌘/Ctrl + K);
+  10. `?` for every shortcut.
+- **The editor tour** is for the owner:
+  - It starts by creating the **practice universe**. An owner-only `POST /api/v1/practice-universe` runs the demo seed (`seedDemo`, now taking a slug, a name, the actor and a status for its maps) into a new universe named "Practice", as one batch, with every map a draft. Readers never see it: the universe list leaves out a universe whose maps are all drafts.
+  - Its steps: edit mode and the toolbar; adding an object (N) and naming it; moving it, changing its height and snapping; its form (color, size); box-select and grouping (⌘/Ctrl + G); undo and History; the settings page; map settings and the underlay; a region and a route; inside a system, adding a planet; on a globe, a place and an event; deleting, with the impact shown.
+  - At the end it offers "Delete the practice universe", the default, or "Keep it".
+- **Showing a step:** a non-modal popover beside the target, labelled "Tour, step 3 of 10", with Back, Next and End. Focus moves to it, and Esc ends the tour. The target gets a highlight ring drawn in the DOM over the page; for an object, at its screen position from the scene index. The canvas draws nothing extra, and with `prefers-reduced-motion` nothing animates (ux.md §10).
+- **Offering:** "New here? Take the tour" on a reader's first visit, and "Take the editor tour" on the owner's first time in edit mode. Both are dismissible and remembered per browser (`ge.tours` in local storage). The Help button becomes a menu: Keyboard shortcuts (M4-T9), Take the tour, Editor tour (owner) and About (the attributions page, M8-T9).
+- **AGENTS.md:** the definition of done gains "a user-facing feature adds or updates its tour step".
+
+**Done when:**
+- [ ] Unit tests: every step names a target kind, a completion and a need the registry knows, and steps whose need isn't met are skipped.
+- [ ] E2E, in both browsers: each tour runs from start to end, and every step finds its target on screen. Esc ends a tour, and the Help menu starts it again.
+- [ ] The editor tour creates the practice universe, writes only inside it, and deletes it at the end. The owner's other universes and their history are unchanged, and an anonymous reader never sees "Practice".
+- [ ] The first-visit prompt shows once, and dismissing it survives a reload.
+- [ ] axe finds no violations with a step open, and idle stays at 0 frames while a step waits.
 
 ---
 

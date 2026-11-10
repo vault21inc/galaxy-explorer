@@ -5,7 +5,8 @@
 - universe-defined group types and layers;
 - nebulae and warp storms as regions;
 - routes between objects;
-- a look of its own for each kind of body in the galaxy view (D-28).
+- a look of its own for each kind of body in the galaxy view (D-28);
+- the shortcut help (`?`) that ux.md promised (D-30).
 
 **Depends on:** M3. This milestone can run in parallel with M5; the two touch different files except for the shared registries.
 **Read first:** [data-model.md §3.3, §3.5](../data-model.md), [rendering.md §6](../rendering.md#6-galaxy-view) (outlines, regions, routes), [ux.md §5](../ux.md#5-selecting-and-editing) (grouping).
@@ -18,6 +19,7 @@
 6. Draw the Great Rift as a rift region along a curve across the galaxy.
 7. Draw a route through four systems.
 8. Systems show as glowing stars ringed by their planets, black holes as lensed accretion discs, and stations and markers as icons. Change a system's color and size, and its star follows.
+9. Press `?`: a panel lists every shortcut and gesture, including Group the selection under edit mode.
 
 **Out of scope:** Voronoi-style territories and freeform drawn areas (later shape renderers).
 
@@ -226,6 +228,26 @@ The details are in D-28 and rendering.md §6. This task doesn't depend on T1–T
 - [x] E2E: `drawnObject` reports each renderer for a system, a planet, a station, a marker and a black hole. A system with three planets reports `planetCount` 3, and a binary (two stars of different colors) reports both in `stars`. Changing a system's color and size changes its glyph's color and on-screen size.
 - [x] Screenshots of each look at a few zoom levels are attached to the commit, for the owner to judge against the NASA reference.
 - [x] The galaxy view's draw calls rise by at most 3, and `pnpm perf` (view and `--edit`) still meets every budget. Before and after numbers are in the commit message.
+
+### M4-T9 Shortcut help
+
+**Where:** `apps/web/src/input/bindings.ts`, `src/panels/shortcut-help/`, `src/app/top-bar.tsx`.
+
+The details are in D-30 and ux.md §4 and §12. This task doesn't depend on T5–T7 and can run at any time.
+
+- **Descriptions in the registry:** each pointer action (`Action`), key action (`KeyAction`) and edit command (`EditKeyAction`) gets a one-line description beside its binding, such as "Group the selection". They live in a record typed over every action, so a new action without one fails the typecheck.
+- **The panel** opens with `?` (a new key binding in both modes) or the Help button in the top bar. It is built from the three binding tables, never typed by hand:
+  - keys whose actions share a description share a row: the four arrow keys (pan up, down, left and right) are one "Pan" row, and `+` and `=` are one "Zoom in" row;
+  - rows that exist only to swallow a gesture (action `none`, such as Ctrl-click on a Mac) are left out;
+  - keys are shown for this platform: ⌘ and ⌥ on a Mac, Ctrl and Alt elsewhere (ux.md §3);
+  - sections for everywhere, edit mode (when the reader may edit), and mouse, trackpad and touch gestures, with the current mode's section first;
+  - it's a Radix dialog: Esc closes it, and focus returns where it was.
+- `?` typed in a text field is just a question mark, like every shortcut (ux.md §4).
+- ux.md §4's table stays the reference for planning. The panel is generated, so it lists only what works today: no ⌘/Ctrl + K until M7-T6.
+
+**Done when:**
+- [ ] Unit tests: every bound action has a description; the panel merges keys that share a description and leaves out `none` rows; keys read correctly for macOS and for other platforms.
+- [ ] E2E: `?` opens the panel in view mode and in edit mode, where it lists Group the selection with this platform's keys. Esc closes it and returns focus. axe finds no violations. `?` typed in the outliner's filter is text.
 
 ---
 
