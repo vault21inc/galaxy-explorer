@@ -1,6 +1,8 @@
 import { CONFIG_RESOURCES, fieldSchemaIn, unwrapField, type ConfigResource } from '@ge/domain';
 import { useId, useState } from 'react';
-import { useConfigList } from '@/api/hooks.ts';
+import { useConfigList, useViewPayload } from '@/api/hooks.ts';
+import { useReadOptions } from '@/api/read-options.ts';
+import { parentChoices } from '@/editor/actions/group.ts';
 import { editDescription, type FieldProps } from '../field-props.ts';
 import { changesFor, valueAt } from '../field-path.ts';
 import type { FormFieldDef } from '@ge/domain';
@@ -12,8 +14,9 @@ type SelectFieldDef = Extract<FormFieldDef, { widget: 'select' }>;
 const NONE = '';
 
 /**
- * A choice from fixed values (status) or from a universe setting (subtypes, group types,
- * event categories), saved as soon as it changes. Nullable fields offer "None".
+ * A choice from fixed values (status), from a universe setting (subtypes, group types, event
+ * categories), or of a parent group (M4-T4), saved as soon as it changes. Nullable fields offer
+ * "None".
  */
 export function SelectField({
   field,
@@ -31,6 +34,9 @@ export function SelectField({
       ? (options.resource as ConfigResource)
       : undefined;
   const items = useConfigList(resource ?? 'object_subtypes', resource ? universeId : undefined);
+  // Parent groups come from the galaxy view already loaded for the group's map.
+  const mapId = options.from === 'parentGroups' ? (record.mapId as string | undefined) : undefined;
+  const view = useViewPayload('galaxy', mapId, useReadOptions());
   const schema = fieldSchemaIn(recordSchema, field.path);
   const nullable = schema ? unwrapField(schema).nullable : false;
   const saved = valueAt(record, field.path);
@@ -39,6 +45,12 @@ export function SelectField({
   let choices: { value: string; label: string }[];
   if (options.from === 'values') {
     choices = options.values.map((value) => ({ value, label: options.labels?.[value] ?? value }));
+  } else if (options.from === 'parentGroups') {
+    const groups = view.data?.groups ?? [];
+    const below = descendantsOf(record.id, groups);
+    choices = parentChoices(String(record.groupTypeId), groups, view.data?.groupTypes ?? [])
+      .filter((group) => group.id !== record.id && !below.has(group.id))
+      .map((group) => ({ value: group.id, label: group.namePlain }));
   } else {
     const match = options.matchField;
     const against = match === undefined ? undefined : valueAt(record, options.matchOn ?? match);
@@ -79,4 +91,22 @@ export function SelectField({
       </select>
     </FieldRow>
   );
+}
+
+/** Every group nested inside this one, at any depth: none may become its parent. */
+function descendantsOf(
+  id: string,
+  groups: readonly { id: string; parentGroupId: string | null }[],
+): Set<string> {
+  const found = new Set<string>();
+  const visit = (parent: string) => {
+    for (const group of groups) {
+      if (group.parentGroupId === parent && !found.has(group.id)) {
+        found.add(group.id);
+        visit(group.id);
+      }
+    }
+  };
+  visit(id);
+  return found;
 }

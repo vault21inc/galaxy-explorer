@@ -16,6 +16,7 @@ import { labelTimeline } from './labels/label-stats.ts';
 import { clampedRadiusPx } from './bodies/body-scale.ts';
 import { canvasState, frameTimeline, renderInfo, type RenderInfo } from './diagnostics.ts';
 import type { FrameStats } from './frame-timeline.ts';
+import { ringedIds } from './picking/selection-rings.tsx';
 import { drawnObject, type DrawnObject } from './scene-index.ts';
 import { worldPerPxAt1 } from './screen-scale.ts';
 
@@ -65,6 +66,8 @@ export interface GeTestHooks {
   platform(): Platform;
   /** The selection, in order. */
   selectedIds(): string[];
+  /** The objects with a ring now: selected, hovered, or members of a selected group (M4-T4). */
+  ringedIds(): string[];
   /** The object under the pointer, or null. */
   hoveredId(): string | null;
   /** Flies the camera to an object, as a double-click does; resolves when it has settled. */
@@ -141,6 +144,7 @@ export function installTestHooks(): void {
     },
     platform: () => detectPlatform(),
     selectedIds: () => [...useSelection.getState().selectedIds],
+    ringedIds: () => [...ringedIds()],
     hoveredId: () => hoverStore.getState().hoveredId,
     workPlanePointAt: (clientX, clientY) => {
       const state = canvasState();

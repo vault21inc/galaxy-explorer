@@ -92,7 +92,11 @@ export function MapPage() {
   return (
     <>
       <SelectionAnnouncer objects={view.data.objects} />
-      <OutlinerSlot objects={view.data.objects} />
+      <OutlinerSlot
+        objects={view.data.objects}
+        groups={view.data.groups}
+        groupTypes={view.data.groupTypes}
+      />
       <EditToolbar />
       {mapId && (
         <EditorActions

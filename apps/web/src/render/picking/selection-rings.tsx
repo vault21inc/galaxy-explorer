@@ -10,6 +10,7 @@ import {
 import { hoverStore } from '@/state/hover.ts';
 import { useSelection } from '@/state/selection.ts';
 import { hexToLinear } from '../color.ts';
+import { useDrawnGroups } from '../groups/group-index.ts';
 import { drawnObject, onDrawnChange } from '../scene-index.ts';
 import { worldPerPxAt1 } from '../screen-scale.ts';
 import {
@@ -18,6 +19,7 @@ import {
   RING_GAP_PX,
   RING_WIDTH_PX,
   SELECTION_RING_COLOR,
+  MEMBER_RING_OPACITY,
   SELECTION_RING_OPACITY,
 } from '../tuning.ts';
 
@@ -92,10 +94,30 @@ function makeGeometry(capacity: number) {
   return geometry;
 }
 
+/** The ids ringed by the last write, for the test hooks. */
+let ringed: readonly string[] = [];
+export function ringedIds(): readonly string[] {
+  return ringed;
+}
+
 export function SelectionRings() {
   const invalidate = useThree((state) => state.invalidate);
   const selectedIds = useSelection((state) => state.selectedIds);
-  const capacity = Math.max(INITIAL_CAPACITY, 2 ** Math.ceil(Math.log2(selectedIds.length + 1)));
+  const groups = useDrawnGroups();
+  // A selected group's members, each with its group's color (M4-T4). Selected objects keep the
+  // selection ring.
+  const members = useMemo(() => {
+    const selected = new Set(selectedIds);
+    const rings = new Map<string, readonly number[]>();
+    for (const group of groups) {
+      if (!selected.has(group.id)) continue;
+      const color = [...hexToLinear(group.color), MEMBER_RING_OPACITY];
+      for (const id of group.memberIds) if (!selected.has(id)) rings.set(id, color);
+    }
+    return rings;
+  }, [groups, selectedIds]);
+  const needed = selectedIds.length + members.size + 1;
+  const capacity = Math.max(INITIAL_CAPACITY, 2 ** Math.ceil(Math.log2(needed)));
   // Rebuilt only when the selection outgrows it, so ordinary changes just rewrite numbers.
   const geometry = useMemo(() => makeGeometry(capacity), [capacity]);
   useEffect(
@@ -114,25 +136,30 @@ export function SelectionRings() {
       const geometry = mesh.current?.geometry;
       if (!geometry) return;
       const hoveredId = hoverStore.getState().hoveredId;
-      const ids =
-        hoveredId !== null && !selectedIds.includes(hoveredId)
-          ? [...selectedIds, hoveredId]
-          : selectedIds;
+      const ids = [...selectedIds, ...members.keys()];
+      if (hoveredId !== null && !selectedIds.includes(hoveredId) && !members.has(hoveredId)) {
+        ids.push(hoveredId);
+      }
       const centers = geometry.getAttribute('aCenter') as InstancedBufferAttribute;
       const radii = geometry.getAttribute('aRadius') as InstancedBufferAttribute;
       const clamps = geometry.getAttribute('aClampPx') as InstancedBufferAttribute;
       const colors = geometry.getAttribute('aColor') as InstancedBufferAttribute;
       let count = 0;
+      const written: string[] = [];
       for (const id of ids) {
         const object = drawnObject(id);
         if (!object || count >= centers.count) continue;
         centers.setXYZ(count, ...object.center);
         radii.setX(count, object.radius);
         clamps.setXY(count, object.minRadiusPx, object.maxRadiusPx);
-        const [r = 1, g = 1, b = 1, a = 1] = selectedIds.includes(id) ? SELECTED : HOVER;
+        const [r = 1, g = 1, b = 1, a = 1] = selectedIds.includes(id)
+          ? SELECTED
+          : (members.get(id) ?? HOVER);
         colors.setXYZW(count, r, g, b, a);
+        written.push(id);
         count++;
       }
+      ringed = written;
       for (const attribute of [centers, radii, clamps, colors]) attribute.needsUpdate = true;
       geometry.instanceCount = count;
       invalidate();
@@ -144,7 +171,7 @@ export function SelectionRings() {
       stopHover();
       stopDrawn();
     };
-  }, [geometry, selectedIds, invalidate]);
+  }, [geometry, selectedIds, members, invalidate]);
 
   const uniforms = useMemo(
     () => ({

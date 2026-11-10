@@ -32,6 +32,8 @@ export interface GroupShape {
   label: string;
   /** Members inside the outline, own and nested: larger groups' labels win (rendering.md §11). */
   memberCount: number;
+  /** Those members' ids, for the rings around a selected group's members (M4-T4). */
+  memberIds: string[];
   /** A hidden spoiler group: grey, with a redacted label (ux.md §7). */
   redacted: boolean;
 }
@@ -72,7 +74,7 @@ export function groupShapes(
     children.set(group.parentGroupId, list);
   }
 
-  // A group's own visible members' positions.
+  // A group's own visible members, with their positions.
   const own = (group: Group) =>
     group.members.flatMap((member) => {
       const hidden = isHidden(
@@ -81,7 +83,7 @@ export function groupShapes(
         policy,
       );
       const position = positions.get(member.objectId);
-      return !hidden && position ? [position] : [];
+      return !hidden && position ? [{ id: member.objectId, position }] : [];
     });
 
   // Members of the group and its descendants, and how many levels lie below it. `seen` stops a
@@ -100,8 +102,12 @@ export function groupShapes(
   };
 
   return groups.flatMap((group): GroupShape[] => {
-    const { points, depth } = collect(group, new Set([group.id]));
-    if (points.length === 0) return [];
+    const collected = collect(group, new Set([group.id]));
+    // An object can be in a group and in one nested inside it (they're of different types).
+    const members = [...new Map(collected.points.map((member) => [member.id, member])).values()];
+    const { depth } = collected;
+    if (members.length === 0) return [];
+    const points = members.map((member) => member.position);
     const paddingLy =
       galaxyRadiusLy * (GROUP_OUTLINE_PADDING_SHARE + depth * GROUP_OUTLINE_NESTING_SHARE);
     const outline = outlineForGroup(
@@ -122,7 +128,8 @@ export function groupShapes(
         fillOpacity: group.style.fillOpacity ?? GROUP_FILL_OPACITY,
         centroid: [outline.centroid[0], y, outline.centroid[1]],
         label: labelText(group, policy),
-        memberCount: points.length,
+        memberCount: members.length,
+        memberIds: members.map((member) => member.id),
         redacted,
       },
     ];

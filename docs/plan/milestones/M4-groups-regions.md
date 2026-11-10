@@ -116,8 +116,14 @@
   - member objects get a highlight ring.
 - The outliner becomes a tree: layer › group types › groups › member objects, then ungrouped objects.
 
+**As built:**
+- Group labels take clicks; object labels still let them through to the canvas. The primary key toggles and Shift adds, as on the canvas. A label shows in the `groups` and `all` label modes, or once its group is selected.
+- The panel's new "Inside" and "Groups inside" section (for kinds with `aspects.members`) links the parent and child groups. The group form gains Parent group, offering only groups of the parent type, never the group itself or its descendants.
+- Member rings use the group's color, a little fainter than a selected object's ring. A sector rings the members of its sub-sectors too.
+- The outliner is drawn flat as an ARIA tree with `aria-level`: layer › group type › group › nested groups › own members, then ungrouped objects (`outliner-tree.ts`). Layers and types start open and groups closed. A selection opens the tree to its row. Right and Left open, close and move up; Space on a layer or type row opens it. The filter gives a flat list. An object in groups of two layers has a row in each.
+
 **Done when:**
-- [ ] E2E: clicking a label selects the group, the panel lists its members, and the outliner shows the nesting.
+- [x] E2E: clicking a label selects the group, the panel lists its members, and the outliner shows the nesting.
 
 ### M4-T5 Layers and legend
 

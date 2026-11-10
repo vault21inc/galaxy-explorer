@@ -339,6 +339,11 @@ export const HOVER_RING_COLOR = '#ffffff';
 export const HOVER_RING_OPACITY = 0.55;
 export const SELECTION_RING_COLOR = '#4fd1ff';
 export const SELECTION_RING_OPACITY = 1;
+/**
+ * The members of a selected group get a ring in the group's color at this opacity (M4-T4):
+ * fainter than a selected object's, so the group reads as the selection.
+ */
+export const MEMBER_RING_OPACITY = 0.7;
 
 /**
  * Flying to an object (double-click, F) frames a sphere of at least this radius around it,

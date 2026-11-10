@@ -120,7 +120,6 @@ export const entityKinds = defineEntityKinds({
     extension: groupExtension,
     aspects: { ...allAspects, location: 'none', members: true },
     contentFields: [],
-    // The parent group joins the form with group nesting in M4.
     form: {
       details: [
         {
@@ -128,6 +127,13 @@ export const entityKinds = defineEntityKinds({
           widget: 'select',
           label: 'Group type',
           options: { from: 'config', resource: 'group_types' },
+        },
+        {
+          path: 'parentGroupId',
+          widget: 'select',
+          label: 'Parent group',
+          options: { from: 'parentGroups' },
+          hint: 'A group of the parent type, such as the sector a sub-sector is in.',
         },
       ],
       appearance: [{ path: 'outlineColor', widget: 'color', label: 'Outline color' }],

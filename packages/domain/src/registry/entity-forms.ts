@@ -31,7 +31,12 @@ export type FormOptions =
       matchField?: string;
       /** The entity's field to compare with, when it has another name than `matchField`. */
       matchOn?: string;
-    };
+    }
+  /**
+   * The map's groups that this group may sit in: those of its type's parent type, except
+   * itself and its own descendants (M4-T4).
+   */
+  | { from: 'parentGroups' };
 
 /**
  * When a field shows. `explorableType`: only for base types that open a view of their own

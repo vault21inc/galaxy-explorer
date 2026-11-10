@@ -1,5 +1,5 @@
-import { isHidden, objectTypes, spoilerKeys, type ViewObject } from '@ge/domain';
-import { EyeOff, X } from 'lucide-react';
+import type { ViewGroup, ViewGroupType, ViewObject } from '@ge/domain';
+import { ChevronDown, ChevronRight, EyeOff, X } from 'lucide-react';
 import {
   useEffect,
   useId,
@@ -13,37 +13,40 @@ import { Button } from '@/components/ui/button.tsx';
 import { isPrimaryModifier } from '@/input/bindings.ts';
 import { detectPlatform } from '@/input/platform.ts';
 import { cn } from '@/lib/utils.ts';
-import { labelText } from '@/render/labels/label-text.ts';
 import { useSelection } from '@/state/selection.ts';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
-import { outlinerKey } from './outliner-keys.ts';
-
-/** One row: an object as the outliner shows it. */
-interface Row {
-  id: string;
-  /** What's shown: the name, or a redaction bar for a hidden spoiler (as the 3D labels do). */
-  text: string;
-  hidden: boolean;
-  type: string;
-  draft: boolean;
-  spoiler: boolean;
-}
+import { outlinerKey, type OutlinerTree } from './outliner-keys.ts';
+import {
+  ancestorsOf,
+  openByDefault,
+  outlinerRows,
+  visibleRows,
+  type OutlinerRow,
+} from './outliner-tree.ts';
 
 /**
- * The outliner (M3-T9, ux.md §1, §10): the current view's objects as an ARIA tree, the keyboard
- * path to everything the canvas does. Flat until groups arrive in M4; the "Unplaced" section
- * (places and events without a location) fills in M6.
+ * The outliner (M3-T9, M4-T4, ux.md §1, §10): the current view as an ARIA tree, the keyboard
+ * path to everything the canvas does. Layer › group type › group › nested groups and members,
+ * then the objects in no group (outliner-tree.ts). The "Unplaced" section (places and events
+ * without a location) fills in M6.
  *
  * - **Selection** is the canvas's, both ways: clicking or Space here selects there, and a
- *   canvas selection is highlighted and scrolled into view here.
+ *   canvas selection is opened to, highlighted and scrolled into view here. Groups select too.
+ * - **Opening:** layers and group types start open, groups closed; the chevron, Right and Left,
+ *   or Space on a layer or type row open and close them.
+ * - **Filter:** a flat list of the groups and objects whose shown name matches.
  * - **Spoilers:** hidden ones show the same redaction bar as their 3D label, and the filter
  *   matches only what's shown, so it can't reveal a hidden name (ux.md §6).
  */
 export function Outliner({
   objects,
+  groups = [],
+  groupTypes = [],
   onClose,
 }: {
   objects: readonly ViewObject[];
+  groups?: readonly ViewGroup[];
+  groupTypes?: readonly ViewGroupType[];
   /** View mode's List button opened it; edit mode shows it always. */
   onClose?: () => void;
 }) {
@@ -52,65 +55,130 @@ export function Outliner({
   const selectedIds = useSelection((state) => state.selectedIds);
   const [filter, setFilter] = useState('');
   const [focused, setFocused] = useState<string | null>(null);
+  // Rows whose open state differs from their default (outliner-tree.ts).
+  const [toggled, setToggled] = useState<ReadonlySet<string>>(new Set());
   const rowRefs = useRef(new Map<string, HTMLElement>());
-  const tree = useRef<HTMLDivElement>(null);
 
-  const rows: Row[] = useMemo(() => {
-    const needle = filter.trim().toLowerCase();
-    return objects
-      .map((object) => ({
-        id: object.id,
-        text: labelText(object, policy),
-        hidden: isHidden(object.isSpoiler, spoilerKeys.record(object.id), policy),
-        type: objectTypes[object.baseType].label,
-        draft: object.status === 'draft',
-        spoiler: object.isSpoiler || object.nameSpoiler,
-      }))
-      .filter((row) => !needle || (!row.hidden && row.text.toLowerCase().includes(needle)))
-      .sort((a, b) => a.text.localeCompare(b.text));
-  }, [objects, policy, filter]);
-  const ids = rows.map((row) => row.id);
+  const all = useMemo(
+    () => outlinerRows(objects, groups, groupTypes, policy),
+    [objects, groups, groupTypes, policy],
+  );
+  const isOpen = (row: OutlinerRow) => openByDefault(row) !== toggled.has(row.key);
+  const needle = filter.trim().toLowerCase();
+  const rows: OutlinerRow[] = needle
+    ? // Each match once, flat: an object in groups of two layers has a row in each.
+      [
+        ...new Map(
+          all
+            .filter(
+              (row) => row.id !== null && !row.hidden && row.text.toLowerCase().includes(needle),
+            )
+            .map((row) => [row.id, { ...row, level: 1, parentKey: null, childCount: 0 }]),
+        ).values(),
+      ]
+    : visibleRows(all, isOpen);
+  const keys = rows.map((row) => row.key);
+  const byKey = new Map(rows.map((row) => [row.key, row]));
   const selected = new Set(selectedIds);
   // The row that takes Tab: the focused one if still shown, else the first selected, else the
   // first (the roving tabindex of the ARIA tree pattern).
   const tabRow =
-    (focused !== null && ids.includes(focused) ? focused : undefined) ??
-    ids.find((id) => selected.has(id)) ??
-    ids[0] ??
+    (focused !== null && byKey.has(focused) ? focused : undefined) ??
+    rows.find((row) => row.id !== null && selected.has(row.id))?.key ??
+    keys[0] ??
     null;
 
-  // A selection made in the canvas scrolls into view here.
-  const last = selectedIds.at(-1);
-  useEffect(() => {
-    if (last) rowRefs.current.get(last)?.scrollIntoView({ block: 'nearest' });
-  }, [last]);
+  const setOpen = (key: string, open: boolean) => {
+    const row = all.find((item) => item.key === key);
+    if (!row) return;
+    setToggled((current) => {
+      const next = new Set(current);
+      if (open === openByDefault(row)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
-  const focusRow = (id: string | null) => {
-    setFocused(id);
-    if (id) rowRefs.current.get(id)?.focus();
+  // A selection made in the canvas opens the tree to its first row: done while rendering, when
+  // the selection has changed (React's pattern for state that follows other state), so the
+  // rows are open in the same render. The user may close them again afterwards.
+  const last = selectedIds.at(-1);
+  const [revealedFor, setRevealedFor] = useState<string | undefined>(undefined);
+  if (last !== revealedFor) {
+    setRevealedFor(last);
+    const first = last === undefined ? undefined : all.find((row) => row.id === last);
+    const closed = first
+      ? ancestorsOf(all, first.key).flatMap((key) => {
+          const row = all.find((item) => item.key === key);
+          return row && !isOpen(row) ? [row] : [];
+        })
+      : [];
+    if (closed.length > 0) {
+      const next = new Set(toggled);
+      for (const row of closed) {
+        if (openByDefault(row)) next.delete(row.key);
+        else next.add(row.key);
+      }
+      setToggled(next);
+    }
+  }
+  // Then it scrolls into view, once the opened rows are in the page.
+  const revealKey = last === undefined ? undefined : all.find((row) => row.id === last)?.key;
+  useEffect(() => {
+    if (revealKey === undefined) return;
+    rowRefs.current.get(revealKey)?.scrollIntoView({ block: 'nearest' });
+  }, [revealKey]);
+
+  const focusRow = (key: string | null) => {
+    setFocused(key);
+    if (key) rowRefs.current.get(key)?.focus();
+  };
+
+  const tree: OutlinerTree = {
+    parentOf: (key) => byKey.get(key)?.parentKey ?? null,
+    openOf: (key) => {
+      const row = byKey.get(key);
+      return row && row.childCount > 0 && !needle ? isOpen(row) : null;
+    },
+    selectable: (key) => (byKey.get(key)?.id ?? null) !== null,
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const move = outlinerKey(ids, tabRow, {
-      key: event.key,
-      shift: event.shiftKey,
-      primary: isPrimaryModifier(event, detectPlatform()),
-    });
+    const move = outlinerKey(
+      keys,
+      tabRow,
+      {
+        key: event.key,
+        shift: event.shiftKey,
+        primary: isPrimaryModifier(event, detectPlatform()),
+      },
+      tree,
+    );
     if (!move) return;
     event.preventDefault();
+    if (move.expand) setOpen(move.expand.row, move.expand.open);
     focusRow(move.focus);
     if (move.select) {
       const { ids: chosen, ...options } = move.select;
-      useSelection.getState().select(chosen, options);
+      // Rows to the entities they stand for.
+      const ids = chosen.flatMap((key) => {
+        const id = byKey.get(key)?.id;
+        return id ? [id] : [];
+      });
+      useSelection.getState().select(ids, options);
     }
   };
 
-  const onClick = (event: MouseEvent, id: string) => {
-    setFocused(id);
+  const onClick = (event: MouseEvent, row: OutlinerRow) => {
+    setFocused(row.key);
+    if (row.id === null) {
+      setOpen(row.key, !isOpen(row));
+      return;
+    }
     const primary = isPrimaryModifier(event, detectPlatform());
     useSelection
       .getState()
-      .select([id], primary ? { toggle: true } : event.shiftKey ? { add: true } : {});
+      .select([row.id], primary ? { toggle: true } : event.shiftKey ? { add: true } : {});
   };
 
   return (
@@ -145,63 +213,92 @@ export function Outliner({
           </p>
         ) : (
           <div
-            ref={tree}
             role="tree"
             aria-label="Objects in this view"
             aria-multiselectable="true"
             className="flex flex-col"
             onKeyDown={onKeyDown}
           >
-            {rows.map((row) => (
-              <div
-                key={row.id}
-                ref={(element) => {
-                  if (element) rowRefs.current.set(row.id, element);
-                  else rowRefs.current.delete(row.id);
-                }}
-                role="treeitem"
-                aria-level={1}
-                aria-selected={selected.has(row.id)}
-                // A hidden spoiler is named without its name; other rows are named by what they
-                // show (their name, badges and type), which axe checks match.
-                aria-label={row.hidden ? `Hidden potential spoiler, ${row.type}` : undefined}
-                tabIndex={row.id === tabRow ? 0 : -1}
-                className={cn(
-                  'flex cursor-default items-center gap-2 rounded-md px-2 py-1 text-sm outline-none select-none',
-                  'hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-ring',
-                  selected.has(row.id) && 'bg-primary/20 hover:bg-primary/25',
-                )}
-                onClick={(event) => {
-                  onClick(event, row.id);
-                }}
-                onFocus={() => {
-                  setFocused(row.id);
-                }}
-              >
-                <span
+            {rows.map((row) => {
+              const open = tree.openOf(row.key);
+              const isSelected = row.id !== null && selected.has(row.id);
+              return (
+                <div
+                  key={row.key}
+                  ref={(element) => {
+                    if (element) rowRefs.current.set(row.key, element);
+                    else rowRefs.current.delete(row.key);
+                  }}
+                  role="treeitem"
+                  aria-level={row.level}
+                  aria-expanded={open ?? undefined}
+                  aria-selected={isSelected}
+                  // A hidden spoiler is named without its name; other rows are named by what
+                  // they show (their name, badges and type), which axe checks match.
+                  aria-label={
+                    row.hidden
+                      ? `Hidden potential spoiler, ${row.kind === 'group' ? 'group' : row.badge}`
+                      : undefined
+                  }
+                  tabIndex={row.key === tabRow ? 0 : -1}
                   className={cn(
-                    'min-w-0 flex-1 truncate',
-                    row.hidden && 'rounded-[2px] bg-foreground/80 text-transparent',
+                    'flex cursor-default items-center gap-1.5 rounded-md py-1 pr-2 text-sm outline-none select-none',
+                    'hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-ring',
+                    isSelected && 'bg-primary/20 hover:bg-primary/25',
+                    row.kind === 'layer' && 'text-xs text-muted-foreground label-caps',
+                    row.kind === 'type' && 'text-xs text-muted-foreground',
                   )}
-                  aria-hidden={row.hidden}
+                  // Each level indents by 0.75rem; the chevron column keeps names aligned.
+                  style={{ paddingLeft: `${(0.25 + (row.level - 1) * 0.75).toString()}rem` }}
+                  onClick={(event) => {
+                    onClick(event, row);
+                  }}
+                  onFocus={() => {
+                    setFocused(row.key);
+                  }}
                 >
-                  {row.text}
-                </span>
-                {row.draft && (
-                  <span className="rounded bg-secondary px-1 text-[10px] text-foreground">
-                    Draft
+                  <span
+                    aria-hidden
+                    className="flex size-3.5 shrink-0 items-center justify-center text-muted-foreground"
+                    onClick={(event) => {
+                      // The chevron opens and closes a group without selecting it.
+                      if (open === null || row.id === null) return;
+                      event.stopPropagation();
+                      setOpen(row.key, !open);
+                    }}
+                  >
+                    {open === true && <ChevronDown className="size-3.5" />}
+                    {open === false && <ChevronRight className="size-3.5" />}
                   </span>
-                )}
-                {row.spoiler && !row.hidden && (
-                  <EyeOff
-                    role="img"
-                    aria-label="Potential spoiler"
-                    className="size-3 text-muted-foreground"
-                  />
-                )}
-                <span className="text-[10px] text-muted-foreground label-caps">{row.type}</span>
-              </div>
-            ))}
+                  <span
+                    className={cn(
+                      'min-w-0 flex-1 truncate',
+                      row.hidden && 'rounded-[2px] bg-foreground/80 text-transparent',
+                    )}
+                    aria-hidden={row.hidden}
+                  >
+                    {row.text}
+                  </span>
+                  {row.draft && (
+                    <span className="rounded bg-secondary px-1 text-[10px] text-foreground">
+                      Draft
+                    </span>
+                  )}
+                  {row.spoiler && !row.hidden && (
+                    <EyeOff
+                      role="img"
+                      aria-label="Potential spoiler"
+                      className="size-3 text-muted-foreground"
+                    />
+                  )}
+                  {row.badge && row.kind !== 'layer' && (
+                    <span className="text-[10px] text-muted-foreground label-caps">
+                      {row.badge}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
         {/* Places and events without a location (data-model §11) are listed here from M6. */}

@@ -5,6 +5,9 @@ import {
   OBJECT_LABEL_HEIGHT_PX,
   OBJECT_LABEL_OPACITY,
 } from '../tuning.ts';
+import { isPrimaryModifier } from '@/input/bindings.ts';
+import { detectPlatform } from '@/input/platform.ts';
+import { useSelection } from '@/state/selection.ts';
 import { LABEL_FONTS } from './measure-text.ts';
 import type { LabelKind, PlacedLabel } from './solve-labels.ts';
 
@@ -32,6 +35,9 @@ const KIND_STYLES: Record<LabelKind, Partial<CSSStyleDeclaration>> = {
     color: `rgb(255 255 255 / ${OBJECT_LABEL_OPACITY.toString()})`,
     textTransform: 'none',
     letterSpacing: 'normal',
+    // Object labels let clicks through to the canvas, which picks the body beneath.
+    pointerEvents: 'none',
+    cursor: 'default',
   },
   group: {
     font: LABEL_FONTS.group,
@@ -39,6 +45,10 @@ const KIND_STYLES: Record<LabelKind, Partial<CSSStyleDeclaration>> = {
     color: '#ffffff',
     textTransform: 'uppercase',
     letterSpacing: `${GROUP_LABEL_LETTER_SPACING_EM.toString()}em`,
+    // A group is picked through its label (rendering.md §10, M4-T4); clicks inside its outline
+    // still pick objects.
+    pointerEvents: 'auto',
+    cursor: 'pointer',
   },
 };
 
@@ -54,10 +64,27 @@ export function mountLabelPool(container: HTMLElement): () => void {
     container.appendChild(element);
     return { element, id: null, text: '', kind: null, color: null, visible: false };
   });
+  container.addEventListener('click', onLabelClick);
   return () => {
+    container.removeEventListener('click', onLabelClick);
     for (const slot of slots) slot.element.remove();
     slots = [];
   };
+}
+
+/**
+ * A click on a group label selects the group, with the canvas's modifiers: the primary key
+ * toggles it in the selection, Shift adds it (ux.md §3). One listener for the whole pool.
+ */
+function onLabelClick(event: MouseEvent): void {
+  const target = event.target instanceof Element ? event.target.closest('[data-label-id]') : null;
+  if (!(target instanceof HTMLElement) || target.dataset.labelKind !== 'group') return;
+  const id = target.dataset.labelId;
+  if (!id) return;
+  const primary = isPrimaryModifier(event, detectPlatform());
+  useSelection
+    .getState()
+    .select([id], primary ? { toggle: true } : event.shiftKey ? { add: true } : {});
 }
 
 /**
@@ -116,6 +143,7 @@ function place(slot: Slot, label: PlacedLabel): void {
   }
   slot.id = label.id;
   element.dataset.labelId = label.id;
+  element.dataset.labelKind = label.kind;
   // Whole pixels keep text crisp; translate3d keeps the move on the compositor.
   element.style.transform = `translate3d(${Math.round(label.left).toString()}px, ${Math.round(label.top).toString()}px, 0)`;
   if (!slot.visible) {
