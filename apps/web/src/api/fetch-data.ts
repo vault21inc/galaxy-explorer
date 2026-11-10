@@ -28,6 +28,7 @@ type LooseWrite = (
 
 const loosePost: LooseWrite = (path, init) => api.POST(path as never, init as never);
 const loosePatch: LooseWrite = (path, init) => api.PATCH(path as never, init as never);
+const looseDelete: LooseWrite = (path, init) => api.DELETE(path as never, init as never);
 
 /**
  * Sends a write built in requests.ts (POST to create, PATCH to update) through the same
@@ -49,4 +50,16 @@ export async function sendWrite<T>(
       : {}),
   };
   return (await unwrap(send(spec.template, init))) as T;
+}
+
+/** Deletes what a request built in requests.ts names, with an optional batch description. */
+export async function sendDelete(spec: RequestSpec, description?: string): Promise<void> {
+  const init = {
+    params: { path: spec.path },
+    body: undefined,
+    ...(description
+      ? { headers: { 'X-GE-Batch-Description': encodeURIComponent(description) } }
+      : {}),
+  };
+  await unwrap(looseDelete(spec.template, init));
 }

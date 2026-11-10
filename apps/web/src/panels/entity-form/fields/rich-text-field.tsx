@@ -11,13 +11,13 @@ import { valueAt, valueKey } from '../field-path.ts';
  * object's name takes focus (M3-T2). HTML comes back sanitized; if the server removed anything,
  * a note under the field says what.
  */
-export function RichTextField({ field, entity, revision, save }: FieldProps<PathFieldDef>) {
-  const value = (valueAt(entity, field.path) ?? null) as RichText | null;
+export function RichTextField({ field, record, title, revision, save }: FieldProps<PathFieldDef>) {
+  const value = (valueAt(record, field.path) ?? null) as RichText | null;
   const isName = field.widget === 'name';
   const focusNameOf = useEditor((state) => state.focusNameOf);
   const setFocusNameOf = useEditor((state) => state.setFocusNameOf);
   const [removed, setRemoved] = useState<readonly string[]>([]);
-  const autoFocus = isName && focusNameOf === entity.id;
+  const autoFocus = isName && focusNameOf === record.id;
 
   // The editor focused itself on mount (its effect runs first); don't do it again.
   useEffect(() => {
@@ -27,8 +27,8 @@ export function RichTextField({ field, entity, revision, save }: FieldProps<Path
   const commit = async (next: RichText | null) => {
     const description =
       isName && next
-        ? `Rename “${entity.namePlain}” to “${toPlainText(next)}”`
-        : editDescription(entity, field.label);
+        ? `Rename “${title}” to “${toPlainText(next)}”`
+        : editDescription(title, field.label);
     const saved = await save({ [field.path]: next }, description);
     const after = saved ? ((valueAt(saved, field.path) ?? null) as RichText | null) : null;
     setRemoved(
@@ -44,7 +44,7 @@ export function RichTextField({ field, entity, revision, save }: FieldProps<Path
         value={value}
         singleLine={isName}
         nullable={!isName}
-        fieldKey={spoilerKeys.field(spoilerKeys.record(entity.id), field.path)}
+        fieldKey={spoilerKeys.field(spoilerKeys.record(record.id), field.path)}
         {...(field.hint ? { hint: field.hint } : {})}
         autoFocus={autoFocus}
         onCommit={(next) => {

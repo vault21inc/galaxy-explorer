@@ -5,13 +5,14 @@ import { FIELD_KEY_PATTERN } from '../patterns.ts';
 import { RichText } from '../richtext/schema.ts';
 import { Appearance } from '../schemas/appearance.ts';
 import { FIELD_VALUE_TYPES } from '../schemas/field-value.ts';
-import { ENTITY_KINDS } from './entity-kinds.ts';
-import { BASE_TYPES } from './object-types.ts';
+import type { FormFieldDef } from './entity-forms.ts';
+import { ENTITY_KINDS, entityKinds } from './entity-kinds.ts';
+import { BASE_TYPES, objectTypes } from './object-types.ts';
 
 /**
  * Universe-level settings tables with plain CRUD (architecture.md §3.4, data-model §3.5):
- * generated routes, settings-page tables and MCP tools. Each `schema` lists the writable
- * fields; `.optional()` fields may be left out on create.
+ * generated routes, settings-page tables (M4-T1) and MCP tools. Each `schema` lists the
+ * writable fields; `.optional()` fields may be left out on create.
  */
 export interface ConfigResourceDef {
   plural: string;
@@ -21,6 +22,14 @@ export interface ConfigResourceDef {
   description: string;
   /** A valid create body for the docs. A test checks it against the schema. */
   example: Record<string, unknown>;
+  /**
+   * The settings page's table columns, drawn by the form widgets (entity-forms.ts) and edited
+   * in place. They cover every required field, so a new row can be filled in; a test checks
+   * that. Order is `sortKey`, set by dragging rows, so it isn't a column.
+   */
+  columns: readonly FormFieldDef[];
+  /** What a new row starts with, for required fields that have a sensible default. */
+  defaults?: Record<string, unknown>;
 }
 
 export function defineConfigResources<const T extends Record<string, ConfigResourceDef>>(
@@ -30,6 +39,17 @@ export function defineConfigResources<const T extends Record<string, ConfigResou
 }
 
 const name = z.string().trim().min(1).max(100);
+
+/** Select labels for the registries' own values. */
+const BASE_TYPE_LABELS = Object.fromEntries(
+  BASE_TYPES.map((type) => [type, objectTypes[type].label]),
+);
+const KIND_LABELS = Object.fromEntries(
+  ENTITY_KINDS.map((kind) => [kind, entityKinds[kind].label.one]),
+);
+const VALUE_TYPE_LABELS = { text: 'Text', number: 'Number', date_text: 'Date', url: 'Link' };
+/** New colors start as the default accent (ux.md §11). */
+const NEW_COLOR = '#4fd1ff';
 const sortKey = z.number().optional();
 
 export const groupTypeSchema = z.object({
@@ -90,6 +110,18 @@ export const configResources = defineConfigResources({
       'A kind of group in this universe, such as Segmentum, Sector or Sub-sector (T5). `layer` gathers types shown together (Administrative, Political). ' +
       '`parentGroupTypeId` makes types nest: groups of this type sit inside groups of the parent type.',
     example: { name: 'Sub-sector', layer: 'Administrative', defaultColor: '#c8a24a' },
+    columns: [
+      { path: 'name', widget: 'text', label: 'Name' },
+      { path: 'layer', widget: 'text', label: 'Layer' },
+      {
+        path: 'parentGroupTypeId',
+        widget: 'select',
+        label: 'Parent type',
+        options: { from: 'config', resource: 'group_types' },
+      },
+      { path: 'defaultColor', widget: 'color', label: 'Default color' },
+    ],
+    defaults: { defaultColor: NEW_COLOR },
   },
   event_categories: {
     plural: 'event-categories',
@@ -98,6 +130,13 @@ export const configResources = defineConfigResources({
     description:
       'A category for events, with the icon and color of their pins, such as Battle or Discovery.',
     example: { name: 'Battle', icon: 'swords', color: '#d9534f' },
+    columns: [
+      { path: 'name', widget: 'text', label: 'Name' },
+      // A text key until M6-T4 brings the icon set and its picker.
+      { path: 'icon', widget: 'text', label: 'Icon' },
+      { path: 'color', widget: 'color', label: 'Color' },
+    ],
+    defaults: { color: NEW_COLOR, icon: 'circle' },
   },
   object_subtypes: {
     plural: 'object-subtypes',
@@ -107,6 +146,18 @@ export const configResources = defineConfigResources({
       'A universe-specific refinement of an object base type, such as Hive World (a planet) or Webway Gate (an anomaly) (U2). ' +
       "`defaultAppearance` sits between the base type's defaults and each object's overrides.",
     example: { baseType: 'planet', name: 'Hive World', icon: 'building-2' },
+    // The description and default appearance are edited with the subtype itself in M7.
+    columns: [
+      { path: 'name', widget: 'text', label: 'Name' },
+      {
+        path: 'baseType',
+        widget: 'select',
+        label: 'Base type',
+        options: { from: 'values', values: BASE_TYPES, labels: BASE_TYPE_LABELS },
+      },
+      { path: 'icon', widget: 'text', label: 'Icon' },
+    ],
+    defaults: { baseType: 'planet' },
   },
   field_definitions: {
     plural: 'field-definitions',
@@ -122,6 +173,42 @@ export const configResources = defineConfigResources({
       unit: 'billion',
       appliesToKind: 'celestial_object',
     },
+    // Wiki aliases are edited with the import in M7.
+    columns: [
+      { path: 'label', widget: 'text', label: 'Label' },
+      { path: 'key', widget: 'text', label: 'Key' },
+      {
+        path: 'valueType',
+        widget: 'select',
+        label: 'Value type',
+        options: { from: 'values', values: FIELD_VALUE_TYPES, labels: VALUE_TYPE_LABELS },
+      },
+      { path: 'unit', widget: 'text', label: 'Unit' },
+      {
+        path: 'appliesToKind',
+        widget: 'select',
+        label: 'For',
+        options: { from: 'values', values: ENTITY_KINDS, labels: KIND_LABELS },
+      },
+      {
+        path: 'appliesToBaseType',
+        widget: 'select',
+        label: 'Base type',
+        options: { from: 'values', values: BASE_TYPES, labels: BASE_TYPE_LABELS },
+      },
+      {
+        path: 'appliesToSubtypeId',
+        widget: 'select',
+        label: 'Subtype',
+        options: {
+          from: 'config',
+          resource: 'object_subtypes',
+          matchField: 'baseType',
+          matchOn: 'appliesToBaseType',
+        },
+      },
+    ],
+    defaults: { valueType: 'text', appliesToKind: 'celestial_object' },
   },
 });
 

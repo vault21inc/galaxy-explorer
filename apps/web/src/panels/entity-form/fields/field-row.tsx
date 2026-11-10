@@ -3,7 +3,9 @@ import { cn } from '@/lib/utils.ts';
 
 /**
  * One labelled form row: the label on the left, the control on the right, and an optional
- * hint or error below. Inherited values look dimmed (ux.md §5).
+ * hint or error below. Inherited values look dimmed (ux.md §5). `compact` is for a table cell
+ * (M4-T1): the column header shows the label, so it's kept for screen readers only, and the
+ * hint is left out.
  */
 export function FieldRow({
   label,
@@ -11,6 +13,7 @@ export function FieldRow({
   hint,
   error,
   inherited = false,
+  compact = false,
   children,
 }: {
   label: string;
@@ -18,12 +21,16 @@ export function FieldRow({
   hint?: string | undefined;
   error?: string | null;
   inherited?: boolean;
+  compact?: boolean | undefined;
   children: ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <div className="flex min-h-7 items-center gap-2">
-        <label htmlFor={htmlFor} className="w-28 shrink-0 text-sm text-muted-foreground">
+      <div className={cn('flex min-h-7 items-center', compact ? 'gap-0' : 'gap-2')}>
+        <label
+          htmlFor={htmlFor}
+          className={compact ? 'sr-only' : 'w-28 shrink-0 text-sm text-muted-foreground'}
+        >
           {label}
         </label>
         <div
@@ -34,11 +41,11 @@ export function FieldRow({
         </div>
       </div>
       {error ? (
-        <p role="alert" className="pl-30 text-xs text-destructive">
+        <p role="alert" className={cn('text-xs text-destructive', !compact && 'pl-30')}>
           {error}
         </p>
       ) : (
-        hint && <p className="pl-30 text-xs text-muted-foreground">{hint}</p>
+        hint && !compact && <p className="pl-30 text-xs text-muted-foreground">{hint}</p>
       )}
     </div>
   );

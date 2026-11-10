@@ -1,6 +1,6 @@
 import { CONFIG_TABLES, schema, type Executor } from '@ge/db';
 import { configSchemasFor, type ConfigResource } from '@ge/domain';
-import { and, asc, eq, gt } from 'drizzle-orm';
+import { and, asc, eq, gt, max } from 'drizzle-orm';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import { NotFound, RuleViolation } from './errors.ts';
 import { requireInUniverse, requireUniverse } from './lookup.ts';
@@ -11,7 +11,7 @@ import { sanitizeRichTextFields } from './sanitize.ts';
  * in the registry. They have no version: the last write wins.
  */
 
-type ConfigTable = PgTable & { id: PgColumn; universeId: PgColumn };
+type ConfigTable = PgTable & { id: PgColumn; universeId: PgColumn; sortKey: PgColumn };
 type Row = Record<string, unknown>;
 
 const tableOf = (resource: ConfigResource) => CONFIG_TABLES[resource] as unknown as ConfigTable;
@@ -57,12 +57,24 @@ export async function createConfig(
   await requireUniverse(tx, universeId);
   await checkReferences(tx, universeId, values);
   const table = tableOf(resource);
+  // Without a sort key a new row goes last, so the settings tables can drag it between any
+  // two others: rows that shared a key would have no key between them (M4-T1).
+  if (values.sortKey === undefined) values.sortKey = (await lastSortKey(tx, table, universeId)) + 1;
   const [row] = (await tx
     .insert(table)
     .values({ ...values, universeId } as never)
     .returning()) as Row[];
   if (!row) throw new Error('Insert returned no row.');
   return toRead(resource, row);
+}
+
+/** The largest sort key in a universe's table, or -1 when it's empty. */
+async function lastSortKey(ex: Executor, table: ConfigTable, universeId: string): Promise<number> {
+  const [row] = await ex
+    .select({ last: max(table.sortKey) })
+    .from(table)
+    .where(eq(table.universeId, universeId));
+  return row?.last === null || row?.last === undefined ? -1 : Number(row.last);
 }
 
 export async function getConfig(ex: Executor, resource: ConfigResource, id: string) {

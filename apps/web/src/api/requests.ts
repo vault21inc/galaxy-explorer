@@ -118,6 +118,11 @@ export function configListRequest(resource: ConfigResource, universeId: string):
   };
 }
 
+/** One config record, to update (PATCH) or delete (M4-T1). Creating posts to the list. */
+export function configItemRequest(resource: ConfigResource, id: string): RequestSpec {
+  return { template: `/api/v1/${configResources[resource].plural}/{id}`, path: { id }, query: {} };
+}
+
 /** Creating an entity of a kind in its map, or its universe for universe-scoped kinds. */
 export function entityCreateRequest<K extends EntityKind>(
   kind: K,

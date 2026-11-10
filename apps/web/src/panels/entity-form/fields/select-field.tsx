@@ -1,4 +1,4 @@
-import { CONFIG_RESOURCES, fieldSchema, unwrapField, type ConfigResource } from '@ge/domain';
+import { CONFIG_RESOURCES, fieldSchemaIn, unwrapField, type ConfigResource } from '@ge/domain';
 import { useId, useState } from 'react';
 import { useConfigList } from '@/api/hooks.ts';
 import { editDescription, type FieldProps } from '../field-props.ts';
@@ -15,20 +15,25 @@ const NONE = '';
  * A choice from fixed values (status) or from a universe setting (subtypes, group types,
  * event categories), saved as soon as it changes. Nullable fields offer "None".
  */
-export function SelectField({ field, kind, entity, save }: FieldProps<SelectFieldDef>) {
+export function SelectField({
+  field,
+  schema: recordSchema,
+  record,
+  universeId,
+  title,
+  save,
+  compact,
+}: FieldProps<SelectFieldDef>) {
   const id = useId();
   const { options } = field;
   const resource =
     options.from === 'config' && (CONFIG_RESOURCES as readonly string[]).includes(options.resource)
       ? (options.resource as ConfigResource)
       : undefined;
-  const items = useConfigList(
-    resource ?? 'object_subtypes',
-    resource ? entity.universeId : undefined,
-  );
-  const schema = fieldSchema(kind, field.path);
+  const items = useConfigList(resource ?? 'object_subtypes', resource ? universeId : undefined);
+  const schema = fieldSchemaIn(recordSchema, field.path);
   const nullable = schema ? unwrapField(schema).nullable : false;
-  const saved = valueAt(entity, field.path);
+  const saved = valueAt(record, field.path);
   const [pending, setPending] = useState<string | null>(null);
 
   let choices: { value: string; label: string }[];
@@ -36,10 +41,9 @@ export function SelectField({ field, kind, entity, save }: FieldProps<SelectFiel
     choices = options.values.map((value) => ({ value, label: options.labels?.[value] ?? value }));
   } else {
     const match = options.matchField;
+    const against = match === undefined ? undefined : valueAt(record, options.matchOn ?? match);
     choices = (items.data ?? [])
-      .filter(
-        (item) => !match || (item as Record<string, unknown>)[match] === valueAt(entity, match),
-      )
+      .filter((item) => !match || (item as Record<string, unknown>)[match] === against)
       .map((item) => {
         const record = item as Record<string, unknown>;
         return {
@@ -50,7 +54,7 @@ export function SelectField({ field, kind, entity, save }: FieldProps<SelectFiel
   }
 
   return (
-    <FieldRow label={field.label} htmlFor={id} hint={field.hint}>
+    <FieldRow label={field.label} htmlFor={id} hint={field.hint} compact={compact}>
       <select
         id={id}
         className={INPUT_CLASS}
@@ -59,8 +63,8 @@ export function SelectField({ field, kind, entity, save }: FieldProps<SelectFiel
           const value = event.currentTarget.value;
           setPending(value);
           void save(
-            changesFor(entity, field.path, value === NONE ? null : value),
-            editDescription(entity, field.label),
+            changesFor(record, field.path, value === NONE ? null : value),
+            editDescription(title, field.label),
           ).finally(() => {
             setPending(null);
           });

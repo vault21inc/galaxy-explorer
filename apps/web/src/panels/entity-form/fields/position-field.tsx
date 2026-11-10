@@ -11,16 +11,18 @@ const AXES = ['x', 'y', 'z'] as const;
  * the galaxy and system units inside a system. A changed field saves on Enter or blur, through
  * the same batch as a drag ("Moved 1 object", M3-T3).
  */
-export function PositionField({ field, entity, revision }: FieldProps) {
+export function PositionField({ field, record, revision }: FieldProps) {
   const save = useSaveMove();
   const id = useId();
-  const fields = entity as typeof entity & {
+  const fields = record as typeof record & {
+    version?: number;
     x?: number;
     y?: number;
     z?: number;
     parentId?: string | null;
   };
-  if (fields.x === undefined) return null;
+  if (fields.x === undefined || fields.version === undefined) return null;
+  const version = fields.version;
   const position = [fields.x, fields.y ?? 0, fields.z ?? 0] as const;
   const unit = fields.parentId ? 'su' : 'ly';
 
@@ -29,7 +31,7 @@ export function PositionField({ field, entity, revision }: FieldProps) {
     if (raw.trim() === '' || !Number.isFinite(value) || value === position[axis]) return;
     const next: [number, number, number] = [...position];
     next[axis] = value;
-    save.mutate([{ id: entity.id, version: entity.version, position: next }]);
+    save.mutate([{ id: record.id, version, position: next }]);
   };
 
   return (

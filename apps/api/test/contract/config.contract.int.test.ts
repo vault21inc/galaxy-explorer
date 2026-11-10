@@ -122,4 +122,25 @@ describe.each(CONFIG_RESOURCES)('contract: %s', (resource) => {
       await api.expect(204, 'DELETE', `/${plural}/${item.id as string}`);
       await api.expect(404, 'GET', `/${plural}/${item.id as string}`);
     }));
+
+  it('9. a record created without a sort key goes last (M4-T1)', () =>
+    run(async (api) => {
+      const { item, body, plural, world } = await created(api, resource);
+      expect(item.sortKey).toBe(0);
+      await api.expect(200, 'PATCH', `/${plural}/${item.id as string}`, { sortKey: 4.5 });
+      // Another record like the first, with its unique fields changed.
+      const second = Object.fromEntries(
+        Object.entries(body).map(([key, value]) => [
+          key,
+          ['name', 'label', 'key'].includes(key) ? `${String(value)}_2` : value,
+        ]),
+      );
+      const next = await api.expect(
+        201,
+        'POST',
+        `/universes/${world.universeId}/${plural}`,
+        second,
+      );
+      expect(next.body.data.sortKey).toBe(5.5);
+    }));
 });

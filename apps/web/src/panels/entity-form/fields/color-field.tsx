@@ -1,4 +1,4 @@
-import { fieldSchema } from '@ge/domain';
+import { fieldSchemaIn } from '@ge/domain';
 import { useEffect, useId, useRef, useState } from 'react';
 import { editDescription, type FieldProps, type PathFieldDef } from '../field-props.ts';
 import { changesFor, valueAt, valueKey } from '../field-path.ts';
@@ -12,17 +12,19 @@ import { FieldRow, INPUT_CLASS, ResetButton } from './field-row.tsx';
  */
 export function ColorField({
   field,
-  kind,
-  entity,
+  schema: recordSchema,
+  record,
+  title,
   subtypes,
   revision,
   save,
+  compact,
 }: FieldProps<PathFieldDef>) {
   const id = useId();
   const picker = useRef<HTMLInputElement>(null);
-  const schema = fieldSchema(kind, field.path);
-  const saved = valueAt(entity, field.path);
-  const inherited = inheritedValue(entity, field.path, subtypes);
+  const schema = fieldSchemaIn(recordSchema, field.path);
+  const saved = valueAt(record, field.path);
+  const inherited = inheritedValue(record, field.path, subtypes);
   const shown =
     typeof saved === 'string' ? saved : typeof inherited === 'string' ? inherited : '#ffffff';
   const [live, setLive] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export function ColorField({
       return;
     }
     setError(null);
-    void save(changesFor(entity, field.path, value), editDescription(entity, field.label));
+    void save(changesFor(record, field.path, value), editDescription(title, field.label));
   };
 
   // The picker's own `change` event: the color chosen when the picker closes.
@@ -65,6 +67,7 @@ export function ColorField({
       hint={field.hint}
       error={error}
       inherited={saved === undefined && inherited !== undefined}
+      compact={compact}
     >
       <input
         ref={picker}
@@ -95,8 +98,8 @@ export function ColorField({
           label={field.label}
           onReset={() => {
             void save(
-              changesFor(entity, field.path, undefined),
-              editDescription(entity, field.label),
+              changesFor(record, field.path, undefined),
+              editDescription(title, field.label),
             );
           }}
         />

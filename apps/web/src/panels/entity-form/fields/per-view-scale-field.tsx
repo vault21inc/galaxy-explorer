@@ -1,5 +1,5 @@
 import {
-  fieldSchema,
+  fieldSchemaIn,
   numberLimits,
   objectTypes,
   VIEW_LEVELS,
@@ -26,30 +26,31 @@ const STEPS = 1_000;
  */
 export function PerViewScaleField({
   field,
-  kind,
-  entity,
+  schema,
+  record,
+  title,
   subtypes,
   save,
 }: FieldProps<PathFieldDef>) {
-  const fields = entity as typeof entity & { baseType?: BaseType };
+  const fields = record as typeof record & { baseType?: BaseType };
   if (!fields.baseType) return null;
   const sizes = objectTypes[fields.baseType].size as Partial<Record<ViewLevel, number>>;
   const views = VIEW_LEVELS.filter((view) => sizes[view] !== undefined);
   if (views.length === 0) return null;
 
   // The per-view record's value schema holds the limits: perView(z.number().min(0.05).max(20)).
-  const limits = numberLimits(fieldSchema(kind, `${field.path}.${views[0] ?? 'galaxy'}`));
+  const limits = numberLimits(fieldSchemaIn(schema, `${field.path}.${views[0] ?? 'galaxy'}`));
   const min = limits.min ?? 0.05;
   const max = limits.max ?? 20;
 
-  const saved = (valueAt(entity, field.path) ?? {}) as Partial<Record<ViewLevel, number>>;
-  const inherited = (inheritedValue(entity, field.path, subtypes) ?? {}) as Partial<
+  const saved = (valueAt(record, field.path) ?? {}) as Partial<Record<ViewLevel, number>>;
+  const inherited = (inheritedValue(record, field.path, subtypes) ?? {}) as Partial<
     Record<ViewLevel, number>
   >;
   const commit = (view: ViewLevel, value: number | undefined) => {
     void save(
-      changesFor(entity, `${field.path}.${view}`, value),
-      editDescription(entity, `${field.label} in the ${viewLevels[view].label.toLowerCase()}`),
+      changesFor(record, `${field.path}.${view}`, value),
+      editDescription(title, `${field.label} in the ${viewLevels[view].label.toLowerCase()}`),
     );
   };
 

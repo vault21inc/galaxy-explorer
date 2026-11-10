@@ -59,9 +59,14 @@ function UniverseControls({ universeSlug }: { universeSlug: string }) {
         }))}
         onSelect={(slug) => void navigate(`/u/${slug}${keep}`)}
         footer={
-          <DropdownMenuItem asChild>
-            <Link to="/">All universes</Link>
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuItem asChild>
+              <Link to={`/u/${route.universe.slug}/settings`}>Universe settings</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/">All universes</Link>
+            </DropdownMenuItem>
+          </>
         }
       />
       {route.maps.length > 0 && (

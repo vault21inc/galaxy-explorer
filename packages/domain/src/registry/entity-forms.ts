@@ -29,6 +29,8 @@ export type FormOptions =
       resource: string;
       /** Only items whose field of this name equals the entity's (subtypes match `baseType`). */
       matchField?: string;
+      /** The entity's field to compare with, when it has another name than `matchField`. */
+      matchOn?: string;
     };
 
 /**

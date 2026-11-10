@@ -9,6 +9,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import { queryKeys } from '../src/api/keys.ts';
 import {
+  configItemRequest,
   configListRequest,
   entityCreateRequest,
   entityListRequest,
@@ -44,7 +45,7 @@ function expectDocumented(spec: RequestSpec): void {
 const ID = '019a5b3c-7d2e-7f00-8a1b-2c3d4e5f6a7b';
 
 /** A write operation documented at the template, with exactly these path parameters. */
-function expectDocumentedWrite(spec: RequestSpec, method: 'post' | 'patch'): void {
+function expectDocumentedWrite(spec: RequestSpec, method: 'post' | 'patch' | 'delete'): void {
   const operation = (
     openapi.paths[spec.template] as Record<string, { parameters?: Parameter[] }> | undefined
   )?.[method];
@@ -81,6 +82,9 @@ describe('registry-derived requests', () => {
 
   it.each(CONFIG_RESOURCES)('%s: the config list request is a documented route', (resource) => {
     expectDocumented(configListRequest(resource, ID));
+    expectDocumentedWrite(configListRequest(resource, ID), 'post');
+    expectDocumentedWrite(configItemRequest(resource, ID), 'patch');
+    expectDocumentedWrite(configItemRequest(resource, ID), 'delete');
   });
 
   it.each(VIEW_LEVELS)('%s: the view request is a documented route', (level) => {

@@ -92,8 +92,9 @@ export function useViewPayload<L extends ViewLevel>(
 }
 
 /**
- * All of a universe's records of a config resource (field definitions, object subtypes…).
- * There are few, so one page holds them; they change only when the owner edits settings.
+ * All of a universe's records of a config resource (field definitions, object subtypes…), in
+ * the owner's order: by `sortKey`, set by dragging rows on the settings page (M4-T1). There are
+ * few, so one page holds them; they change only when the owner edits settings.
  */
 export function useConfigList<R extends ConfigResource>(
   resource: R,
@@ -111,6 +112,21 @@ export function useConfigList<R extends ConfigResource>(
                 signal,
               )
             ).data,
+    select: inSortOrder,
     staleTime: Infinity,
+  });
+}
+
+/**
+ * The settings order: by sort key, then by id (creation order, as ids are UUIDv7). Every config
+ * record has both; the generic read type just can't show it.
+ */
+export function inSortOrder<T>(items: T[]): T[] {
+  const key = (item: T) => item as { sortKey?: number; id?: string };
+  return items.toSorted((a, b) => {
+    const [x, y] = [key(a), key(b)];
+    const byKey = (x.sortKey ?? 0) - (y.sortKey ?? 0);
+    if (byKey !== 0) return byKey;
+    return (x.id ?? '').localeCompare(y.id ?? '');
   });
 }

@@ -3,6 +3,7 @@ import {
   fieldPaths,
   formGroups,
   objectTypes,
+  schemasFor,
   type BaseType,
   type FormFieldDef,
 } from '@ge/domain';
@@ -24,6 +25,7 @@ export function EntityForm(props: SectionProps) {
   const { kind, entity, subtypes } = props;
   const { save, conflict, revision } = useEntitySave(kind, entity);
   const groups = formGroups(entityKinds[kind].form);
+  const schema = schemasFor(kind).update;
 
   return (
     <form
@@ -45,8 +47,10 @@ export function EntityForm(props: SectionProps) {
                 <div key={fieldPaths(field).join(',')} className="contents">
                   <Widget
                     field={field}
-                    kind={kind}
-                    entity={entity}
+                    schema={schema}
+                    record={entity}
+                    universeId={entity.universeId}
+                    title={entity.namePlain}
                     subtypes={subtypes}
                     revision={revision}
                     save={save}

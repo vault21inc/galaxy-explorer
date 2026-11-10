@@ -32,9 +32,18 @@
   - one **generic CRUD table per config resource** in `configResources`: group types (name, layer, parent type, default color), event categories (name, color, and an icon as a text key until M6-T4), object subtypes and field definitions. The last two are fully used in M7, but the tables already work.
 - The tables are generated from the registry with inline editing and ordering by drag (`sort_key`).
 
+**As built:**
+- The page is `src/pages/universe-settings-page.tsx`, where the app's other pages are; the details form is in `src/panels/universe-details/`. The Universe switcher's menu links to it.
+- Each config resource in the registry now has `columns` (form field definitions, drawn by the entity form's widgets in a compact form) and `defaults` for a new row. A domain test checks that the columns are fields of the schema and cover every required field. The universe form is `universeForm`, data like the entity forms. The widgets take a schema and a record instead of an entity kind, so all three forms share them.
+- Left out of the tables until M7, which uses them: a subtype's description and default appearance, and a field definition's wiki aliases.
+- New rows go last: the API gives a config record created without `sortKey` the largest key plus one, so there is always room to drag a row between two others. Lists are shown by `sortKey`, then by creation order.
+- Rows reorder by dragging the handle, or with Arrow Up and Down on the focused handle.
+- `settings` is no longer a valid map slug, as the route takes it.
+- The accent color is saved, but nothing in the plan applies it to the interface yet.
+
 **Done when:**
-- [ ] E2E: creating the three administrative group types with their parent chain persists after a reload.
-- [ ] No resource-specific table components exist; adding a config resource to the registry makes its table appear.
+- [x] E2E: creating the three administrative group types with their parent chain persists after a reload.
+- [x] No resource-specific table components exist; adding a config resource to the registry makes its table appear.
 
 ### M4-T2 Groups from a selection, and membership editing
 

@@ -154,6 +154,8 @@ export const configResources = defineConfigResources({
 });
 ```
 
+Each resource also lists its settings-page `columns`, as form field definitions drawn by the same widgets as the entity forms, and `defaults` for a new row (M4-T1). The settings page has one generic table component; a new resource gets its table from the registry alone.
+
 ### 3.5 Web-only registries (`apps/web`)
 
 | Registry | File | Maps |

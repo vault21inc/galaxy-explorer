@@ -170,7 +170,8 @@ How hidden content looks (P2, black out rather than remove):
 - **URLs:**
   - `/u/{universeSlug}/{mapSlug}` is the galaxy view;
   - `/u/{universeSlug}/{mapSlug}/view/{objectId}` is the system or orbit view of that object (the level comes from its type);
-  - `?select={id},{id}` restores the selection.
+  - `?select={id},{id}` restores the selection;
+  - `/u/{universeSlug}/settings` is the universe's settings page (M4-T1), so no map may use the slug `settings`.
 
   Every state can be shared as a link, and the browser's Back and Forward move between views.
 - **Entering** (S1, S2): double-click, Enter, or keep zooming toward an explorable object. A progress ring fills while you push past the threshold, then the camera flies in and fades.

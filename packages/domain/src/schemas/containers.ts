@@ -27,8 +27,17 @@ export const UniverseRead = z
   .required()
   .extend({ id: Uuid, namePlain: z.string(), version, createdAt: timestamp, updatedAt: timestamp });
 
+/**
+ * `/u/:universeSlug/settings` is the universe's settings page (M4-T1), and the router ranks it
+ * above `/u/:universeSlug/:mapSlug`, so a map with this slug could never be opened.
+ */
+export const RESERVED_MAP_SLUGS: readonly string[] = ['settings'];
+const MapSlug = Slug.refine((slug) => !RESERVED_MAP_SLUGS.includes(slug), {
+  message: 'This slug is taken by the universe’s settings page. Choose another.',
+});
+
 export const MapCreate = z.strictObject({
-  slug: Slug,
+  slug: MapSlug,
   name: RichText,
   description: RichText.nullable().optional(),
   /** Order in the map switcher, for example by era. */

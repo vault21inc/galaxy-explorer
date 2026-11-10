@@ -120,7 +120,9 @@ export function ignoresCameraKeys(target: EventTarget | null): boolean {
   }
   return (
     target.closest(
-      '[role="menu"], [role="listbox"], [role="tree"], [role="dialog"], [role="slider"], [role="radiogroup"]',
+      // `data-keys="own"`: a page over the canvas whose controls use the keys themselves, such
+      // as the settings page's row handles (M4-T1).
+      '[role="menu"], [role="listbox"], [role="tree"], [role="dialog"], [role="slider"], [role="radiogroup"], [data-keys="own"]',
     ) !== null
   );
 }

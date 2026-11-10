@@ -1,4 +1,4 @@
-import { fieldSchema, numberLimits, unwrapField } from '@ge/domain';
+import { fieldSchemaIn, numberLimits, unwrapField } from '@ge/domain';
 import { useId, useState } from 'react';
 import { editDescription, type FieldProps, type PathFieldDef } from '../field-props.ts';
 import { changesFor, valueAt, valueKey } from '../field-path.ts';
@@ -7,19 +7,19 @@ import { FieldRow, INPUT_CLASS, ResetButton } from './field-row.tsx';
 
 /**
  * The `text` and `number` widgets: one input, saved on blur or Enter when it changed and the
- * kind's Zod schema accepts it (limits come from the schema). Clearing it saves null for a
+ * record's Zod schema accepts it (limits come from the schema). Clearing it saves null for a
  * nullable field, or removes the override of an appearance value, which then shows its
  * default again.
  */
 export function TextField(props: FieldProps<PathFieldDef>) {
-  const { field, kind, entity, subtypes, revision, save } = props;
+  const { field, schema: recordSchema, record, title, subtypes, revision, save, compact } = props;
   const id = useId();
   const isNumber = field.widget === 'number';
-  const schema = fieldSchema(kind, field.path);
+  const schema = fieldSchemaIn(recordSchema, field.path);
   const nullable = schema ? unwrapField(schema).nullable : false;
   const limits = numberLimits(schema);
-  const saved = valueAt(entity, field.path);
-  const inherited = inheritedValue(entity, field.path, subtypes);
+  const saved = valueAt(record, field.path);
+  const inherited = inheritedValue(record, field.path, subtypes);
   const isInherited = saved === undefined && inherited !== undefined;
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +37,7 @@ export function TextField(props: FieldProps<PathFieldDef>) {
       }
     }
     setError(null);
-    void save(changesFor(entity, field.path, value), editDescription(entity, field.label));
+    void save(changesFor(record, field.path, value), editDescription(title, field.label));
   };
 
   const shown = saved ?? '';
@@ -48,6 +48,7 @@ export function TextField(props: FieldProps<PathFieldDef>) {
       hint={field.hint}
       error={error}
       inherited={isInherited}
+      compact={compact}
     >
       <input
         // Remounted for a new saved value, which replaces what's typed.
@@ -81,8 +82,8 @@ export function TextField(props: FieldProps<PathFieldDef>) {
           label={field.label}
           onReset={() => {
             void save(
-              changesFor(entity, field.path, undefined),
-              editDescription(entity, field.label),
+              changesFor(record, field.path, undefined),
+              editDescription(title, field.label),
             );
           }}
         />

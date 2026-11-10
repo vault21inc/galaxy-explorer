@@ -37,7 +37,8 @@ export {
   type FormOptions,
   type FormWidget,
 } from './entity-forms.ts';
-export { fieldSchema, numberLimits, unwrapField } from './form-schema.ts';
+export { fieldSchema, fieldSchemaIn, numberLimits, unwrapField } from './form-schema.ts';
+export { universeForm } from './container-forms.ts';
 export { celestialObjectExtension, eventExtension, groupExtension } from './extensions.ts';
 export {
   BASE_TYPES,

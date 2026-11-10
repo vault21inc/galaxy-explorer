@@ -9,7 +9,15 @@ import type { EntityKind } from './entity-kinds.ts';
  * repeats what the schema already says.
  */
 export function fieldSchema(kind: EntityKind, path: string): z.ZodType | undefined {
-  let schema: z.ZodType | undefined = schemasFor(kind).update;
+  return fieldSchemaIn(schemasFor(kind).update, path);
+}
+
+/**
+ * The same walk in any object schema: a universe's or a config resource's update schema, for
+ * the forms and tables that aren't an entity kind's (M4-T1).
+ */
+export function fieldSchemaIn(root: z.ZodType, path: string): z.ZodType | undefined {
+  let schema: z.ZodType | undefined = root;
   for (const key of path.split('.')) {
     const parent: z.ZodType | undefined = schema ? unwrapField(schema).inner : undefined;
     if (parent instanceof z.ZodObject) {
