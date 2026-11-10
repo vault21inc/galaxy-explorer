@@ -231,6 +231,12 @@ void main() {
 - **Stations and markers:** instanced icon billboards from the icon atlas (§8, pins).
 - **Background:** the sky points, plus a dim band of the galaxy disc texture.
 - Children of planets (moons, stations) aren't shown here. They appear in the planet's orbit view, which keeps the system view readable.
+- **As built (M5-T3):**
+  - Star colors come from the blackbody table in `resolveAppearance`.
+  - The stars' lights are uniforms of the planet and belt shaders, not `PointLight`s.
+  - All belts share one draw call.
+  - The background band is procedural.
+  - The milestone file has the details.
 
 ## 8. Orbit view
 

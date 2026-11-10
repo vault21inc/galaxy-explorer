@@ -299,7 +299,7 @@ describe('view payloads', () => {
       // Gudrun I: the subtype sets color and scale 3 in systems; the object overrides the scale to 0.5.
       expect(system.children[1]).toMatchObject({
         appearance: { color: '#aa8844', scale: { galaxy: 2, system: 0.5 } },
-        size: 0.35 * 0.5,
+        size: 0.25 * 0.5,
       });
     }));
 

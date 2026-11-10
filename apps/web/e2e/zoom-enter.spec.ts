@@ -78,25 +78,27 @@ test.describe('zooming between views', () => {
     await page.waitForTimeout(600); // let that push lapse: the burst starts from nothing
     const before = await transitions(page);
 
-    // Inertia: 60 shrinking deltas a frame apart, far more than one push needs. Sent from the
-    // page itself, so they arrive every 16 ms as a trackpad's do, however busy the test runner.
+    // Inertia: 60 shrinking deltas 16 ms apart, far more than one push needs, sent from the
+    // page. Each carries the timestamp it would have had, as a trackpad's events carry their
+    // hardware time even when the page is busy (compiling the system view's shaders, say) and
+    // delivers them late; the momentum guard reads those timestamps.
     const at = await pointAt(page, aster);
     await page.evaluate(
       ({ x, y }) =>
         new Promise<void>((resolve) => {
+          const start = performance.now();
           let step = 0;
           const send = () => {
             const target = document.elementFromPoint(x, y) ?? document.body;
-            const deltaY = -Math.max(2, 40 * 0.95 ** step);
-            target.dispatchEvent(
-              new WheelEvent('wheel', {
-                deltaY,
-                clientX: x,
-                clientY: y,
-                bubbles: true,
-                cancelable: true,
-              }),
-            );
+            const event = new WheelEvent('wheel', {
+              deltaY: -Math.max(2, 40 * 0.95 ** step),
+              clientX: x,
+              clientY: y,
+              bubbles: true,
+              cancelable: true,
+            });
+            Object.defineProperty(event, 'timeStamp', { value: start + step * 16 });
+            target.dispatchEvent(event);
             step++;
             if (step < 60) setTimeout(send, 16);
             else resolve();

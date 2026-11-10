@@ -134,7 +134,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "spoilerPlanetCount": 0,
         "stars": [
           {
-            "color": "#ffd27f",
+            "color": "#fff2e7",
             "isSpoiler": false,
             "sizeShare": 1,
           },
@@ -166,7 +166,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "spoilerPlanetCount": 0,
         "stars": [
           {
-            "color": "#ffd27f",
+            "color": "#ffb77a",
             "isSpoiler": false,
             "sizeShare": 1,
           },
@@ -198,7 +198,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "spoilerPlanetCount": 0,
         "stars": [
           {
-            "color": "#ffd27f",
+            "color": "#cddcff",
             "isSpoiler": false,
             "sizeShare": 1,
           },
@@ -230,7 +230,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "spoilerPlanetCount": 0,
         "stars": [
           {
-            "color": "#ffd27f",
+            "color": "#ffdcbf",
             "isSpoiler": false,
             "sizeShare": 1,
           },
@@ -262,7 +262,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "spoilerPlanetCount": 0,
         "stars": [
           {
-            "color": "#ffd27f",
+            "color": "#ffad66",
             "isSpoiler": false,
             "sizeShare": 1,
           },
@@ -294,7 +294,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "spoilerPlanetCount": 0,
         "stars": [
           {
-            "color": "#ffd27f",
+            "color": "#fffcf7",
             "isSpoiler": false,
             "sizeShare": 1,
           },
@@ -545,7 +545,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
     "children": [
       {
         "appearance": {
-          "color": "#ffd27f",
+          "color": "#fff2e7",
           "star": {
             "glow": 1,
             "temperatureK": 5800,
@@ -563,7 +563,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
           0,
           0,
         ],
-        "size": 1,
+        "size": 0.6,
         "status": "published",
         "subtypeId": null,
         "version": 1,
@@ -590,7 +590,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
           0,
           0,
         ],
-        "size": 0.35,
+        "size": 0.25,
         "status": "published",
         "subtypeId": null,
         "version": 1,
@@ -617,7 +617,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
           0,
           1.5,
         ],
-        "size": 0.35,
+        "size": 0.25,
         "status": "published",
         "subtypeId": "<id 20>",
         "version": 1,

@@ -5,6 +5,9 @@ import { BLACK_HOLES, BlackHoles } from './glyphs/black-holes.tsx';
 import { ICON_SPRITES, IconSprites } from './glyphs/icon-sprites.tsx';
 import { SYSTEM_GLYPHS, SystemGlyphs } from './glyphs/system-glyphs.tsx';
 import { REGION_CLOUD, RegionCloud } from './regions/region-cloud.tsx';
+import { ASTEROID_BELTS, AsteroidBelts } from './belts/asteroid-belts.tsx';
+import { PLANET_BODIES, PlanetBodies } from './planets/planet-bodies.tsx';
+import { STAR_BODIES, StarBodies } from './stars/star-bodies.tsx';
 import type { RendererProps } from './renderer-types.ts';
 
 /**
@@ -23,6 +26,9 @@ const regionCloud: RendererDef = { name: REGION_CLOUD, component: RegionCloud };
 const systemGlyphs: RendererDef = { name: SYSTEM_GLYPHS, component: SystemGlyphs };
 const blackHoles: RendererDef = { name: BLACK_HOLES, component: BlackHoles };
 const iconSprites: RendererDef = { name: ICON_SPRITES, component: IconSprites };
+const starBodies: RendererDef = { name: STAR_BODIES, component: StarBodies };
+const planetBodies: RendererDef = { name: PLANET_BODIES, component: PlanetBodies };
+const asteroidBelts: RendererDef = { name: ASTEROID_BELTS, component: AsteroidBelts };
 
 type LevelRenderers = Partial<Record<BaseType, RendererDef>> & { default: RendererDef };
 
@@ -38,10 +44,14 @@ export const renderers: Partial<Record<ViewLevel, LevelRenderers>> = {
     nebula: regionCloud,
     anomaly: regionCloud,
   },
-  // Until M5-T3 brings stars, planets, orbit rings and belts their own looks, a system's
-  // children are small spheres, and stations and markers their icons.
+  // Inside a system (rendering.md §7, M5-T3): stars that light it, lit planets, belts of
+  // rocks, and icons; anything else (a black hole, say) a small sphere. The orbit rings and
+  // the background are the system level's own (levels/system-level.tsx).
   system: {
     default: instancedBodies,
+    star: starBodies,
+    planet: planetBodies,
+    asteroid_belt: asteroidBelts,
     station: iconSprites,
     marker: iconSprites,
   },

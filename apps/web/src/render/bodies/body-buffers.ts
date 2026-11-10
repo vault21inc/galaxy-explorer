@@ -33,10 +33,14 @@ export function bodyState(object: ViewObject, policy: SpoilerPolicy): DrawnState
   return object.status === 'draft' ? 'draft' : 'normal';
 }
 
+/** The galaxy view's on-screen radius clamp; other views pass their own. */
+const GALAXY_CLAMP = { minRadiusPx: GALAXY_BODY_MIN_PX / 2, maxRadiusPx: GALAXY_BODY_MAX_PX / 2 };
+
 export function buildBodyBuffers(
   objects: readonly ViewObject[],
   policy: SpoilerPolicy,
   renderer: string,
+  clamp: { minRadiusPx: number; maxRadiusPx: number } = GALAXY_CLAMP,
 ): BodyBuffers {
   const count = objects.length;
   const buffers: BodyBuffers = {
@@ -63,8 +67,7 @@ export function buildBodyBuffers(
       renderer,
       center: object.position,
       radius,
-      minRadiusPx: GALAXY_BODY_MIN_PX / 2,
-      maxRadiusPx: GALAXY_BODY_MAX_PX / 2,
+      ...clamp,
       state,
       color,
       pickPriority: 1,

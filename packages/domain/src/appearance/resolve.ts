@@ -2,6 +2,7 @@ import type { HexColor } from '../colors.ts';
 import { objectTypes, type BaseType } from '../registry/object-types.ts';
 import type { ViewLevel } from '../registry/view-levels.ts';
 import type { Appearance } from '../schemas/appearance.ts';
+import { blackbodyColor } from './blackbody.ts';
 
 export interface ResolveAppearanceInput {
   baseType: BaseType;
@@ -28,6 +29,9 @@ export interface ResolvedAppearance {
  * 2. the subtype's default appearance;
  * 3. the object's own overrides.
  *
+ * A star's color, unless its subtype or the star itself sets one, is the blackbody color of its
+ * temperature (rendering.md §7), so the galaxy glyph and the system view agree.
+ *
  * Nested settings merge field by field, so an object can override only its atmosphere color
  * and keep the subtype's thickness. Lists (palettes) replace each other whole. The server and
  * the browser both run this, so live edit previews match what's saved.
@@ -46,6 +50,10 @@ export function resolveAppearance({
   ) as Appearance & {
     color: HexColor;
   };
+  if (baseType === 'star' && !subtypeDefaults?.color && !overrides?.color) {
+    const temperatureK = appearance.star?.temperatureK;
+    if (temperatureK !== undefined) appearance.color = blackbodyColor(temperatureK);
+  }
   const defaultSize: number | undefined = (type.size as Partial<Record<ViewLevel, number>>)[view];
   const scale = appearance.scale?.[view] ?? 1;
   return { appearance, size: defaultSize === undefined ? null : defaultSize * scale };

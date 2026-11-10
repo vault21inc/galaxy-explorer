@@ -573,3 +573,92 @@ export const PUSH_RING_MIN_RADIUS_PX = 24;
 export const PUSH_RING_STROKE_PX = 3;
 /** Leaving a view by zooming out, the ring is drawn around the middle of the screen. */
 export const EXIT_RING_RADIUS_PX = 48;
+
+// ---------------------------------------------------------------------------------------------
+// System view look (rendering.md §7, M5-T3). Sizes in system units (su) unless "_PX".
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Stars are spheres at least this many CSS pixels in radius, so a star seen from far out stays
+ * a visible disc; up close they're their true size (no upper limit to speak of).
+ */
+export const STAR_BODY_MIN_PX = 6;
+export const STAR_BODY_MAX_PX = 100_000;
+/** Icosphere subdivisions for stars: 3 gives 1,280 triangles, round even filling the screen. */
+export const STAR_SPHERE_DETAIL = 3;
+/**
+ * The star surface's granulation (rendering.md §9): a cell pattern baked once into this many
+ * pixels across (and half as many tall), with about this many cells around the equator. It
+ * brightens and darkens the surface by up to ±STAR_GRANULATION_CONTRAST.
+ */
+export const STAR_GRANULATION_PX = 512;
+export const STAR_GRANULATION_CELLS = 110;
+export const STAR_GRANULATION_CONTRAST = 0.1;
+/**
+ * Limb darkening: a star's edge is dimmer than its middle, because we see shallower, cooler
+ * layers there. Brightness at the edge, from 0 (black) to 1 (no darkening).
+ */
+export const STAR_LIMB_BRIGHTNESS = 0.55;
+/**
+ * The glow around a star: a camera-facing disc this many star radii across times the star's
+ * `glow` (appearance.star.glow, 1 by default), at least STAR_GLOW_MIN_PX in radius, whose
+ * brightness falls off smoothly to nothing at its edge.
+ */
+export const STAR_GLOW_RADII = 3;
+export const STAR_GLOW_MIN_PX = 26;
+export const STAR_GLOW_INTENSITY = 0.55;
+/** Stars that light the system's bodies, the largest first (D-29); more are drawn but unlit. */
+export const SYSTEM_MAX_LIGHTS = 3;
+/** Light on every body's night side, so its shape still reads against black space. */
+export const SYSTEM_AMBIENT = 0.07;
+
+/** Planets are at least this many CSS pixels in radius, so they never vanish when zoomed out. */
+export const SYSTEM_PLANET_MIN_PX = 4;
+export const SYSTEM_PLANET_MAX_PX = 100_000;
+/** A planet's sphere (rendering.md §7): 32 segments around, 16 from pole to pole. */
+export const PLANET_SEGMENTS = 32;
+export const PLANET_RINGS_SEGMENTS = 96;
+/** Planet rings without their own color and opacity use these. */
+export const PLANET_RINGS_COLOR = '#d8c9a8';
+export const PLANET_RINGS_OPACITY = 0.6;
+
+/**
+ * Orbit rings (rendering.md §7): a circle for each body around the system's center, through
+ * the body, this many segments round, as crisp thin lines in a dim color. A selected body's
+ * ring is drawn in the selection color.
+ */
+export const ORBIT_RING_SEGMENTS = 128;
+export const ORBIT_RING_COLOR = '#2f4258';
+export const ORBIT_RING_SELECTED_COLOR = '#4fd1ff';
+export const ORBIT_RING_WIDTH_PX = 1;
+
+/**
+ * Asteroid belts (rendering.md §7): seeded rocks in a band around the system's center, through
+ * the belt's position. The band's half-width is its size × BELT_HALF_WIDTH_SIZES, its half
+ * thickness size × BELT_HALF_THICKNESS_SIZES. Rocks are BELT_ROCK_RADIUS_SU across give or
+ * take 60 %, never under BELT_ROCK_MIN_PX on screen.
+ */
+export const BELT_ROCKS = 1_200;
+export const BELT_MAX_ROCKS = 2_000;
+export const BELT_HALF_WIDTH_SIZES = 0.45;
+export const BELT_HALF_THICKNESS_SIZES = 0.06;
+export const BELT_ROCK_RADIUS_SU = 0.02;
+export const BELT_ROCK_MIN_PX = 1.1;
+/** A belt is picked within this many pixels of its middle line, or its half-width if wider. */
+export const BELT_PICK_HALF_WIDTH_PX = 8;
+/** Points on the circle a belt is picked along, and labelled at. */
+export const BELT_PICK_POINTS = 96;
+
+/**
+ * The system view's background (rendering.md §7): the sky, plus a dim band where the galaxy's
+ * disc runs across it, as seen from inside the disc. The band is this many degrees wide, its
+ * plane tilted this far from the system's and turned this far about the vertical, so that from
+ * the view's starting pose (SYSTEM_START_TILT_DEG) it runs through the middle of the screen,
+ * corner to corner. In
+ * this color at this brightness.
+ */
+export const GALAXY_BAND_WIDTH_DEG = 7;
+export const GALAXY_BAND_TILT_DEG = 55;
+export const GALAXY_BAND_TURN_DEG = -120;
+export const GALAXY_BAND_COLOR = '#aab4d8';
+export const GALAXY_BAND_INTENSITY = 0.085;

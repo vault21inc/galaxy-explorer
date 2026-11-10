@@ -89,9 +89,24 @@
 - The system background: sky points and a dim galaxy band.
 
 **Done when:**
-- [ ] A system with 1 star, 12 planets, 2 belts and 5 stations stays within 80 draw calls; so does a triple-star system with 12 planets, lit by all three stars (D-29).
-- [ ] Hover, selection and labels behave as in the galaxy view (shared e2e helpers).
+- [x] A system with 1 star, 12 planets, 2 belts and 5 stations stays within 80 draw calls; so does a triple-star system with 12 planets, lit by all three stars (D-29).
+- [x] Hover, selection and labels behave as in the galaxy view (shared e2e helpers).
 - [ ] Screenshots are reviewed by the owner against the references.
+
+**As built:**
+- **Renderers.** The registry's `system` entries are `StarBodies` (`render/stars/`), `PlanetBodies` with `PlanetRings` (`render/planets/`), `AsteroidBelts` (`render/belts/`) and the existing `IconSprites`; anything else is a small sphere. `OrbitRings` (`render/orbits/`) and `GalaxyBand` (`render/system/`) belong to the level, like the galaxy view's outlines. Stars and planets share `bodies/use-instanced-spheres.ts`: one instanced sphere per renderer, with the move preview and the scene index.
+- **Draw calls.** The e2e test systems use 9 (Sol: sky, band, orbit rings, star spheres, star glows, planets, planet rings, belts, icons) and 7 (Trinity), against a budget of 80. All belts share one draw call, rather than one per belt.
+- **Star colors** come from a blackbody table in `@ge/domain` (`appearance/blackbody.ts`) inside `resolveAppearance`, unless the star or its subtype sets a color, so the galaxy glyph and the system view agree. The demo's stars now show their temperatures in the galaxy view too.
+- **Stars.** The granulation is baked once (512 × 256, cellular noise computed on the sphere so it has no seam) and darkened toward the limb. The glow is an additive billboard, at least 26 px.
+- **Lighting.** The stars' lights are uniforms of the planet and belt shaders (`stars/system-lights.ts`), not three.js `PointLight`s: only those two custom shaders are lit, they keep a minimum on-screen size, and the lighting is schematic (no falloff, no shadows). Up to 3 stars light, largest first, following a dragged star. A system without stars is lit from its center.
+- **Planets** are 32 × 16 spheres in their flat color with diffuse light and a faint rim, at least 4 px. Rings are an instanced band sized to the planet as drawn.
+- **Orbit rings** are one `LineSegments2`, 1 px, depth-tested, around the center through each body with `showOrbit`. The selected body's ring is in the selection color, and a dragged body's ring follows it. `orbitCenterId` comes in M5-T4.
+- **Belts** are 1,200 seeded, faceted, lit rocks each, in a Gaussian band. A belt is picked along its middle circle (as rifts are), with a lower priority than the bodies inside it.
+- **The background** is the sky plus a procedural galaxy band at infinity, aimed to cross the starting view diagonally. It isn't the map's baked disc texture: the system payload doesn't carry galaxy settings, and a faint band shows little of the disc's detail.
+- **Icons** are still the built-in station and marker shapes. D-28 moved the Lucide-based icon atlas to M6-T4, which chooses the icon set.
+- **Default sizes** in the system view are smaller: stars 0.6 su (was 1) and planets 0.25 su (was 0.35), so a planet 1 su out doesn't touch its star.
+- **Test hook:** `systemLights()`.
+- **The momentum-guard test** now stamps its synthetic wheel events with the times they would have had, every 16 ms. The heavier system view can stall the page while it first compiles, and events stamped at dispatch time then looked like a new scroll. Real trackpad events carry their hardware time.
 
 ### M5-T4 Editing inside a system
 

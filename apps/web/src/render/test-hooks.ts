@@ -9,6 +9,7 @@ import { hoverStore } from '@/state/hover.ts';
 import { useSelection } from '@/state/selection.ts';
 import { useNavigation } from '@/state/navigation.ts';
 import { viewNavigation } from '@/state/view-navigator.ts';
+import { currentLights } from './stars/system-lights.ts';
 import { transitionsStarted, viewSettled } from './transition/transition-controller.ts';
 import { flyTo } from './camera/fly-to.ts';
 import { galaxyDiscState } from './galaxy/galaxy-disc.tsx';
@@ -104,6 +105,11 @@ export interface GeTestHooks {
   transitioning(): boolean;
   /** Animated changes of view started since the page loaded (M5-T2). */
   transitions(): number;
+  /**
+   * The stars lighting the system view's bodies (M5-T3, D-29), largest first, at most 3: their
+   * positions and linear colors. Empty when no star lights it.
+   */
+  systemLights(): { position: [number, number, number]; color: [number, number, number] }[];
   /** Flies the camera to an object, as a double-click does; resolves when it has settled. */
   flyTo(id: string): Promise<void>;
   /** Where a page point meets the work plane (y = 0), as placing an object computes it. */
@@ -226,6 +232,11 @@ export function installTestHooks(): void {
     },
     transitioning: () => !viewSettled(),
     transitions: () => transitionsStarted(),
+    systemLights: () =>
+      currentLights().map(({ position: [x, y, z], color: [r, g, b] }) => ({
+        position: [x, y, z],
+        color: [r, g, b],
+      })),
     flyTo: async (id) => {
       const object = drawnObject(id);
       const controls = canvasState()?.controls;

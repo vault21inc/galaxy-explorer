@@ -45,7 +45,9 @@ export const objectTypes = defineObjectTypes({
     label: 'Star',
     parents: ['system'],
     explorableAs: null,
-    size: { system: 1 },
+    // Schematic, not to scale: big enough to read as the system's sun, small enough that a
+    // planet 1 su out doesn't touch it (M5-T3).
+    size: { system: 0.6 },
     icon: 'sun',
     defaultAppearance: { color: color('#ffd27f'), star: { temperatureK: 5_800, glow: 1 } },
   },
@@ -53,7 +55,7 @@ export const objectTypes = defineObjectTypes({
     label: 'Planet',
     parents: ['system', 'map'],
     explorableAs: 'orbit',
-    size: { galaxy: 60, system: 0.35, orbit: 1 },
+    size: { galaxy: 60, system: 0.25, orbit: 1 },
     icon: 'globe',
     defaultAppearance: {
       color: color('#7fa7ff'),

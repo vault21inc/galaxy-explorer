@@ -8,6 +8,7 @@ export {
   type ResolvedAppearance,
   type ResolveAppearanceInput,
 } from './appearance/resolve.ts';
+export { blackbodyColor } from './appearance/blackbody.ts';
 export { HexColor } from './colors.ts';
 export {
   GALAXY_DEFAULTS,
