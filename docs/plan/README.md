@@ -187,3 +187,4 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-10:** M4-T7 done: routes, the first kind added after M1 (a registry entry and a migration): the Route tool, Create route from a selection, a waypoints panel with drag reordering, and lines that follow a dragged waypoint, in two draw calls for any number of routes.
 - **2026-11-10:** labels get a dark outline so they read over bright parts of the galaxy, and the quality popover gains Galaxy stars sliders (number and brightness), remembered per browser.
 - **2026-11-10:** M4-T9 done: `?` or the Help button opens the keyboard shortcuts, generated from the binding tables for this platform and mode. All M4 tasks are done; the milestone's acceptance checks remain.
+- **2026-11-10:** M4 performance reports committed (view and edit mode, every budget met). The last M4 acceptance item is the owner's: recreating a real sector structure by tracing the underlay.

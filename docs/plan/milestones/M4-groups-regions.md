@@ -292,6 +292,6 @@ The details are in D-30 and ux.md §4 and §12. This task doesn't depend on T5�
 
 ## Milestone acceptance
 
-- [ ] All tasks are checked off; CI is green.
-- [ ] The performance report for the stress map with groups, regions and routes is committed.
+- [x] All tasks are checked off; CI is green.
+- [x] The performance report for the stress map with groups, regions and routes is committed: [2026-11-10-M4.md](../../perf/2026-11-10-M4.md) and, in edit mode, [2026-11-10-M4-edit.md](../../perf/2026-11-10-M4-edit.md). Every budget passes. Stress map (5,000 objects, 300 groups, about 100 regions, 50 routes): 14 draw calls when viewing and 20 when editing; orbit, pan and zoom at 4.2 / 4.8 ms median / p95 in Chrome and 17 / 18 ms in WebKit.
 - [ ] The owner can recreate a real sector structure, for example Scarus Sector with its sub-sectors, by tracing the underlay.
