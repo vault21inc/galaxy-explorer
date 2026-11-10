@@ -33,7 +33,7 @@ Run from the repository root. Each one listed here exists and runs; the last tab
 | `pnpm db:generate` | generate a migration from `packages/db/src/schema` with drizzle-kit; add `--custom` for an empty one to write by hand |
 | `pnpm api:generate` | regenerate `packages/api-client` (`openapi.json` and `src/generated/schema.ts`) from the API's routes; **run it after changing any route or API schema, and commit the result** |
 | `pnpm api:check` | regenerate the client and fail if it differs from what's committed (CI runs this) |
-| `pnpm perf` | the scripted performance run on the owner's Mac: builds the app, seeds the stress map into its own `ge_perf` database, drives Chrome and WebKit visibly, writes `docs/perf/<date>-M2.md` and fails on a missed budget ([docs/perf/README.md](docs/perf/README.md)). `PERF_LABEL=M5` names a later milestone's report |
+| `pnpm perf` | the scripted performance run on the owner's Mac: builds the app, seeds the stress map into its own `ge_perf` database, drives Chrome and WebKit visibly, writes `docs/perf/<date>-M2.md` and fails on a missed budget ([docs/perf/README.md](docs/perf/README.md)). `PERF_LABEL=M5` names a later milestone's report. `pnpm perf --edit` runs it in edit mode with the underlay shown and 100 objects selected (`<date>-M3-edit.md`) |
 
 Added by later tasks; update this file when you add one:
 

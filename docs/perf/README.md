@@ -61,6 +61,13 @@ Added in M2-T8 (rendering.md §14). Run it on the reference Mac, with nothing el
    - sits idle 3 s after each phase.
 4. Writes `docs/perf/<date>-M2.md` (`PERF_LABEL` changes the milestone) with every budget of rendering.md §2 it can measure, and exits with an error if one is missed. Raw results stay in `scripts/perf/results/` (not committed).
 
+**`pnpm perf --edit`** (M3's acceptance) runs the same path in edit mode:
+- Before loading, it uploads an image as the map's reference underlay (shown) and opens the map with the first 100 objects selected. That puts their rings, the height gizmo, the outliner and the panel on screen.
+- Plain left-drags draw a selection box in edit mode, so the orbits hold Alt, the editor's orbit modifier.
+- The report is `<date>-M3-edit.md`.
+
+GPU memory is judged from the end of the first orbit to the end of the run. A geometry or texture reaches the GPU the first time it's drawn, so something first seen when the camera turns arrives during that orbit. A leak shows as growth after it. In edit mode one geometry arrives there (11 → 12), then the count stays level.
+
 Reading it:
 - **Frame times can't beat the display.** On a 240 Hz external display the median is 4.2 ms; Playwright's WebKit draws at 60 Hz, so its median is one 16.7 ms frame.
 - **WebKit rounds timers to whole milliseconds,** so its numbers carry ±1 ms. The 60 fps check allows that, and its label timings aren't judged.

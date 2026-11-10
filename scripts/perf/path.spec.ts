@@ -1,14 +1,19 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import type { FrameStats, PerfResult, PhaseResult, RenderInfo } from './shared.ts';
-import { RESULTS_DIR } from './shared.ts';
+import { EDIT_SELECTION, PERF_MODE, REPO_ROOT, RESULTS_DIR } from './shared.ts';
 
 /**
  * The scripted path (rendering.md §14), galaxy view only until M5 adds entering and leaving
  * views: load the stress map, sit idle, orbit, pan, zoom toward the cursor, then orbit with
  * every label shown. Each phase records frame times and the renderer's counters through
  * `window.__GE_TEST__`; report.ts checks them against the budgets.
+ *
+ * With `--edit` (PERF_MODE=edit, the M3 acceptance) the same path runs in edit mode, with a
+ * reference underlay shown and 100 objects selected (their rings, the height gizmo, the
+ * outliner and the panel all on screen). Plain left-drags draw a selection box in edit mode, so
+ * the orbits hold Alt, the editor's orbit modifier (ux.md §3).
  */
 
 /** The parts of the test hooks this script uses (apps/web/src/render/test-hooks.ts). */
@@ -20,6 +25,8 @@ interface Hooks {
   labelStats(): FrameStats;
   resetLabelStats(): void;
   visibleLabels(): unknown[];
+  underlay(): unknown;
+  selectedIds(): string[];
 }
 declare global {
   interface Window {
@@ -72,6 +79,8 @@ async function refreshRate(page: Page): Promise<number> {
   );
 }
 
+const EDITING = PERF_MODE === 'edit';
+
 async function drag(
   page: Page,
   from: { x: number; y: number },
@@ -79,6 +88,9 @@ async function drag(
   button: 'left' | 'right' = 'left',
   steps = 60,
 ) {
+  // In edit mode a plain left-drag selects; Alt makes it orbit, as in view mode.
+  const orbitKey = EDITING && button === 'left';
+  if (orbitKey) await page.keyboard.down('Alt');
   await page.mouse.move(from.x, from.y);
   await page.mouse.down({ button });
   for (let i = 1; i <= steps; i++) {
@@ -86,6 +98,50 @@ async function drag(
     await page.waitForTimeout(STEP_MS);
   }
   await page.mouse.up({ button });
+  if (orbitKey) await page.keyboard.up('Alt');
+}
+
+/**
+ * Edit mode's extras, set up through the API before the page loads: an uploaded image as the
+ * map's underlay (shown), and the ids of the first 100 objects to select. Returns those ids.
+ */
+async function prepareEditMode(request: APIRequestContext): Promise<string[]> {
+  const json = async (url: string) => (await (await request.get(url)).json()) as { data: unknown };
+  const universes = (await json('/api/v1/universes')).data as { id: string; slug: string }[];
+  const universe = universes.find((item) => item.slug === 'stress-test');
+  if (!universe) throw new Error('No stress-test universe: did the seed run?');
+  const [map] = (await json(`/api/v1/universes/${universe.id}/maps`)).data as {
+    id: string;
+    version: number;
+  }[];
+  if (!map) throw new Error('The stress universe has no map.');
+
+  const image = readFileSync(resolve(REPO_ROOT, 'apps/web/e2e/fixtures/nebula.png'));
+  const upload = await request.post(`/api/v1/universes/${universe.id}/assets`, {
+    multipart: { file: { name: 'underlay.png', mimeType: 'image/png', buffer: image } },
+  });
+  expect(upload.ok(), await upload.text()).toBe(true);
+  const asset = ((await upload.json()) as { data: { id: string } }).data;
+  const patched = await request.patch(`/api/v1/maps/${map.id}`, {
+    data: {
+      version: map.version,
+      underlayAssetId: asset.id,
+      underlay: {
+        widthLy: 120_000,
+        rotationDeg: 0,
+        offsetX: 0,
+        offsetZ: 0,
+        opacity: 0.5,
+        visible: true,
+      },
+    },
+  });
+  expect(patched.ok(), await patched.text()).toBe(true);
+
+  const view = (await json(`/api/v1/maps/${map.id}/views/galaxy`)).data as {
+    objects: { id: string }[];
+  };
+  return view.objects.slice(0, EDIT_SELECTION).map((object) => object.id);
 }
 
 async function wheel(page: Page, at: { x: number; y: number }, deltaY: number, ticks: number) {
@@ -134,7 +190,8 @@ test('the galaxy view stays within its budgets', async ({ page, browser }, testI
   // First galaxy frame: from navigation until a frame shows the background, every body and
   // region, and the depth stars (6 draw calls, 25,000 points). Measured in the page, on its
   // own clock, which starts at navigation.
-  await page.goto(MAP);
+  const selection = EDITING ? await prepareEditMode(page.request) : [];
+  await page.goto(EDITING ? `${MAP}?select=${selection.join(',')}` : MAP);
   const firstFrame = await page.waitForFunction(
     () => {
       const info = window.__GE_TEST__?.renderInfo();
@@ -145,6 +202,14 @@ test('the galaxy view stays within its budgets', async ({ page, browser }, testI
   );
   const firstFrameMs = (await firstFrame.jsonValue()) as number;
   await waitForIdle(page);
+  if (EDITING) {
+    await page.keyboard.press('e');
+    await page.waitForFunction(() => window.__GE_TEST__?.underlay() !== null, undefined, {
+      timeout: 30_000,
+    });
+    expect(await evaluateHooks<number>(page, 'h.selectedIds().length')).toBe(EDIT_SELECTION);
+    await waitForIdle(page);
+  }
   const start = await renderInfo();
   idleFrames.push(await framesDuring(page, 3_000));
 
@@ -187,6 +252,15 @@ test('the galaxy view stays within its budgets', async ({ page, browser }, testI
 
   const result: PerfResult = {
     project: testInfo.project.name,
+    mode: PERF_MODE,
+    ...(EDITING
+      ? {
+          edit: {
+            selected: await evaluateHooks<number>(page, 'h.selectedIds().length'),
+            underlay: await evaluateHooks<boolean>(page, 'h.underlay() !== null'),
+          },
+        }
+      : {}),
     browserVersion: browser.version(),
     refreshHz,
     viewport: { ...viewport, deviceScaleFactor: testInfo.project.use.deviceScaleFactor ?? 1 },

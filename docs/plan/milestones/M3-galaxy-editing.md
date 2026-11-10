@@ -395,5 +395,7 @@
 ## Milestone acceptance
 
 - [ ] All tasks are checked off; CI is green.
-- [ ] Performance in edit mode, with the underlay visible and 100 objects selected, still meets the galaxy budget (re-run `pnpm perf` with `--edit`).
+- [x] Performance in edit mode, with the underlay visible and 100 objects selected, still meets the galaxy budget (re-run `pnpm perf` with `--edit`).
+  - 2026-11-10, [report](../../perf/2026-11-10-M3-edit.md): Chrome 4.2 / 4.6 ms, 12 draw calls (6 in view mode), labels at 1.0 ms p95, 0 idle frames.
+  - Chrome's window was on the 240 Hz external display.
 - [ ] The owner has built a small real map, for example a dozen systems traced from a reference image, and has filed any friction as issues.

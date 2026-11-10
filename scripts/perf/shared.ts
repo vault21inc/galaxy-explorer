@@ -37,9 +37,21 @@ export interface PhaseResult {
   labels?: FrameStats & { shown: number };
 }
 
+/** `view`: the reader's galaxy view. `edit`: edit mode, underlay shown, 100 selected (M3). */
+export type PerfMode = 'view' | 'edit';
+
+/** The mode `pnpm perf` was started in (perf.ts sets it). */
+export const PERF_MODE: PerfMode = process.env.PERF_MODE === 'edit' ? 'edit' : 'view';
+
+/** Objects selected in edit mode: the M3 acceptance's "100 objects selected". */
+export const EDIT_SELECTION = 100;
+
 /** One browser's run, written by path.spec.ts and read by report.ts. */
 export interface PerfResult {
   project: string;
+  mode: PerfMode;
+  /** Edit mode: what was on screen besides the galaxy view. */
+  edit?: { selected: number; underlay: boolean };
   browserVersion: string;
   refreshHz: number;
   viewport: { width: number; height: number; deviceScaleFactor: number };

@@ -8,7 +8,7 @@ import { BUDGETS, REPO_ROOT, RESULTS_DIR, type FrameStats, type PerfResult } fro
 /**
  * Turns `pnpm perf` results into a dated report in docs/perf/ (rendering.md §14), and fails
  * (exit code 1) if any budget of rendering.md §2 is missed. `PERF_LABEL` names the milestone
- * (default M2).
+ * (perf.ts sets M2, or M3 for `--edit`); an edit-mode report's file name ends in `-edit`.
  */
 
 const label = process.env.PERF_LABEL ?? 'M2';
@@ -119,18 +119,21 @@ const checks: Check[] = [
     ),
   },
   {
-    metric: 'GPU memory: geometries / textures at the start and the end',
-    budget: 'stable (20 view round trips arrive with M5)',
-    values: each(
-      (r) =>
-        `${r.memory.start.geometries.toString()} / ${r.memory.start.textures.toString()} → ` +
-        `${r.memory.end.geometries.toString()} / ${r.memory.end.textures.toString()}`,
-    ),
-    pass: all(
-      (r) =>
-        r.memory.start.geometries === r.memory.end.geometries &&
-        r.memory.start.textures === r.memory.end.textures,
-    ),
+    // A geometry or texture reaches the GPU the first time it's drawn, so something first seen
+    // when the camera turns (edit mode's height gizmo, say) arrives during the first orbit. A
+    // leak keeps growing; what matters is that nothing grows after that warm-up.
+    metric: 'GPU memory: geometries / textures at the start, after the first orbit, and at the end',
+    budget: 'level after the first orbit (20 view round trips arrive with M5)',
+    values: each((r) => {
+      const warm = r.phases.orbit?.render ?? r.memory.start;
+      const show = (info: { geometries: number; textures: number }) =>
+        `${info.geometries.toString()} / ${info.textures.toString()}`;
+      return `${show(r.memory.start)} → ${show(warm)} → ${show(r.memory.end)}`;
+    }),
+    pass: all((r) => {
+      const warm = r.phases.orbit?.render ?? r.memory.start;
+      return warm.geometries === r.memory.end.geometries && warm.textures === r.memory.end.textures;
+    }),
   },
 ];
 const jsCheck: Check = {
@@ -142,6 +145,10 @@ const jsCheck: Check = {
 
 // ---- the report -------------------------------------------------------------------------
 const date = new Date().toISOString().slice(0, 10);
+const editing = results.some((r) => r.mode === 'edit');
+const modeLine = editing
+  ? `edit mode, with the reference underlay shown (${results.every((r) => r.edit?.underlay) ? 'drawn in every run' : '**not drawn in every run**'}) and ${results.map((r) => `${(r.edit?.selected ?? 0).toString()} selected`).join(' / ')}; left-drags orbit with Alt held, as edit mode requires`
+  : 'view mode, as a reader sees it';
 const names = results.map((r) => `${r.project} ${r.browserVersion}`);
 const row = (cells: string[]) => `| ${cells.join(' | ')} |`;
 const phaseRows = results.flatMap((r) =>
@@ -170,6 +177,7 @@ Written by \`pnpm perf\` (scripts/perf/) against the budgets in [rendering.md §
 - **Browsers:** ${names.join('; ')}. Headed, ${results[0]?.viewport.width.toString() ?? '?'} × ${results[0]?.viewport.height.toString() ?? '?'} CSS px at device pixel ratio ${results[0]?.viewport.deviceScaleFactor.toString() ?? '?'}, default quality (Medium: DPR capped at 1.5).
 - **Timers:** WebKit rounds \`performance.now()\` to whole milliseconds, so its frame times carry ±1 ms; the 60 fps check allows it that, and its label timings aren't judged.
 - **Display refresh rate, measured:** ${results.map((r) => `${r.project} ${r.refreshHz.toString()} Hz`).join(', ')}. Frame intervals can't be shorter than the display's.
+- **Mode:** ${modeLine}.
 - **Content:** the stress map, ${results[0]?.objects.toLocaleString('en') ?? '?'} objects (300 groups and 50 routes are drawn from M4).
 - **Path:** load; 3 s idle; orbit (3 left-drags); pan (2 right-drags); zoom toward the cursor (100 wheel steps at two points); orbit again holding Space (every label shown). 3 s idle after each phase. Pointer steps are 16 ms apart.
 
@@ -189,7 +197,7 @@ Not measured yet: view transitions (M5) and GPU memory over 20 galaxy → system
 ${phaseRows.join('\n')}
 `;
 
-const path = resolve(REPO_ROOT, 'docs/perf', `${date}-${label}.md`);
+const path = resolve(REPO_ROOT, 'docs/perf', `${date}-${label}${editing ? '-edit' : ''}.md`);
 writeFileSync(path, markdown);
 console.log(`Wrote ${path}`);
 for (const check of [...checks, jsCheck]) {
