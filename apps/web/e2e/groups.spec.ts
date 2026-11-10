@@ -83,11 +83,27 @@ async function clickObject(page: Page, id: string, button: 'left' | 'right' = 'l
   await page.mouse.click(at.x, at.y, { button });
 }
 
+/** Opens the group dialog with ⌘/Ctrl + G, names the group and saves (or asks to move). */
 async function groupAs(page: Page, name: string) {
   await page.keyboard.press(`${await primary(page)}+g`);
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Name').fill(name);
   await dialog.getByRole('button', { name: 'Group' }).click();
+}
+
+/**
+ * The dialog closes once the batch is saved and the view has refetched; the new group is then
+ * the selection. Clicks on the canvas before that would land on the dialog.
+ */
+async function expectGroupSelected(page: Page, s: Setup, name: string) {
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect
+    .poll(async () => {
+      const group = (await groups(page, s)).find((item) => item.namePlain === name);
+      const selected = await page.evaluate(() => window.__GE_TEST__?.selectedIds());
+      return group !== undefined && selected?.length === 1 && selected[0] === group.id;
+    })
+    .toBe(true);
 }
 
 test.describe('groups from a selection (M4-T2)', () => {
@@ -97,12 +113,10 @@ test.describe('groups from a selection (M4-T2)', () => {
     const s = await setUp(page.request);
     await openWith(page, s, ['Alpha', 'Beta', 'Gamma', 'Delta']);
     await groupAs(page, 'Helican');
-
-    await expect
-      .poll(() => membersOf(page, s, 'Helican'))
-      .toEqual(idsOf(s, 'Alpha', 'Beta', 'Gamma', 'Delta'));
-    const [helican] = await groups(page, s);
-    expect(await page.evaluate(() => window.__GE_TEST__?.selectedIds())).toEqual([helican?.id]);
+    await expectGroupSelected(page, s, 'Helican');
+    expect(await membersOf(page, s, 'Helican')).toEqual(
+      idsOf(s, 'Alpha', 'Beta', 'Gamma', 'Delta'),
+    );
     const panel = page.getByRole('complementary', { name: 'Details' });
     await expect(panel.getByRole('list', { name: 'Members' }).getByRole('listitem')).toHaveCount(4);
   });
@@ -111,7 +125,7 @@ test.describe('groups from a selection (M4-T2)', () => {
     const s = await setUp(page.request);
     await openWith(page, s, ['Alpha', 'Beta', 'Gamma', 'Delta']);
     await groupAs(page, 'Helican');
-    await expect.poll(() => membersOf(page, s, 'Helican')).toHaveLength(4);
+    await expectGroupSelected(page, s, 'Helican');
 
     // Select Delta alone, then group it as Ophidian.
     await clickObject(page, s.ids.Delta ?? '');
@@ -120,7 +134,8 @@ test.describe('groups from a selection (M4-T2)', () => {
     const dialog = page.getByRole('dialog');
     await expect(dialog.getByRole('heading')).toHaveText('Move 1 object from Helican to Ophidian?');
     await dialog.getByRole('button', { name: 'Move' }).click();
-    await expect.poll(() => membersOf(page, s, 'Ophidian')).toEqual(idsOf(s, 'Delta'));
+    await expectGroupSelected(page, s, 'Ophidian');
+    expect(await membersOf(page, s, 'Ophidian')).toEqual(idsOf(s, 'Delta'));
     expect(await membersOf(page, s, 'Helican')).toEqual(idsOf(s, 'Alpha', 'Beta', 'Gamma'));
 
     // One undo step: Ophidian is gone and Delta is back in Helican.
@@ -135,7 +150,7 @@ test.describe('groups from a selection (M4-T2)', () => {
     const s = await setUp(page.request);
     await openWith(page, s, ['Alpha', 'Beta']);
     await groupAs(page, 'Helican');
-    await expect.poll(() => membersOf(page, s, 'Helican')).toHaveLength(2);
+    await expectGroupSelected(page, s, 'Helican');
 
     await clickObject(page, s.ids.Epsilon ?? '', 'right');
     await page.getByRole('menuitem', { name: 'Add to group' }).click();
@@ -151,6 +166,8 @@ test.describe('groups from a selection (M4-T2)', () => {
       page.getByRole('menuitem', { name: 'Remove from administrative group' }),
     ).toBeEnabled();
     await page.keyboard.press('Escape');
+    // Keys pressed inside a menu are the menu's; wait until it has closed.
+    await expect(page.getByRole('menu')).toHaveCount(0);
     await page.keyboard.press(`${await primary(page)}+Shift+g`);
     await expect.poll(() => membersOf(page, s, 'Helican')).toEqual(idsOf(s, 'Alpha', 'Beta'));
   });
@@ -161,6 +178,7 @@ test.describe('groups from a selection (M4-T2)', () => {
     const s = await setUp(page.request);
     await openWith(page, s, ['Alpha', 'Beta']);
     await groupAs(page, 'Helican');
+    await expectGroupSelected(page, s, 'Helican');
     const members = page.getByRole('list', { name: 'Members' });
     await expect(members.getByRole('listitem')).toHaveCount(2);
 
@@ -179,9 +197,13 @@ test.describe('groups from a selection (M4-T2)', () => {
     await expect(dialog).toContainText('2 group memberships');
     await dialog.getByRole('button', { name: 'Delete' }).click();
     await expect.poll(() => groups(page, s)).toEqual([]);
-    const view = (await getJson(page.request, `/api/v1/maps/${s.mapId}/views/galaxy`)) as {
-      data: { objects: unknown[] };
-    };
-    expect(view.data.objects).toHaveLength(5);
+    await expect
+      .poll(async () => {
+        const view = (await getJson(page.request, `/api/v1/maps/${s.mapId}/views/galaxy`)) as {
+          data: { objects: unknown[] };
+        };
+        return view.data.objects.length;
+      })
+      .toBe(5);
   });
 });
