@@ -200,7 +200,8 @@ export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
 };
 
 /** Edit-mode commands (ux.md §4), run by the editor actions (editor/actions/). */
-export type EditKeyAction = 'select-all' | 'duplicate' | 'delete' | 'undo' | 'redo';
+export type EditKeyAction =
+  'select-all' | 'duplicate' | 'delete' | 'undo' | 'redo' | 'group' | 'ungroup';
 
 interface EditKeyBinding {
   /** `KeyboardEvent.key`, compared without case (Shift makes it "Z"). */
@@ -224,6 +225,9 @@ export const EDIT_KEY_BINDINGS: readonly EditKeyBinding[] = [
   { key: 'z', primary: true, shift: true, action: 'redo' },
   // Windows and Linux also redo with Ctrl + Y.
   { key: 'y', primary: true, platform: 'other', action: 'redo' },
+  // Group the selection; with Shift, take it out of its group in the active layer (M4-T2).
+  { key: 'g', primary: true, action: 'group' },
+  { key: 'g', primary: true, shift: true, action: 'ungroup' },
 ];
 
 /**

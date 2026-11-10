@@ -62,10 +62,17 @@
   - the panel's member list (with each membership's spoiler flag).
 - Deleting a group is the generic delete with impact (members are released; child groups lose their parent).
 
+**As built:**
+- The batches are pure functions in `group.ts` (create, release from same-type groups, add; add to an existing group; remove in a layer), sent by `use-group-actions.ts`. The toolbar's Group button, ⌘/Ctrl + G and the context menu's Group… all open the dialog.
+- The dialog's name is plain text, saved as plain `RichText`; it can be formatted afterwards in the group's form.
+- The new group is selected, so the panel shows it. A selected group shows its form and members, and Delete deletes it after the usual dry run, whose summary now says how many child groups lose their parent. The rest of group selection (labels, the outliner tree, member rings) is M4-T4's.
+- **Active layer:** ⌘/Ctrl + Shift + G and "Remove from group" act on the selection's groups in the active layer. Until M4-T5's Layers popover lets you choose it, that's the layer you last grouped in, or else the first layer in settings order (`state/layers.ts`). The menu item names it: "Remove from administrative group".
+- The galaxy view's groups now carry `version`, for deleting. A kind's `aspects.members` (groups only) drives the members section and `include=members`.
+
 **Done when:**
-- [ ] E2E: grouping four systems as "Helican" creates the group and its memberships.
-- [ ] Re-grouping one of them prompts and moves it.
-- [ ] Undo restores the previous memberships.
+- [x] E2E: grouping four systems as "Helican" creates the group and its memberships.
+- [x] Re-grouping one of them prompts and moves it.
+- [x] Undo restores the previous memberships.
 
 ### M4-T3 Outline geometry and rendering
 

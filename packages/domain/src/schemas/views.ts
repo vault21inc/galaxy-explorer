@@ -71,6 +71,8 @@ export const ViewGroupMember = z.object({ objectId: Uuid, isSpoiler: z.boolean()
 
 export const ViewGroup = z.object({
   id: Uuid,
+  /** For edits from the view, such as deleting the group (M4-T2). */
+  version: z.int().positive(),
   ...Named,
   status: z.enum(['draft', 'published']),
   groupTypeId: Uuid,
@@ -80,6 +82,8 @@ export const ViewGroup = z.object({
   members: z.array(ViewGroupMember),
 });
 
+export type ViewGroup = z.infer<typeof ViewGroup>;
+
 export const ViewGroupType = z.object({
   id: Uuid,
   name: z.string(),
@@ -88,6 +92,7 @@ export const ViewGroupType = z.object({
   defaultColor: HexColor,
   sortKey: z.number(),
 });
+export type ViewGroupType = z.infer<typeof ViewGroupType>;
 
 export const GalaxyView = z.object({
   map: z.object({

@@ -1,4 +1,4 @@
-import type { ViewObject } from '@ge/domain';
+import type { ViewGroup, ViewObject } from '@ge/domain';
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button.tsx';
@@ -11,14 +11,17 @@ import { EntityPanel } from './entity-panel.tsx';
 /**
  * The right-hand panel (ux.md §1): the selection's details, or for several selected items, a
  * list of them. About 380 px wide and collapsible; on narrow screens a bottom sheet. Loaded on
- * first selection, as its own chunk.
+ * first selection, as its own chunk. A selected group (a new one, M4-T2) shows the group's
+ * details and members.
  */
 export default function InfoPanel({
   universeId,
   objects,
+  groups = [],
 }: {
   universeId: string;
   objects: readonly ViewObject[];
+  groups?: readonly ViewGroup[];
 }) {
   const selectedIds = useSelection((state) => state.selectedIds);
   const clear = useSelection((state) => state.clear);
@@ -29,6 +32,7 @@ export default function InfoPanel({
 
   const [onlyId] = selectedIds;
   const single = selectedIds.length === 1 && onlyId !== undefined;
+  const isGroup = (id: string) => groups.some((group) => group.id === id);
   return (
     <SpoilerProvider>
       <aside
@@ -57,13 +61,19 @@ export default function InfoPanel({
         {!collapsed && (
           <div className="overflow-y-auto p-4">
             {single ? (
-              <EntityPanel kind="celestial_object" id={onlyId} universeId={universeId} />
+              <EntityPanel
+                kind={isGroup(onlyId) ? 'group' : 'celestial_object'}
+                id={onlyId}
+                universeId={universeId}
+              />
             ) : (
               <div className="flex flex-col gap-2">
                 <h2 className="text-sm font-semibold">{selectedIds.length} selected</h2>
                 <ul className="flex flex-col gap-1 text-sm">
                   {selectedIds.map((id) => {
-                    const object = objects.find((item) => item.id === id);
+                    const object =
+                      objects.find((item) => item.id === id) ??
+                      groups.find((item) => item.id === id);
                     return (
                       <li key={id}>
                         <button

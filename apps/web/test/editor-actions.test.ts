@@ -27,6 +27,8 @@ describe('edit-mode shortcuts (ux.md §4)', () => {
   it('⌘A and ⌘D on a Mac, Ctrl+A and Ctrl+D elsewhere', () => {
     expect(resolveEditKey(keys('a', { meta: true }), 'mac')).toBe('select-all');
     expect(resolveEditKey(keys('d', { meta: true }), 'mac')).toBe('duplicate');
+    expect(resolveEditKey(keys('g', { meta: true }), 'mac')).toBe('group');
+    expect(resolveEditKey(keys('G', { ctrl: true, shift: true }), 'other')).toBe('ungroup');
     expect(resolveEditKey(keys('a', { ctrl: true }), 'other')).toBe('select-all');
     expect(resolveEditKey(keys('D', { ctrl: true }), 'other')).toBe('duplicate');
   });
@@ -81,6 +83,7 @@ describe('delete', () => {
       childObjects: 7,
       alsoDeleted: ['3 group memberships', '1 fact'],
       unplaced: 4,
+      orphanedGroups: 0,
     });
     expect(describeImpact(summary)).toBe(
       '7 child objects, 3 group memberships, 1 fact; 4 places or events become unplaced',
@@ -90,9 +93,31 @@ describe('delete', () => {
   it('says nothing else is affected when only the objects go', () => {
     const impact = { celestial_objects: { insert: 0, update: 0, delete: 2 } };
     expect(describeImpact(summarizeImpact(impact, 2))).toBeNull();
-    expect(describeImpact({ childObjects: 1, alsoDeleted: [], unplaced: 0 })).toBe(
-      '1 child object',
+    expect(
+      describeImpact({ childObjects: 1, alsoDeleted: [], unplaced: 0, orphanedGroups: 0 }),
+    ).toBe('1 child object');
+  });
+
+  it('says what deleting a group releases (M4-T2)', () => {
+    const impact = {
+      entities: { insert: 0, update: 0, delete: 1 },
+      object_groups: { insert: 0, update: 2, delete: 1 },
+      group_members: { insert: 0, update: 0, delete: 4 },
+    };
+    expect(describeImpact(summarizeImpact(impact, 0))).toBe(
+      '4 group memberships; 2 child groups lose their parent',
     );
+    const items = [
+      { id: 'g', version: 2, namePlain: 'Helican', kind: 'group' as const },
+      { id: 'h', version: 1, namePlain: 'Lyra', kind: 'group' as const },
+    ];
+    expect(deleteDescription(items)).toBe('Delete 2 groups');
+    expect(deleteRequest(items as never, false).operations[0]).toEqual({
+      op: 'delete',
+      kind: 'group',
+      id: 'g',
+      version: 2,
+    });
   });
 });
 

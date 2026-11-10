@@ -209,7 +209,15 @@ test.describe('selection commands (M3-T5)', () => {
     expect(await selectedIds(page)).toEqual([id(s, 'West 2')]);
 
     const menu = page.getByRole('menu', { name: 'Object actions' });
-    await expect(menu.getByRole('menuitem')).toHaveText([/Rename/, /Duplicate/, /Delete/]);
+    // The group commands joined in M4-T2; this map has no group types, so no groups to add to.
+    await expect(menu.getByRole('menuitem')).toHaveText([
+      /Rename/,
+      /Group…/,
+      /Add to group/,
+      /Remove from group/,
+      /Duplicate/,
+      /Delete/,
+    ]);
     await menu.getByRole('menuitem', { name: 'Rename' }).click();
     await expect(menu).toBeHidden();
     const name = page.getByLabel('Name', { exact: true });

@@ -34,6 +34,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "parentGroupId": null,
         "status": "published",
         "style": {},
+        "version": 1,
       },
       {
         "groupTypeId": "<id 13>",
@@ -60,6 +61,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "parentGroupId": "<id 10>",
         "status": "published",
         "style": {},
+        "version": 1,
       },
       {
         "groupTypeId": "<id 13>",
@@ -86,6 +88,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "parentGroupId": "<id 10>",
         "status": "published",
         "style": {},
+        "version": 1,
       },
     ],
     "map": {

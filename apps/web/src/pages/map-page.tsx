@@ -71,7 +71,15 @@ export function MapPage() {
         </StatusPanel>
         <EditToolbar />
         {/* Nothing to select here, but undo still works (after deleting the last object). */}
-        {mapId && <EditorActions mapId={mapId} objects={view.data.objects} />}
+        {mapId && (
+          <EditorActions
+            mapId={mapId}
+            universeSlug={universeSlug}
+            objects={view.data.objects}
+            groups={view.data.groups}
+            groupTypes={view.data.groupTypes}
+          />
+        )}
         {editing && <HistoryPanel universeId={route.universe.id} />}
         {editing && mapId && (
           <Suspense fallback={null}>
@@ -86,7 +94,15 @@ export function MapPage() {
       <SelectionAnnouncer objects={view.data.objects} />
       <OutlinerSlot objects={view.data.objects} />
       <EditToolbar />
-      {mapId && <EditorActions mapId={mapId} objects={view.data.objects} />}
+      {mapId && (
+        <EditorActions
+          mapId={mapId}
+          universeSlug={universeSlug}
+          objects={view.data.objects}
+          groups={view.data.groups}
+          groupTypes={view.data.groupTypes}
+        />
+      )}
       {editing && <HistoryPanel universeId={route.universe.id} />}
       {editing && mapId && (
         <Suspense fallback={null}>
@@ -95,7 +111,11 @@ export function MapPage() {
       )}
       {hasSelection && (
         <Suspense fallback={null}>
-          <InfoPanel universeId={route.universe.id} objects={view.data.objects} />
+          <InfoPanel
+            universeId={route.universe.id}
+            objects={view.data.objects}
+            groups={view.data.groups}
+          />
         </Suspense>
       )}
     </>

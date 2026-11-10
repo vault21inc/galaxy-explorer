@@ -22,6 +22,8 @@ export interface EntityKindDef {
     facts: boolean;
     relations: boolean;
     location: 'none' | 'optional' | 'required';
+    /** Has member objects, under /groups/{id}/members (data-model §3.3). */
+    members: boolean;
   };
   /**
    * Extension fields that are content, blacked out (set to null) while the whole entity is a
@@ -49,7 +51,13 @@ export function defineEntityKinds<const T extends Record<string, EntityKindDef>>
   return kinds;
 }
 
-const allAspects = { images: true, links: true, facts: true, relations: true } as const;
+const allAspects = {
+  images: true,
+  links: true,
+  facts: true,
+  relations: true,
+  members: false,
+} as const;
 
 /** Kinds whose form has only the shared fields. */
 const SHARED_FORM: EntityFormDef = { details: [], appearance: [] };
@@ -110,7 +118,7 @@ export const entityKinds = defineEntityKinds({
     plural: 'groups',
     label: { one: 'Group', many: 'Groups' },
     extension: groupExtension,
-    aspects: { ...allAspects, location: 'none' },
+    aspects: { ...allAspects, location: 'none', members: true },
     contentFields: [],
     // The parent group joins the form with group nesting in M4.
     form: {

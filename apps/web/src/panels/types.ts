@@ -6,6 +6,7 @@ export type PanelEntity = EntityReadOf<EntityKind> & {
   facts?: components['schemas']['FactRead'][];
   links?: components['schemas']['LinkRead'][];
   relations?: components['schemas']['RelationRead'][];
+  members?: components['schemas']['MemberRead'][];
   images?: components['schemas']['ImageRead'][];
 };
 

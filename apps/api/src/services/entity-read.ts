@@ -156,6 +156,7 @@ async function loadAspects(
   if (want.has('links')) result.links = await listLinks(ex, id);
   if (want.has('relations')) result.relations = await listRelations(ex, id, viewer);
   if (want.has('location')) result.location = await getLocation(ex, id);
-  if (want.has('members') && kind === 'group') result.members = await listMembers(ex, id);
+  if (want.has('members') && entityKinds[kind].aspects.members)
+    result.members = await listMembers(ex, id);
   return result;
 }

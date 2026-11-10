@@ -115,6 +115,7 @@ export async function galaxyView(ex: Executor, mapId: string, viewer: Viewer): P
   const groupRows = await ex
     .select({
       id: entities.id,
+      version: entities.version,
       name: entities.name,
       namePlain: entities.namePlain,
       isSpoiler: entities.isSpoiler,
@@ -154,6 +155,7 @@ export async function galaxyView(ex: Executor, mapId: string, viewer: Viewer): P
     objects: galaxyObjects,
     groups: groupRows.map((group) => ({
       id: group.id as GalaxyView['groups'][number]['id'],
+      version: group.version,
       ...named(group),
       status: group.status as 'draft' | 'published',
       groupTypeId: group.groupTypeId as GalaxyView['groups'][number]['groupTypeId'],

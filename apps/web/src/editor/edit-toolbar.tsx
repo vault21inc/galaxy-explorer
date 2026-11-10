@@ -11,6 +11,8 @@ import {
 import { Button } from '@/components/ui/button.tsx';
 import { objectTypes } from '@ge/domain';
 import { useEditor } from '@/state/editor.ts';
+import { useGroupDialog } from '@/state/group-dialog.ts';
+import { useSelection } from '@/state/selection.ts';
 import { useSidePanel } from '@/state/side-panel.ts';
 import { AddMenu } from './add-menu.tsx';
 import { useUndoRedo } from './use-undo.ts';
@@ -28,7 +30,7 @@ interface Tool {
 /** The toolbar's items in ux.md §1's order. */
 const TOOLS: readonly Tool[] = [
   { label: 'Select', icon: MousePointer2, active: true },
-  { label: 'Group', icon: Group, arrives: 'M4' },
+  { label: 'Group', icon: Group, keys: '⌘/Ctrl + G' },
   { label: 'Route', icon: Route, arrives: 'M4' },
   { label: 'Map', icon: MapIcon },
   { label: 'Undo', icon: Undo2, keys: '⌘/Ctrl + Z' },
@@ -47,11 +49,15 @@ export function EditToolbar() {
   const setGridSize = useEditor((state) => state.setGridSize);
   const history = useUndoRedo();
   const leftPanel = useSidePanel((state) => state.left);
+  const hasSelection = useSelection((state) => state.selectedIds.length > 0);
   if (!editing) return null;
 
   /** What the working tools do; the others are placeholders until their task. */
   const behaviour = (label: string) => {
     switch (label) {
+      case 'Group':
+        // The dialog groups the selected objects (M4-T2).
+        return { onClick: useGroupDialog.getState().show, disabled: !hasSelection };
       case 'Undo':
         return { onClick: history.undo, disabled: !history.canUndo };
       case 'Redo':

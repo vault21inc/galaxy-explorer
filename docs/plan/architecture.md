@@ -72,10 +72,10 @@ export const entityKinds = defineEntityKinds({
     plural: 'objects',               // URL segment, MCP tool prefix, query-key prefix
     label: { one: 'Object', many: 'Objects' },
     extension: celestialObjectExtension, // Zod object for the extension table's columns
-    aspects: { images: true, links: true, facts: true, relations: true, location: 'none' },
+    aspects: { images: true, links: true, facts: true, relations: true, location: 'none', members: false },
     form: { details: [...], appearance: [...] }, // fields and widgets for the editor (data, not React; D-27)
   },
-  group:     { scope: 'map',      plural: 'groups',     extension: groupExtension, /* … */ },
+  group:     { scope: 'map',      plural: 'groups',     extension: groupExtension, aspects: { /* … */ members: true } },
   route:     { scope: 'map',      plural: 'routes',     extension: routeExtension, /* M4 */ },
   place:     { scope: 'map',      plural: 'places',     extension: null, aspects: { /* … */ location: 'required' } },
   event:     { scope: 'map',      plural: 'events',     extension: eventExtension, aspects: { /* … */ location: 'optional' } },

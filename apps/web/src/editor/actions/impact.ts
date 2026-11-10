@@ -25,11 +25,13 @@ export interface ImpactSummary {
   alsoDeleted: string[];
   /** Places and events located at a deleted object, which stay but lose their location. */
   unplaced: number;
+  /** Groups inside a deleted group, which stay but lose their parent (M4-T2). */
+  orphanedGroups: number;
 }
 
 const count = (n: number, one: string, many: string) => `${n.toString()} ${n === 1 ? one : many}`;
 
-/** Sums up an impact for deleting `deletedCount` objects. */
+/** Sums up an impact for deleting `deletedCount` objects (and any groups). */
 export function summarizeImpact(impact: Impact, deletedCount: number): ImpactSummary {
   const deleted = (table: string) => impact[table]?.delete ?? 0;
   return {
@@ -38,6 +40,8 @@ export function summarizeImpact(impact: Impact, deletedCount: number): ImpactSum
       deleted(table) > 0 ? [count(deleted(table), one, many)] : [],
     ),
     unplaced: deleted('entity_locations'),
+    // A deleted group's children are updated, not deleted: their parent is set to null.
+    orphanedGroups: impact.object_groups?.update ?? 0,
   };
 }
 
@@ -49,10 +53,17 @@ export function describeImpact(summary: ImpactSummary): string | null {
       : []),
     ...summary.alsoDeleted,
   ];
-  const unplaced =
-    summary.unplaced > 0
-      ? `${count(summary.unplaced, 'place or event becomes', 'places or events become')} unplaced`
-      : null;
-  if (parts.length === 0) return unplaced;
-  return unplaced ? `${parts.join(', ')}; ${unplaced}` : parts.join(', ');
+  const kept = [
+    ...(summary.unplaced > 0
+      ? [`${count(summary.unplaced, 'place or event becomes', 'places or events become')} unplaced`]
+      : []),
+    ...(summary.orphanedGroups > 0
+      ? [
+          `${count(summary.orphanedGroups, 'child group loses its', 'child groups lose their')} parent`,
+        ]
+      : []),
+  ];
+  const changed = kept.length > 0 ? kept.join(', ') : null;
+  if (parts.length === 0) return changed;
+  return changed ? `${parts.join(', ')}; ${changed}` : parts.join(', ');
 }

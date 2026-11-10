@@ -1828,6 +1828,7 @@ export interface components {
         ViewGroupInput: {
             /** Format: uuid */
             id: string;
+            version: number;
             namePlain: string;
             nameSpoiler: boolean;
             nameRedacted: string;
@@ -3280,6 +3281,7 @@ export interface components {
         ViewGroup: {
             /** Format: uuid */
             id: string;
+            version: number;
             namePlain: string;
             nameSpoiler: boolean;
             nameRedacted: string;
