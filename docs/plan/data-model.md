@@ -444,7 +444,7 @@ const Appearance = z.object({
     filaments: z.number().min(0).max(1),
     gaps: z.array(z.object({ angleDeg: z.number(), widthDeg: z.number().min(1).max(120) })).max(4),
     texture: z.enum(['procedural', 'upload']),         // 'upload' uses entity_images role 'region_texture'
-    rotationDeg: z.number(),
+    rotationDeg: z.number().min(-360).max(360),
     // rift: a band along a curve
     path: z.array(z.tuple([z.number(), z.number()])).min(2).max(64), // [x, z] in ly, relative to the object
   }).partial(),

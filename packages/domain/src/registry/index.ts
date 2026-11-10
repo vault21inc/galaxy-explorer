@@ -43,6 +43,7 @@ export { celestialObjectExtension, eventExtension, groupExtension } from './exte
 export {
   BASE_TYPES,
   defineObjectTypes,
+  isRegionType,
   objectTypes,
   type BaseType,
   type ObjectTypeDef,

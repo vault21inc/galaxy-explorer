@@ -17,6 +17,7 @@ import { clampedRadiusPx } from './bodies/body-scale.ts';
 import { canvasState, frameTimeline, renderInfo, type RenderInfo } from './diagnostics.ts';
 import type { FrameStats } from './frame-timeline.ts';
 import { ringedIds } from './picking/selection-rings.tsx';
+import { stormTextureOf } from './regions/storm-discs.tsx';
 import { drawnObject, type DrawnObject } from './scene-index.ts';
 import { worldPerPxAt1 } from './screen-scale.ts';
 
@@ -68,6 +69,10 @@ export interface GeTestHooks {
   selectedIds(): string[];
   /** The objects with a ring now: selected, hovered, or members of a selected group (M4-T4). */
   ringedIds(): string[];
+  /** Where a world point is on the page, in CSS pixels, or null behind the camera (M4-T6). */
+  projectPoint(point: [number, number, number]): { x: number; y: number } | null;
+  /** Which texture a storm draws: its generated one or its uploaded picture (M4-T6). */
+  stormTexture(id: string): 'generated' | 'upload' | null;
   /** The object under the pointer, or null. */
   hoveredId(): string | null;
   /** Flies the camera to an object, as a double-click does; resolves when it has settled. */
@@ -145,6 +150,8 @@ export function installTestHooks(): void {
     platform: () => detectPlatform(),
     selectedIds: () => [...useSelection.getState().selectedIds],
     ringedIds: () => [...ringedIds()],
+    projectPoint: (point) => pageProjection(point),
+    stormTexture: (id) => stormTextureOf(id),
     hoveredId: () => hoverStore.getState().hoveredId,
     workPlanePointAt: (clientX, clientY) => {
       const state = canvasState();
@@ -178,12 +185,17 @@ export function installTestHooks(): void {
 const scratch = new Vector3();
 
 function screenPositionOf(id: string): { x: number; y: number } | null {
-  const state = canvasState();
   const object = drawnObject(id);
-  if (!state || !object) return null;
+  return object ? pageProjection(object.center) : null;
+}
+
+/** A world point on the page, in CSS pixels, or null when it's off screen or behind the camera. */
+function pageProjection(point: readonly [number, number, number]): { x: number; y: number } | null {
+  const state = canvasState();
+  if (!state) return null;
   // project() maps a world point to normalized device coordinates: -1 to 1 across the canvas,
   // and z from -1 (near plane) to 1 (far plane). Outside those ranges it isn't visible.
-  scratch.set(...object.center).project(state.camera);
+  scratch.set(...point).project(state.camera);
   if (Math.abs(scratch.x) > 1 || Math.abs(scratch.y) > 1 || Math.abs(scratch.z) > 1) return null;
   const rect = state.gl.domElement.getBoundingClientRect();
   return {

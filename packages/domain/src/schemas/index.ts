@@ -27,7 +27,16 @@ export {
   type ImageRole,
   type LocationMode,
 } from './aspects.ts';
-export { Appearance, perView, PLANET_PRESETS, PlanetAppearance } from './appearance.ts';
+export {
+  Appearance,
+  perView,
+  PLANET_PRESETS,
+  PlanetAppearance,
+  REGION_SHAPES,
+  RegionAppearance,
+  RimGap,
+  type RegionShape,
+} from './appearance.ts';
 export { FIELD_VALUE_TYPES, FieldValue } from './field-value.ts';
 export { GalaxySettings, Underlay } from './map-settings.ts';
 export { GroupStyle, RouteStyle } from './styles.ts';

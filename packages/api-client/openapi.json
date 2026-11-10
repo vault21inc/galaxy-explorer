@@ -92,7 +92,9 @@
                 "type": "string",
                 "enum": [
                   "sphere",
-                  "disc"
+                  "disc",
+                  "storm",
+                  "rift"
                 ]
               },
               "density": {
@@ -103,6 +105,72 @@
               "color": {
                 "type": "string",
                 "pattern": "^#[0-9a-f]{6}$"
+              },
+              "innerRadius": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 0.9
+              },
+              "rimColor": {
+                "type": "string",
+                "pattern": "^#[0-9a-f]{6}$"
+              },
+              "filaments": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "gaps": {
+                "maxItems": 4,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "angleDeg": {
+                      "type": "number"
+                    },
+                    "widthDeg": {
+                      "type": "number",
+                      "minimum": 1,
+                      "maximum": 120
+                    }
+                  },
+                  "required": [
+                    "angleDeg",
+                    "widthDeg"
+                  ]
+                }
+              },
+              "texture": {
+                "type": "string",
+                "enum": [
+                  "procedural",
+                  "upload"
+                ]
+              },
+              "rotationDeg": {
+                "type": "number",
+                "minimum": -360,
+                "maximum": 360
+              },
+              "path": {
+                "minItems": 2,
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "items": false,
+                  "minItems": 2,
+                  "maxItems": 2
+                }
               }
             }
           }
@@ -802,7 +870,8 @@
               "gallery",
               "cover",
               "surface_texture",
-              "cloud_texture"
+              "cloud_texture",
+              "region_texture"
             ]
           },
           "caption": {
@@ -849,7 +918,8 @@
               "gallery",
               "cover",
               "surface_texture",
-              "cloud_texture"
+              "cloud_texture",
+              "region_texture"
             ]
           },
           "caption": {
@@ -2834,6 +2904,34 @@
             "items": {
               "$ref": "#/components/schemas/SystemStarInput"
             }
+          },
+          "regionTexture": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "assetId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "isSpoiler": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "assetId",
+                  "url",
+                  "isSpoiler"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -2852,7 +2950,8 @@
           "size",
           "planetCount",
           "spoilerPlanetCount",
-          "stars"
+          "stars",
+          "regionTexture"
         ]
       },
       "SystemStarInput": {
@@ -7199,7 +7298,9 @@
                 "type": "string",
                 "enum": [
                   "sphere",
-                  "disc"
+                  "disc",
+                  "storm",
+                  "rift"
                 ]
               },
               "density": {
@@ -7210,6 +7311,73 @@
               "color": {
                 "type": "string",
                 "pattern": "^#[0-9a-f]{6}$"
+              },
+              "innerRadius": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 0.9
+              },
+              "rimColor": {
+                "type": "string",
+                "pattern": "^#[0-9a-f]{6}$"
+              },
+              "filaments": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "gaps": {
+                "maxItems": 4,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "angleDeg": {
+                      "type": "number"
+                    },
+                    "widthDeg": {
+                      "type": "number",
+                      "minimum": 1,
+                      "maximum": 120
+                    }
+                  },
+                  "required": [
+                    "angleDeg",
+                    "widthDeg"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "texture": {
+                "type": "string",
+                "enum": [
+                  "procedural",
+                  "upload"
+                ]
+              },
+              "rotationDeg": {
+                "type": "number",
+                "minimum": -360,
+                "maximum": 360
+              },
+              "path": {
+                "minItems": 2,
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "items": false,
+                  "minItems": 2,
+                  "maxItems": 2
+                }
               }
             },
             "additionalProperties": false
@@ -7935,7 +8103,8 @@
               "gallery",
               "cover",
               "surface_texture",
-              "cloud_texture"
+              "cloud_texture",
+              "region_texture"
             ]
           },
           "caption": {
@@ -7983,7 +8152,8 @@
               "gallery",
               "cover",
               "surface_texture",
-              "cloud_texture"
+              "cloud_texture",
+              "region_texture"
             ]
           },
           "caption": {
@@ -9983,6 +10153,35 @@
             "items": {
               "$ref": "#/components/schemas/SystemStar"
             }
+          },
+          "regionTexture": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "assetId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "isSpoiler": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "assetId",
+                  "url",
+                  "isSpoiler"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -10001,7 +10200,8 @@
           "size",
           "planetCount",
           "spoilerPlanetCount",
-          "stars"
+          "stars",
+          "regionTexture"
         ],
         "additionalProperties": false
       },
@@ -20987,7 +21187,8 @@
                       "gallery",
                       "cover",
                       "surface_texture",
-                      "cloud_texture"
+                      "cloud_texture",
+                      "region_texture"
                     ]
                   },
                   "caption": {
@@ -21040,7 +21241,8 @@
                 "gallery",
                 "cover",
                 "surface_texture",
-                "cloud_texture"
+                "cloud_texture",
+                "region_texture"
               ]
             },
             "in": "path",
@@ -21145,7 +21347,8 @@
                 "gallery",
                 "cover",
                 "surface_texture",
-                "cloud_texture"
+                "cloud_texture",
+                "region_texture"
               ]
             },
             "in": "path",

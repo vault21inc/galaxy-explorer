@@ -184,8 +184,8 @@ void main() {
 - Additive for nebulae; normal blending with darker tints for warp storms. Premultiplied-alpha blending does both in one draw call (M2-T3).
 - One draw call for all regions: instanced quads with a per-instance region id and color.
 - Picked as a projected circle.
-- **Storms** (`shape: 'storm'`, M4-T6, D-25): large storms seen from above, such as the Eye of Terror. A flat disc in the galactic plane with a baked top-down texture (rim, darker core, radial filaments, gaps in the rim) or an uploaded image, plus a few billboards for depth. All storm discs share one draw call through a texture array.
-- **Rifts** (`shape: 'rift'`, M4-T6): bands along a curve, such as the Great Rift. Billboards along the curve join `RegionCloud`'s draw call; one merged ribbon mesh draws every rift's flat band. Picked by distance to the projected curve.
+- **Storms** (`shape: 'storm'`, M4-T6, D-25): large storms seen from above, such as the Eye of Terror. A flat disc in the galactic plane with a baked top-down texture (rim, darker core, radial filaments, gaps in the rim) or an uploaded image, plus a few billboards for depth. All storm discs share one draw call through a texture array (`DataArrayTexture`), whose layers are baked on the CPU once per set of settings. Discs are drawn double-sided in one pass, without the depth test.
+- **Rifts** (`shape: 'rift'`, M4-T6): bands along a curve, such as the Great Rift. The curve is a Catmull-Rom spline through the rift's points (`@ge/domain` geo/rift.ts). Billboards spread evenly by length along it join `RegionCloud`'s draw call; one merged ribbon mesh draws every rift's flat band. Picked by distance to the projected curve, within its on-screen half-width.
 - All regions together: at most 3 draw calls.
 
 **Group outlines** (`GroupOutlines`):

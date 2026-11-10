@@ -19,12 +19,18 @@ import { worldPerPxAt1 } from '../screen-scale.ts';
 import { useMovePreview } from '../use-move-preview.ts';
 import { REGION_BILLBOARD_MAX_PX, REGION_BILLBOARD_MIN_PX, REGION_SPRITE_PX } from '../tuning.ts';
 import { buildRegionBuffers } from './region-buffers.ts';
+import { resolvedRegion } from './region-shape.ts';
+import { RiftRibbons } from './rift-ribbons.tsx';
+import { StormDiscs } from './storm-discs.tsx';
 import { regionSpriteDefinition, regionSpriteKey } from './region-sprite.ts';
 
 export const REGION_CLOUD = 'region-cloud';
 
 /**
- * Nebulae and anomalies (rendering.md §6): every region's billboards in one draw call.
+ * Nebulae and anomalies (rendering.md §6): every region's billboards in one draw call, plus the
+ * storms' flat discs (`StormDiscs`) and the rifts' bands (`RiftRibbons`), one draw call each
+ * (M4-T6): at most three for every region on the map. RegionCloud publishes every region to the
+ * scene index, whatever its shape.
  *
  * Blending: nebulae should add light, anomalies should cover what's behind them, and one draw
  * call can only use one blend mode. Premultiplied-alpha blending does both: the GPU computes
@@ -77,6 +83,14 @@ const FRAGMENT_SHADER = /* glsl */ `
 export function RegionCloud({ objects }: RendererProps) {
   const gl = useThree((state) => state.gl);
   const policy = useSpoilerPolicy();
+  const storms = useMemo(
+    () => objects.filter((object) => resolvedRegion(object).shape === 'storm'),
+    [objects],
+  );
+  const rifts = useMemo(
+    () => objects.filter((object) => resolvedRegion(object).shape === 'rift'),
+    [objects],
+  );
   const buffers = useMemo(
     () => buildRegionBuffers(objects, policy, REGION_CLOUD),
     [objects, policy],
@@ -133,22 +147,27 @@ export function RegionCloud({ objects }: RendererProps) {
     if (scale) scale.value = worldPerPxAt1(camera, size.height);
   });
 
-  if (buffers.count === 0) return null;
   return (
-    // Drawn after the background's stars, without writing depth: clouds never hide what's
-    // behind them from the depth test. Culling is off, as for the bodies.
-    <mesh ref={mesh} geometry={geometry} frustumCulled={false} renderOrder={4}>
-      <shaderMaterial
-        ref={material}
-        vertexShader={VERTEX_SHADER}
-        fragmentShader={FRAGMENT_SHADER}
-        uniforms={uniforms}
-        transparent
-        depthWrite={false}
-        blending={CustomBlending}
-        blendSrc={OneFactor}
-        blendDst={OneMinusSrcAlphaFactor}
-      />
-    </mesh>
+    <>
+      <StormDiscs objects={storms} />
+      <RiftRibbons objects={rifts} />
+      {buffers.count > 0 && (
+        // Drawn after the background's stars, without writing depth: clouds never hide what's
+        // behind them from the depth test. Culling is off, as for the bodies.
+        <mesh ref={mesh} geometry={geometry} frustumCulled={false} renderOrder={4}>
+          <shaderMaterial
+            ref={material}
+            vertexShader={VERTEX_SHADER}
+            fragmentShader={FRAGMENT_SHADER}
+            uniforms={uniforms}
+            transparent
+            depthWrite={false}
+            blending={CustomBlending}
+            blendSrc={OneFactor}
+            blendDst={OneMinusSrcAlphaFactor}
+          />
+        </mesh>
+      )}
+    </>
   );
 }

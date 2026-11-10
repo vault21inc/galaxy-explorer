@@ -1,0 +1,2 @@
+ALTER TABLE "entity_images" DROP CONSTRAINT "entity_images_role_check";--> statement-breakpoint
+ALTER TABLE "entity_images" ADD CONSTRAINT "entity_images_role_check" CHECK ("entity_images"."role" in ('gallery', 'cover', 'surface_texture', 'cloud_texture', 'region_texture'));

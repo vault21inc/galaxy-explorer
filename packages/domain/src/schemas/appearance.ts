@@ -59,6 +59,48 @@ export const PlanetAppearance = z
   .partial();
 export type PlanetAppearance = z.infer<typeof PlanetAppearance>;
 
+/** A region's shapes (D-25): round and flattened clouds, storms seen from above, and rifts. */
+export const REGION_SHAPES = ['sphere', 'disc', 'storm', 'rift'] as const;
+export type RegionShape = (typeof REGION_SHAPES)[number];
+
+/** A gap in a storm's rim, such as the Cadian Gate: where it is and how wide, in degrees. */
+export const RimGap = z.object({ angleDeg: z.number(), widthDeg: z.number().min(1).max(120) });
+export type RimGap = z.infer<typeof RimGap>;
+
+/**
+ * How a nebula or anomaly is drawn (data-model §4, D-25). Every field is optional: what's left
+ * out comes from the base type's defaults. The shape decides which fields matter: the storm
+ * fields only for `storm`, the path only for `rift`.
+ */
+export const RegionAppearance = z
+  .object({
+    /** In the parent frame's unit (light-years in the galaxy); a rift's half-width. */
+    radius: z.number().positive(),
+    shape: z.enum(REGION_SHAPES),
+    density: z.number().min(0).max(1),
+    /** The cloud's color; a storm's interior color. */
+    color: HexColor,
+    // A storm: a flat disc seen from above.
+    /** The darker core, as a share of the radius. */
+    innerRadius: z.number().min(0).max(0.9),
+    rimColor: HexColor,
+    /** How strongly radial filaments streak the disc, 0–1. */
+    filaments: z.number().min(0).max(1),
+    gaps: z.array(RimGap).max(4),
+    /** 'upload' uses the object's image with the role `region_texture`. */
+    texture: z.enum(['procedural', 'upload']),
+    /** Turns the whole disc, generated or uploaded. */
+    rotationDeg: z.number().min(-360).max(360),
+    // A rift: a band along a curve.
+    /** The curve's points, [x, z] in light-years relative to the object's position. */
+    path: z
+      .array(z.tuple([z.number(), z.number()]))
+      .min(2)
+      .max(64),
+  })
+  .partial();
+export type RegionAppearance = z.infer<typeof RegionAppearance>;
+
 export const Appearance = z
   .object({
     /** Body color in the galaxy and system views. */
@@ -74,16 +116,8 @@ export const Appearance = z
       .partial(),
     /** Planets and moons. */
     planet: PlanetAppearance,
-    /** Nebulae and anomalies. */
-    region: z
-      .object({
-        /** In the parent frame's unit: light-years in the galaxy. */
-        radius: z.number().positive(),
-        shape: z.enum(['sphere', 'disc']),
-        density: z.number().min(0).max(1),
-        color: HexColor,
-      })
-      .partial(),
+    /** Nebulae and anomalies (M4-T6, D-25). */
+    region: RegionAppearance,
   })
   .partial();
 export type Appearance = z.infer<typeof Appearance>;

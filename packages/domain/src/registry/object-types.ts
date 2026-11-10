@@ -100,7 +100,18 @@ export const objectTypes = defineObjectTypes({
     icon: 'cloud',
     defaultAppearance: {
       color: color('#7a5cff'),
-      region: { radius: 1_500, shape: 'sphere', density: 0.5, color: color('#7a5cff') },
+      region: {
+        radius: 1_500,
+        shape: 'sphere',
+        density: 0.5,
+        color: color('#7a5cff'),
+        // What a storm-shaped nebula starts from (M4-T6).
+        innerRadius: 0.45,
+        rimColor: color('#c9b8ff'),
+        filaments: 0.5,
+        texture: 'procedural',
+        rotationDeg: 0,
+      },
     },
   },
   anomaly: {
@@ -112,7 +123,18 @@ export const objectTypes = defineObjectTypes({
     icon: 'tornado',
     defaultAppearance: {
       color: color('#ff4f8b'),
-      region: { radius: 1_000, shape: 'sphere', density: 0.6, color: color('#ff4f8b') },
+      region: {
+        radius: 1_000,
+        shape: 'sphere',
+        density: 0.6,
+        color: color('#ff4f8b'),
+        // What a warp storm starts from (M4-T6): a dark core inside a bright rim.
+        innerRadius: 0.45,
+        rimColor: color('#ffb3cf'),
+        filaments: 0.6,
+        texture: 'procedural',
+        rotationDeg: 0,
+      },
     },
   },
   black_hole: {
@@ -137,3 +159,9 @@ export type BaseType = keyof typeof objectTypes;
 
 /** The base type names in registry order, as a tuple Zod can use. */
 export const BASE_TYPES = Object.keys(objectTypes) as [BaseType, ...BaseType[]];
+
+/** Whether a base type is drawn as a region, a cloud with its radius in `appearance.region`. */
+export function isRegionType(baseType: BaseType): boolean {
+  const type: ObjectTypeDef = objectTypes[baseType];
+  return type.region === true;
+}

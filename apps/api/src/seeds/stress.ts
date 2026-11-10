@@ -48,6 +48,41 @@ function baseTypeFor(roll: number): BaseType {
 }
 
 const pad = (n: number) => String(n).padStart(5, '0');
+
+/** The first few regions of a type get the larger shapes (M4-T6): storms and rifts. */
+const STRESS_STORMS = 5;
+const STRESS_RIFTS = 3;
+
+/**
+ * A region's appearance on the stress map. Most are round clouds; the first anomalies are storms
+ * and the first nebulae are rifts, so the stress map exercises every region renderer. Shapes come
+ * from the region's place among its type, not from the seed's random stream, so the other
+ * objects keep their positions.
+ */
+function regionAppearance(baseType: BaseType, nth: number) {
+  if (baseType === 'anomaly' && nth < STRESS_STORMS) {
+    return {
+      region: {
+        shape: 'storm' as const,
+        radius: 3_000 + nth * 400,
+        gaps: nth === 0 ? [{ angleDeg: 300, widthDeg: 25 }] : [],
+      },
+    };
+  }
+  if (baseType === 'nebula' && nth < STRESS_RIFTS) {
+    // A gentle S-curve about 18,000 ly long, turned differently for each rift.
+    const turn = nth * 1.1;
+    const path = [-9_000, -3_000, 3_000, 9_000].map((along, k): [number, number] => {
+      const sideways = (k % 2 === 0 ? 1 : -1) * 1_500;
+      return [
+        Math.round(along * Math.cos(turn) - sideways * Math.sin(turn)),
+        Math.round(along * Math.sin(turn) + sideways * Math.cos(turn)),
+      ];
+    });
+    return { region: { shape: 'rift' as const, radius: 900, path } };
+  }
+  return { region: { radius: 1_200 } };
+}
 const { entities, celestialObjects, objectGroups, groupMembers } = schema;
 
 export async function seedStress(db: Database, options: Partial<StressOptions> = {}) {
@@ -85,8 +120,15 @@ export async function seedStress(db: Database, options: Partial<StressOptions> =
       };
     });
     const objectIds = await upsertEntities(tx, scope, 'celestial_object', objectRows);
+    // Each region's place among regions of its type, for its shape.
+    const seen = new Map<BaseType, number>();
+    const regionNth = objectRows.map((row) => {
+      const nth = seen.get(row.baseType) ?? 0;
+      seen.set(row.baseType, nth + 1);
+      return nth;
+    });
     for (let start = 0; start < objectRows.length; start += CHUNK) {
-      const chunk = objectRows.slice(start, start + CHUNK).map((row) => ({
+      const chunk = objectRows.slice(start, start + CHUNK).map((row, offset) => ({
         entityId: objectIds.get(row.key) ?? '',
         mapId: map.id,
         baseType: row.baseType,
@@ -96,7 +138,7 @@ export async function seedStress(db: Database, options: Partial<StressOptions> =
         z: row.position[2],
         appearance:
           row.baseType === 'nebula' || row.baseType === 'anomaly'
-            ? { region: { radius: 1_200 } }
+            ? regionAppearance(row.baseType, regionNth[start + offset] ?? 0)
             : {},
       }));
       await tx

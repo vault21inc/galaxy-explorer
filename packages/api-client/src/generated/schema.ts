@@ -1332,9 +1332,23 @@ export interface components {
             region?: {
                 radius?: number;
                 /** @enum {string} */
-                shape?: "sphere" | "disc";
+                shape?: "sphere" | "disc" | "storm" | "rift";
                 density?: number;
                 color?: string;
+                innerRadius?: number;
+                rimColor?: string;
+                filaments?: number;
+                gaps?: {
+                    angleDeg: number;
+                    widthDeg: number;
+                }[];
+                /** @enum {string} */
+                texture?: "procedural" | "upload";
+                rotationDeg?: number;
+                path?: [
+                    number,
+                    number
+                ][];
             };
         };
         PlanetAppearanceInput: {
@@ -1498,7 +1512,7 @@ export interface components {
             /** Format: uuid */
             assetId: string;
             /** @enum {string} */
-            role: "gallery" | "cover" | "surface_texture" | "cloud_texture";
+            role: "gallery" | "cover" | "surface_texture" | "cloud_texture" | "region_texture";
             caption: components["schemas"]["RichTextInput"] | null;
             isSpoiler: boolean;
             sortKey: number;
@@ -1508,7 +1522,7 @@ export interface components {
             /** Format: uuid */
             assetId: string;
             /** @enum {string} */
-            role?: "gallery" | "cover" | "surface_texture" | "cloud_texture";
+            role?: "gallery" | "cover" | "surface_texture" | "cloud_texture" | "region_texture";
             caption?: components["schemas"]["RichTextInput"] | null;
             isSpoiler?: boolean;
             sortKey?: number;
@@ -1918,6 +1932,12 @@ export interface components {
             planetCount: number;
             spoilerPlanetCount: number;
             stars: components["schemas"]["SystemStarInput"][];
+            regionTexture: {
+                /** Format: uuid */
+                assetId: string;
+                url: string;
+                isSpoiler: boolean;
+            } | null;
         };
         SystemStarInput: {
             color: string;
@@ -2787,9 +2807,23 @@ export interface components {
             region?: {
                 radius?: number;
                 /** @enum {string} */
-                shape?: "sphere" | "disc";
+                shape?: "sphere" | "disc" | "storm" | "rift";
                 density?: number;
                 color?: string;
+                innerRadius?: number;
+                rimColor?: string;
+                filaments?: number;
+                gaps?: {
+                    angleDeg: number;
+                    widthDeg: number;
+                }[];
+                /** @enum {string} */
+                texture?: "procedural" | "upload";
+                rotationDeg?: number;
+                path?: [
+                    number,
+                    number
+                ][];
             };
         };
         PlanetAppearance: {
@@ -2953,7 +2987,7 @@ export interface components {
             /** Format: uuid */
             assetId: string;
             /** @enum {string} */
-            role: "gallery" | "cover" | "surface_texture" | "cloud_texture";
+            role: "gallery" | "cover" | "surface_texture" | "cloud_texture" | "region_texture";
             caption: components["schemas"]["RichText"] | null;
             isSpoiler: boolean;
             sortKey: number;
@@ -2963,7 +2997,7 @@ export interface components {
             /** Format: uuid */
             assetId: string;
             /** @enum {string} */
-            role?: "gallery" | "cover" | "surface_texture" | "cloud_texture";
+            role?: "gallery" | "cover" | "surface_texture" | "cloud_texture" | "region_texture";
             caption?: components["schemas"]["RichText"] | null;
             isSpoiler?: boolean;
             sortKey?: number;
@@ -3373,6 +3407,12 @@ export interface components {
             planetCount: number;
             spoilerPlanetCount: number;
             stars: components["schemas"]["SystemStar"][];
+            regionTexture: {
+                /** Format: uuid */
+                assetId: string;
+                url: string;
+                isSpoiler: boolean;
+            } | null;
         };
         SystemStar: {
             color: string;
@@ -8349,7 +8389,7 @@ export interface operations {
             path: {
                 entityId: string;
                 assetId: string;
-                role: "gallery" | "cover" | "surface_texture" | "cloud_texture";
+                role: "gallery" | "cover" | "surface_texture" | "cloud_texture" | "region_texture";
             };
             cookie?: never;
         };
@@ -8407,7 +8447,7 @@ export interface operations {
             path: {
                 entityId: string;
                 assetId: string;
-                role: "gallery" | "cover" | "surface_texture" | "cloud_texture";
+                role: "gallery" | "cover" | "surface_texture" | "cloud_texture" | "region_texture";
             };
             cookie?: never;
         };
@@ -8417,7 +8457,7 @@ export interface operations {
                     /** Format: uuid */
                     assetId?: string;
                     /** @enum {string} */
-                    role?: "gallery" | "cover" | "surface_texture" | "cloud_texture";
+                    role?: "gallery" | "cover" | "surface_texture" | "cloud_texture" | "region_texture";
                     caption?: components["schemas"]["RichTextInput"] | null;
                     isSpoiler?: boolean;
                     sortKey?: number;

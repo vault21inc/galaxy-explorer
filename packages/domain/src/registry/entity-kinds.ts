@@ -1,5 +1,6 @@
 import type { z } from 'zod';
-import type { EntityFormDef } from './entity-forms.ts';
+import { REGION_SHAPES } from '../schemas/appearance.ts';
+import type { EntityFormDef, FormFieldDef } from './entity-forms.ts';
 import { celestialObjectExtension, eventExtension, groupExtension } from './extensions.ts';
 
 /**
@@ -62,6 +63,108 @@ const allAspects = {
 /** Kinds whose form has only the shared fields. */
 const SHARED_FORM: EntityFormDef = { details: [], appearance: [] };
 
+/** The region shapes in the form's words (D-25). */
+const REGION_SHAPE_LABELS = {
+  sphere: 'Round cloud',
+  disc: 'Flat cloud',
+  storm: 'Storm, seen from above',
+  rift: 'Rift, along a curve',
+} satisfies Record<(typeof REGION_SHAPES)[number], string>;
+
+const STORM = { path: 'appearance.region.shape', in: ['storm'] } as const;
+
+/**
+ * A nebula's or anomaly's region fields (M4-T6): the shape and its look, then each shape's own
+ * fields, shown only for that shape.
+ */
+const REGION_FIELDS: readonly FormFieldDef[] = [
+  {
+    path: 'appearance.region.shape',
+    widget: 'select',
+    label: 'Shape',
+    options: { from: 'values', values: REGION_SHAPES, labels: REGION_SHAPE_LABELS },
+    showWhen: 'regionType',
+  },
+  {
+    path: 'appearance.region.color',
+    widget: 'color',
+    label: 'Region color',
+    showWhen: 'regionType',
+  },
+  {
+    path: 'appearance.region.radius',
+    widget: 'number',
+    label: 'Radius (ly)',
+    hint: 'A rift’s half-width. In edit mode, drag the ring on the map.',
+    showWhen: 'regionType',
+  },
+  {
+    path: 'appearance.region.density',
+    widget: 'number',
+    label: 'Density',
+    hint: '0 to 1: how many clouds it’s made of.',
+    showWhen: ['regionType', { path: 'appearance.region.shape', in: ['sphere', 'disc', 'rift'] }],
+  },
+  {
+    path: 'appearance.region.innerRadius',
+    widget: 'number',
+    label: 'Core',
+    hint: 'The darker core, as a share of the radius (0 to 0.9).',
+    showWhen: ['regionType', STORM],
+  },
+  {
+    path: 'appearance.region.rimColor',
+    widget: 'color',
+    label: 'Rim color',
+    showWhen: ['regionType', STORM],
+  },
+  {
+    path: 'appearance.region.filaments',
+    widget: 'number',
+    label: 'Filaments',
+    hint: '0 to 1: how strongly streaks cross the disc.',
+    showWhen: ['regionType', STORM],
+  },
+  {
+    path: 'appearance.region.gaps',
+    widget: 'rimGaps',
+    label: 'Gaps in the rim',
+    showWhen: ['regionType', STORM],
+  },
+  {
+    path: 'appearance.region.rotationDeg',
+    widget: 'number',
+    label: 'Rotation (°)',
+    showWhen: ['regionType', STORM],
+  },
+  {
+    path: 'appearance.region.texture',
+    widget: 'select',
+    label: 'Picture',
+    options: {
+      from: 'values',
+      values: ['procedural', 'upload'],
+      labels: { procedural: 'Generated from these fields', upload: 'An uploaded image' },
+    },
+    showWhen: ['regionType', STORM],
+  },
+  {
+    widget: 'imageRole',
+    role: 'region_texture',
+    path: 'appearance.region.texture',
+    value: 'upload',
+    label: 'Storm image',
+    hint: 'A top-down picture, placed by the radius and rotation.',
+    showWhen: ['regionType', STORM, { path: 'appearance.region.texture', in: ['upload'] }],
+  },
+  {
+    path: 'appearance.region.path',
+    widget: 'riftPath',
+    label: 'Points',
+    showWhen: ['regionType', { path: 'appearance.region.shape', in: ['rift'] }],
+  },
+];
+
 export const entityKinds = defineEntityKinds({
   celestial_object: {
     scope: 'map',
@@ -96,6 +199,7 @@ export const entityKinds = defineEntityKinds({
           label: 'Label priority',
           hint: 'Higher labels stay visible when labels collide.',
         },
+        ...REGION_FIELDS,
       ],
     },
     description:

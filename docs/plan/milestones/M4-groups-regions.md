@@ -174,12 +174,23 @@
 - `RegionCloud` is polished against the references. Nebulae are additive; warp storms use darker tints with normal blending.
 - **Out of scope:** animated (swirling) storms; ambient motion stays opt-in (rendering.md §2).
 
+**As built:**
+- `RegionCloud` stays the registry's renderer for nebulae and anomalies, and draws `StormDiscs` and `RiftRibbons` for the regions of those shapes. It publishes every region to the scene index with its `shape`, and a rift with its `curve`.
+- **Storm textures** are baked on the CPU (`storm-bake.ts`, pure and unit-tested), once per set of settings, straight into a layer of a `DataArrayTexture`. That needs no GPU read-back, and texture arrays work in WebKit too. An uploaded picture is drawn into its layer once loaded; until then the storm shows its generated texture.
+- Storm discs and rift bands are flat in the galactic plane. They're drawn double-sided in one pass, without the depth test, like the group fills.
+- The galaxy view's objects carry `regionTexture` (`{ assetId, url, isSpoiler }` or null). A spoiler picture shows only once spoilers are shown.
+- **Handles** are DOM elements at 3D points (drei's `<Html>`): the radius handle on the edge (for a rift, beside its first point), and a handle per rift point. A drag previews the new shape through `state/region-preview.ts`, which the galaxy view applies to the region renderer's objects only. Release saves one PATCH, merging into the object's own appearance overrides, never the merged view.
+- **Rift points:** the form's Points field has "Add points". While it's on, a plain click on the map adds a point at the nearer end. Clicking a point selects it, and Delete then removes it, wherever focus is, never the rift. A rift keeps at least two points, and one without its own points is a straight band eight half-widths long through its position.
+- The form gains region fields per shape. Conditions now take `regionType` and `{ path, in }`. There's a generic `imageRole` widget (the storm's picture, later M6's planet textures), and the images editor lists only gallery and cover images.
+- The nebula and anomaly types carry storm defaults: core 0.45, a rim color, filaments, generated texture, no rotation. `rotationDeg` is limited to ±360.
+- The stress map's first 5 anomalies are storms and its first 3 nebulae rifts, among about 100 regions.
+
 **Done when:**
-- [ ] E2E: creating a nebula and dragging its radius handle saves the new radius.
-- [ ] E2E: a storm with a gap and a rift with four points save, reload and draw; `drawnObject` reports each one's shape, and picking hits a rift along its curve but not beside it.
-- [ ] E2E: an uploaded `region_texture` replaces a storm's baked texture.
-- [ ] Unit tests: the region schema per shape, the rift curve sampling, and the storm bake key.
-- [ ] All regions together take at most 3 draw calls (billboards, storm discs, rift ribbons). 50 regions on the stress map, including 5 storms and 3 rifts, keep the budget.
+- [x] E2E: creating a nebula and dragging its radius handle saves the new radius.
+- [x] E2E: a storm with a gap and a rift with four points save, reload and draw; `drawnObject` reports each one's shape, and picking hits a rift along its curve but not beside it.
+- [x] E2E: an uploaded `region_texture` replaces a storm's baked texture.
+- [x] Unit tests: the region schema per shape, the rift curve sampling, and the storm bake key.
+- [x] All regions together take at most 3 draw calls (billboards, storm discs, rift ribbons). 50 regions on the stress map, including 5 storms and 3 rifts, keep the budget.
 
 ### M4-T7 Routes
 

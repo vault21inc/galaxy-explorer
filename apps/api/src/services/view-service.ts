@@ -1,5 +1,7 @@
 import { schema, type Executor } from '@ge/db';
 import {
+  isRegionType,
+  mediaUrl,
   objectTypes,
   resolveAppearance,
   type Appearance,
@@ -23,8 +25,17 @@ import { entityVisible, type Viewer } from './visibility.ts';
  * Appearances are resolved with the same `resolveAppearance` the browser uses for previews.
  */
 
-const { entities, celestialObjects, objectGroups, groupMembers, groupTypes, objectSubtypes, maps } =
-  schema;
+const {
+  entities,
+  celestialObjects,
+  objectGroups,
+  groupMembers,
+  groupTypes,
+  objectSubtypes,
+  maps,
+  entityImages,
+  assets,
+} = schema;
 
 const objectColumns = {
   id: entities.id,
@@ -107,9 +118,14 @@ export async function galaxyView(ex: Executor, mapId: string, viewer: Viewer): P
     viewer,
     subtypes,
   );
+  const regionTextures = await loadRegionTextures(
+    ex,
+    objects.filter((object) => isRegionType(object.baseType)).map((object) => object.id),
+  );
   const galaxyObjects: GalaxyObject[] = objects.map((object) => ({
     ...object,
     ...(glyphs.get(object.id) ?? { ...NO_GLYPH, stars: [] }),
+    regionTexture: regionTextures.get(object.id) ?? null,
   }));
 
   const groupRows = await ex
@@ -188,6 +204,35 @@ export async function galaxyView(ex: Executor, mapId: string, viewer: Viewer): P
  */
 /** The glyph fields of an object that isn't a system, or a system with nothing inside. */
 const NO_GLYPH = { planetCount: 0, spoilerPlanetCount: 0 } as const;
+
+/**
+ * The regions' uploaded top-down pictures (M4-T6), by object: the display variant's URL and the
+ * image's spoiler flag, which the client applies like every other spoiler. One query for all.
+ */
+async function loadRegionTextures(ex: Executor, regionIds: readonly string[]) {
+  const found = new Map<string, NonNullable<GalaxyObject['regionTexture']>>();
+  if (regionIds.length === 0) return found;
+  const rows = await ex
+    .select({
+      entityId: entityImages.entityId,
+      assetId: entityImages.assetId,
+      isSpoiler: entityImages.isSpoiler,
+      variants: assets.variants,
+    })
+    .from(entityImages)
+    .innerJoin(assets, eq(assets.id, entityImages.assetId))
+    .where(
+      and(inArray(entityImages.entityId, [...regionIds]), eq(entityImages.role, 'region_texture')),
+    );
+  for (const row of rows) {
+    found.set(row.entityId, {
+      assetId: row.assetId as NonNullable<GalaxyObject['regionTexture']>['assetId'],
+      url: mediaUrl(row.variants.display.key),
+      isSpoiler: row.isSpoiler,
+    });
+  }
+  return found;
+}
 
 /** Stars a system's galaxy glyph shows at most (D-29). */
 const GLYPH_STARS = 3;

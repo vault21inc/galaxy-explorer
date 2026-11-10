@@ -15,7 +15,13 @@ export type FormWidget =
   | 'perViewScale'
   | 'position'
   | 'text'
-  | 'number';
+  | 'number'
+  /** A storm's rim gaps: up to four angle and width pairs (M4-T6). */
+  | 'rimGaps'
+  /** A rift's points: their count, and the switch for adding them on the map (M4-T6). */
+  | 'riftPath'
+  /** The one image an entity has in a role, such as a storm's `region_texture` (M4-T6). */
+  | 'imageRole';
 
 /** Where a select's choices come from. */
 export type FormOptions =
@@ -39,27 +45,39 @@ export type FormOptions =
   | { from: 'parentGroups' };
 
 /**
- * When a field shows. `explorableType`: only for base types that open a view of their own
- * (`objectTypes[baseType].explorableAs`).
+ * When a field shows:
+ * - `explorableType`: only for base types that open a view of their own
+ *   (`objectTypes[baseType].explorableAs`);
+ * - `regionType`: only for base types drawn as a region (nebulae and anomalies, M4-T6);
+ * - `{ path, in }`: only while the field at `path`, or its inherited default, is one of these
+ *   values, such as the storm fields while `appearance.region.shape` is `storm`.
  */
-export type FormCondition = 'explorableType';
+export type FormCondition =
+  'explorableType' | 'regionType' | { path: string; in: readonly string[] };
 
 interface FieldBase {
   label: string;
   /** A short explanation under the field. */
   hint?: string;
-  showWhen?: FormCondition;
+  /** Every condition must hold. */
+  showWhen?: FormCondition | readonly FormCondition[];
 }
 
 export type FormFieldDef =
   | (FieldBase & {
-      widget: Exclude<FormWidget, 'select' | 'position'>;
+      widget: Exclude<FormWidget, 'select' | 'position' | 'imageRole'>;
       /** The writable field, or a dotted path into a jsonb document: `appearance.color`. */
       path: string;
     })
   | (FieldBase & { widget: 'select'; path: string; options: FormOptions })
   /** Edits x, y and z together, in the parent frame's unit. */
-  | (FieldBase & { widget: 'position' });
+  | (FieldBase & { widget: 'position' })
+  /**
+   * An image role. A string rather than `ImageRole`, which this file can't import without a
+   * cycle; a test checks it's one of `IMAGE_ROLES`. `path` is the setting it goes with, set to
+   * `value` when an image is chosen (the storm's `texture: 'upload'`).
+   */
+  | (FieldBase & { widget: 'imageRole'; role: string; path: string; value: string });
 
 /**
  * A kind's own part of the form. `formFor` wraps it in the fields every kind shares: name,

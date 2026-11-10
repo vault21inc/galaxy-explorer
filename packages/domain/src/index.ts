@@ -27,6 +27,14 @@ export {
   type OutlineOptions,
   type PlanePoint,
 } from './geo/outline.ts';
+export {
+  catmullRom,
+  defaultRiftPath,
+  distanceToPolyline,
+  pointsAlong,
+  polylineLength,
+  type CurvePoint,
+} from './geo/rift.ts';
 export { gaussian, seededRandom } from './random.ts';
 export { Slug, Uuid } from './ids.ts';
 export * from './patterns.ts';

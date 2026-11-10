@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
+  IMAGE_ROLES,
   CONFIG_RESOURCES,
   ENTITY_KINDS,
   ENTITY_STATUSES,
@@ -28,6 +29,8 @@ const WIDGET_SCHEMA: Partial<Record<FormWidget, (schema: z.ZodType) => boolean>>
   text: (schema) => schema instanceof z.ZodString,
   color: (schema) => schema instanceof z.ZodString,
   perViewScale: (schema) => schema instanceof z.ZodRecord,
+  rimGaps: (schema) => schema instanceof z.ZodArray,
+  riftPath: (schema) => schema instanceof z.ZodArray,
 };
 
 describe.each(ENTITY_KINDS)('the %s form', (kind) => {
@@ -54,6 +57,7 @@ describe.each(ENTITY_KINDS)('the %s form', (kind) => {
       if (field.widget === 'select' && field.options.from === 'config') {
         expect(CONFIG_RESOURCES).toContain(field.options.resource);
       }
+      if (field.widget === 'imageRole') expect(IMAGE_ROLES).toContain(field.role);
     },
   );
 });

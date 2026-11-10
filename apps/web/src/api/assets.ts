@@ -67,11 +67,11 @@ export function useAssetLibrary(universeId: string) {
 
 /**
  * Writing images and their assets. Every write refreshes the entity kind (its images embed the
- * asset), the views, and the library.
+ * asset), the views (a storm's picture is in the galaxy view, M4-T6), and the library.
  */
 export function useImageWrites(kind: EntityKind, entityId: string) {
   const queryClient = useQueryClient();
-  const refresh = () => refreshAfterWrite(queryClient, [[kind], ['asset']]);
+  const refresh = () => refreshAfterWrite(queryClient, [[kind], ['asset'], ['view']]);
   const imagePath = (image: Pick<ImageRead, 'assetId' | 'role'>) => ({
     path: { entityId, assetId: image.assetId, role: image.role },
   });

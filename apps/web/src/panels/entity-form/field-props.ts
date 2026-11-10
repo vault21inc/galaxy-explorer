@@ -1,4 +1,4 @@
-import type { ConfigReadOf, fieldSchemaIn, FormFieldDef } from '@ge/domain';
+import type { ConfigReadOf, EntityKind, fieldSchemaIn, FormFieldDef } from '@ge/domain';
 
 /**
  * What a form edits: an entity (the panel's form), a universe (the settings page's details) or
@@ -34,6 +34,8 @@ export interface FieldProps<F extends FormFieldDef = FormFieldDef> {
   save: SaveFields;
   /** In a table cell: the label is for screen readers only, and hints are left out. */
   compact?: boolean;
+  /** The entity's kind, for widgets that write its aspects (images); entity forms only. */
+  kind?: EntityKind;
 }
 
 /** A field with a path: every widget but the position. */

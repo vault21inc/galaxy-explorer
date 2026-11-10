@@ -2,10 +2,13 @@ import {
   ENTITY_KINDS,
   entityKinds,
   formGroups,
+  isRegionType,
   objectTypes,
   rt,
   SHOW_SPOILERS,
   type EntityKind,
+  type FormCondition,
+  type FormFieldDef,
   type RichText,
 } from '@ge/domain';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -64,6 +67,23 @@ function entityOf(kind: EntityKind): PanelEntity {
 
 const escape = (text: string) => text.replaceAll('&', '&amp;');
 
+/** Whether a field's base-type conditions rule it out (the shape conditions are tested apart). */
+function ruledOut(field: FormFieldDef, baseType: keyof typeof objectTypes | undefined): boolean {
+  const { showWhen } = field;
+  const conditions: readonly FormCondition[] =
+    showWhen === undefined
+      ? []
+      : typeof showWhen === 'string' || !('length' in showWhen)
+        ? [showWhen]
+        : showWhen;
+  return conditions.some(
+    (condition) =>
+      (condition === 'explorableType' &&
+        (!baseType || objectTypes[baseType].explorableAs === null)) ||
+      (condition === 'regionType' && (!baseType || !isRegionType(baseType))),
+  );
+}
+
 describe.each(ENTITY_KINDS)('the generated %s form', (kind) => {
   const html = render(
     <EntityForm kind={kind} entity={entityOf(kind)} fieldDefinitions={[]} subtypes={[]} />,
@@ -74,9 +94,7 @@ describe.each(ENTITY_KINDS)('the generated %s form', (kind) => {
     for (const group of formGroups(entityKinds[kind].form)) {
       if (group.heading) expect(html).toContain(`>${group.heading}<`);
       for (const field of group.fields) {
-        const hidden =
-          field.showWhen === 'explorableType' &&
-          (!entity.baseType || objectTypes[entity.baseType].explorableAs === null);
+        const hidden = ruledOut(field, entity.baseType);
         if (hidden) expect(html).not.toContain(`>${escape(field.label)}<`);
         else expect(html, field.label).toContain(escape(field.label));
       }
@@ -86,6 +104,44 @@ describe.each(ENTITY_KINDS)('the generated %s form', (kind) => {
   it('starts with the name, editable', () => {
     expect(html).toMatch(/<input[^>]*value="Corvid"/);
     expect(html).toContain('aria-label="Edit Corvid"');
+  });
+});
+
+describe('a region’s form (M4-T6)', () => {
+  const regionForm = (region: object) =>
+    render(
+      <EntityForm
+        kind="celestial_object"
+        entity={
+          {
+            ...entityOf('celestial_object'),
+            baseType: 'anomaly',
+            explorable: false,
+            appearance: { region },
+          } as unknown as PanelEntity
+        }
+        fieldDefinitions={[]}
+        subtypes={[]}
+      />,
+    );
+
+  it('shows a storm’s fields for a storm, and a rift’s points for a rift', () => {
+    const storm = regionForm({ shape: 'storm' });
+    expect(storm).toContain('>Shape<');
+    expect(storm).toContain('>Rim color<');
+    expect(storm).toContain('>Gaps in the rim<');
+    expect(storm).not.toContain('>Points<');
+    expect(storm).not.toContain('>Storm image<');
+    expect(regionForm({ shape: 'storm', texture: 'upload' })).toContain('>Storm image<');
+    const rift = regionForm({ shape: 'rift' });
+    expect(rift).toContain('>Points<');
+    expect(rift).not.toContain('>Rim color<');
+  });
+
+  it('falls back to the type’s default shape: a round cloud', () => {
+    const cloud = regionForm({});
+    expect(cloud).toContain('>Density<');
+    expect(cloud).not.toContain('>Rim color<');
   });
 });
 

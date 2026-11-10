@@ -31,6 +31,13 @@ export interface DrawnObject {
   label: string;
   /** 0–10: higher keeps its label when labels collide (ux.md §7). */
   labelPriority: number;
+  /** A region's shape (M4-T6): sphere, disc, storm or rift. */
+  shape?: string;
+  /**
+   * A rift's center line in world coordinates (M4-T6). It is picked by its distance from this
+   * curve, within `radius` (its half-width), instead of as a circle (rendering.md §10).
+   */
+  curve?: readonly (readonly [number, number, number])[];
 }
 
 const sources = new Map<string, readonly DrawnObject[]>();

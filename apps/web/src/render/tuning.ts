@@ -395,3 +395,28 @@ export const GROUP_GAP_PX = 6;
 /** Outlines and fills are flat overlays: drawn after the disc and glow, before bodies. */
 export const GROUP_FILL_RENDER_ORDER = 2.5;
 export const GROUP_LINE_RENDER_ORDER = 3.5;
+
+// ---- region shapes (rendering.md §6, M4-T6, D-25) --------------------------------------------
+
+/**
+ * A storm's few billboards around its rim, for depth when the camera tilts: the flat disc alone
+ * would vanish edge-on.
+ */
+export const STORM_BILLBOARDS = 8;
+/** Each storm's top-down texture, baked once (rendering.md §9), in pixels a side. */
+export const STORM_TEXTURE_PX = 256;
+/** The smallest on-screen radius of a storm disc, in CSS pixels, so a far storm stays visible. */
+export const STORM_DISC_MIN_PX = 10;
+/** At most this many storms get a texture layer; more are drawn with the first layer. */
+export const STORM_MAX_LAYERS = 64;
+/** How bright a storm disc is drawn: its baked alpha times this. */
+export const STORM_DISC_OPACITY = 0.9;
+
+/** Curve segments per span between two rift points (Catmull-Rom, @ge/domain geo/rift.ts). */
+export const RIFT_CURVE_STEPS = 12;
+/** Billboards along a rift: one per this many half-widths of its length, within these limits. */
+export const RIFT_BILLBOARD_SPACING_RADII = 1.2;
+export const RIFT_BILLBOARDS_MIN = 6;
+export const RIFT_BILLBOARDS_MAX = 60;
+/** The flat band under a rift's billboards: its peak opacity across the middle. */
+export const RIFT_RIBBON_OPACITY = 0.45;

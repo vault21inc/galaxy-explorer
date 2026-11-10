@@ -11,6 +11,8 @@ import { partitionByRenderer } from '@/render/registry.ts';
 import { UnderlayImage } from '@/render/galaxy/underlay.tsx';
 import { useEditor } from '@/state/editor.ts';
 import { useGalaxyPreview } from '@/state/galaxy-preview.ts';
+import { useRegionPreview } from '@/state/region-preview.ts';
+import { RegionHandles } from '@/editor/region-handles.tsx';
 
 /**
  * The galaxy view (rendering.md §6), drawn inside the canvas: the background, then each
@@ -22,10 +24,34 @@ export default function GalaxyLevel({ subjectId }: { subjectId: string }) {
   const preview = useGalaxyPreview((state) =>
     state.preview?.mapId === subjectId ? state.preview : null,
   );
-  const groups = useMemo(
+  const partitions = useMemo(
     () => (view.data ? partitionByRenderer('galaxy', view.data.objects) : []),
     [view.data],
   );
+  // A region being reshaped (M4-T6) is drawn with its preview settings. Only its renderer gets
+  // a new list, so the others keep their buffers.
+  const regionPreview = useRegionPreview((state) => state.preview);
+  const groups = useMemo(() => {
+    if (!regionPreview) return partitions;
+    return partitions.map((partition) =>
+      partition.objects.some((object) => object.id === regionPreview.id)
+        ? {
+            ...partition,
+            objects: partition.objects.map((object) =>
+              object.id === regionPreview.id
+                ? {
+                    ...object,
+                    appearance: {
+                      ...object.appearance,
+                      region: { ...object.appearance.region, ...regionPreview.region },
+                    },
+                  }
+                : object,
+            ),
+          }
+        : partition,
+    );
+  }, [partitions, regionPreview]);
   const editing = useEditor((state) => state.editing);
   if (!view.data) return null;
   const { underlayAssetId } = view.data.map;
@@ -54,6 +80,7 @@ export default function GalaxyLevel({ subjectId }: { subjectId: string }) {
         <renderer.component key={renderer.name} objects={objects} />
       ))}
       <SelectionRings />
+      {editing && <RegionHandles mapId={subjectId} objects={view.data.objects} />}
       <Placement mapId={subjectId} />
       <MoveTool mapId={subjectId} />
     </>

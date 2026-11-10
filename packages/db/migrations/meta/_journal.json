@@ -15,6 +15,13 @@
       "when": 1794087271116,
       "tag": "0001_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794324104109,
+      "tag": "0002_region-texture-role",
+      "breakpoints": true
     }
   ]
 }

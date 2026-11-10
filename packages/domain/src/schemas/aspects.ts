@@ -13,7 +13,14 @@ import { FieldValue } from './field-value.ts';
  */
 
 /** What an entity image is for. Only `gallery` may appear more than once per entity. */
-export const IMAGE_ROLES = ['gallery', 'cover', 'surface_texture', 'cloud_texture'] as const;
+export const IMAGE_ROLES = [
+  'gallery',
+  'cover',
+  'surface_texture',
+  'cloud_texture',
+  // A storm's top-down picture, in place of its baked texture (M4-T6, D-25).
+  'region_texture',
+] as const;
 export type ImageRole = (typeof IMAGE_ROLES)[number];
 
 /**

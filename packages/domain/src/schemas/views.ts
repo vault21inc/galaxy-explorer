@@ -64,6 +64,12 @@ export const GalaxyObject = ViewObject.extend({
   /** The same planets flagged as potential spoilers, counted apart so they can stay hidden. */
   spoilerPlanetCount: z.int().nonnegative(),
   stars: z.array(SystemStar).max(3),
+  /**
+   * A region's uploaded top-down picture (the `region_texture` image, M4-T6), which a storm
+   * draws instead of its generated one when `appearance.region.texture` is `upload`. Null for
+   * every other object, and for regions without one.
+   */
+  regionTexture: z.object({ assetId: Uuid, url: z.string(), isSpoiler: z.boolean() }).nullable(),
 });
 export type GalaxyObject = z.infer<typeof GalaxyObject>;
 

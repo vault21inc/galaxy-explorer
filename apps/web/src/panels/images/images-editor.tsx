@@ -26,7 +26,11 @@ function attempt(work: Promise<unknown>, what: string) {
  * image), the cover role, the spoiler flag, and Remove. The first image added is the cover.
  */
 export default function ImagesEditor({ kind, entity }: SectionProps) {
-  const images = entity.images ?? [];
+  // The gallery and its cover; images in other roles, such as a storm's picture, have their own
+  // field in the form (M4-T6).
+  const images = (entity.images ?? []).filter(
+    (image) => image.role === 'gallery' || image.role === 'cover',
+  );
   const writes = useImageWrites(kind, entity.id);
   const [picking, setPicking] = useState(false);
   const cover = images.find((image) => image.role === 'cover');
