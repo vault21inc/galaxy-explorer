@@ -5,6 +5,7 @@ import { flyTo } from '@/render/camera/fly-to.ts';
 import { resetViewCamera } from '@/render/camera/use-view-camera.ts';
 import { drawnObject, type DrawnObject } from '@/render/scene-index.ts';
 import { useEditor } from '@/state/editor.ts';
+import { useHelp } from '@/state/help.ts';
 import { useLabels } from '@/state/labels.ts';
 import { useSpoilers } from '@/state/spoilers.ts';
 import { useSelection } from '@/state/selection.ts';
@@ -68,6 +69,9 @@ export function useKeyboard(): void {
           return;
         case 'toggle-spoilers':
           useSpoilers.getState().toggle();
+          return;
+        case 'show-help':
+          useHelp.getState().setOpen(true);
           return;
         case 'show-all-labels':
           // Released in onKeyUp; holding the key repeats keydown, which changes nothing.

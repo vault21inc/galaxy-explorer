@@ -273,9 +273,20 @@ The details are in D-30 and ux.md §4 and §12. This task doesn't depend on T5�
 - `?` typed in a text field is just a question mark, like every shortcut (ux.md §4).
 - ux.md §4's table stays the reference for planning. The panel is generated, so it lists only what works today: no ⌘/Ctrl + K until M7-T6.
 
+**As built:**
+- `input/bindings.ts` has `ACTION_DESCRIPTIONS` (pointer actions, `none` is null), `KEY_ACTION_HELP` (each key action's line and section, everywhere or edit, and whether it needs Shift, as Shift + S does) and `EDIT_ACTION_DESCRIPTIONS`. Each is a `Record` over its action type. `?` is a new key binding, `show-help`.
+- `panels/shortcut-help/help-sections.ts` builds the sections (pure, unit-tested):
+  - Rows that share a description share a row: Pan the view lists ↑ ↓ ← →; Zoom in lists `+` and `=`; Delete lists Delete and ⌫.
+  - Keys are written the platform's way: "⇧⌘G" on a Mac (modifiers in the order ⌃⌥⇧⌘), "Ctrl + Shift + G" elsewhere. Ctrl + Y is listed only off the Mac.
+  - A gesture that works only in view mode says so ("Drag, in view mode"). Edit-mode gestures (move, box select, the menu) are in the edit section.
+- **The panel** is a Radix dialog opened by `?` or the Help button (a question-mark icon) in the top bar. The current mode's section comes first, and the gestures section takes the full width.
+  - Focus returns to where it was on close. Radix only returns it to a `DialogTrigger`, so the panel remembers the focused element itself. The Help button focuses itself on click, which Safari doesn't do.
+  - A Close button gives the scrolling panel something to focus: axe requires keyboard access to a scrollable region.
+- The edit section shows only where edit mode is on offer (`useEditor.available`).
+
 **Done when:**
-- [ ] Unit tests: every bound action has a description; the panel merges keys that share a description and leaves out `none` rows; keys read correctly for macOS and for other platforms.
-- [ ] E2E: `?` opens the panel in view mode and in edit mode, where it lists Group the selection with this platform's keys. Esc closes it and returns focus. axe finds no violations. `?` typed in the outliner's filter is text.
+- [x] Unit tests: every bound action has a description; the panel merges keys that share a description and leaves out `none` rows; keys read correctly for macOS and for other platforms.
+- [x] E2E: `?` opens the panel in view mode and in edit mode, where it lists Group the selection with this platform's keys. Esc closes it and returns focus. axe finds no violations. `?` typed in the outliner's filter is text.
 
 ---
 

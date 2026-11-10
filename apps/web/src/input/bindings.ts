@@ -114,6 +114,26 @@ export const BINDINGS: readonly Binding[] = [
   { gesture: 'double-tap', action: 'enter' },
 ];
 
+/**
+ * What each pointer action does, in a line, for the shortcut help (M4-T9, D-30). Typed over
+ * every action, so a new one without a description fails the typecheck. `none` rows only
+ * swallow a gesture and aren't listed.
+ */
+export const ACTION_DESCRIPTIONS: Readonly<Record<Action, string | null>> = {
+  rotate: 'Orbit the camera',
+  pan: 'Pan the view',
+  zoom: 'Zoom toward the pointer',
+  select: 'Select',
+  'toggle-select': 'Add to or take from the selection',
+  'box-select': 'Select with a box, from empty space',
+  'box-select-add': 'Add a box to the selection',
+  move: 'Move the selection, from an object',
+  // Entering a system's own view arrives in M5; until then it flies there.
+  enter: 'Fly to an object',
+  'context-menu': 'Open the menu for the selection',
+  none: null,
+};
+
 export function isHeld(modifier: Modifier, keys: HeldKeys, platform: Platform): boolean {
   switch (modifier) {
     case 'shift':
@@ -166,7 +186,8 @@ export type KeyAction =
   | 'show-all-labels'
   | 'toggle-spoilers'
   | 'toggle-edit'
-  | 'add-object';
+  | 'add-object'
+  | 'show-help';
 
 export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
   ArrowUp: 'pan-up',
@@ -197,6 +218,41 @@ export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
   // N opens the Add menu in edit mode (ux.md §4).
   n: 'add-object',
   N: 'add-object',
+  // ? opens the shortcut help (M4-T9); with Shift held, it's "?" on most layouts.
+  '?': 'show-help',
+};
+
+/**
+ * Each key action's line in the shortcut help, and where it's listed: everywhere, or in the
+ * edit-mode section shown only to readers who may edit. Actions that share a description share
+ * a row, so the four arrow keys are one "Pan the view". `shift` marks a key that needs Shift
+ * (the table's "S" is Shift + S).
+ */
+export const KEY_ACTION_HELP: Readonly<
+  Record<KeyAction, { description: string; section: 'everywhere' | 'edit'; shift?: boolean }>
+> = {
+  'pan-up': { description: 'Pan the view', section: 'everywhere' },
+  'pan-down': { description: 'Pan the view', section: 'everywhere' },
+  'pan-left': { description: 'Pan the view', section: 'everywhere' },
+  'pan-right': { description: 'Pan the view', section: 'everywhere' },
+  'zoom-in': { description: 'Zoom in', section: 'everywhere' },
+  'zoom-out': { description: 'Zoom out', section: 'everywhere' },
+  'reset-view': { description: 'Reset the camera', section: 'everywhere' },
+  'frame-selection': { description: 'Fly to the selection', section: 'everywhere' },
+  'clear-selection': {
+    description: 'Clear the selection, or stop placing an object',
+    section: 'everywhere',
+  },
+  'cycle-labels': { description: 'Labels: hover only, group names, all', section: 'everywhere' },
+  'show-all-labels': { description: 'Show every label while held', section: 'everywhere' },
+  'toggle-spoilers': {
+    description: 'Show or hide potential spoilers',
+    section: 'everywhere',
+    shift: true,
+  },
+  'show-help': { description: 'Show these shortcuts', section: 'everywhere' },
+  'toggle-edit': { description: 'Turn edit mode on or off', section: 'edit' },
+  'add-object': { description: 'Add an object', section: 'edit' },
 };
 
 /** Edit-mode commands (ux.md §4), run by the editor actions (editor/actions/). */
@@ -214,6 +270,17 @@ interface EditKeyBinding {
   platform?: Platform;
   action: EditKeyAction;
 }
+
+/** Each edit command's line in the shortcut help (M4-T9), typed over every command. */
+export const EDIT_ACTION_DESCRIPTIONS: Readonly<Record<EditKeyAction, string>> = {
+  'select-all': 'Select everything in the view',
+  duplicate: 'Duplicate the selection',
+  delete: 'Delete the selection, after asking',
+  undo: 'Undo',
+  redo: 'Redo',
+  group: 'Group the selection',
+  ungroup: 'Take the selection out of its group in the active layer',
+};
 
 /** Edit-mode shortcuts with modifiers, which KEY_BINDINGS doesn't take. */
 export const EDIT_KEY_BINDINGS: readonly EditKeyBinding[] = [

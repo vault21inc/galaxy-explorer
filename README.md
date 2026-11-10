@@ -2,7 +2,7 @@
 
 A browser app for building and exploring galaxies from any fictional universe, starting with Warhammer 40,000. The owner builds each galaxy by hand in 3D: star systems, sectors, nebulae, planets, places and events. Visitors explore it at three levels: galaxy, system and orbit. Potential spoilers stay hidden until a visitor chooses to see them.
 
-**Status (10 November 2026):** the galaxy view can be explored and edited. You can place and edit systems, planets, stations, black holes and regions, organize them into nested groups shown as outlines, and draw routes between them. Milestones M0–M3 are done. M4 (groups, regions and routes) is nearly done: the `?` shortcut panel is next. The system and orbit views come in M5 and M6. Progress is tracked task by task in the [plan's status section](docs/plan/README.md#status).
+**Status (10 November 2026):** the galaxy view can be explored and edited. You can place and edit systems, planets, stations, black holes and regions, organize them into nested groups shown as outlines, and draw routes between them. Milestones M0–M3 are done. M4's tasks (groups, regions and routes) are done; its acceptance checks remain. The system and orbit views come in M5 and M6. Progress is tracked task by task in the [plan's status section](docs/plan/README.md#status).
 
 ## What you can do today
 
@@ -107,6 +107,7 @@ Run these once, in the repository folder.
 | Labels: hover only, group names, all | — | L cycles; hold Space for all |
 | Show or hide spoilers | the Spoilers button | Shift + S |
 | Quality, and how many galaxy stars to draw and how bright | the settings button (top right) | — |
+| Every shortcut and gesture | the Help button | ? |
 | Edit mode | the Edit button | E |
 
 In edit mode:
@@ -118,7 +119,7 @@ In edit mode:
 - ⌘/Ctrl + D duplicates, ⌘/Ctrl + G groups, and Delete deletes, after a confirmation that counts what goes with it;
 - ⌘/Ctrl + Z undoes and ⌘/Ctrl + Shift + Z redoes.
 
-The List button (always open in edit mode) shows everything in the view as a tree of layers, groups, routes and objects, usable with the keyboard alone. [ux.md](docs/plan/ux.md#4-keyboard-shortcuts) has the full list, including what's still to come.
+The List button (always open in edit mode) shows everything in the view as a tree of layers, groups, routes and objects, usable with the keyboard alone. Press `?` for every shortcut that works today; [ux.md](docs/plan/ux.md#4-keyboard-shortcuts) also lists what's still to come.
 
 ### Other pages
 

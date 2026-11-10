@@ -4,6 +4,7 @@ import { DropdownMenuItem } from '@/components/ui/dropdown-menu.tsx';
 import { containerName } from '@/lib/container-name.ts';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { LayersPopover } from '@/panels/layers/layers-popover.tsx';
+import { ShortcutHelp } from '@/panels/shortcut-help/shortcut-help.tsx';
 import { QualityPopover } from './quality-popover.tsx';
 import { EditToggle } from './edit-toggle.tsx';
 import { SpoilerToggle } from './spoiler-toggle.tsx';
@@ -12,7 +13,8 @@ import { useUniverseRoute } from './use-universe-route.ts';
 
 /**
  * The top bar (ux.md §1): the app's name, the universe and map switchers, the breadcrumbs and
- * the edit toggle (on a map), the spoiler toggle and the settings. M7 adds search.
+ * the edit toggle (on a map), the spoiler toggle, the shortcut help (M4-T9) and the settings. M7
+ * adds search.
  */
 export function TopBar() {
   const { universeSlug, mapSlug } = useParams();
@@ -32,6 +34,7 @@ export function TopBar() {
         {mapSlug !== undefined && <EditToggle />}
         {mapSlug !== undefined && <LayersPopover />}
         <SpoilerToggle />
+        <ShortcutHelp />
         <QualityPopover />
       </div>
     </header>
