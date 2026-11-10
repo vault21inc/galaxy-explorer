@@ -231,7 +231,7 @@ View endpoints return compact, render-ready projections: one request per view, w
 // GET /api/v1/maps/{mapId}/views/galaxy
 {
   "data": {
-    "map": { "id": "…", "namePlain": "M41", "galaxySettings": { … }, "underlay": { … } | null },
+    "map": { "id": "…", "universeId": "…", "namePlain": "M41", "galaxySettings": { … }, "underlay": { … } | null },
     "objects": [{
       "id": "…", "baseType": "system", "subtypeId": null,
       "namePlain": "Gudrun System", "nameSpoiler": false, "isSpoiler": false, "status": "published",

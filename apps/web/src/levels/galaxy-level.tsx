@@ -42,7 +42,9 @@ export default function GalaxyLevel({ subjectId }: { subjectId: string }) {
         preview={preview?.galaxySettings ?? null}
       />
       <GroupOutlines
+        universeId={view.data.map.universeId}
         groups={view.data.groups}
+        groupTypes={view.data.groupTypes}
         objects={view.data.objects}
         galaxyRadiusLy={
           resolveGalaxySettings(preview?.galaxySettings ?? view.data.map.galaxySettings).radiusLy

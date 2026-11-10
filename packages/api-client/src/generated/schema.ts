@@ -1879,6 +1879,8 @@ export interface components {
             map: {
                 /** Format: uuid */
                 id: string;
+                /** Format: uuid */
+                universeId: string;
                 namePlain: string;
                 nameSpoiler: boolean;
                 nameRedacted: string;
@@ -3332,6 +3334,8 @@ export interface components {
             map: {
                 /** Format: uuid */
                 id: string;
+                /** Format: uuid */
+                universeId: string;
                 namePlain: string;
                 nameSpoiler: boolean;
                 nameRedacted: string;

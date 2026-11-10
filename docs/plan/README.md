@@ -182,3 +182,4 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-10:** M4-T3 done: group outlines (hull, rounded offset, Chaikin smoothing) nest around their sub-groups, with fills and centred labels in each group's color, in 3 draw calls for any number of groups.
 - **2026-11-10:** M4-T4 done: group labels and outliner rows select groups; a group's panel shows its members, parent and child groups, and its members get rings; the outliner is a tree of layers, group types and groups.
 - **2026-11-10:** D-30: help. The `?` shortcut panel, generated from the bindings registry, is planned as M4-T9; guided reader and editor tours, the editor's in a practice universe, as M8-T10.
+- **2026-11-10:** M4-T5 done: the Layers popover shows or hides each layer and group type, remembered per browser, with a legend of the groups shown; outlines and their labels follow it.

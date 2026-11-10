@@ -143,6 +143,7 @@ export async function galaxyView(ex: Executor, mapId: string, viewer: Viewer): P
   return {
     map: {
       id: map.id,
+      universeId: map.universeId,
       ...named({
         name: mapRow?.name ?? map.name,
         namePlain: map.namePlain,

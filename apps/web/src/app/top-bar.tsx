@@ -3,6 +3,7 @@ import { useUniverses } from '@/api/containers.ts';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu.tsx';
 import { containerName } from '@/lib/container-name.ts';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
+import { LayersPopover } from '@/panels/layers/layers-popover.tsx';
 import { QualityPopover } from './quality-popover.tsx';
 import { EditToggle } from './edit-toggle.tsx';
 import { SpoilerToggle } from './spoiler-toggle.tsx';
@@ -29,6 +30,7 @@ export function TopBar() {
       {universeSlug !== undefined && <UniverseControls universeSlug={universeSlug} />}
       <div className="ml-auto flex items-center gap-1">
         {mapSlug !== undefined && <EditToggle />}
+        {mapSlug !== undefined && <LayersPopover />}
         <SpoilerToggle />
         <QualityPopover />
       </div>

@@ -136,8 +136,13 @@
   It is remembered per browser.
 - The label mode "groups" and outline rendering both respect visibility.
 
+**As built:**
+- The popover is `apps/web/src/panels/layers/layers-popover.tsx`, beside the spoiler toggle on map pages. Visibility lives in `state/layers.ts` (`ge.layers` in local storage): hidden layers per universe, since layer names are only unique within one, and hidden types by id. A hidden layer hides types added to it later too. The galaxy view's `map` now carries `universeId` for this.
+- Outlines are computed from every group and only then filtered, so a sector still encloses its sub-sectors when the sub-sector type is hidden. Labels follow the drawn outlines. The outliner still lists every group.
+- In edit mode each layer has a Grouping choice: the layer ⌘/Ctrl + Shift + G and "Remove from group" work in (M4-T2's active layer). It isn't remembered.
+
 **Done when:**
-- [ ] E2E: hiding the Political layer hides its outlines and labels, and the setting survives a reload.
+- [x] E2E: hiding the Political layer hides its outlines and labels, and the setting survives a reload.
 
 ### M4-T6 Regions
 

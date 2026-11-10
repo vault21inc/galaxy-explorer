@@ -97,6 +97,8 @@ export type ViewGroupType = z.infer<typeof ViewGroupType>;
 export const GalaxyView = z.object({
   map: z.object({
     id: Uuid,
+    /** Layer visibility is remembered per universe (M4-T5). */
+    universeId: Uuid,
     ...Named,
     galaxySettings: GalaxySettings,
     underlay: Underlay.nullable(),

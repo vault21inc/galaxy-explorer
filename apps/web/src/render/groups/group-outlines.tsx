@@ -1,4 +1,4 @@
-import type { SpoilerPolicy, ViewGroup, ViewObject } from '@ge/domain';
+import type { SpoilerPolicy, ViewGroup, ViewGroupType, ViewObject } from '@ge/domain';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo } from 'react';
 import {
@@ -11,6 +11,7 @@ import {
 } from 'three';
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
+import { isTypeShown, useLayerVisibility } from '@/state/layers.ts';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { worldPerPxAt1 } from '../screen-scale.ts';
 import {
@@ -29,22 +30,40 @@ import { buildFillBuffers, buildLineBuffers, type LineBuffers } from './outline-
  * solid lines and one for dashed, plus one for all the fills. Rebuilt only when the groups,
  * their members, positions or the spoiler policy change; the camera moving costs nothing here
  * but two uniform updates.
+ *
+ * Hidden layers and group types (M4-T5) aren't drawn, so their labels go too. The shapes are
+ * computed from every group first: a sector still encloses its sub-sectors when the sub-sector
+ * type is hidden.
  */
 export function GroupOutlines({
+  universeId,
   groups,
+  groupTypes,
   objects,
   galaxyRadiusLy,
 }: {
+  universeId: string;
   groups: readonly ViewGroup[];
+  groupTypes: readonly ViewGroupType[];
   objects: readonly ViewObject[];
   galaxyRadiusLy: number;
 }) {
   const policy: SpoilerPolicy = useSpoilerPolicy();
+  const visibility = useLayerVisibility(universeId);
   const invalidate = useThree((state) => state.invalidate);
-  const shapes = useMemo(
+  const allShapes = useMemo(
     () => groupShapes(groups, objects, policy, galaxyRadiusLy),
     [groups, objects, policy, galaxyRadiusLy],
   );
+  const shapes = useMemo(() => {
+    const types = new Map(groupTypes.map((type) => [type.id as string, type]));
+    const shown = new Set(
+      groups
+        .filter((group) => isTypeShown(types.get(group.groupTypeId), visibility))
+        .map((group) => group.id as string),
+    );
+    return allShapes.filter((shape) => shown.has(shape.id));
+  }, [allShapes, groups, groupTypes, visibility]);
 
   const solid = useMemo(
     () =>

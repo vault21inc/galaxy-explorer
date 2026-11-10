@@ -147,33 +147,38 @@ test.describe('the edit form (M3-T4)', () => {
     });
   });
 
-  test('a conflict offers reload or overwrite', async ({ page }) => {
+  // Each half starts from a freshly loaded form. Run back to back, the second rename could land
+  // while the form was still refetching after the first save, and the form would read the new
+  // version before saving: no conflict to test.
+  const conflictOn = async (page: Page) => {
     const s = await setUp(page.request);
     const panel = await openForm(page, s.url);
     const name = panel.getByLabel('Name', { exact: true });
-
     // Someone else renames it after the form has read version 1.
-    const rename = async (source: string, version: number) =>
-      page.request.patch(`/api/v1/objects/${s.id}`, { data: { version, name: plain(source) } });
-    expect((await rename('Elsewhere', 1)).ok()).toBe(true);
-
+    const response = await page.request.patch(`/api/v1/objects/${s.id}`, {
+      data: { version: 1, name: plain('Elsewhere') },
+    });
+    expect(response.ok()).toBe(true);
     await name.fill('Mine');
     await name.press('Enter');
     const dialog = page.getByRole('dialog', { name: 'Changed elsewhere' });
     await expect(dialog).toContainText('Elsewhere');
     await expect(dialog).toContainText('Mine');
+    return { s, name, dialog };
+  };
+
+  test('a conflict offers to overwrite', async ({ page }) => {
+    const { s, name, dialog } = await conflictOn(page);
     await dialog.getByRole('button', { name: 'Overwrite' }).click();
     await expect.poll(async () => (await objectOf(page.request, s.id)).namePlain).toBe('Mine');
     await expect(name).toHaveValue('Mine');
+  });
 
-    // Again, and this time keep theirs.
-    const { version } = await objectOf(page.request, s.id);
-    expect((await rename('Theirs', version)).ok()).toBe(true);
-    await name.fill('Mine again');
-    await name.press('Enter');
+  test('a conflict offers to reload theirs', async ({ page }) => {
+    const { s, name, dialog } = await conflictOn(page);
     await dialog.getByRole('button', { name: 'Reload' }).click();
     await expect(dialog).toBeHidden();
-    await expect(name).toHaveValue('Theirs');
-    expect((await objectOf(page.request, s.id)).namePlain).toBe('Theirs');
+    await expect(name).toHaveValue('Elsewhere');
+    expect((await objectOf(page.request, s.id)).namePlain).toBe('Elsewhere');
   });
 });
