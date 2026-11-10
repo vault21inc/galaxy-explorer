@@ -22,6 +22,7 @@ import { useSelection } from '@/state/selection.ts';
 import { gizmoBusy, setGizmo } from './gizmo-state.ts';
 import { moveDelta } from './snap.ts';
 import { useSaveMove, type Move } from './use-save-move.ts';
+import { useWorkPlaneLimit } from './use-work-plane-limit.ts';
 import { toNdc, workPlanePoint } from './work-plane.ts';
 
 /** The gizmo's size relative to its default, chosen to sit comfortably next to a body. */
@@ -40,6 +41,12 @@ const ndc = new Vector2();
  * During a drag only the move preview changes (scene-index.ts); releasing saves one batch.
  */
 export function MoveTool({ mapId }: { mapId: string }) {
+  // How far a drag may reach (work-plane.ts), current for the listeners below.
+  const limit = useWorkPlaneLimit(mapId);
+  const limitRef = useRef(limit);
+  useEffect(() => {
+    limitRef.current = limit;
+  }, [limit]);
   const editing = useEditor((state) => state.editing);
   const placing = useEditor((state) => state.placing);
   const selectedIds = useSelection((state) => state.selectedIds);
@@ -110,6 +117,7 @@ export function MoveTool({ mapId }: { mapId: string }) {
         get().camera,
         toNdc(event.clientX, event.clientY, canvas, ndc),
         heightY,
+        limitRef.current,
       );
       if (!from) return;
       drag = {
@@ -130,10 +138,12 @@ export function MoveTool({ mapId }: { mapId: string }) {
         if (!selection.selectedIds.includes(drag.grabbedId)) selection.select([drag.grabbedId]);
         drag.ids = useSelection.getState().selectedIds;
       }
+      // Past the limit, the preview stays where it last was.
       const to = workPlanePoint(
         get().camera,
         toNdc(event.clientX, event.clientY, canvas, ndc),
         drag.heightY,
+        limitRef.current,
       );
       const grabbed = savedObject(drag.grabbedId);
       if (!to || !grabbed) return;

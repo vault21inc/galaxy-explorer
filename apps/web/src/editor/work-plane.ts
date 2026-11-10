@@ -6,6 +6,11 @@ import { Plane, Ray, Vector2, Vector3, type Camera } from 'three';
  * crosses the plane is the point. Null when the ray runs parallel to the plane or away from it
  * (the camera looking up from below the horizon, say).
  *
+ * Null too when the crossing lies farther than `maxRadiusLy` from the galaxy's center. Near the
+ * horizon the ray meets the plane at a grazing angle, and a pixel of pointer movement there
+ * moves the crossing by thousands of light-years: a drag that strayed there once put an object
+ * 90 galaxy radii out. Beyond the limit the drag simply stops following.
+ *
  * `ndc` is the pointer in normalized device coordinates: −1 to 1 across the canvas, y up.
  */
 const WORK_PLANE = new Plane(new Vector3(0, 1, 0), 0);
@@ -16,6 +21,7 @@ export function workPlanePoint(
   camera: Camera,
   ndc: Vector2,
   heightY = 0,
+  maxRadiusLy = Infinity,
 ): [number, number, number] | null {
   // A plane is stored as normal · p + constant = 0, so y = h is constant −h.
   WORK_PLANE.constant = -heightY;
@@ -25,7 +31,8 @@ export function workPlanePoint(
   scratch.set(ndc.x, ndc.y, 0.5).unproject(camera);
   ray.direction.copy(scratch).sub(ray.origin).normalize();
   const hit = ray.intersectPlane(WORK_PLANE, scratch);
-  return hit ? [hit.x, heightY, hit.z] : null;
+  if (!hit || Math.hypot(hit.x, hit.z) > maxRadiusLy) return null;
+  return [hit.x, heightY, hit.z];
 }
 
 /** Page coordinates to normalized device coordinates over an element. */

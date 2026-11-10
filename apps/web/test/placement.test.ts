@@ -41,6 +41,18 @@ describe('workPlanePoint', () => {
     expect(point?.[0]).toBeGreaterThan(0);
   });
 
+  it('finds nothing farther out than the limit, as near the horizon', () => {
+    // Pointing just below the horizon: the crossing is far away.
+    const low = new PerspectiveCamera(45, 1.6, 1, 1e9);
+    low.position.set(0, 1_000, 0);
+    low.lookAt(0, 990, -1_000);
+    low.updateMatrixWorld();
+    const far = workPlanePoint(low, new Vector2(0, 0));
+    expect(Math.hypot(far?.[0] ?? 0, far?.[2] ?? 0)).toBeGreaterThan(50_000);
+    expect(workPlanePoint(low, new Vector2(0, 0), 0, 50_000)).toBeNull();
+    expect(workPlanePoint(camera, new Vector2(0, 0), 0, 50_000)).not.toBeNull();
+  });
+
   it('finds nothing when the pointer is above the horizon', () => {
     const level = new PerspectiveCamera(45, 1.6, 1, 1_000_000);
     level.position.set(0, 100, 0);

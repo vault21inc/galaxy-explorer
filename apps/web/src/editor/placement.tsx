@@ -12,6 +12,7 @@ import { optimisticObject, useCreateObject } from './use-create-object.ts';
 
 /** Renderers that can draw a ghost of their own look (D-28); others get a plain sphere. */
 const GHOST_RENDERERS = new Set(['system-glyphs', 'black-holes', 'icon-sprites']);
+import { useWorkPlaneLimit } from './use-work-plane-limit.ts';
 import { toNdc, workPlanePoint } from './work-plane.ts';
 
 /** Where the ghost is now, for the test hooks; null while it isn't shown. */
@@ -34,6 +35,12 @@ export function Placement({ mapId }: { mapId: string }) {
   const invalidate = useThree((state) => state.invalidate);
   const create = useCreateObject(mapId);
   const ghost = useRef<Object3D>(null);
+  // How far a placement may reach (work-plane.ts); past it the ghost hides.
+  const limit = useWorkPlaneLimit(mapId);
+  const limitRef = useRef(limit);
+  useEffect(() => {
+    limitRef.current = limit;
+  }, [limit]);
 
   useEffect(() => {
     if (!placing) return;
@@ -41,7 +48,12 @@ export function Placement({ mapId }: { mapId: string }) {
     let press: { x: number; y: number } | null = null;
 
     const pointAt = (event: PointerEvent) =>
-      workPlanePoint(get().camera, toNdc(event.clientX, event.clientY, canvas, ndc));
+      workPlanePoint(
+        get().camera,
+        toNdc(event.clientX, event.clientY, canvas, ndc),
+        0,
+        limitRef.current,
+      );
 
     const onPointerMove = (event: PointerEvent) => {
       const object = ghost.current;
