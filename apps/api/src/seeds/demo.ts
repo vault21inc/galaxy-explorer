@@ -3,6 +3,7 @@ import { rt } from '@ge/domain';
 import { eq } from 'drizzle-orm';
 import { setFact } from '../services/aspects/content.ts';
 import { setLocation, setMembers } from '../services/aspects/placement.ts';
+import { setWaypoints } from '../services/aspects/waypoints.ts';
 import {
   ensureAsset,
   ensureConfig,
@@ -345,6 +346,14 @@ export async function seedDemo(db: Database) {
       { objectId: erebus, isSpoiler: true },
       { objectId: fenwick },
     ]);
+
+    // ---- a route (M4-T7) -------------------------------------------------------------------------
+    const reachRun = await ensureEntity(tx, 'route', inMap, 'demo-reach-run', {
+      name: plain('Reach Run'),
+      summary: md('The old trade lane across the Reach.'),
+      style: { color: '#c8a24a', widthPx: 2, dashed: true },
+    });
+    await setWaypoints(tx, reachRun, { objectIds: [fenwick, brennan, aster, corvid] });
 
     // ---- places and events, one per location mode ------------------------------------------
     const hiveSpire = await ensureEntity(tx, 'place', inMap, 'demo-hive-spire', {

@@ -18,6 +18,7 @@ import { canvasState, frameTimeline, renderInfo, type RenderInfo } from './diagn
 import type { FrameStats } from './frame-timeline.ts';
 import { ringedIds } from './picking/selection-rings.tsx';
 import { stormTextureOf } from './regions/storm-discs.tsx';
+import { drawnRoute } from './routes/route-index.ts';
 import { drawnObject, type DrawnObject } from './scene-index.ts';
 import { worldPerPxAt1 } from './screen-scale.ts';
 
@@ -61,6 +62,19 @@ export interface GeTestHooks {
     widthPx: number;
     label: string;
     memberCount: number;
+    redacted: boolean;
+  } | null;
+  /**
+   * How a route is drawn (M4-T7), or null when it isn't: its waypoints in order, where its line
+   * runs now (shifted while a waypoint is dragged), its look and its label.
+   */
+  routeLine(id: string): {
+    waypointIds: string[];
+    points: [number, number, number][];
+    color: string;
+    dashed: boolean;
+    widthPx: number;
+    label: string;
     redacted: boolean;
   } | null;
   /** The keyboard convention the app detected: Cmd is primary on 'mac', Ctrl elsewhere. */
@@ -146,6 +160,15 @@ export function installTestHooks(): void {
         memberCount,
         redacted,
       };
+    },
+    routeLine: (id) => {
+      const shape = drawnRoute(id);
+      if (!shape) return null;
+      const { waypointIds, color, dashed, widthPx, label, redacted } = shape;
+      const points = (drawnObject(id)?.curve ?? shape.points).map(
+        ([x, y, z]): [number, number, number] => [x, y, z],
+      );
+      return { waypointIds: [...waypointIds], points, color, dashed, widthPx, label, redacted };
     },
     platform: () => detectPlatform(),
     selectedIds: () => [...useSelection.getState().selectedIds],

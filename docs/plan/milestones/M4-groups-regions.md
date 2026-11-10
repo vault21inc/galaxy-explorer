@@ -209,9 +209,21 @@
   - The panel lists the waypoints, which can be reordered by drag, and offers the style (color, width, dashed).
 - Rendering: merged line segments (rendering.md §6), with the label at the middle segment.
 
+**As built:**
+- **Adding the kind** took the registry entry (`route`, with a new `waypoints` aspect flag and `routeExtension` holding `style`), the `routes` and `route_waypoints` tables (migration 0003, with the kind checks regenerated), and the tables in `EXTENSION_TABLES`, `AUDITED_TABLES` and `CLONE_SPEC`. The contract suite, the generated form, OpenAPI tags and the batch docs picked it up from the registry.
+- **Waypoints:** `PUT /routes/{id}/waypoints` takes `{ objectIds }` in order (up to 200), `GET` lists them, `include=waypoints` adds them to a route, and the batch op `setWaypoints` takes the ids as `data`. Waypoints are top-level objects on the route's map. An object may come again later (a round trip) but not twice in a row. Deleting an object removes its waypoints.
+- **The galaxy view** sends `routes` with each one's style and waypoint ids. Waypoints a reader can't see (drafts) are left out, and the line goes straight past them.
+- **Drawing:** `RouteLines` draws every route in two calls, solid and dashed. Routes are drawn over outlines and under bodies, with the route's color and width or the defaults in `tuning.ts`. While objects are dragged, the segment ends at them are shifted in place, so the line follows the drag.
+- **Picking:** each route is in the scene index as a curve, picked within 6 px of its line. A body on the line wins; a region under it loses. Routes are left out of box selection, have no ring or gizmo, and a selected route rings its waypoints in its color.
+- **The label** is at the middle of the middle segment, styled like a group label, and shows in the `groups` and `all` label modes.
+- **The Route tool** (the toolbar's Route button) takes clicks on objects in order: ⌫ removes the last, Enter creates the route, Esc leaves. The waypoints so far are selected and joined by a white line. **Create route** in the context menu uses the selection order. A new route is named after its ends ("Aster to Corvid"), selected, and its name field focused.
+- **The panel** lists the waypoints, reordered by drag or Arrow Up and Down on a handle, and each can be removed; neighbours that become the same object merge. The style is in the generated form.
+- The outliner lists routes under **Routes**. A delete counts route waypoints in its impact.
+- The demo seed has one route, Reach Run, through four systems. The stress map has 50 routes of 4 to 8 systems each, every one hopping to the nearest system it hasn't visited.
+
 **Done when:**
-- [ ] The M1 generic contract suite covers `route` with **no new test code**, only the registry entry.
-- [ ] E2E: creating a route through four systems draws it; moving a waypoint system updates the line.
+- [x] The M1 generic contract suite covers `route` with **no new test code**, only the registry entry.
+- [x] E2E: creating a route through four systems draws it; moving a waypoint system updates the line.
 
 ### M4-T8 A look per kind of body in the galaxy view
 

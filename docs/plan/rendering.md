@@ -206,6 +206,11 @@ void main() {
 
 **Routes:** the same merged-line approach, from waypoint positions; dashed or solid per `RouteStyle`.
 
+- As built (M4-T7): `RouteLines` draws every route in two calls (solid and dashed), over the group outlines and under the bodies. A route of n waypoints is n − 1 segments; routes don't join.
+- While objects are dragged, the segment ends at them are shifted in place, so the lines follow the drag without a rebuild.
+- Each route is in the scene index as a curve through its waypoints, picked within 6 px of its line (bodies on it win, regions lose), and left out of box selection.
+- Its label sits at the middle of its middle segment, in the route's color, and shows in the label layer's `groups` and `all` modes. A selected route rings its waypoints.
+
 ## 7. System view
 
 - **Stars:**

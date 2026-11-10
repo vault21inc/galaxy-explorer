@@ -41,7 +41,9 @@ describe('demo seed', () => {
         event: 4,
         group: 3,
         place: 2,
+        route: 1,
       });
+      expect(await count(db, sql`select 1 from route_waypoints`)).toBe(4);
       const types = await db.execute<{ base_type: string; n: number }>(
         sql`select base_type, count(*)::int as n from celestial_objects group by base_type`,
       );
@@ -101,16 +103,18 @@ describe('demo seed', () => {
 
 describe('stress seed', () => {
   it(
-    'builds 5,000 objects in 300 spatial groups, deterministically, and changes nothing when run again',
+    'builds 5,000 objects in 300 spatial groups and 50 routes, deterministically, and changes nothing when run again',
     { timeout: 60_000 },
     () =>
       withTestDb(async (db) => {
         const result = await seedStress(db);
-        expect(result).toMatchObject({ objects: 5_000, groups: 300 });
+        expect(result).toMatchObject({ objects: 5_000, groups: 300, routes: 50 });
         expect(await count(db, sql`select 1 from celestial_objects where parent_id is null`)).toBe(
           5_000,
         );
         expect(await count(db, sql`select 1 from group_members`)).toBe(5_000);
+        expect(await count(db, sql`select 1 from routes`)).toBe(50);
+        expect(await count(db, sql`select 1 from route_waypoints`)).toBeGreaterThanOrEqual(200);
         // Spatial clusters: members of a group sit closer to each other than to the galaxy at large.
         const spread = await db.execute<{ within: number; overall: number }>(sql`
         select avg(within)::float as within, (select stddev(x)::float from celestial_objects) as overall

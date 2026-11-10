@@ -27,6 +27,13 @@ export const CLONE_SPEC: readonly CloneSpecEntry[] = [
     select: 'map_id',
   },
   { table: 'group_members', freshIds: [], remap: ['group_id', 'object_id'], select: 'map_id' },
+  { table: 'routes', freshIds: [], remap: ['entity_id'], select: 'map_id' },
+  {
+    table: 'route_waypoints',
+    freshIds: [],
+    remap: ['route_id', 'object_id'],
+    select: 'map_id',
+  },
   { table: 'events', freshIds: [], remap: ['entity_id'], select: 'map_id' },
   {
     table: 'entity_locations',

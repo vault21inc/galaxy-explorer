@@ -1,4 +1,4 @@
-import type { ViewGroup, ViewGroupType, ViewObject } from '@ge/domain';
+import type { ViewGroup, ViewGroupType, ViewObject, ViewRoute } from '@ge/domain';
 import { List } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import { useEditor } from '@/state/editor.ts';
@@ -13,10 +13,12 @@ export function OutlinerSlot({
   objects,
   groups,
   groupTypes,
+  routes,
 }: {
   objects: readonly ViewObject[];
   groups: readonly ViewGroup[];
   groupTypes: readonly ViewGroupType[];
+  routes: readonly ViewRoute[];
 }) {
   const editing = useEditor((state) => state.editing);
   const left = useSidePanel((state) => state.left);
@@ -25,7 +27,7 @@ export function OutlinerSlot({
 
   if (editing) {
     return left === null ? (
-      <Outliner objects={objects} groups={groups} groupTypes={groupTypes} />
+      <Outliner objects={objects} groups={groups} groupTypes={groupTypes} routes={routes} />
     ) : null;
   }
   if (listOpen) {
@@ -34,6 +36,7 @@ export function OutlinerSlot({
         objects={objects}
         groups={groups}
         groupTypes={groupTypes}
+        routes={routes}
         onClose={() => {
           setListOpen(false);
         }}

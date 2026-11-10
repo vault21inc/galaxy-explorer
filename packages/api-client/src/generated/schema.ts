@@ -318,6 +318,100 @@ export interface paths {
         patch: operations["groups.update"];
         trace?: never;
     };
+    "/api/v1/maps/{mapId}/routes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List routes
+         * @description A line through objects in order: a trade lane, warp route or campaign path (U6). Its waypoints, the objects it passes through, are set as an ordered list of object ids with PUT /routes/{id}/waypoints (or the batch op setWaypoints); they are top-level objects on the route's map, and one may come again later (a round trip) but not twice in a row. `style` holds the line color, width in pixels and dashing.
+         */
+        get: operations["routes.list"];
+        put?: never;
+        /**
+         * Create a route
+         * @description A line through objects in order: a trade lane, warp route or campaign path (U6). Its waypoints, the objects it passes through, are set as an ordered list of object ids with PUT /routes/{id}/waypoints (or the batch op setWaypoints); they are top-level objects on the route's map, and one may come again later (a round trip) but not twice in a row. `style` holds the line color, width in pixels and dashing.
+         *
+         *     Example body:
+         *
+         *     ```json
+         *     {
+         *       "name": {
+         *         "format": "plain",
+         *         "source": "Hydraphur Run"
+         *       },
+         *       "style": {
+         *         "color": "#c8a24a",
+         *         "widthPx": 2,
+         *         "dashed": true
+         *       }
+         *     }
+         *     ```
+         */
+        post: operations["routes.create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maps/{mapId}/routes/by-key/{externalKey}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Create or update a route by its external key
+         * @description A line through objects in order: a trade lane, warp route or campaign path (U6). Its waypoints, the objects it passes through, are set as an ordered list of object ids with PUT /routes/{id}/waypoints (or the batch op setWaypoints); they are top-level objects on the route's map, and one may come again later (a round trip) but not twice in a row. `style` holds the line color, width in pixels and dashing.
+         *
+         *     Idempotent: the first call creates the entity with this `externalKey`, later calls update it (no `version` needed). Use this from scripts and LLM agents so re-running them never duplicates content.
+         */
+        put: operations["routes.upsertByKey"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/routes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a route
+         * @description A line through objects in order: a trade lane, warp route or campaign path (U6). Its waypoints, the objects it passes through, are set as an ordered list of object ids with PUT /routes/{id}/waypoints (or the batch op setWaypoints); they are top-level objects on the route's map, and one may come again later (a round trip) but not twice in a row. `style` holds the line color, width in pixels and dashing.
+         */
+        get: operations["routes.get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a route
+         * @description A line through objects in order: a trade lane, warp route or campaign path (U6). Its waypoints, the objects it passes through, are set as an ordered list of object ids with PUT /routes/{id}/waypoints (or the batch op setWaypoints); they are top-level objects on the route's map, and one may come again later (a round trip) but not twice in a row. `style` holds the line color, width in pixels and dashing.
+         *
+         *     Deletes what depends on it too (data-model §11); revert the batch to undo.
+         */
+        delete: operations["routes.delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a route
+         * @description A line through objects in order: a trade lane, warp route or campaign path (U6). Its waypoints, the objects it passes through, are set as an ordered list of object ids with PUT /routes/{id}/waypoints (or the batch op setWaypoints); they are top-level objects on the route's map, and one may come again later (a round trip) but not twice in a row. `style` holds the line color, width in pixels and dashing.
+         *
+         *     Send only the fields to change, plus the `version` you read. A stale version returns 409 with the current record.
+         */
+        patch: operations["routes.update"];
+        trace?: never;
+    };
     "/api/v1/maps/{mapId}/places": {
         parameters: {
             query?: never;
@@ -1110,6 +1204,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/routes/{routeId}/waypoints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a route's waypoints
+         * @description A route's waypoints are the objects it passes through, in order: top-level objects on the route's map. An object may appear again later (a round trip) but not twice in a row. The change is one batch, returned in X-GE-Batch-Id.
+         */
+        get: operations["routes.waypoints.list"];
+        /**
+         * Replace a route's waypoints
+         * @description A route's waypoints are the objects it passes through, in order: top-level objects on the route's map. An object may appear again later (a round trip) but not twice in a row. The change is one batch, returned in X-GE-Batch-Id.
+         */
+        put: operations["routes.waypoints.set"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/batch": {
         parameters: {
             query?: never;
@@ -1123,7 +1241,7 @@ export interface paths {
          * Run many operations as one change
          * @description Runs up to 1000 operations in order, in one transaction and one change batch: all of them happen, or none do, and the whole request is one undo step.
          *
-         *     Operations: create, update, delete and upsert for any entity kind (`kind` is celestial_object, group, place, event or character; `data` is the same body as that kind's single-resource route), and setLocation, addMembers, removeMembers, setFacts, addLink and addRelation on an entity `id`.
+         *     Operations: create, update, delete and upsert for any entity kind (`kind` is celestial_object, group, route, place, event, character; `data` is the same body as that kind's single-resource route), and setLocation, addMembers, removeMembers, setWaypoints (a route's object ids in order), setFacts, addLink and addRelation on an entity `id`.
          *
          *     Refer to an entity created earlier in the same request as `"$op:N"` (N counts from 0), anywhere an id goes. For example, create a system, then planets with `"parentId": "$op:0"`.
          *
@@ -1575,7 +1693,7 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 /** @enum {string} */
-                kind: "celestial_object" | "group" | "place" | "event" | "character";
+                kind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
                 namePlain: string;
                 isSpoiler: boolean;
                 nameSpoiler: boolean;
@@ -1642,6 +1760,14 @@ export interface components {
             /** Format: uuid */
             objectId: string;
             isSpoiler?: boolean;
+        };
+        WaypointReadInput: {
+            seq: number;
+            /** Format: uuid */
+            objectId: string;
+        };
+        WaypointsWriteInput: {
+            objectIds: string[];
         };
         UniverseCreateInput: {
             slug: string;
@@ -1725,7 +1851,7 @@ export interface components {
             /** @constant */
             op: "create";
             /** @enum {string} */
-            kind: "celestial_object" | "group" | "place" | "event" | "character";
+            kind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
             /** @description An id, or "$op:N" for the entity created by operation N of this request. */
             mapId?: string;
             /** @description An id, or "$op:N" for the entity created by operation N of this request. */
@@ -1737,7 +1863,7 @@ export interface components {
             /** @constant */
             op: "update";
             /** @enum {string} */
-            kind: "celestial_object" | "group" | "place" | "event" | "character";
+            kind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
             /** @description An id, or "$op:N" for the entity created by operation N of this request. */
             id: string;
             version: number;
@@ -1748,7 +1874,7 @@ export interface components {
             /** @constant */
             op: "delete";
             /** @enum {string} */
-            kind: "celestial_object" | "group" | "place" | "event" | "character";
+            kind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
             /** @description An id, or "$op:N" for the entity created by operation N of this request. */
             id: string;
             version: number;
@@ -1756,7 +1882,7 @@ export interface components {
             /** @constant */
             op: "upsert";
             /** @enum {string} */
-            kind: "celestial_object" | "group" | "place" | "event" | "character";
+            kind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
             externalKey: string;
             /** @description An id, or "$op:N" for the entity created by operation N of this request. */
             mapId?: string;
@@ -1784,6 +1910,12 @@ export interface components {
         } | {
             /** @constant */
             op: "removeMembers";
+            /** @description An id, or "$op:N" for the entity created by operation N of this request. */
+            id: string;
+            data: (string)[];
+        } | {
+            /** @constant */
+            op: "setWaypoints";
             /** @description An id, or "$op:N" for the entity created by operation N of this request. */
             id: string;
             data: (string)[];
@@ -1905,7 +2037,19 @@ export interface components {
             };
             objects: components["schemas"]["GalaxyObjectInput"][];
             groups: components["schemas"]["ViewGroupInput"][];
-            routes: unknown[];
+            routes: {
+                /** Format: uuid */
+                id: string;
+                version: number;
+                namePlain: string;
+                nameSpoiler: boolean;
+                nameRedacted: string;
+                isSpoiler: boolean;
+                /** @enum {string} */
+                status: "draft" | "published";
+                style: components["schemas"]["RouteStyleInput"];
+                waypoints: string[];
+            }[];
             groupTypes: components["schemas"]["ViewGroupTypeInput"][];
         };
         GalaxyObjectInput: {
@@ -2161,6 +2305,52 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        RouteCreateInput: {
+            name: components["schemas"]["RichTextInput"];
+            summary?: components["schemas"]["RichTextInput"] | null;
+            description?: components["schemas"]["RichTextInput"] | null;
+            isSpoiler?: boolean;
+            /** @enum {string} */
+            status?: "draft" | "published";
+            externalKey?: string | null;
+            style?: components["schemas"]["RouteStyleInput"];
+        };
+        RouteUpdateInput: {
+            name?: components["schemas"]["RichTextInput"];
+            summary?: components["schemas"]["RichTextInput"] | null;
+            description?: components["schemas"]["RichTextInput"] | null;
+            isSpoiler?: boolean;
+            /** @enum {string} */
+            status?: "draft" | "published";
+            externalKey?: string | null;
+            style?: components["schemas"]["RouteStyleInput"];
+            version: number;
+        };
+        RouteReadInput: {
+            name: components["schemas"]["RichTextInput"];
+            summary: components["schemas"]["RichTextInput"] | null;
+            description: components["schemas"]["RichTextInput"] | null;
+            isSpoiler: boolean;
+            /** @enum {string} */
+            status: "draft" | "published";
+            externalKey: string | null;
+            style: components["schemas"]["RouteStyleInput"];
+            /** Format: uuid */
+            id: string;
+            /** @constant */
+            kind: "route";
+            /** Format: uuid */
+            universeId: string;
+            /** Format: uuid */
+            mapId: string;
+            namePlain: string;
+            clonedFromEntityId: string | null;
+            version: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         PlaceCreateInput: {
             name: components["schemas"]["RichTextInput"];
             summary?: components["schemas"]["RichTextInput"] | null;
@@ -2383,7 +2573,7 @@ export interface components {
             valueType: "text" | "number" | "date_text" | "url";
             unit?: string | null;
             /** @enum {string} */
-            appliesToKind: "celestial_object" | "group" | "place" | "event" | "character";
+            appliesToKind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
             appliesToBaseType?: ("system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker") | null;
             appliesToSubtypeId?: string | null;
             wikiAliases?: string[];
@@ -2396,7 +2586,7 @@ export interface components {
             valueType?: "text" | "number" | "date_text" | "url";
             unit?: string | null;
             /** @enum {string} */
-            appliesToKind?: "celestial_object" | "group" | "place" | "event" | "character";
+            appliesToKind?: "celestial_object" | "group" | "route" | "place" | "event" | "character";
             appliesToBaseType?: ("system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker") | null;
             appliesToSubtypeId?: string | null;
             wikiAliases?: string[];
@@ -2409,7 +2599,7 @@ export interface components {
             valueType: "text" | "number" | "date_text" | "url";
             unit: string | null;
             /** @enum {string} */
-            appliesToKind: "celestial_object" | "group" | "place" | "event" | "character";
+            appliesToKind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
             appliesToBaseType: ("system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker") | null;
             appliesToSubtypeId: string | null;
             wikiAliases: string[];
@@ -2513,6 +2703,13 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            waypoints?: (components["schemas"]["WaypointReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
         };
         GroupDetailInput: {
             name: components["schemas"]["RichTextInput"];
@@ -2584,6 +2781,87 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            waypoints?: (components["schemas"]["WaypointReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+        };
+        RouteDetailInput: {
+            name: components["schemas"]["RichTextInput"];
+            summary: components["schemas"]["RichTextInput"] | null;
+            description: components["schemas"]["RichTextInput"] | null;
+            isSpoiler: boolean;
+            /** @enum {string} */
+            status: "draft" | "published";
+            externalKey: string | null;
+            style: components["schemas"]["RouteStyleInput"];
+            /** Format: uuid */
+            id: string;
+            /** @constant */
+            kind: "route";
+            /** Format: uuid */
+            universeId: string;
+            /** Format: uuid */
+            mapId: string;
+            namePlain: string;
+            clonedFromEntityId: string | null;
+            version: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            facts?: (components["schemas"]["FactReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            images?: (components["schemas"]["ImageReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            links?: (components["schemas"]["LinkReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            relations?: (components["schemas"]["RelationReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            location?: (components["schemas"]["LocationReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            })) | null;
+            members?: (components["schemas"]["MemberReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            waypoints?: (components["schemas"]["WaypointReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
         };
         PlaceDetailInput: {
             name: components["schemas"]["RichTextInput"];
@@ -2644,6 +2922,13 @@ export interface components {
                 [key: string]: unknown;
             })) | null;
             members?: (components["schemas"]["MemberReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            waypoints?: (components["schemas"]["WaypointReadInput"] | ({
                 /** @constant */
                 redacted: true;
                 isSpoiler: boolean;
@@ -2719,6 +3004,13 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            waypoints?: (components["schemas"]["WaypointReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
         };
         CharacterDetailInput: {
             name: components["schemas"]["RichTextInput"];
@@ -2778,6 +3070,13 @@ export interface components {
                 [key: string]: unknown;
             })) | null;
             members?: (components["schemas"]["MemberReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            waypoints?: (components["schemas"]["WaypointReadInput"] | ({
                 /** @constant */
                 redacted: true;
                 isSpoiler: boolean;
@@ -3050,7 +3349,7 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 /** @enum {string} */
-                kind: "celestial_object" | "group" | "place" | "event" | "character";
+                kind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
                 namePlain: string;
                 isSpoiler: boolean;
                 nameSpoiler: boolean;
@@ -3117,6 +3416,14 @@ export interface components {
             /** Format: uuid */
             objectId: string;
             isSpoiler?: boolean;
+        };
+        WaypointRead: {
+            seq: number;
+            /** Format: uuid */
+            objectId: string;
+        };
+        WaypointsWrite: {
+            objectIds: string[];
         };
         UniverseCreate: {
             slug: string;
@@ -3200,7 +3507,7 @@ export interface components {
             /** @constant */
             op: "create";
             /** @enum {string} */
-            kind: "celestial_object" | "group" | "place" | "event" | "character";
+            kind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
             /** @description An id, or "$op:N" for the entity created by operation N of this request. */
             mapId?: string;
             /** @description An id, or "$op:N" for the entity created by operation N of this request. */
@@ -3212,7 +3519,7 @@ export interface components {
             /** @constant */
             op: "update";
             /** @enum {string} */
-            kind: "celestial_object" | "group" | "place" | "event" | "character";
+            kind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
             /** @description An id, or "$op:N" for the entity created by operation N of this request. */
             id: string;
             version: number;
@@ -3223,7 +3530,7 @@ export interface components {
             /** @constant */
             op: "delete";
             /** @enum {string} */
-            kind: "celestial_object" | "group" | "place" | "event" | "character";
+            kind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
             /** @description An id, or "$op:N" for the entity created by operation N of this request. */
             id: string;
             version: number;
@@ -3231,7 +3538,7 @@ export interface components {
             /** @constant */
             op: "upsert";
             /** @enum {string} */
-            kind: "celestial_object" | "group" | "place" | "event" | "character";
+            kind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
             externalKey: string;
             /** @description An id, or "$op:N" for the entity created by operation N of this request. */
             mapId?: string;
@@ -3259,6 +3566,12 @@ export interface components {
         } | {
             /** @constant */
             op: "removeMembers";
+            /** @description An id, or "$op:N" for the entity created by operation N of this request. */
+            id: string;
+            data: (string)[];
+        } | {
+            /** @constant */
+            op: "setWaypoints";
             /** @description An id, or "$op:N" for the entity created by operation N of this request. */
             id: string;
             data: (string)[];
@@ -3380,7 +3693,19 @@ export interface components {
             };
             objects: components["schemas"]["GalaxyObject"][];
             groups: components["schemas"]["ViewGroup"][];
-            routes: unknown[];
+            routes: {
+                /** Format: uuid */
+                id: string;
+                version: number;
+                namePlain: string;
+                nameSpoiler: boolean;
+                nameRedacted: string;
+                isSpoiler: boolean;
+                /** @enum {string} */
+                status: "draft" | "published";
+                style: components["schemas"]["RouteStyle"];
+                waypoints: string[];
+            }[];
             groupTypes: components["schemas"]["ViewGroupType"][];
         };
         GalaxyObject: {
@@ -3636,6 +3961,52 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        RouteCreate: {
+            name: components["schemas"]["RichText"];
+            summary?: components["schemas"]["RichText"] | null;
+            description?: components["schemas"]["RichText"] | null;
+            isSpoiler?: boolean;
+            /** @enum {string} */
+            status?: "draft" | "published";
+            externalKey?: string | null;
+            style?: components["schemas"]["RouteStyle"];
+        };
+        RouteUpdate: {
+            name?: components["schemas"]["RichText"];
+            summary?: components["schemas"]["RichText"] | null;
+            description?: components["schemas"]["RichText"] | null;
+            isSpoiler?: boolean;
+            /** @enum {string} */
+            status?: "draft" | "published";
+            externalKey?: string | null;
+            style?: components["schemas"]["RouteStyle"];
+            version: number;
+        };
+        RouteRead: {
+            name: components["schemas"]["RichText"];
+            summary: components["schemas"]["RichText"] | null;
+            description: components["schemas"]["RichText"] | null;
+            isSpoiler: boolean;
+            /** @enum {string} */
+            status: "draft" | "published";
+            externalKey: string | null;
+            style: components["schemas"]["RouteStyle"];
+            /** Format: uuid */
+            id: string;
+            /** @constant */
+            kind: "route";
+            /** Format: uuid */
+            universeId: string;
+            /** Format: uuid */
+            mapId: string;
+            namePlain: string;
+            clonedFromEntityId: string | null;
+            version: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         PlaceCreate: {
             name: components["schemas"]["RichText"];
             summary?: components["schemas"]["RichText"] | null;
@@ -3858,7 +4229,7 @@ export interface components {
             valueType: "text" | "number" | "date_text" | "url";
             unit?: string | null;
             /** @enum {string} */
-            appliesToKind: "celestial_object" | "group" | "place" | "event" | "character";
+            appliesToKind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
             appliesToBaseType?: ("system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker") | null;
             appliesToSubtypeId?: string | null;
             wikiAliases?: string[];
@@ -3871,7 +4242,7 @@ export interface components {
             valueType?: "text" | "number" | "date_text" | "url";
             unit?: string | null;
             /** @enum {string} */
-            appliesToKind?: "celestial_object" | "group" | "place" | "event" | "character";
+            appliesToKind?: "celestial_object" | "group" | "route" | "place" | "event" | "character";
             appliesToBaseType?: ("system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker") | null;
             appliesToSubtypeId?: string | null;
             wikiAliases?: string[];
@@ -3884,7 +4255,7 @@ export interface components {
             valueType: "text" | "number" | "date_text" | "url";
             unit: string | null;
             /** @enum {string} */
-            appliesToKind: "celestial_object" | "group" | "place" | "event" | "character";
+            appliesToKind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
             appliesToBaseType: ("system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker") | null;
             appliesToSubtypeId: string | null;
             wikiAliases: string[];
@@ -3988,6 +4359,13 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            waypoints?: (components["schemas"]["WaypointRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
         };
         GroupDetail: {
             name: components["schemas"]["RichText"];
@@ -4059,6 +4437,87 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            waypoints?: (components["schemas"]["WaypointRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+        };
+        RouteDetail: {
+            name: components["schemas"]["RichText"];
+            summary: components["schemas"]["RichText"] | null;
+            description: components["schemas"]["RichText"] | null;
+            isSpoiler: boolean;
+            /** @enum {string} */
+            status: "draft" | "published";
+            externalKey: string | null;
+            style: components["schemas"]["RouteStyle"];
+            /** Format: uuid */
+            id: string;
+            /** @constant */
+            kind: "route";
+            /** Format: uuid */
+            universeId: string;
+            /** Format: uuid */
+            mapId: string;
+            namePlain: string;
+            clonedFromEntityId: string | null;
+            version: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            facts?: (components["schemas"]["FactRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            images?: (components["schemas"]["ImageRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            links?: (components["schemas"]["LinkRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            relations?: (components["schemas"]["RelationRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            location?: (components["schemas"]["LocationRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            })) | null;
+            members?: (components["schemas"]["MemberRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            waypoints?: (components["schemas"]["WaypointRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
         };
         PlaceDetail: {
             name: components["schemas"]["RichText"];
@@ -4119,6 +4578,13 @@ export interface components {
                 [key: string]: unknown;
             })) | null;
             members?: (components["schemas"]["MemberRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            waypoints?: (components["schemas"]["WaypointRead"] | ({
                 /** @constant */
                 redacted: true;
                 isSpoiler: boolean;
@@ -4194,6 +4660,13 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            waypoints?: (components["schemas"]["WaypointRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
         };
         CharacterDetail: {
             name: components["schemas"]["RichText"];
@@ -4253,6 +4726,13 @@ export interface components {
                 [key: string]: unknown;
             })) | null;
             members?: (components["schemas"]["MemberRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            waypoints?: (components["schemas"]["WaypointRead"] | ({
                 /** @constant */
                 redacted: true;
                 isSpoiler: boolean;
@@ -5193,7 +5673,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints. */
                 include?: string;
             };
             header?: never;
@@ -5605,7 +6085,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints. */
                 include?: string;
             };
             header?: never;
@@ -5751,6 +6231,414 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["GroupDetail"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "routes.list": {
+        parameters: {
+            query?: {
+                /** @description The `nextCursor` of the previous page. */
+                cursor?: string;
+                /** @description Items per page (1–1,000). */
+                limit?: number;
+                /** @description `exclude` blacks out everything flagged as a potential spoiler before it leaves the server. */
+                spoilers?: "include" | "exclude";
+                /** @description Editors only: include unpublished drafts. */
+                includeDrafts?: "true" | "false";
+                /** @description Only entities with this status. */
+                status?: "draft" | "published";
+                /** @description Case-insensitive part of the plain-text name. */
+                q?: string;
+            };
+            header?: never;
+            path: {
+                mapId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["RouteDetail"][];
+                        nextCursor: string | null;
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "routes.create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mapId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RouteCreateInput"];
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["RouteDetail"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "routes.upsertByKey": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mapId: string;
+                externalKey: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RouteCreateInput"];
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["RouteDetail"];
+                    };
+                };
+            };
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["RouteDetail"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "routes.get": {
+        parameters: {
+            query?: {
+                /** @description `exclude` blacks out everything flagged as a potential spoiler before it leaves the server. */
+                spoilers?: "include" | "exclude";
+                /** @description Editors only: include unpublished drafts. */
+                includeDrafts?: "true" | "false";
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints. */
+                include?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["RouteDetail"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "routes.delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description The version you read; a stale one is a 409 conflict. */
+                    version: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "routes.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RouteUpdateInput"];
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["RouteDetail"];
                     };
                 };
             };
@@ -6013,7 +6901,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints. */
                 include?: string;
             };
             header?: never;
@@ -6423,7 +7311,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints. */
                 include?: string;
             };
             header?: never;
@@ -6831,7 +7719,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints. */
                 include?: string;
             };
             header?: never;
@@ -9596,6 +10484,130 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "routes.waypoints.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                routeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["WaypointRead"][];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "routes.waypoints.set": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                routeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WaypointsWriteInput"];
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["WaypointRead"][];
+                    };
+                };
             };
             /** @description The request is invalid. */
             400: {

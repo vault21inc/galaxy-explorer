@@ -6,12 +6,13 @@ import {
   type ViewGroup,
   type ViewGroupType,
   type ViewObject,
+  type ViewRoute,
 } from '@ge/domain';
 import { labelText } from '@/render/labels/label-text.ts';
 
 /**
  * The outliner's rows (M4-T4, ux.md §1): layer › group type › group › nested groups and member
- * objects, then the objects in no group. Pure, so it's unit-tested. Rows come in display order
+ * objects, then the routes (M4-T7), then the objects in no group. Pure, so it's unit-tested. Rows come in display order
  * (each parent before its children), each with its depth and parent, which is all the ARIA tree
  * needs: it's drawn flat, with `aria-level`, and collapsing a row hides its descendants.
  */
@@ -20,7 +21,7 @@ export interface OutlinerRow {
   key: string;
   /** The entity a click selects; null for layer and group type rows, which only expand. */
   id: string | null;
-  kind: 'layer' | 'type' | 'group' | 'object';
+  kind: 'layer' | 'type' | 'group' | 'route' | 'object';
   /** What's shown: the name, or a redaction bar for a hidden spoiler (as the 3D labels do). */
   text: string;
   hidden: boolean;
@@ -46,6 +47,10 @@ type Group = Pick<
   | 'nameRedacted'
 >;
 type GroupType = Pick<ViewGroupType, 'id' | 'name' | 'layer' | 'sortKey'>;
+type Route = Pick<
+  ViewRoute,
+  'id' | 'waypoints' | 'status' | 'isSpoiler' | 'namePlain' | 'nameSpoiler' | 'nameRedacted'
+>;
 
 const byText = (a: { text: string }, b: { text: string }) => a.text.localeCompare(b.text);
 
@@ -77,6 +82,7 @@ export function outlinerRows(
   groups: readonly Group[],
   groupTypes: readonly GroupType[],
   policy: SpoilerPolicy,
+  routes: readonly Route[] = [],
 ): OutlinerRow[] {
   const objectsById = new Map(objects.map((object) => [object.id as string, object]));
   const groupIds = new Set(groups.map((group) => group.id as string));
@@ -173,6 +179,40 @@ export function outlinerRows(
     // A layer with no groups yet says nothing: leave it out.
     if (typeCount === 0) rows.splice(layerIndex, 1);
     else if (layerRow) layerRow.childCount = typeCount;
+  }
+
+  // Then the routes, under a row of their own, each with its number of waypoints.
+  if (routes.length > 0) {
+    rows.push({
+      key: 'routes',
+      id: null,
+      kind: 'layer',
+      text: 'Routes',
+      hidden: false,
+      badge: '',
+      draft: false,
+      spoiler: false,
+      level: 1,
+      parentKey: null,
+      childCount: routes.length,
+    });
+    rows.push(
+      ...routes
+        .map((route): OutlinerRow => ({
+          key: `route:${route.id}`,
+          id: route.id,
+          kind: 'route',
+          text: labelText(route, policy),
+          hidden: isHidden(route.isSpoiler, spoilerKeys.record(route.id), policy),
+          badge: route.waypoints.length.toString(),
+          draft: route.status === 'draft',
+          spoiler: route.isSpoiler || route.nameSpoiler,
+          level: 2,
+          parentKey: 'routes',
+          childCount: 0,
+        }))
+        .toSorted(byText),
+    );
   }
 
   // Then every object in no group at all.

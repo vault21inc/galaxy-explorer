@@ -210,11 +210,13 @@ test.describe('selection commands (M3-T5)', () => {
 
     const menu = page.getByRole('menu', { name: 'Object actions' });
     // The group commands joined in M4-T2; this map has no group types, so no groups to add to.
+    // Create route (M4-T7) needs two selected objects.
     await expect(menu.getByRole('menuitem')).toHaveText([
       /Rename/,
       /Group…/,
       /Add to group/,
       /Remove from group/,
+      /Create route/,
       /Duplicate/,
       /Delete/,
     ]);

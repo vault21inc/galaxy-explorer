@@ -49,6 +49,8 @@ export function openApiComponents(): Record<string, z.ZodType> {
     LocationWrite: aspects.LocationWrite,
     MemberRead: aspects.MemberRead,
     MemberWrite: aspects.MemberWrite,
+    WaypointRead: aspects.WaypointRead,
+    WaypointsWrite: aspects.WaypointsWrite,
     UniverseCreate: containers.UniverseCreate,
     UniverseUpdate: containers.UniverseUpdate,
     UniverseRead: containers.UniverseRead,

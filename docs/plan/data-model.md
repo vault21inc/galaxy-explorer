@@ -169,6 +169,8 @@ create table route_waypoints (
   foreign key (route_id, map_id) references routes (entity_id, map_id) on delete cascade deferrable,
   foreign key (object_id, map_id) references celestial_objects (entity_id, map_id) on delete cascade deferrable
 );
+-- Rules (M4-T7): waypoints are top-level objects; an object may come again later in a route (a round
+-- trip) but not twice in a row. Deleting an object removes its waypoints and leaves a gap in seq.
 
 create table events (
   entity_id    uuid primary key,

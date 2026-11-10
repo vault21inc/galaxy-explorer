@@ -1,5 +1,5 @@
 import type { ConfigResource, EntityKind } from '@ge/domain';
-import { celestialObjects, events, objectGroups } from './entities.ts';
+import { celestialObjects, events, objectGroups, routes } from './entities.ts';
 import { eventCategories, fieldDefinitions, groupTypes, objectSubtypes } from './settings.ts';
 
 /**
@@ -10,6 +10,7 @@ import { eventCategories, fieldDefinitions, groupTypes, objectSubtypes } from '.
 export const EXTENSION_TABLES = {
   celestial_object: celestialObjects,
   group: objectGroups,
+  route: routes,
   place: null,
   event: events,
   character: null,

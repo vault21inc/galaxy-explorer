@@ -1,4 +1,4 @@
-import type { ViewGroup, ViewGroupType, ViewObject } from '@ge/domain';
+import type { ViewGroup, ViewGroupType, ViewObject, ViewRoute } from '@ge/domain';
 import { ChevronDown, ChevronRight, EyeOff, X } from 'lucide-react';
 import {
   useEffect,
@@ -42,11 +42,13 @@ export function Outliner({
   objects,
   groups = [],
   groupTypes = [],
+  routes = [],
   onClose,
 }: {
   objects: readonly ViewObject[];
   groups?: readonly ViewGroup[];
   groupTypes?: readonly ViewGroupType[];
+  routes?: readonly ViewRoute[];
   /** View mode's List button opened it; edit mode shows it always. */
   onClose?: () => void;
 }) {
@@ -60,8 +62,8 @@ export function Outliner({
   const rowRefs = useRef(new Map<string, HTMLElement>());
 
   const all = useMemo(
-    () => outlinerRows(objects, groups, groupTypes, policy),
-    [objects, groups, groupTypes, policy],
+    () => outlinerRows(objects, groups, groupTypes, policy, routes),
+    [objects, groups, groupTypes, policy, routes],
   );
   const isOpen = (row: OutlinerRow) => openByDefault(row) !== toggled.has(row.key);
   const needle = filter.trim().toLowerCase();
@@ -237,7 +239,7 @@ export function Outliner({
                   // they show (their name, badges and type), which axe checks match.
                   aria-label={
                     row.hidden
-                      ? `Hidden potential spoiler, ${row.kind === 'group' ? 'group' : row.badge}`
+                      ? `Hidden potential spoiler, ${row.kind === 'object' ? row.badge : row.kind}`
                       : undefined
                   }
                   tabIndex={row.key === tabRow ? 0 : -1}

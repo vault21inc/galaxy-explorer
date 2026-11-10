@@ -7,6 +7,8 @@ import { useSelection } from '@/state/selection.ts';
 import { clampedRadiusPx } from '../bodies/body-scale.ts';
 import { drawnGroups } from '../groups/group-index.ts';
 import type { GroupShape } from '../groups/group-shapes.ts';
+import { drawnRoutes } from '../routes/route-index.ts';
+import { routeLabelAnchor, type RouteShape } from '../routes/route-shapes.ts';
 import { projected } from '../picking/picking.ts';
 import { drawnObject, type DrawnObject } from '../scene-index.ts';
 import { worldPerPxAt1 } from '../screen-scale.ts';
@@ -93,6 +95,8 @@ function addCandidate(
   selected: ReadonlySet<string>,
   hoveredId: string | null,
 ): void {
+  // A route's label sits on its line instead (addRouteCandidate).
+  if (object.waypointIds) return;
   const slot = nextSlot();
   slot.id = object.id;
   slot.text = object.label;
@@ -125,6 +129,35 @@ function addGroupCandidate(state: RootState, group: GroupShape, selected: Readon
   slot.color = group.color;
 }
 
+/**
+ * A route's label (M4-T7), centred on the middle of its middle segment. It looks and acts like
+ * a group label (centred, in the line's color, a click selects it), so it takes that kind. The
+ * points come from the scene index, which shifts them while a waypoint is dragged.
+ */
+function addRouteCandidate(
+  state: RootState,
+  route: RouteShape,
+  selected: ReadonlySet<string>,
+  hoveredId: string | null,
+) {
+  const anchor = routeLabelAnchor(drawnObject(route.id)?.curve ?? route.points);
+  if (!anchor) return;
+  scratch.set(...anchor).project(state.camera);
+  if (scratch.z < -1 || scratch.z > 1) return;
+  const slot = nextSlot();
+  slot.id = route.id;
+  slot.text = route.label;
+  slot.kind = 'group';
+  slot.x = ((scratch.x + 1) / 2) * state.size.width;
+  slot.y = ((1 - scratch.y) / 2) * state.size.height;
+  slot.radiusPx = 0;
+  slot.selected = selected.has(route.id);
+  slot.hovered = route.id === hoveredId;
+  slot.labelPriority = 0;
+  slot.groupSize = route.points.length;
+  slot.color = route.color;
+}
+
 /** Chooses and places this frame's labels (rendering.md §11). Runs after each rendered frame. */
 function updateLabels(state: RootState): void {
   const started = performance.now();
@@ -153,6 +186,12 @@ function updateLabels(state: RootState): void {
   const allGroups = mode === 'groups' || mode === 'all';
   for (const group of drawnGroups()) {
     if (allGroups || selected.has(group.id)) addGroupCandidate(state, group, selected);
+  }
+  // Route names: like group names, or when hovered.
+  for (const route of drawnRoutes()) {
+    if (allGroups || selected.has(route.id) || route.id === hoveredId) {
+      addRouteCandidate(state, route, selected, hoveredId);
+    }
   }
 
   lastPlaced = solveLabels(

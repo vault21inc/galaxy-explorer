@@ -6,6 +6,7 @@ import { Placement } from '@/editor/placement.tsx';
 import { resolveGalaxySettings } from '@ge/domain';
 import { GalaxyBackground } from '@/render/galaxy/galaxy-background.tsx';
 import { GroupOutlines } from '@/render/groups/group-outlines.tsx';
+import { RouteLines } from '@/render/routes/route-lines.tsx';
 import { SelectionRings } from '@/render/picking/selection-rings.tsx';
 import { partitionByRenderer } from '@/render/registry.ts';
 import { UnderlayImage } from '@/render/galaxy/underlay.tsx';
@@ -13,6 +14,7 @@ import { useEditor } from '@/state/editor.ts';
 import { useGalaxyPreview } from '@/state/galaxy-preview.ts';
 import { useRegionPreview } from '@/state/region-preview.ts';
 import { RegionHandles } from '@/editor/region-handles.tsx';
+import { RouteTool } from '@/editor/route-tool.tsx';
 
 /**
  * The galaxy view (rendering.md §6), drawn inside the canvas: the background, then each
@@ -76,11 +78,13 @@ export default function GalaxyLevel({ subjectId }: { subjectId: string }) {
           resolveGalaxySettings(preview?.galaxySettings ?? view.data.map.galaxySettings).radiusLy
         }
       />
+      <RouteLines routes={view.data.routes} objects={view.data.objects} />
       {groups.map(({ renderer, objects }) => (
         <renderer.component key={renderer.name} objects={objects} />
       ))}
       <SelectionRings />
       {editing && <RegionHandles mapId={subjectId} objects={view.data.objects} />}
+      {editing && <RouteTool mapId={subjectId} objects={view.data.objects} />}
       <Placement mapId={subjectId} />
       <MoveTool mapId={subjectId} />
     </>

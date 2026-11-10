@@ -5,7 +5,7 @@ import { isClick } from '@/input/click.ts';
 import { detectPlatform } from '@/input/platform.ts';
 import { pickAt, projected } from '@/render/picking/picking.ts';
 import { gizmoBusy } from '@/editor/gizmo-state.ts';
-import { useEditor } from '@/state/editor.ts';
+import { toolOwnsClicks } from '@/state/editor.ts';
 import { useSelection } from '@/state/selection.ts';
 import { boxSelection, rectBetween } from './box.ts';
 
@@ -42,7 +42,7 @@ export function useBoxSelect(mode: Mode): void {
 
     const onPointerDown = (event: PointerEvent) => {
       if (event.button !== 0 || event.pointerType === 'touch') return;
-      if (useEditor.getState().placing || gizmoBusy()) return;
+      if (toolOwnsClicks() || gizmoBusy()) return;
       const hit = pickAt(get(), event.clientX, event.clientY);
       const target = hit === null ? 'empty' : 'object';
       const action = resolveBinding('left-drag', event, mode, target, platform);

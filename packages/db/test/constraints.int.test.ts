@@ -285,7 +285,7 @@ describe('entity scope', () => {
     withDb(async (db) => {
       const { universeId, mapId } = await insertUniverseWithMap(db);
       await expectPgError(
-        insertEntity(db, { universeId, mapId, kind: 'route' as 'event' }),
+        insertEntity(db, { universeId, mapId, kind: 'starship' as 'event' }),
         PG.check,
         'entities_kind_check',
       );

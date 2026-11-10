@@ -1,5 +1,5 @@
 import { resolveGalaxySettings, sampleGalaxyPosition, seededRandom } from '@ge/domain/galaxy';
-import { Matrix4, PerspectiveCamera } from 'three';
+import { Matrix4, PerspectiveCamera, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import { ScreenPicker } from '../src/render/picking/screen-picker.ts';
 import type { DrawnObject } from '../src/render/scene-index.ts';
@@ -106,6 +106,35 @@ describe('ScreenPicker', () => {
       bottom: HEIGHT / 2 + 5,
     });
     expect(hits.map((hit) => hit.id)).toEqual(['center']);
+  });
+
+  it('picks a route near its line, behind a body on it, and never in a box (M4-T7)', () => {
+    const route: DrawnObject = {
+      ...body('route', [0, 0, 0]),
+      renderer: 'route-lines',
+      minRadiusPx: 6,
+      maxRadiusPx: 6,
+      pickPriority: 0.5,
+      curve: [
+        [-20_000, 0, 0],
+        [20_000, 0, 0],
+      ],
+      waypointIds: ['west', 'east'],
+    };
+    const picker = built([route, body('east', [20_000, 0, 0])]);
+    const { viewProjection, viewport } = galaxyCamera();
+    // A point on the x axis on the page: applyMatrix4 divides by w, giving device coordinates.
+    const screen = (x: number) => {
+      const ndc = new Vector3(x, 0, 0).applyMatrix4(new Matrix4().fromArray(viewProjection));
+      return { x: ((ndc.x + 1) / 2) * viewport.widthPx, y: ((1 - ndc.y) / 2) * viewport.heightPx };
+    };
+    const middle = screen(0);
+    expect(picker.pick(middle.x, middle.y)?.id).toBe('route');
+    expect(picker.pick(middle.x, middle.y + 20)).toBeNull();
+    const end = screen(20_000);
+    expect(picker.pick(end.x, end.y)?.id).toBe('east');
+    const box = { left: 0, top: 0, right: WIDTH, bottom: HEIGHT };
+    expect(picker.pickRect(box).map((hit) => hit.id)).toEqual(['east']);
   });
 
   it('picks among 5,000 objects in well under 1 ms per pointer move', () => {

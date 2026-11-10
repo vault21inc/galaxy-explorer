@@ -20,6 +20,7 @@ import { useContextMenu } from '@/state/context-menu.ts';
  * selection, which the click has just set. "Enter" arrives with the system view (M5). The
  * group commands (M4-T2): Group… opens the dialog, "Add to group ▸" lists the map's groups by
  * type, and "Remove from group" takes the selection out of its group in the active layer.
+ * "Create route" (M4-T7) runs a route through two or more selected objects, in selection order.
  */
 export function ObjectContextMenu({
   selectedCount,
@@ -27,6 +28,8 @@ export function ObjectContextMenu({
   groupTypes,
   removeLabel,
   canRemove,
+  canRoute,
+  onCreateRoute,
   onRename,
   onGroup,
   onAddTo,
@@ -39,6 +42,8 @@ export function ObjectContextMenu({
   groupTypes: readonly ViewGroupType[];
   removeLabel: string;
   canRemove: boolean;
+  canRoute: boolean;
+  onCreateRoute: () => void;
   onRename: () => void;
   onGroup: () => void;
   onAddTo: (group: ViewGroup) => void;
@@ -137,6 +142,9 @@ export function ObjectContextMenu({
             {shift}
             {primary}G
           </DropdownMenuShortcut>
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled={!canRoute} onSelect={onCreateRoute}>
+          Create route
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onDuplicate}>

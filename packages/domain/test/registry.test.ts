@@ -95,8 +95,8 @@ describe('registry invariants', () => {
     }
   });
 
-  it('does not register routes yet (M4)', () => {
-    expect(kinds).not.toContain('route');
+  it('registers routes, the first kind added after M1 (M4-T7)', () => {
+    expect(kinds).toContain('route');
   });
 
   it('keeps literal types, so derived code is typed per kind', () => {

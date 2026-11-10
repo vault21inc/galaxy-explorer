@@ -396,6 +396,27 @@ export const GROUP_GAP_PX = 6;
 export const GROUP_FILL_RENDER_ORDER = 2.5;
 export const GROUP_LINE_RENDER_ORDER = 3.5;
 
+// ---- routes (rendering.md §6, M4-T7) ----------------------------------------------------------
+
+/** A route's look when its style doesn't set one (RouteStyle): a warm gold, 2 px, solid. */
+export const ROUTE_COLOR = '#d9b45a';
+export const ROUTE_LINE_WIDTH_PX = 2;
+/** Dashed routes: dash and gap length in CSS pixels, at the camera's target distance. */
+export const ROUTE_DASH_PX = 8;
+export const ROUTE_GAP_PX = 5;
+/** Routes are drawn over group outlines and under bodies, so a line never hides a system. */
+export const ROUTE_LINE_RENDER_ORDER = 3.75;
+/** How far from a route's line a click still picks it, in CSS pixels on either side. */
+export const ROUTE_PICK_HALF_WIDTH_PX = 6;
+/**
+ * A route beats a region (0) but not a body (1) under the pointer: near a system the click is
+ * the system's, and over a nebula a click on the line is the route's.
+ */
+export const ROUTE_PICK_PRIORITY = 0.5;
+/** The Route tool's line in progress (M4-T7): white, a little wider than a route. */
+export const ROUTE_DRAFT_COLOR = '#ffffff';
+export const ROUTE_DRAFT_WIDTH_PX = 2.5;
+
 // ---- region shapes (rendering.md §6, M4-T6, D-25) --------------------------------------------
 
 /**

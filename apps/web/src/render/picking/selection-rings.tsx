@@ -11,6 +11,7 @@ import { hoverStore } from '@/state/hover.ts';
 import { useSelection } from '@/state/selection.ts';
 import { hexToLinear } from '../color.ts';
 import { useDrawnGroups } from '../groups/group-index.ts';
+import { useDrawnRoutes } from '../routes/route-index.ts';
 import { drawnObject, onDrawnChange } from '../scene-index.ts';
 import { worldPerPxAt1 } from '../screen-scale.ts';
 import {
@@ -104,18 +105,22 @@ export function SelectionRings() {
   const invalidate = useThree((state) => state.invalidate);
   const selectedIds = useSelection((state) => state.selectedIds);
   const groups = useDrawnGroups();
-  // A selected group's members, each with its group's color (M4-T4). Selected objects keep the
-  // selection ring.
+  const routes = useDrawnRoutes();
+  // A selected group's members, each with its group's color (M4-T4), and a selected route's
+  // waypoints in its line's color (M4-T7). Selected objects keep the selection ring.
   const members = useMemo(() => {
     const selected = new Set(selectedIds);
     const rings = new Map<string, readonly number[]>();
-    for (const group of groups) {
-      if (!selected.has(group.id)) continue;
-      const color = [...hexToLinear(group.color), MEMBER_RING_OPACITY];
-      for (const id of group.memberIds) if (!selected.has(id)) rings.set(id, color);
+    for (const item of [
+      ...groups.map((group) => ({ id: group.id, color: group.color, ids: group.memberIds })),
+      ...routes.map((route) => ({ id: route.id, color: route.color, ids: route.waypointIds })),
+    ]) {
+      if (!selected.has(item.id)) continue;
+      const color = [...hexToLinear(item.color), MEMBER_RING_OPACITY];
+      for (const id of item.ids) if (!selected.has(id)) rings.set(id, color);
     }
     return rings;
-  }, [groups, selectedIds]);
+  }, [groups, routes, selectedIds]);
   const needed = selectedIds.length + members.size + 1;
   const capacity = Math.max(INITIAL_CAPACITY, 2 ** Math.ceil(Math.log2(needed)));
   // Rebuilt only when the selection outgrows it, so ordinary changes just rewrite numbers.
@@ -148,7 +153,8 @@ export function SelectionRings() {
       const written: string[] = [];
       for (const id of ids) {
         const object = drawnObject(id);
-        if (!object || count >= centers.count) continue;
+        // A route has no ring of its own; its waypoints are ringed instead.
+        if (!object || object.waypointIds || count >= centers.count) continue;
         centers.setXYZ(count, ...object.center);
         radii.setX(count, object.radius);
         clamps.setXY(count, object.minRadiusPx, object.maxRadiusPx);

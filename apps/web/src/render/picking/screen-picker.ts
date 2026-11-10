@@ -171,7 +171,10 @@ export class ScreenPicker {
     return best < 0 ? null : this.#objectAt(best);
   }
 
-  /** Objects whose projected center is inside the rectangle (box selection, M3). */
+  /**
+   * Objects whose projected center is inside the rectangle (box selection, M3). Routes aren't
+   * objects and are left out: a box selects what to group or route through.
+   */
   pickRect(rect: ScreenRect): DrawnObject[] {
     const hits: DrawnObject[] = [];
     for (let slot = 0; slot < this.#count; slot++) {
@@ -179,7 +182,7 @@ export class ScreenPicker {
       const y = this.#y[slot] ?? 0;
       if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) continue;
       const object = this.#objectAt(slot);
-      if (object) hits.push(object);
+      if (object && !object.waypointIds) hits.push(object);
     }
     return hits;
   }

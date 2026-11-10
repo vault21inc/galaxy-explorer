@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { objectTypes } from '@ge/domain';
 import { useEditor } from '@/state/editor.ts';
 import { useGroupDialog } from '@/state/group-dialog.ts';
+import { useRouteDraft } from '@/state/route-draft.ts';
 import { useSelection } from '@/state/selection.ts';
 import { useSidePanel } from '@/state/side-panel.ts';
 import { AddMenu } from './add-menu.tsx';
@@ -31,7 +32,7 @@ interface Tool {
 const TOOLS: readonly Tool[] = [
   { label: 'Select', icon: MousePointer2, active: true },
   { label: 'Group', icon: Group, keys: '⌘/Ctrl + G' },
-  { label: 'Route', icon: Route, arrives: 'M4' },
+  { label: 'Route', icon: Route },
   { label: 'Map', icon: MapIcon },
   { label: 'Undo', icon: Undo2, keys: '⌘/Ctrl + Z' },
   { label: 'Redo', icon: Redo2, keys: '⌘/Ctrl + Shift + Z' },
@@ -45,6 +46,8 @@ const TOOLS: readonly Tool[] = [
 export function EditToolbar() {
   const editing = useEditor((state) => state.editing);
   const placing = useEditor((state) => state.placing);
+  const routing = useEditor((state) => state.routing);
+  const stops = useRouteDraft((state) => state.waypoints.length);
   const gridSize = useEditor((state) => state.gridSize);
   const setGridSize = useEditor((state) => state.setGridSize);
   const history = useUndoRedo();
@@ -58,6 +61,16 @@ export function EditToolbar() {
       case 'Group':
         // The dialog groups the selected objects (M4-T2).
         return { onClick: useGroupDialog.getState().show, disabled: !hasSelection };
+      case 'Route':
+        // Click objects in order (M4-T7); the tool's keys are in its status line.
+        return {
+          onClick: () => {
+            const editor = useEditor.getState();
+            if (editor.routing) editor.stopRouting();
+            else editor.startRouting();
+          },
+          pressed: routing,
+        };
       case 'Undo':
         return { onClick: history.undo, disabled: !history.canUndo };
       case 'Redo':
@@ -88,7 +101,7 @@ export function EditToolbar() {
     >
       {TOOLS.map(({ label, icon: Icon, arrives, active, keys }) => {
         const { onClick, disabled = false, pressed } = behaviour(label);
-        const on = (active === true && !placing) || pressed === true;
+        const on = (active === true && !placing && !routing) || pressed === true;
         return (
           <span key={label} className="contents">
             <Button
@@ -126,6 +139,15 @@ export function EditToolbar() {
           }}
         />
       </label>
+      {routing && (
+        <p role="status" className="px-2 text-xs whitespace-nowrap text-muted-foreground">
+          {stops === 0
+            ? 'Click objects in order'
+            : `${stops.toString()} ${stops === 1 ? 'stop' : 'stops'}`}
+          {' · ⌫ removes last · '}
+          {stops >= 2 ? 'Enter finishes · ' : ''}Esc cancels
+        </p>
+      )}
       {placing && (
         <p role="status" className="px-2 text-xs text-muted-foreground">
           Click to place a {objectTypes[placing].label.toLowerCase()} · Esc cancels

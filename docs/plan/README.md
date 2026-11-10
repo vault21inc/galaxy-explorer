@@ -184,3 +184,4 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-10:** D-30: help. The `?` shortcut panel, generated from the bindings registry, is planned as M4-T9; guided reader and editor tours, the editor's in a practice universe, as M8-T10.
 - **2026-11-10:** M4-T5 done: the Layers popover shows or hides each layer and group type, remembered per browser, with a legend of the groups shown; outlines and their labels follow it.
 - **2026-11-10:** M4-T6 done: regions take four shapes (round and flat clouds, storms seen from above with a baked or uploaded picture, and rifts along a curve), edited with a radius handle and rift point handles on the map; all regions draw in three calls.
+- **2026-11-10:** M4-T7 done: routes, the first kind added after M1 (a registry entry and a migration): the Route tool, Create route from a selection, a waypoints panel with drag reordering, and lines that follow a dragged waypoint, in two draw calls for any number of routes.

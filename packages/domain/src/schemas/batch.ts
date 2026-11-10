@@ -53,6 +53,12 @@ export const BatchOperation = z.discriminatedUnion('op', [
     id: Ref,
     data: z.array(Ref).min(1).max(MAX_BATCH_OPERATIONS),
   }),
+  /** A route's waypoints, replaced by these objects in order (M4-T7). */
+  z.strictObject({
+    op: z.literal('setWaypoints'),
+    id: Ref,
+    data: z.array(Ref).max(MAX_BATCH_OPERATIONS),
+  }),
   z.strictObject({ op: z.literal('setFacts'), id: Ref, data: z.array(Data).min(1).max(100) }),
   z.strictObject({ op: z.literal('addLink'), id: Ref, data: Data }),
   z.strictObject({ op: z.literal('addRelation'), id: Ref, data: Data }),

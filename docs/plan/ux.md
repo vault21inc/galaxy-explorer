@@ -124,6 +124,12 @@ Shortcuts are ignored while focus is in a text field. `?` opens this list as an 
   2. In the dialog, pick a group type (from universe settings), a name, an outline color (defaulting to the type's color) and an optional parent group.
   3. An object already in a group of that type triggers "Move N objects from Helican to Ophidian?"
   4. The new group is selected. Adding objects to it later works by drag-select, then "Add to group ▸" in the context menu.
+- **Routes** (M4-T7):
+  - The **Route tool** in the toolbar: click objects in order; ⌫ removes the last, Enter creates the route (two waypoints at least), Esc leaves the tool. The waypoints so far are selected, joined by a white line.
+  - **Create route** in the context menu runs a route through the selected objects, in the order they were selected.
+  - The new route is named after its ends ("Aster to Corvid"), selected, and its name field takes focus.
+  - Its panel lists the waypoints; in edit mode, drag a handle (or Arrow Up and Down on it) to reorder, and Remove takes one out. The style (color, width, dashed) is in its form.
+  - A click on the line selects the route. Routes are listed in the outliner under Routes.
 - **Deleting:** a confirmation that lists what goes with it, for example "Delete Gudrun System? 7 child objects, 3 group memberships; 4 events become unplaced". Deletes can be undone.
 - **Undo and redo:** ⌘/Ctrl + Z and the shift variant walk this session's batches. The History panel lists all batches, including those from other sessions and API tokens, with actor, description and time, each with a Revert button. A conflict explains which item changed since.
 - **Duplicating** (⌘/Ctrl + D) copies the selected objects 20 units to the right, including their appearance and facts but not their relations or memberships.

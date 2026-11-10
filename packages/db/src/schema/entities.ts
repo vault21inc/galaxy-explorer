@@ -8,6 +8,7 @@ import {
   type Appearance,
   type GroupStyle,
   type RichText,
+  type RouteStyle,
 } from '@ge/domain';
 import { sql } from 'drizzle-orm';
 import {
@@ -15,6 +16,7 @@ import {
   check,
   doublePrecision,
   index,
+  integer,
   jsonb,
   numeric,
   pgTable,
@@ -129,6 +131,35 @@ export const groupMembers = pgTable(
     primaryKey({ name: 'group_members_pk', columns: [t.groupId, t.objectId] }),
     // An object is in at most one group of each type.
     unique('group_members_one_group_per_type_uq').on(t.objectId, t.groupTypeId),
+  ],
+);
+
+/** A line through objects in order (M4-T7, data-model §3.3). Its look is `style`. */
+export const routes = pgTable(
+  'routes',
+  {
+    ...extensionKey(),
+    style: jsonb().$type<RouteStyle>().notNull().default({}),
+  },
+  (t) => [unique('routes_entity_map_uq').on(t.entityId, t.mapId)],
+);
+
+/**
+ * A route's waypoints: the objects it passes through, by `seq` from 0. The same object may
+ * appear more than once (a route that doubles back). Deleting an object removes its waypoints.
+ */
+export const routeWaypoints = pgTable(
+  'route_waypoints',
+  {
+    routeId: uuid().notNull(),
+    seq: integer().notNull(),
+    mapId: uuid().notNull(),
+    objectId: uuid().notNull(),
+  },
+  (t) => [
+    primaryKey({ name: 'route_waypoints_pk', columns: [t.routeId, t.seq] }),
+    check('route_waypoints_seq_check', sql`${t.seq} >= 0`),
+    index('route_waypoints_object_idx').on(t.objectId),
   ],
 );
 

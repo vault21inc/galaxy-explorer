@@ -67,10 +67,11 @@ test.describe('labels (rendering.md §11, ux.md §7)', () => {
 
   test('L cycles hover → groups → all, and the mode is remembered', async ({ page }) => {
     await openDemo(page);
-    await page.keyboard.press('l'); // groups: the demo's sector and its two sub-sectors (M4-T3)
+    // groups: the demo's sector and its two sub-sectors (M4-T3), and its route (M4-T7)
+    await page.keyboard.press('l');
     await expect
       .poll(async () => (await labels(page)).map((label) => label.text).sort())
-      .toEqual(['Inner Reach', 'Outer Reach', 'Vela Sector']);
+      .toEqual(['Inner Reach', 'Outer Reach', 'Reach Run', 'Vela Sector']);
     await page.keyboard.press('l'); // all
     await expect.poll(async () => (await labels(page)).length).toBeGreaterThan(5);
 

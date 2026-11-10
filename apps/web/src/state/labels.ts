@@ -4,8 +4,8 @@ import { safeStorage } from '@/lib/safe-storage.ts';
 
 /**
  * Label modes (ux.md §7): `hover` shows the hovered and selected items only (the default);
- * `groups` adds group names; `all` adds every visible object, decluttered. L cycles them, and
- * holding Space shows all while held.
+ * `groups` adds group and route names (M4-T7); `all` adds every visible object, decluttered. L
+ * cycles them, and holding Space shows all while held.
  */
 export const LABEL_MODES = ['hover', 'groups', 'all'] as const;
 export type LabelMode = (typeof LABEL_MODES)[number];

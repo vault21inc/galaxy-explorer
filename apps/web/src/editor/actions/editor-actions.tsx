@@ -1,4 +1,4 @@
-import type { ViewGroup, ViewGroupType, ViewObject } from '@ge/domain';
+import type { ViewGroup, ViewGroupType, ViewObject, ViewRoute } from '@ge/domain';
 import { useEffect, useRef } from 'react';
 import { resolveEditKey, type EditKeyAction } from '@/input/bindings.ts';
 import { detectPlatform } from '@/input/platform.ts';
@@ -13,6 +13,7 @@ import { useUndoRedo } from '../use-undo.ts';
 import { DeleteDialog } from './delete-dialog.tsx';
 import { activeLayerOf, removeFromGroupsRequest } from './group.ts';
 import { ObjectContextMenu } from './object-context-menu.tsx';
+import { useCreateRoute } from './use-create-route.ts';
 import { useDeleteObjects } from './use-delete-objects.ts';
 import { useDuplicateObjects } from './use-duplicate-objects.ts';
 import { useGroupActions } from './use-group-actions.ts';
@@ -22,7 +23,8 @@ import { useGroupActions } from './use-group-actions.ts';
  * selects everything in the view, ⌘/Ctrl + D duplicates, Delete or Backspace deletes after a
  * confirmation that counts what goes with it (M3-T5); ⌘/Ctrl + Z undoes and ⌘/Ctrl + Shift + Z
  * (or Ctrl + Y) redoes (M3-T6). ⌘/Ctrl + G groups the selection in a dialog, and
- * ⌘/Ctrl + Shift + G takes it out of its group in the active layer (M4-T2). In a text field
+ * ⌘/Ctrl + Shift + G takes it out of its group in the active layer (M4-T2). "Create route"
+ * draws a route through the selected objects in the order they were selected (M4-T7). In a text field
  * these keys are the field's own. Rendered by the map page, which has the view's objects and
  * groups (with the versions a delete needs).
  */
@@ -32,12 +34,14 @@ export function EditorActions({
   objects,
   groups = [],
   groupTypes = [],
+  routes = [],
 }: {
   mapId: string;
   universeSlug: string;
   objects: readonly ViewObject[];
   groups?: readonly ViewGroup[];
   groupTypes?: readonly ViewGroupType[];
+  routes?: readonly ViewRoute[];
 }) {
   const editing = useEditor((state) => state.editing);
   const selectedIds = useSelection((state) => state.selectedIds);
@@ -45,6 +49,7 @@ export function EditorActions({
   const duplicate = useDuplicateObjects(mapId);
   const history = useUndoRedo();
   const groupActions = useGroupActions(groups, groupTypes);
+  const createRoute = useCreateRoute(mapId, objects);
   const activeLayer = useLayers((state) => state.activeLayer);
 
   const selected = () => {
@@ -55,7 +60,16 @@ export function EditorActions({
     const ids = new Set(useSelection.getState().selectedIds);
     return groups.filter((group) => ids.has(group.id));
   };
+  const selectedRoutes = () => {
+    const ids = new Set(useSelection.getState().selectedIds);
+    return routes.filter((route) => ids.has(route.id));
+  };
   const selectedObjectIds = () => selected().map((object) => object.id);
+  /** The selected objects in the order they were selected, for a route through them. */
+  const selectionOrder = () => {
+    const ids = new Set(objects.map((object) => object.id as string));
+    return useSelection.getState().selectedIds.filter((id) => ids.has(id));
+  };
   const perform = (action: EditKeyAction) => {
     switch (action) {
       case 'select-all':
@@ -68,6 +82,7 @@ export function EditorActions({
         remove.request([
           ...selected(),
           ...selectedGroups().map((group) => ({ ...group, kind: 'group' as const })),
+          ...selectedRoutes().map((route) => ({ ...route, kind: 'route' as const })),
         ]);
         return;
       case 'group':
@@ -143,6 +158,10 @@ export function EditorActions({
           groupTypes={groupTypes}
           removeLabel={layer ? `Remove from ${layer.toLowerCase()} group` : 'Remove from group'}
           canRemove={canRemove}
+          canRoute={selectedIdList.length >= 2}
+          onCreateRoute={() => {
+            void createRoute(selectionOrder());
+          }}
           onGroup={() => {
             perform('group');
           }}

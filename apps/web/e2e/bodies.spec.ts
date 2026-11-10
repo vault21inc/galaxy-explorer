@@ -50,9 +50,10 @@ test.describe('bodies and regions in the galaxy view', () => {
 
     // Four for the background (galaxy.spec.ts), then one each for the systems, icons, black
     // holes and regions (M4-T8); for its 300 groups one for the fills and one for the solid
-    // outlines (M4-T3); and for its 5 storms and 3 rifts one each (M4-T6).
+    // outlines (M4-T3); for its 5 storms and 3 rifts one each (M4-T6); and for its 50 routes
+    // one for the solid lines and one for the dashed (M4-T7).
     const info = await page.evaluate(() => window.__GE_TEST__?.renderInfo());
-    expect(info?.calls).toBe(12);
+    expect(info?.calls).toBe(14);
   });
 
   test('zoomed all the way out, every body is still at least the minimum size', async ({

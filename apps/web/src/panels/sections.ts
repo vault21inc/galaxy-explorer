@@ -9,6 +9,7 @@ import { MembersSection } from './sections/members-section.tsx';
 import { NestingSection } from './sections/nesting-section.tsx';
 import { RelationsSection } from './sections/relations-section.tsx';
 import { textSection } from './sections/text-section.tsx';
+import { WaypointsSection } from './sections/waypoints-section.tsx';
 import type { SectionProps } from './types.ts';
 
 /**
@@ -46,6 +47,12 @@ export const PANEL_SECTIONS: readonly SectionDef[] = [
     component: MembersSection,
     include: 'members',
     appliesTo: (kind) => kind.aspects.members,
+  },
+  {
+    id: 'waypoints',
+    component: WaypointsSection,
+    include: 'waypoints',
+    appliesTo: (kind) => kind.aspects.waypoints,
   },
   // Groups nest (data-model §3.3): where this one sits, and what sits inside it.
   { id: 'nesting', component: NestingSection, appliesTo: (kind) => kind.aspects.members },

@@ -117,7 +117,7 @@ describe('configSchemasFor (config resources)', () => {
     expect(fields.create.safeParse(valid).success).toBe(true);
     expect(fields.create.safeParse({ ...valid, key: 'Population' }).success).toBe(false);
     expect(fields.create.safeParse({ ...valid, valueType: 'boolean' }).success).toBe(false);
-    expect(fields.create.safeParse({ ...valid, appliesToKind: 'route' }).success).toBe(false);
+    expect(fields.create.safeParse({ ...valid, appliesToKind: 'starship' }).success).toBe(false);
   });
 });
 

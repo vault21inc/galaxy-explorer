@@ -96,6 +96,7 @@ export function MapPage() {
         objects={view.data.objects}
         groups={view.data.groups}
         groupTypes={view.data.groupTypes}
+        routes={view.data.routes}
       />
       <EditToolbar />
       {mapId && (
@@ -105,6 +106,7 @@ export function MapPage() {
           objects={view.data.objects}
           groups={view.data.groups}
           groupTypes={view.data.groupTypes}
+          routes={view.data.routes}
         />
       )}
       {editing && <HistoryPanel universeId={route.universe.id} />}
@@ -119,6 +121,7 @@ export function MapPage() {
             universeId={route.universe.id}
             objects={view.data.objects}
             groups={view.data.groups}
+            routes={view.data.routes}
           />
         </Suspense>
       )}

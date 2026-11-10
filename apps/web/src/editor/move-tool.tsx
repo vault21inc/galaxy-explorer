@@ -2,8 +2,9 @@ import { TransformControls } from '@react-three/drei';
 import type { GalaxyView } from '@ge/domain';
 import { useThree } from '@react-three/fiber';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Vector2, type Group } from 'three';
+import { useViewPayload } from '@/api/hooks.ts';
 import { queryKeys } from '@/api/keys.ts';
 import { useReadOptions } from '@/api/read-options.ts';
 import { resolveBinding } from '@/input/bindings.ts';
@@ -48,12 +49,20 @@ export function MoveTool({ mapId }: { mapId: string }) {
     limitRef.current = limit;
   }, [limit]);
   const editing = useEditor((state) => state.editing);
-  const placing = useEditor((state) => state.placing);
-  const selectedIds = useSelection((state) => state.selectedIds);
+  // Placing an object or drawing a route (M4-T7) owns the canvas: no drags, no gizmo.
+  const placing = useEditor((state) => state.placing !== null || state.routing);
+  const selection = useSelection((state) => state.selectedIds);
   const get = useThree((state) => state.get);
   const invalidate = useThree((state) => state.invalidate);
   const queryClient = useQueryClient();
-  const viewKey = queryKeys.view('galaxy', mapId, useReadOptions());
+  const readOptions = useReadOptions();
+  const viewKey = queryKeys.view('galaxy', mapId, readOptions);
+  // Only objects move: a selected group or route (M4-T7) has no position of its own.
+  const view = useViewPayload('galaxy', mapId, readOptions);
+  const selectedIds = useMemo(() => {
+    const objectIds = new Set<string>(view.data?.objects.map((object) => object.id));
+    return selection.filter((id) => objectIds.has(id));
+  }, [selection, view.data]);
   const save = useSaveMove();
 
   // Writes need each object's version, from the payload the view shows.
@@ -102,7 +111,8 @@ export function MoveTool({ mapId }: { mapId: string }) {
     const onPointerDown = (event: PointerEvent) => {
       if (event.button !== 0 || event.pointerType === 'touch' || gizmoBusy()) return;
       const hit = pickAt(get(), event.clientX, event.clientY);
-      if (!hit) return;
+      // A press on a route's line isn't a drag of anything.
+      if (!hit || hit.waypointIds) return;
       const selected = useSelection.getState().selectedIds.includes(hit.id);
       const action = resolveBinding(
         'left-drag',

@@ -244,6 +244,13 @@ export const LocationRead = z.object({
 export const MemberWrite = z.strictObject({ objectId: Uuid, isSpoiler: isSpoiler.optional() });
 export const MemberRead = z.object({ objectId: Uuid, isSpoiler });
 
+/** A route's waypoints (M4-T7): the objects it passes through, in order. */
+export const MAX_WAYPOINTS = 200;
+export const WaypointsWrite = z.strictObject({
+  objectIds: z.array(Uuid).max(MAX_WAYPOINTS),
+});
+export const WaypointRead = z.object({ seq: z.int().min(0), objectId: Uuid });
+
 /** Aspects an entity read can include on request (`include=facts,images,…`). */
 export const ENTITY_INCLUDES = [
   'facts',
@@ -252,5 +259,6 @@ export const ENTITY_INCLUDES = [
   'relations',
   'location',
   'members',
+  'waypoints',
 ] as const;
 export type EntityInclude = (typeof ENTITY_INCLUDES)[number];

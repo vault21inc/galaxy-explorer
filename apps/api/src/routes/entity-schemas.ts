@@ -8,6 +8,7 @@ import {
   MemberRead,
   RelationRead,
   schemasFor,
+  WaypointRead,
   type EntityKind,
 } from '@ge/domain';
 import { z } from 'zod';
@@ -42,6 +43,7 @@ function buildResponse(kind: EntityKind) {
     relations: listOf(RelationRead),
     location: z.union([LocationRead, redactedItem]).nullable().optional(),
     members: listOf(MemberRead),
+    waypoints: listOf(WaypointRead),
   });
 }
 

@@ -1,7 +1,12 @@
 import type { z } from 'zod';
 import { REGION_SHAPES } from '../schemas/appearance.ts';
 import type { EntityFormDef, FormFieldDef } from './entity-forms.ts';
-import { celestialObjectExtension, eventExtension, groupExtension } from './extensions.ts';
+import {
+  celestialObjectExtension,
+  eventExtension,
+  groupExtension,
+  routeExtension,
+} from './extensions.ts';
 
 /**
  * Entity kinds (architecture.md §3.1): everything the author writes about. Routes, query
@@ -25,6 +30,8 @@ export interface EntityKindDef {
     location: 'none' | 'optional' | 'required';
     /** Has member objects, under /groups/{id}/members (data-model §3.3). */
     members: boolean;
+    /** Has ordered waypoints, under /routes/{id}/waypoints (data-model §3.3, M4-T7). */
+    waypoints: boolean;
   };
   /**
    * Extension fields that are content, blacked out (set to null) while the whole entity is a
@@ -58,6 +65,7 @@ const allAspects = {
   facts: true,
   relations: true,
   members: false,
+  waypoints: false,
 } as const;
 
 /** Kinds whose form has only the shared fields. */
@@ -253,7 +261,34 @@ export const entityKinds = defineEntityKinds({
       outlineColor: '#c8a24a',
     },
   },
-  // `route` arrives in M4.
+  route: {
+    scope: 'map',
+    plural: 'routes',
+    label: { one: 'Route', many: 'Routes' },
+    extension: routeExtension,
+    aspects: { ...allAspects, location: 'none', waypoints: true },
+    contentFields: [],
+    form: {
+      details: [],
+      appearance: [
+        { path: 'style.color', widget: 'color', label: 'Line color' },
+        {
+          path: 'style.widthPx',
+          widget: 'number',
+          label: 'Width (px)',
+          hint: '1 to 6 pixels on screen.',
+        },
+        { path: 'style.dashed', widget: 'switch', label: 'Dashed' },
+      ],
+    },
+    description:
+      'A line through objects in order: a trade lane, warp route or campaign path (U6). Its waypoints, the objects it passes through, are set as an ordered list of object ids with PUT /routes/{id}/waypoints (or the batch op setWaypoints); ' +
+      "they are top-level objects on the route's map, and one may come again later (a round trip) but not twice in a row. `style` holds the line color, width in pixels and dashing.",
+    example: {
+      name: { format: 'plain', source: 'Hydraphur Run' },
+      style: { color: '#c8a24a', widthPx: 2, dashed: true },
+    },
+  },
   place: {
     scope: 'map',
     plural: 'places',

@@ -3,6 +3,7 @@ import { entityKinds, OPERATION_REFERENCE, type BatchOperation, type EntityKind 
 import { eq, sql } from 'drizzle-orm';
 import { addLink, addRelation, setFact } from './aspects/content.ts';
 import { addMembers, removeMembers, setLocation } from './aspects/placement.ts';
+import { setWaypoints } from './aspects/waypoints.ts';
 import {
   createEntity,
   deleteEntity,
@@ -185,6 +186,12 @@ async function runOne(tx: Executor, operation: BatchOperation): Promise<RunResul
     case 'removeMembers':
       await removeMembers(tx, operation.id, operation.data);
       return { op: 'removeMembers', id: operation.id, data: null };
+    case 'setWaypoints':
+      return {
+        op: 'setWaypoints',
+        id: operation.id,
+        data: await setWaypoints(tx, operation.id, { objectIds: operation.data }),
+      };
     case 'setFacts': {
       const facts = [];
       for (const fact of operation.data) facts.push(await setFact(tx, operation.id, fact as never));

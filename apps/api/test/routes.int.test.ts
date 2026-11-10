@@ -4,7 +4,7 @@ import { rt } from '@ge/domain';
 import { describe, expect, it } from 'vitest';
 import { apiOn, type Api } from './contract/harness.ts';
 
-/** The hand-written routes: universes and maps, aspects, and group members. */
+/** The hand-written routes: universes and maps, aspects, group members and route waypoints. */
 
 const run = (
   fn: (api: Api, db: Parameters<Parameters<typeof withTestDb>[0]>[0]) => Promise<void>,
@@ -359,5 +359,93 @@ describe('group members', () => {
       await api.expect(204, 'DELETE', members, { objectIds: [s.systemId] });
       expect((await api.expect(200, 'GET', members)).body.data).toEqual([]);
       await api.expect(404, 'GET', `/groups/${s.systemId}/members`);
+    }));
+});
+
+describe('route waypoints (M4-T7)', () => {
+  it('are set in order, checked, read back, drawn in the galaxy view and follow deletions', () =>
+    run(async (api, db) => {
+      const s = await scene(api, db);
+      const system = async (name: string, status = 'published') =>
+        (
+          await api.expect(201, 'POST', `/maps/${s.mapId}/objects`, {
+            name: rt.plain(name),
+            baseType: 'system',
+            status,
+          })
+        ).body.data.id as string;
+      const hydraphur = await system('Hydraphur');
+      const kar = await system('Kar Duniash', 'draft');
+      const routeId = (
+        await api.expect(201, 'POST', `/maps/${s.mapId}/routes`, {
+          name: rt.plain('Hydraphur Run'),
+          style: { color: '#c8a24a', dashed: true },
+        })
+      ).body.data.id as string;
+      const waypoints = `/routes/${routeId}/waypoints`;
+
+      // A round trip may pass the same system again, in order.
+      const order = [s.systemId, hydraphur, kar, s.systemId];
+      expect((await api.expect(200, 'PUT', waypoints, { objectIds: order })).body.data).toEqual(
+        order.map((objectId, seq) => ({ seq, objectId })),
+      );
+      // Not a planet, not twice in a row, and only on a route.
+      const planet = await api.expect(422, 'PUT', waypoints, { objectIds: [s.planetId] });
+      expect(planet.body).toMatchObject({ errors: [{ path: '/objectIds/0' }] });
+      await api.expect(422, 'PUT', waypoints, { objectIds: [hydraphur, hydraphur] });
+      await api.expect(404, 'PUT', `/routes/${s.groupId}/waypoints`, { objectIds: [] });
+      const read = (await api.expect(200, 'GET', `/routes/${routeId}?include=waypoints`)).body.data;
+      expect(read.waypoints.map((w: { objectId: string }) => w.objectId)).toEqual(order);
+
+      // A reader doesn't see the draft system, so the line skips it.
+      const galaxy = async (query = '') =>
+        (await api.expect(200, 'GET', `/maps/${s.mapId}/views/galaxy${query}`)).body.data;
+      expect((await galaxy()).routes).toEqual([
+        expect.objectContaining({
+          id: routeId,
+          namePlain: 'Hydraphur Run',
+          style: { color: '#c8a24a', dashed: true },
+          waypoints: [s.systemId, hydraphur, s.systemId],
+        }),
+      ]);
+      expect((await galaxy('?includeDrafts=true')).routes[0].waypoints).toEqual(order);
+
+      // Deleting a system removes its waypoints; the route stays.
+      await api.expect(204, 'DELETE', `/objects/${hydraphur}`, { version: 1 });
+      expect((await api.expect(200, 'GET', waypoints)).body.data).toEqual([
+        { seq: 0, objectId: s.systemId },
+        { seq: 2, objectId: kar },
+        { seq: 3, objectId: s.systemId },
+      ]);
+    }));
+
+  it('a route and its waypoints can be created in one batch', () =>
+    run(async (api, db) => {
+      const s = await scene(api, db);
+      const other = (
+        await api.expect(201, 'POST', `/maps/${s.mapId}/objects`, {
+          name: rt.plain('Hydraphur'),
+          baseType: 'system',
+        })
+      ).body.data.id as string;
+      const response = await api.expect(200, 'POST', '/batch', {
+        description: 'Create route',
+        operations: [
+          { op: 'create', kind: 'route', mapId: s.mapId, data: { name: rt.plain('Run') } },
+          { op: 'setWaypoints', id: '$op:0', data: [s.systemId, other] },
+        ],
+      });
+      const routeId = response.body.data.results[0].id as string;
+      expect(response.body.data.results[1]).toMatchObject({
+        op: 'setWaypoints',
+        id: routeId,
+        data: [
+          { seq: 0, objectId: s.systemId },
+          { seq: 1, objectId: other },
+        ],
+      });
+      // One undo step takes both back.
+      await api.expect(201, 'POST', `/history/${response.batchId!}/revert`);
+      await api.expect(404, 'GET', `/routes/${routeId}`);
     }));
 });

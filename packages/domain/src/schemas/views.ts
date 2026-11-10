@@ -5,7 +5,7 @@ import { BASE_TYPES } from '../registry/object-types.ts';
 import type { ViewLevel } from '../registry/view-levels.ts';
 import { Appearance } from './appearance.ts';
 import { LOCATION_MODES } from './aspects.ts';
-import { GroupStyle } from './styles.ts';
+import { GroupStyle, RouteStyle } from './styles.ts';
 import { GalaxySettings, Underlay } from './map-settings.ts';
 
 /**
@@ -90,6 +90,20 @@ export const ViewGroup = z.object({
 
 export type ViewGroup = z.infer<typeof ViewGroup>;
 
+/**
+ * A route as the galaxy view draws it (M4-T7): its look and its waypoints in order, only those
+ * the view shows. Waypoints may repeat an object.
+ */
+export const ViewRoute = z.object({
+  id: Uuid,
+  version: z.int().positive(),
+  ...Named,
+  status: z.enum(['draft', 'published']),
+  style: RouteStyle,
+  waypoints: z.array(Uuid),
+});
+export type ViewRoute = z.infer<typeof ViewRoute>;
+
 export const ViewGroupType = z.object({
   id: Uuid,
   name: z.string(),
@@ -114,7 +128,8 @@ export const GalaxyView = z.object({
   objects: z.array(GalaxyObject),
   groups: z.array(ViewGroup),
   /** Arrive in M4. */
-  routes: z.array(z.never()),
+  /** Routes whose waypoints the reader may see (M4-T7). */
+  routes: z.array(ViewRoute),
   groupTypes: z.array(ViewGroupType),
 });
 export type GalaxyView = z.infer<typeof GalaxyView>;

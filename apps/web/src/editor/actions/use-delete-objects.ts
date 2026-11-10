@@ -17,7 +17,7 @@ export interface PendingDelete {
 }
 
 /**
- * Deleting objects (M3-T5), and groups (M4-T2): `request` runs the delete as a dry run, whose impact the dialog
+ * Deleting objects (M3-T5), groups (M4-T2) and routes (M4-T7): `request` runs the delete as a dry run, whose impact the dialog
  * lists; `confirm` runs it for real, as one batch and one undo step; `cancel` drops it.
  */
 export function useDeleteObjects() {
@@ -33,7 +33,9 @@ export function useDeleteObjects() {
     if (objects.length === 0) return;
     setPending({ objects, summary: null, deleting: false });
     sendBatch(deleteRequest(objects, true)).then((result) => {
-      const objectCount = objects.filter((item) => (item.kind ?? 'celestial_object') !== 'group');
+      const objectCount = objects.filter(
+        (item) => (item.kind ?? 'celestial_object') === 'celestial_object',
+      );
       const summary = summarizeImpact(result.impact ?? {}, objectCount.length);
       // Only if this is still the delete being asked about.
       setPending((current) => (current?.objects === objects ? { ...current, summary } : current));
@@ -49,7 +51,7 @@ export function useDeleteObjects() {
       const selection = useSelection.getState();
       selection.select(selection.selectedIds.filter((id) => !deleted.has(id)));
       setPending(null);
-      await refreshAfterWrite(queryClient, [['view'], ['celestial_object'], ['group']]);
+      await refreshAfterWrite(queryClient, [['view'], ['celestial_object'], ['group'], ['route']]);
     }, fail);
   };
 

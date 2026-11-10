@@ -6,7 +6,7 @@ import { pickAt } from '@/render/picking/picking.ts';
 import { hoverStore, setHovered } from '@/state/hover.ts';
 import { gizmoBusy } from '@/editor/gizmo-state.ts';
 import { useContextMenu } from '@/state/context-menu.ts';
-import { useEditor } from '@/state/editor.ts';
+import { toolOwnsClicks } from '@/state/editor.ts';
 import { useSelection } from '@/state/selection.ts';
 import { resolveBinding, type Gesture, type Mode, type Target } from './bindings.ts';
 import { isClick } from './click.ts';
@@ -60,8 +60,8 @@ export function usePointerSelection(mode: Mode): void {
     const onPointerUp = (event: PointerEvent) => {
       const started = press;
       press = null;
-      // While an object is being placed, clicks belong to the placement.
-      if (useEditor.getState().placing) return;
+      // While an object is placed or a route drawn, clicks belong to that tool.
+      if (toolOwnsClicks()) return;
       if (started?.pointerId !== event.pointerId || started.button !== event.button) return;
       if (!isClick(started, { x: event.clientX, y: event.clientY })) return;
       const gesture: Gesture | null =
@@ -87,7 +87,7 @@ export function usePointerSelection(mode: Mode): void {
       }
     };
     const onDoubleClick = (event: MouseEvent) => {
-      if (useEditor.getState().placing) return;
+      if (toolOwnsClicks()) return;
       const hit = pickAt(get(), event.clientX, event.clientY);
       if (!hit) return;
       const action = resolveBinding('double-click', event, mode, targetOf(hit.id), platform);

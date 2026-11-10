@@ -17,6 +17,9 @@ export {
   LocationRead,
   LocationWrite,
   MemberRead,
+  MAX_WAYPOINTS,
+  WaypointRead,
+  WaypointsWrite,
   MemberWrite,
   RelationRead,
   RelationWrite,
@@ -66,6 +69,7 @@ export {
   ViewGroupType,
   ViewObject,
   ViewPin,
+  ViewRoute,
   viewPayloads,
   type ViewPayload,
 } from './views.ts';

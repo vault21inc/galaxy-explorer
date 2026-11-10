@@ -1,5 +1,5 @@
 import { withBatch, type Database } from '@ge/db';
-import { BatchRequest, MAX_BATCH_OPERATIONS } from '@ge/domain';
+import { BatchRequest, ENTITY_KINDS, MAX_BATCH_OPERATIONS } from '@ge/domain';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { actorOf } from '../http/batch.ts';
@@ -8,7 +8,7 @@ import { batchImpact, runOperations, type OperationResult } from '../services/ba
 
 const BATCH_DOC = `Runs up to ${String(MAX_BATCH_OPERATIONS)} operations in order, in one transaction and one change batch: all of them happen, or none do, and the whole request is one undo step.
 
-Operations: create, update, delete and upsert for any entity kind (\`kind\` is celestial_object, group, place, event or character; \`data\` is the same body as that kind's single-resource route), and setLocation, addMembers, removeMembers, setFacts, addLink and addRelation on an entity \`id\`.
+Operations: create, update, delete and upsert for any entity kind (\`kind\` is ${ENTITY_KINDS.join(', ')}; \`data\` is the same body as that kind's single-resource route), and setLocation, addMembers, removeMembers, setWaypoints (a route's object ids in order), setFacts, addLink and addRelation on an entity \`id\`.
 
 Refer to an entity created earlier in the same request as \`"$op:N"\` (N counts from 0), anywhere an id goes. For example, create a system, then planets with \`"parentId": "$op:0"\`.
 

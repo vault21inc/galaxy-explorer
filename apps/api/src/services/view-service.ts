@@ -18,6 +18,7 @@ import { InvalidRequest, NotFound } from './errors.ts';
 import { getMap } from './container-service.ts';
 import { named, published } from './view-common.ts';
 import { loadPins } from './view-pins.ts';
+import { loadRoutes } from './view-routes.ts';
 import { entityVisible, type Viewer } from './visibility.ts';
 
 /**
@@ -187,7 +188,7 @@ export async function galaxyView(ex: Executor, mapId: string, viewer: Viewer): P
           isSpoiler: member.isSpoiler,
         })),
     })),
-    routes: [],
+    routes: await loadRoutes(ex, mapId, viewer, shownObjects),
     groupTypes: (
       await ex
         .select()

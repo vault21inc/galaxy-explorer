@@ -2,18 +2,20 @@
 
 A browser app for building and exploring galaxies from any fictional universe, starting with Warhammer 40,000. The owner builds each galaxy by hand in 3D: star systems, sectors, nebulae, planets, places and events. Visitors explore it at three levels: galaxy, system and orbit. Potential spoilers stay hidden until a visitor chooses to see them.
 
-**Status (10 November 2026):** the galaxy view can be explored and edited. You can place and edit systems, planets, stations, black holes and regions, and organize them into nested groups shown as outlines. Milestones M0–M3 are done. M4 (groups, regions and routes) is nearly done: routes and the `?` shortcut panel are next. The system and orbit views come in M5 and M6. Progress is tracked task by task in the [plan's status section](docs/plan/README.md#status).
+**Status (10 November 2026):** the galaxy view can be explored and edited. You can place and edit systems, planets, stations, black holes and regions, organize them into nested groups shown as outlines, and draw routes between them. Milestones M0–M3 are done. M4 (groups, regions and routes) is nearly done: the `?` shortcut panel is next. The system and orbit views come in M5 and M6. Progress is tracked task by task in the [plan's status section](docs/plan/README.md#status).
 
 ## What you can do today
 
 - **Explore a galaxy:** a procedural spiral or elliptical galaxy with your objects on it. Each kind of body has its own look: systems as stars ringed by their planets (binaries and triples in each star's color), black holes as lensed accretion discs, stations and markers as icons.
 - **Regions:** nebulae and anomalies as round or flat clouds, storms seen from above (the Eye of Terror, with a gap in its rim for the Cadian Gate, from a generated or uploaded picture), and rifts along a curve (the Great Rift).
 - **Groups:** nested groups such as Segmentum › Sector › Sub-sector, drawn as colored outlines with their names, shown or hidden by layer.
-- **Read about anything:** select an object or group for its details, images, facts and links. Potential spoilers stay blacked out until you reveal them, one at a time or all at once.
+- **Routes:** lines through systems in order, such as a trade lane or a warp route, solid or dashed, with their names on the line.
+- **Read about anything:** select an object, group or route for its details, images, facts and links. Potential spoilers stay blacked out until you reveal them, one at a time or all at once.
 - **Build it, in edit mode (E):**
   - add, move, duplicate and delete objects;
   - edit their details, with rich text and images;
   - group a selection (⌘/Ctrl + G);
+  - draw routes with the Route tool, or through a selection in the order you picked it;
   - reshape regions with handles on the map;
   - change the galaxy's look, or trace over an uploaded map image;
   - undo anything, or revert it later from the History panel.
@@ -109,12 +111,13 @@ Run these once, in the repository folder.
 In edit mode:
 - dragging empty space draws a selection box, with Shift adding to the selection;
 - dragging an object moves it, with Shift snapping to the grid;
-- right-click opens the object's menu;
+- right-click opens the object's menu, where Create route runs a route through the selection;
+- the Route tool takes clicks on objects in order: ⌫ removes the last, Enter finishes, Esc cancels;
 - N adds an object;
 - ⌘/Ctrl + D duplicates, ⌘/Ctrl + G groups, and Delete deletes, after a confirmation that counts what goes with it;
 - ⌘/Ctrl + Z undoes and ⌘/Ctrl + Shift + Z redoes.
 
-The List button (always open in edit mode) shows everything in the view as a tree of layers, groups and objects, usable with the keyboard alone. [ux.md](docs/plan/ux.md#4-keyboard-shortcuts) has the full list, including what's still to come.
+The List button (always open in edit mode) shows everything in the view as a tree of layers, groups, routes and objects, usable with the keyboard alone. [ux.md](docs/plan/ux.md#4-keyboard-shortcuts) has the full list, including what's still to come.
 
 ### Other pages
 

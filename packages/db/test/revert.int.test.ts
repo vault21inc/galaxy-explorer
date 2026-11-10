@@ -20,6 +20,7 @@ import {
   entityLocations,
   fieldValues,
   groupMembers,
+  routes,
 } from '../src/schema/index.ts';
 import { withTestDb } from '../src/testing/index.ts';
 import { assetValues, buildWorld, type World } from './history-world.ts';
@@ -91,6 +92,20 @@ const cases: Record<string, TableCase> = {
       objectId: w.systemId,
     }),
     change: { isSpoiler: true },
+  },
+  routes: {
+    prepare: async (_tx, w) => ({ entityId: await w.bareEntity('route') }),
+    row: (w, p) => ({ entityId: p.entityId, mapId: w.mapId, style: { dashed: true } }),
+    change: { style: { color: '#123456', widthPx: 3 } },
+  },
+  route_waypoints: {
+    prepare: async (tx, w) => {
+      const routeId = await w.bareEntity('route');
+      await tx.insert(routes).values({ entityId: routeId, mapId: w.mapId });
+      return { routeId };
+    },
+    row: (w, p) => ({ routeId: p.routeId, seq: 0, mapId: w.mapId, objectId: w.systemId }),
+    change: { seq: 4 },
   },
   events: {
     prepare: async (_tx, w) => ({ entityId: await w.bareEntity('event') }),

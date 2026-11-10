@@ -11,6 +11,8 @@ interface EditorState {
   available: boolean;
   /** Placing a new object: its base type, while the ghost follows the pointer (M3-T2). */
   placing: BaseType | null;
+  /** The Route tool is on (M4-T7): clicks add waypoints instead of selecting. */
+  routing: boolean;
   /** The Add menu is open (the toolbar button or N). */
   addMenuOpen: boolean;
   /** An object just created, whose name field should take focus once its panel shows. */
@@ -23,6 +25,8 @@ interface EditorState {
   setAvailable: (available: boolean) => void;
   startPlacing: (baseType: BaseType) => void;
   cancelPlacing: () => void;
+  startRouting: () => void;
+  stopRouting: () => void;
   setAddMenuOpen: (open: boolean) => void;
   setFocusNameOf: (id: string | null) => void;
 }
@@ -31,7 +35,7 @@ interface EditorState {
 export const DEFAULT_GRID_SIZE = 10;
 
 /** Leaving edit mode ends whatever the editor was in the middle of. */
-const IDLE = { editing: false, placing: null, addMenuOpen: false } as const;
+const IDLE = { editing: false, placing: null, routing: false, addMenuOpen: false } as const;
 
 /** Edit mode. It changes on a click or the E key, never per frame. */
 export const useEditor = create<EditorState>()((set, get) => ({
@@ -53,10 +57,16 @@ export const useEditor = create<EditorState>()((set, get) => ({
     set(available ? { available } : { available, ...IDLE });
   },
   startPlacing: (baseType) => {
-    if (get().editing) set({ placing: baseType, addMenuOpen: false });
+    if (get().editing) set({ placing: baseType, routing: false, addMenuOpen: false });
   },
   cancelPlacing: () => {
     set({ placing: null });
+  },
+  startRouting: () => {
+    if (get().editing) set({ routing: true, placing: null, addMenuOpen: false });
+  },
+  stopRouting: () => {
+    set({ routing: false });
   },
   setAddMenuOpen: (open) => {
     set({ addMenuOpen: open && get().editing });
@@ -65,3 +75,12 @@ export const useEditor = create<EditorState>()((set, get) => ({
     set({ focusNameOf: id });
   },
 }));
+
+/**
+ * Whether a tool owns the canvas's clicks: placing an object (M3-T2) or drawing a route
+ * (M4-T7). Selection, box selection, the move tool and double-click step aside meanwhile.
+ */
+export function toolOwnsClicks(): boolean {
+  const { placing, routing } = useEditor.getState();
+  return placing !== null || routing;
+}

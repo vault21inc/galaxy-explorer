@@ -12,6 +12,7 @@ export type Impact = Readonly<
 /** What goes with the deleted objects: the database tables, in plain words. */
 const DELETED: readonly { table: string; one: string; many: string }[] = [
   { table: 'group_members', one: 'group membership', many: 'group memberships' },
+  { table: 'route_waypoints', one: 'route waypoint', many: 'route waypoints' },
   { table: 'field_values', one: 'fact', many: 'facts' },
   { table: 'entity_links', one: 'link', many: 'links' },
   { table: 'entity_images', one: 'image', many: 'images' },

@@ -1,6 +1,7 @@
 import { schema, withBatch, type Database, type Executor } from '@ge/db';
 import {
   resolveGalaxySettings,
+  RouteStyle,
   rt,
   sampleGalaxyPosition,
   seededRandom,
@@ -13,7 +14,8 @@ import { ensureConfig, ensureMap, ensureUniverse } from './ensure.ts';
 /**
  * `pnpm db:seed stress` (M1-T11): a large map for performance work (rendering.md §2), generated
  * deterministically from a seed. Positions follow the galaxy density function, and groups are
- * spatial clusters: each object joins the group whose center is nearest.
+ * spatial clusters: each object joins the group whose center is nearest. Routes (M4-T7) hop
+ * from a random system to its nearest unvisited neighbours.
  *
  * It writes in bulk rather than through the entity service, which would take far longer for
  * thousands of rows, but still inside a change batch, so it's audited and revertable. Rows are
@@ -23,8 +25,8 @@ import { ensureConfig, ensureMap, ensureUniverse } from './ensure.ts';
 export interface StressOptions {
   objects: number;
   groups: number;
-  /** Routes arrive in M4; the option is accepted and ignored until then. */
-  routes?: number;
+  /** Routes through nearby systems (M4-T7). */
+  routes: number;
   seed: number;
 }
 
@@ -34,6 +36,10 @@ export const STRESS_DEFAULTS: StressOptions = {
   routes: 50,
   seed: 40_000,
 };
+
+/** How many systems a stress route passes through: 4, plus up to 4 more. */
+const STRESS_ROUTE_MIN_STOPS = 4;
+const STRESS_ROUTE_EXTRA_STOPS = 5;
 
 /** Rows per INSERT, to keep each statement's parameters within Postgres's limit. */
 const CHUNK = 1_000;
@@ -83,11 +89,18 @@ function regionAppearance(baseType: BaseType, nth: number) {
   }
   return { region: { radius: 1_200 } };
 }
-const { entities, celestialObjects, objectGroups, groupMembers } = schema;
+const {
+  entities,
+  celestialObjects,
+  objectGroups,
+  groupMembers,
+  routes: routeTable,
+  routeWaypoints,
+} = schema;
 
 export async function seedStress(db: Database, options: Partial<StressOptions> = {}) {
-  const { objects, groups, seed } = { ...STRESS_DEFAULTS, ...options };
-  const description = `Seed: stress (${String(objects)} objects, ${String(groups)} groups)`;
+  const { objects, groups, routes, seed } = { ...STRESS_DEFAULTS, ...options };
+  const description = `Seed: stress (${String(objects)} objects, ${String(groups)} groups, ${String(routes)} routes)`;
   const { result } = await withBatch(db, SEED_ACTOR, description, async (tx, batchId) => {
     const universe = await ensureUniverse(tx, {
       slug: 'stress-test',
@@ -211,11 +224,62 @@ export async function seedStress(db: Database, options: Partial<StressOptions> =
       await tx.insert(groupMembers).values(memberRows.slice(start, start + CHUNK));
     }
 
+    // Routes: each starts at a random system and hops to the nearest system it hasn't visited.
+    const routeRandom = seededRandom(seed + 2);
+    const systems = objectRows.filter((row) => row.baseType === 'system');
+    const routeRows = Array.from({ length: systems.length > 1 ? routes : 0 }, (_, index) => {
+      const hops = STRESS_ROUTE_MIN_STOPS + Math.floor(routeRandom() * STRESS_ROUTE_EXTRA_STOPS);
+      const stops = [systems[Math.floor(routeRandom() * systems.length)] ?? systems[0]];
+      while (stops.length < Math.min(hops, systems.length)) {
+        const last = stops.at(-1)?.position ?? [0, 0, 0];
+        let next = systems[0];
+        let nextDistance = Infinity;
+        for (const candidate of systems) {
+          if (stops.includes(candidate)) continue;
+          const distance =
+            (candidate.position[0] - last[0]) ** 2 + (candidate.position[2] - last[2]) ** 2;
+          if (distance < nextDistance) {
+            next = candidate;
+            nextDistance = distance;
+          }
+        }
+        stops.push(next);
+      }
+      return { key: `stress-route-${pad(index)}`, name: `Route ${pad(index)}`, stops };
+    });
+    const routeIds = await upsertEntities(tx, scope, 'route', routeRows);
+    if (routeRows.length > 0) {
+      await tx
+        .insert(routeTable)
+        .values(
+          routeRows.map((row, index) => ({
+            entityId: routeIds.get(row.key) ?? '',
+            mapId: map.id,
+            style: RouteStyle.parse({
+              color: index % 2 === 0 ? '#c8a24a' : '#7fd4a0',
+              dashed: index % 3 === 0,
+            }),
+          })),
+        )
+        .onConflictDoUpdate({ target: routeTable.entityId, set: { style: sql`excluded.style` } });
+    }
+    // Rebuilt each run, like memberships.
+    await tx.delete(routeWaypoints).where(eq(routeWaypoints.mapId, map.id));
+    const waypointRows = routeRows.flatMap((row) =>
+      row.stops.map((stop, seq) => ({
+        routeId: routeIds.get(row.key) ?? '',
+        seq,
+        mapId: map.id,
+        objectId: objectIds.get(stop?.key ?? '') ?? '',
+      })),
+    );
+    if (waypointRows.length > 0) await tx.insert(routeWaypoints).values(waypointRows);
+
     await tx
       .update(schema.changeBatches)
       .set({ universeId: universe.id })
       .where(eq(schema.changeBatches.id, batchId));
-    return { universeId: universe.id, mapId: map.id, objects, groups };
+    return { universeId: universe.id, mapId: map.id, objects, groups, routes: routeRows.length };
   });
   return result;
 }
@@ -224,7 +288,7 @@ export async function seedStress(db: Database, options: Partial<StressOptions> =
 async function upsertEntities(
   tx: Executor,
   scope: { universeId: string; mapId: string },
-  kind: 'celestial_object' | 'group',
+  kind: 'celestial_object' | 'group' | 'route',
   rows: readonly { key: string; name: string }[],
 ): Promise<Map<string, string>> {
   const ids = new Map<string, string>();

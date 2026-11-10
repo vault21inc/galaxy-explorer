@@ -75,12 +75,12 @@ test.describe('the galaxy background', () => {
 
     // Back on the first map, its disc comes from the bake cache: still four textures. The
     // geometries are the sky, disc, glow, depth stars, bodies, system glyphs, regions,
-    // selection rings, and the group fills and outlines (M4-T3), so the other map's were
-    // disposed.
+    // selection rings, the group fills and outlines (M4-T3) and the demo's one (dashed) route
+    // (M4-T7), so the other map's were disposed.
     // Polled as a whole: until the first frame after Back, the numbers describe the other map.
     await page.goBack();
     await expect
       .poll(info, { timeout: 15_000 })
-      .toMatchObject({ points: SKY_POINTS + DEPTH_STARS, textures: 4, geometries: 10 });
+      .toMatchObject({ points: SKY_POINTS + DEPTH_STARS, textures: 4, geometries: 11 });
   });
 });

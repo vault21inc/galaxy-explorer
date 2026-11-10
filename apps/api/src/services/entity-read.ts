@@ -16,6 +16,7 @@ import {
   listMembers,
   listRelations,
 } from './aspects/read.ts';
+import { listWaypoints } from './aspects/waypoints.ts';
 import { NotFound } from './errors.ts';
 import { entityVisible, type Viewer } from './visibility.ts';
 
@@ -158,5 +159,7 @@ async function loadAspects(
   if (want.has('location')) result.location = await getLocation(ex, id);
   if (want.has('members') && entityKinds[kind].aspects.members)
     result.members = await listMembers(ex, id);
+  if (want.has('waypoints') && entityKinds[kind].aspects.waypoints)
+    result.waypoints = await listWaypoints(ex, id);
   return result;
 }

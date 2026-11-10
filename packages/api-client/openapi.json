@@ -1128,6 +1128,7 @@
                 "enum": [
                   "celestial_object",
                   "group",
+                  "route",
                   "place",
                   "event",
                   "character"
@@ -1442,6 +1443,43 @@
         },
         "required": [
           "objectId"
+        ],
+        "additionalProperties": false
+      },
+      "WaypointReadInput": {
+        "type": "object",
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "objectId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "seq",
+          "objectId"
+        ]
+      },
+      "WaypointsWriteInput": {
+        "type": "object",
+        "properties": {
+          "objectIds": {
+            "maxItems": 200,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        },
+        "required": [
+          "objectIds"
         ],
         "additionalProperties": false
       },
@@ -1877,6 +1915,7 @@
                 "enum": [
                   "celestial_object",
                   "group",
+                  "route",
                   "place",
                   "event",
                   "character"
@@ -1937,6 +1976,7 @@
                 "enum": [
                   "celestial_object",
                   "group",
+                  "route",
                   "place",
                   "event",
                   "character"
@@ -1990,6 +2030,7 @@
                 "enum": [
                   "celestial_object",
                   "group",
+                  "route",
                   "place",
                   "event",
                   "character"
@@ -2035,6 +2076,7 @@
                 "enum": [
                   "celestial_object",
                   "group",
+                  "route",
                   "place",
                   "event",
                   "character"
@@ -2189,6 +2231,53 @@
               },
               "data": {
                 "minItems": 1,
+                "maxItems": 1000,
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^\\$op:(\\d+)$"
+                    }
+                  ],
+                  "description": "An id, or \"$op:N\" for the entity created by operation N of this request."
+                }
+              }
+            },
+            "required": [
+              "op",
+              "id",
+              "data"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "type": "string",
+                "const": "setWaypoints"
+              },
+              "id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^\\$op:(\\d+)$"
+                  }
+                ],
+                "description": "An id, or \"$op:N\" for the entity created by operation N of this request."
+              },
+              "data": {
                 "maxItems": 1000,
                 "type": "array",
                 "items": {
@@ -2782,7 +2871,60 @@
           "routes": {
             "type": "array",
             "items": {
-              "not": {}
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "version": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "namePlain": {
+                  "type": "string"
+                },
+                "nameSpoiler": {
+                  "type": "boolean"
+                },
+                "nameRedacted": {
+                  "type": "string"
+                },
+                "isSpoiler": {
+                  "type": "boolean"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "draft",
+                    "published"
+                  ]
+                },
+                "style": {
+                  "$ref": "#/components/schemas/RouteStyleInput"
+                },
+                "waypoints": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "version",
+                "namePlain",
+                "nameSpoiler",
+                "nameRedacted",
+                "isSpoiler",
+                "status",
+                "style",
+                "waypoints"
+              ]
             }
           },
           "groupTypes": {
@@ -4113,6 +4255,245 @@
           "updatedAt"
         ]
       },
+      "RouteCreateInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/RichTextInput"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RichTextInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RichTextInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isSpoiler": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
+          },
+          "externalKey": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "style": {
+            "$ref": "#/components/schemas/RouteStyleInput"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "RouteUpdateInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/RichTextInput"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RichTextInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RichTextInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isSpoiler": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
+          },
+          "externalKey": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "style": {
+            "$ref": "#/components/schemas/RouteStyleInput"
+          },
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "additionalProperties": false
+      },
+      "RouteReadInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/RichTextInput"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RichTextInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RichTextInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isSpoiler": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
+          },
+          "externalKey": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "style": {
+            "$ref": "#/components/schemas/RouteStyleInput"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "kind": {
+            "type": "string",
+            "const": "route"
+          },
+          "universeId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "mapId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "namePlain": {
+            "type": "string"
+          },
+          "clonedFromEntityId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          }
+        },
+        "required": [
+          "name",
+          "summary",
+          "description",
+          "isSpoiler",
+          "status",
+          "externalKey",
+          "style",
+          "id",
+          "kind",
+          "universeId",
+          "mapId",
+          "namePlain",
+          "clonedFromEntityId",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
       "PlaceCreateInput": {
         "type": "object",
         "properties": {
@@ -5330,6 +5711,7 @@
             "enum": [
               "celestial_object",
               "group",
+              "route",
               "place",
               "event",
               "character"
@@ -5428,6 +5810,7 @@
             "enum": [
               "celestial_object",
               "group",
+              "route",
               "place",
               "event",
               "character"
@@ -5520,6 +5903,7 @@
             "enum": [
               "celestial_object",
               "group",
+              "route",
               "place",
               "event",
               "character"
@@ -5996,6 +6380,33 @@
                 }
               ]
             }
+          },
+          "waypoints": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/WaypointReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
           }
         },
         "required": [
@@ -6310,6 +6721,33 @@
                 }
               ]
             }
+          },
+          "waypoints": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/WaypointReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
           }
         },
         "required": [
@@ -6322,6 +6760,319 @@
           "groupTypeId",
           "parentGroupId",
           "outlineColor",
+          "style",
+          "id",
+          "kind",
+          "universeId",
+          "mapId",
+          "namePlain",
+          "clonedFromEntityId",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "RouteDetailInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/RichTextInput"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RichTextInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RichTextInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isSpoiler": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
+          },
+          "externalKey": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "style": {
+            "$ref": "#/components/schemas/RouteStyleInput"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "kind": {
+            "type": "string",
+            "const": "route"
+          },
+          "universeId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "mapId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "namePlain": {
+            "type": "string"
+          },
+          "clonedFromEntityId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "facts": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/FactReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ImageReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LinkReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RelationReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "location": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/LocationReadInput"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "redacted": {
+                        "type": "boolean",
+                        "const": true
+                      },
+                      "isSpoiler": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "redacted",
+                      "isSpoiler"
+                    ],
+                    "additionalProperties": {}
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MemberReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "waypoints": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/WaypointReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "name",
+          "summary",
+          "description",
+          "isSpoiler",
+          "status",
+          "externalKey",
           "style",
           "id",
           "kind",
@@ -6576,6 +7327,33 @@
               "anyOf": [
                 {
                   "$ref": "#/components/schemas/MemberReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "waypoints": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/WaypointReadInput"
                 },
                 {
                   "type": "object",
@@ -6907,6 +7685,33 @@
                 }
               ]
             }
+          },
+          "waypoints": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/WaypointReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
           }
         },
         "required": [
@@ -7170,6 +7975,33 @@
               "anyOf": [
                 {
                   "$ref": "#/components/schemas/MemberReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "waypoints": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/WaypointReadInput"
                 },
                 {
                   "type": "object",
@@ -8364,6 +9196,7 @@
                 "enum": [
                   "celestial_object",
                   "group",
+                  "route",
                   "place",
                   "event",
                   "character"
@@ -8682,6 +9515,44 @@
         },
         "required": [
           "objectId"
+        ],
+        "additionalProperties": false
+      },
+      "WaypointRead": {
+        "type": "object",
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "objectId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "seq",
+          "objectId"
+        ],
+        "additionalProperties": false
+      },
+      "WaypointsWrite": {
+        "type": "object",
+        "properties": {
+          "objectIds": {
+            "maxItems": 200,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        },
+        "required": [
+          "objectIds"
         ],
         "additionalProperties": false
       },
@@ -9119,6 +9990,7 @@
                 "enum": [
                   "celestial_object",
                   "group",
+                  "route",
                   "place",
                   "event",
                   "character"
@@ -9179,6 +10051,7 @@
                 "enum": [
                   "celestial_object",
                   "group",
+                  "route",
                   "place",
                   "event",
                   "character"
@@ -9232,6 +10105,7 @@
                 "enum": [
                   "celestial_object",
                   "group",
+                  "route",
                   "place",
                   "event",
                   "character"
@@ -9277,6 +10151,7 @@
                 "enum": [
                   "celestial_object",
                   "group",
+                  "route",
                   "place",
                   "event",
                   "character"
@@ -9431,6 +10306,53 @@
               },
               "data": {
                 "minItems": 1,
+                "maxItems": 1000,
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^\\$op:(\\d+)$"
+                    }
+                  ],
+                  "description": "An id, or \"$op:N\" for the entity created by operation N of this request."
+                }
+              }
+            },
+            "required": [
+              "op",
+              "id",
+              "data"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "type": "string",
+                "const": "setWaypoints"
+              },
+              "id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^\\$op:(\\d+)$"
+                  }
+                ],
+                "description": "An id, or \"$op:N\" for the entity created by operation N of this request."
+              },
+              "data": {
                 "maxItems": 1000,
                 "type": "array",
                 "items": {
@@ -10030,7 +10952,61 @@
           "routes": {
             "type": "array",
             "items": {
-              "not": {}
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "version": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "namePlain": {
+                  "type": "string"
+                },
+                "nameSpoiler": {
+                  "type": "boolean"
+                },
+                "nameRedacted": {
+                  "type": "string"
+                },
+                "isSpoiler": {
+                  "type": "boolean"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "draft",
+                    "published"
+                  ]
+                },
+                "style": {
+                  "$ref": "#/components/schemas/RouteStyle"
+                },
+                "waypoints": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "version",
+                "namePlain",
+                "nameSpoiler",
+                "nameRedacted",
+                "isSpoiler",
+                "status",
+                "style",
+                "waypoints"
+              ],
+              "additionalProperties": false
             }
           },
           "groupTypes": {
@@ -11375,6 +12351,246 @@
         ],
         "additionalProperties": false
       },
+      "RouteCreate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/RichText"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RichText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RichText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isSpoiler": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
+          },
+          "externalKey": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "style": {
+            "$ref": "#/components/schemas/RouteStyle"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "RouteUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/RichText"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RichText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RichText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isSpoiler": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
+          },
+          "externalKey": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "style": {
+            "$ref": "#/components/schemas/RouteStyle"
+          },
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "additionalProperties": false
+      },
+      "RouteRead": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/RichText"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RichText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RichText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isSpoiler": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
+          },
+          "externalKey": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "style": {
+            "$ref": "#/components/schemas/RouteStyle"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "kind": {
+            "type": "string",
+            "const": "route"
+          },
+          "universeId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "mapId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "namePlain": {
+            "type": "string"
+          },
+          "clonedFromEntityId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          }
+        },
+        "required": [
+          "name",
+          "summary",
+          "description",
+          "isSpoiler",
+          "status",
+          "externalKey",
+          "style",
+          "id",
+          "kind",
+          "universeId",
+          "mapId",
+          "namePlain",
+          "clonedFromEntityId",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
       "PlaceCreate": {
         "type": "object",
         "properties": {
@@ -12598,6 +13814,7 @@
             "enum": [
               "celestial_object",
               "group",
+              "route",
               "place",
               "event",
               "character"
@@ -12696,6 +13913,7 @@
             "enum": [
               "celestial_object",
               "group",
+              "route",
               "place",
               "event",
               "character"
@@ -12788,6 +14006,7 @@
             "enum": [
               "celestial_object",
               "group",
+              "route",
               "place",
               "event",
               "character"
@@ -13268,6 +14487,33 @@
                 }
               ]
             }
+          },
+          "waypoints": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/WaypointRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
           }
         },
         "required": [
@@ -13583,6 +14829,33 @@
                 }
               ]
             }
+          },
+          "waypoints": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/WaypointRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
           }
         },
         "required": [
@@ -13595,6 +14868,320 @@
           "groupTypeId",
           "parentGroupId",
           "outlineColor",
+          "style",
+          "id",
+          "kind",
+          "universeId",
+          "mapId",
+          "namePlain",
+          "clonedFromEntityId",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "RouteDetail": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/RichText"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RichText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RichText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isSpoiler": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
+          },
+          "externalKey": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "style": {
+            "$ref": "#/components/schemas/RouteStyle"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "kind": {
+            "type": "string",
+            "const": "route"
+          },
+          "universeId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "mapId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "namePlain": {
+            "type": "string"
+          },
+          "clonedFromEntityId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "facts": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/FactRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ImageRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LinkRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RelationRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "location": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/LocationRead"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "redacted": {
+                        "type": "boolean",
+                        "const": true
+                      },
+                      "isSpoiler": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "redacted",
+                      "isSpoiler"
+                    ],
+                    "additionalProperties": {}
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MemberRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "waypoints": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/WaypointRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "name",
+          "summary",
+          "description",
+          "isSpoiler",
+          "status",
+          "externalKey",
           "style",
           "id",
           "kind",
@@ -13850,6 +15437,33 @@
               "anyOf": [
                 {
                   "$ref": "#/components/schemas/MemberRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "waypoints": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/WaypointRead"
                 },
                 {
                   "type": "object",
@@ -14182,6 +15796,33 @@
                 }
               ]
             }
+          },
+          "waypoints": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/WaypointRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
           }
         },
         "required": [
@@ -14446,6 +16087,33 @@
               "anyOf": [
                 {
                   "$ref": "#/components/schemas/MemberRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "waypoints": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/WaypointRead"
                 },
                 {
                   "type": "object",
@@ -16128,12 +17796,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members)(,(facts|images|links|relations|location|members))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints)(,(facts|images|links|relations|location|members|waypoints))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints."
           },
           {
             "schema": {
@@ -16844,12 +18512,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members)(,(facts|images|links|relations|location|members))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints)(,(facts|images|links|relations|location|members|waypoints))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints."
           },
           {
             "schema": {
@@ -17022,6 +18690,690 @@
           "groups"
         ],
         "description": "A named set of top-level objects drawn as a colored outline: a sector, territory or faction. Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color.\n\nDeletes what depends on it too (data-model §11); revert the batch to undo.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "The version you read; a stale one is a 409 conflict."
+                  }
+                },
+                "required": [
+                  "version"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/maps/{mapId}/routes": {
+      "get": {
+        "operationId": "routes.list",
+        "summary": "List routes",
+        "tags": [
+          "routes"
+        ],
+        "description": "A line through objects in order: a trade lane, warp route or campaign path (U6). Its waypoints, the objects it passes through, are set as an ordered list of object ids with PUT /routes/{id}/waypoints (or the batch op setWaypoints); they are top-level objects on the route's map, and one may come again later (a round trip) but not twice in a row. `style` holds the line color, width in pixels and dashing.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "The `nextCursor` of the previous page."
+          },
+          {
+            "schema": {
+              "default": 100,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Items per page (1–1,000)."
+          },
+          {
+            "schema": {
+              "default": "include",
+              "type": "string",
+              "enum": [
+                "include",
+                "exclude"
+              ]
+            },
+            "in": "query",
+            "name": "spoilers",
+            "required": false,
+            "description": "`exclude` blacks out everything flagged as a potential spoiler before it leaves the server."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "in": "query",
+            "name": "includeDrafts",
+            "required": false,
+            "description": "Editors only: include unpublished drafts."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "published"
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "description": "Only entities with this status."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "description": "Case-insensitive part of the plain-text name."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "mapId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RouteDetail"
+                      }
+                    },
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "routes.create",
+        "summary": "Create a route",
+        "tags": [
+          "routes"
+        ],
+        "description": "A line through objects in order: a trade lane, warp route or campaign path (U6). Its waypoints, the objects it passes through, are set as an ordered list of object ids with PUT /routes/{id}/waypoints (or the batch op setWaypoints); they are top-level objects on the route's map, and one may come again later (a round trip) but not twice in a row. `style` holds the line color, width in pixels and dashing.\n\nExample body:\n\n```json\n{\n  \"name\": {\n    \"format\": \"plain\",\n    \"source\": \"Hydraphur Run\"\n  },\n  \"style\": {\n    \"color\": \"#c8a24a\",\n    \"widthPx\": 2,\n    \"dashed\": true\n  }\n}\n```",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteCreateInput"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "mapId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/RouteDetail"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/maps/{mapId}/routes/by-key/{externalKey}": {
+      "put": {
+        "operationId": "routes.upsertByKey",
+        "summary": "Create or update a route by its external key",
+        "tags": [
+          "routes"
+        ],
+        "description": "A line through objects in order: a trade lane, warp route or campaign path (U6). Its waypoints, the objects it passes through, are set as an ordered list of object ids with PUT /routes/{id}/waypoints (or the batch op setWaypoints); they are top-level objects on the route's map, and one may come again later (a round trip) but not twice in a row. `style` holds the line color, width in pixels and dashing.\n\nIdempotent: the first call creates the entity with this `externalKey`, later calls update it (no `version` needed). Use this from scripts and LLM agents so re-running them never duplicates content.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteCreateInput"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "mapId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "in": "path",
+            "name": "externalKey",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/RouteDetail"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/RouteDetail"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/routes/{id}": {
+      "get": {
+        "operationId": "routes.get",
+        "summary": "Get a route",
+        "tags": [
+          "routes"
+        ],
+        "description": "A line through objects in order: a trade lane, warp route or campaign path (U6). Its waypoints, the objects it passes through, are set as an ordered list of object ids with PUT /routes/{id}/waypoints (or the batch op setWaypoints); they are top-level objects on the route's map, and one may come again later (a round trip) but not twice in a row. `style` holds the line color, width in pixels and dashing.",
+        "parameters": [
+          {
+            "schema": {
+              "default": "include",
+              "type": "string",
+              "enum": [
+                "include",
+                "exclude"
+              ]
+            },
+            "in": "query",
+            "name": "spoilers",
+            "required": false,
+            "description": "`exclude` blacks out everything flagged as a potential spoiler before it leaves the server."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "in": "query",
+            "name": "includeDrafts",
+            "required": false,
+            "description": "Editors only: include unpublished drafts."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(facts|images|links|relations|location|members|waypoints)(,(facts|images|links|relations|location|members|waypoints))*$"
+            },
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/RouteDetail"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "routes.update",
+        "summary": "Update a route",
+        "tags": [
+          "routes"
+        ],
+        "description": "A line through objects in order: a trade lane, warp route or campaign path (U6). Its waypoints, the objects it passes through, are set as an ordered list of object ids with PUT /routes/{id}/waypoints (or the batch op setWaypoints); they are top-level objects on the route's map, and one may come again later (a round trip) but not twice in a row. `style` holds the line color, width in pixels and dashing.\n\nSend only the fields to change, plus the `version` you read. A stale version returns 409 with the current record.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteUpdateInput"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/RouteDetail"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "routes.delete",
+        "summary": "Delete a route",
+        "tags": [
+          "routes"
+        ],
+        "description": "A line through objects in order: a trade lane, warp route or campaign path (U6). Its waypoints, the objects it passes through, are set as an ordered list of object ids with PUT /routes/{id}/waypoints (or the batch op setWaypoints); they are top-level objects on the route's map, and one may come again later (a round trip) but not twice in a row. `style` holds the line color, width in pixels and dashing.\n\nDeletes what depends on it too (data-model §11); revert the batch to undo.",
         "requestBody": {
           "required": true,
           "content": {
@@ -17528,12 +19880,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members)(,(facts|images|links|relations|location|members))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints)(,(facts|images|links|relations|location|members|waypoints))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints."
           },
           {
             "schema": {
@@ -18233,12 +20585,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members)(,(facts|images|links|relations|location|members))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints)(,(facts|images|links|relations|location|members|waypoints))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints."
           },
           {
             "schema": {
@@ -18917,12 +21269,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members)(,(facts|images|links|relations|location|members))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints)(,(facts|images|links|relations|location|members|waypoints))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints."
           },
           {
             "schema": {
@@ -23077,6 +25429,186 @@
         }
       }
     },
+    "/api/v1/routes/{routeId}/waypoints": {
+      "get": {
+        "operationId": "routes.waypoints.list",
+        "summary": "List a route's waypoints",
+        "tags": [
+          "routes"
+        ],
+        "description": "A route's waypoints are the objects it passes through, in order: top-level objects on the route's map. An object may appear again later (a round trip) but not twice in a row. The change is one batch, returned in X-GE-Batch-Id.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "routeId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WaypointRead"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "routes.waypoints.set",
+        "summary": "Replace a route's waypoints",
+        "tags": [
+          "routes"
+        ],
+        "description": "A route's waypoints are the objects it passes through, in order: top-level objects on the route's map. An object may appear again later (a round trip) but not twice in a row. The change is one batch, returned in X-GE-Batch-Id.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WaypointsWriteInput"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "routeId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WaypointRead"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/batch": {
       "post": {
         "operationId": "batch.run",
@@ -23084,7 +25616,7 @@
         "tags": [
           "batch"
         ],
-        "description": "Runs up to 1000 operations in order, in one transaction and one change batch: all of them happen, or none do, and the whole request is one undo step.\n\nOperations: create, update, delete and upsert for any entity kind (`kind` is celestial_object, group, place, event or character; `data` is the same body as that kind's single-resource route), and setLocation, addMembers, removeMembers, setFacts, addLink and addRelation on an entity `id`.\n\nRefer to an entity created earlier in the same request as `\"$op:N\"` (N counts from 0), anywhere an id goes. For example, create a system, then planets with `\"parentId\": \"$op:0\"`.\n\nIf an operation fails, nothing is written, and the problem response's `operationIndex` names it. With `dryRun: true` everything runs and is reported, including `impact` (rows touched per table), and then rolled back; use it to preview deletes.",
+        "description": "Runs up to 1000 operations in order, in one transaction and one change batch: all of them happen, or none do, and the whole request is one undo step.\n\nOperations: create, update, delete and upsert for any entity kind (`kind` is celestial_object, group, route, place, event, character; `data` is the same body as that kind's single-resource route), and setLocation, addMembers, removeMembers, setWaypoints (a route's object ids in order), setFacts, addLink and addRelation on an entity `id`.\n\nRefer to an entity created earlier in the same request as `\"$op:N\"` (N counts from 0), anywhere an id goes. For example, create a system, then planets with `\"parentId\": \"$op:0\"`.\n\nIf an operation fails, nothing is written, and the problem response's `operationIndex` names it. With `dryRun: true` everything runs and is reported, including `impact` (rows touched per table), and then rolled back; use it to preview deletes.",
         "requestBody": {
           "required": true,
           "content": {
@@ -24651,6 +27183,10 @@
     {
       "name": "groups",
       "description": "A named set of top-level objects drawn as a colored outline: a sector, territory or faction. Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color."
+    },
+    {
+      "name": "routes",
+      "description": "A line through objects in order: a trade lane, warp route or campaign path (U6). Its waypoints, the objects it passes through, are set as an ordered list of object ids with PUT /routes/{id}/waypoints (or the batch op setWaypoints); they are top-level objects on the route's map, and one may come again later (a round trip) but not twice in a row. `style` holds the line color, width in pixels and dashing."
     },
     {
       "name": "places",

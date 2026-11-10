@@ -21,7 +21,7 @@ const which = positionals[0];
 const url = process.env.DATABASE_URL;
 if (which !== 'demo' && which !== 'stress') {
   console.error(
-    'Usage: pnpm db:seed demo | pnpm db:seed stress [--objects 5000] [--groups 300] [--seed 40000]',
+    'Usage: pnpm db:seed demo | pnpm db:seed stress [--objects 5000] [--groups 300] [--routes 50] [--seed 40000]',
   );
   process.exit(1);
 }
@@ -45,6 +45,7 @@ try {
       : await seedStress(db, {
           objects: number(values.objects, STRESS_DEFAULTS.objects),
           groups: number(values.groups, STRESS_DEFAULTS.groups),
+          routes: number(values.routes, STRESS_DEFAULTS.routes),
           seed: number(values.seed, STRESS_DEFAULTS.seed),
         });
   console.log(

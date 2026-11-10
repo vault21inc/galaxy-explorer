@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { HexColor } from '../colors.ts';
 import { Uuid } from '../ids.ts';
 import { Appearance } from '../schemas/appearance.ts';
-import { GroupStyle } from '../schemas/styles.ts';
+import { GroupStyle, RouteStyle } from '../schemas/styles.ts';
 import { BASE_TYPES } from './object-types.ts';
 
 /**
@@ -32,6 +32,11 @@ export const groupExtension = z.object({
   /** Defaults to the group type's color. */
   outlineColor: HexColor.optional(),
   style: GroupStyle.optional(),
+});
+
+/** A line through objects (M4-T7); its waypoints are managed under /routes/{id}/waypoints. */
+export const routeExtension = z.object({
+  style: RouteStyle.optional(),
 });
 
 export const eventExtension = z.object({

@@ -26,6 +26,7 @@ import { entityRoutes } from './routes/entities.ts';
 import { healthRoutes } from './routes/health.ts';
 import { historyRoutes } from './routes/history.ts';
 import { placementRoutes } from './routes/placement-routes.ts';
+import { waypointRoutes } from './routes/waypoint-routes.ts';
 import { viewRoutes } from './routes/views.ts';
 import { openApiTags } from './routes/tags.ts';
 import { LocalBlobStore } from './storage/blob-store.ts';
@@ -100,6 +101,7 @@ export async function buildServer(config: Config) {
       await v1.register(configRoutes, { db });
       await v1.register(contentRoutes, { db });
       await v1.register(placementRoutes, { db });
+      await v1.register(waypointRoutes, { db });
       await v1.register(batchRoutes, { db });
       await v1.register(historyRoutes, { db });
       await v1.register(viewRoutes, { db });

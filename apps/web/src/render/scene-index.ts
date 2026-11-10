@@ -38,6 +38,12 @@ export interface DrawnObject {
    * curve, within `radius` (its half-width), instead of as a circle (rendering.md §10).
    */
   curve?: readonly (readonly [number, number, number])[];
+  /**
+   * A route (M4-T7): the object at each point of `curve`. Routes are picked along their line
+   * like rifts, but they aren't objects: no ring, no box selection, and their label sits on the
+   * line (label-driver.tsx). A move in progress shifts the points at moving objects.
+   */
+  waypointIds?: readonly string[];
 }
 
 const sources = new Map<string, readonly DrawnObject[]>();
@@ -79,9 +85,19 @@ export function onMovePreview(listener: () => void): () => void {
 
 /** An object as it's shown: shifted while it's part of a move preview. */
 function shown(object: DrawnObject): DrawnObject {
-  if (!preview?.ids.has(object.id)) return object;
-  const [x, y, z] = object.center;
+  if (!preview) return object;
   const [dx, dy, dz] = preview.delta;
+  if (object.waypointIds && object.curve) {
+    const { ids } = preview;
+    const waypoints = object.waypointIds;
+    if (!waypoints.some((id) => ids.has(id))) return object;
+    const curve = object.curve.map(([x, y, z], index) =>
+      ids.has(waypoints[index] ?? '') ? ([x + dx, y + dy, z + dz] as const) : ([x, y, z] as const),
+    );
+    return { ...object, curve };
+  }
+  if (!preview.ids.has(object.id)) return object;
+  const [x, y, z] = object.center;
   return { ...object, center: [x + dx, y + dy, z + dz] };
 }
 
