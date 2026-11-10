@@ -2,7 +2,24 @@
 
 A browser app for building and exploring galaxies from any fictional universe, starting with Warhammer 40,000. The owner builds each galaxy by hand in 3D: star systems, sectors, nebulae, planets, places and events. Visitors explore it at three levels: galaxy, system and orbit. Potential spoilers stay hidden until a visitor chooses to see them.
 
-**Status:** the foundation (M0) is in place: a database, an API and a 3D canvas showing a placeholder starfield. The real galaxy view arrives in M2. Progress is tracked in the [plan's status section](docs/plan/README.md#status).
+**Status (10 November 2026):** the galaxy view can be explored and edited. You can place and edit systems, planets, stations, black holes and regions, and organize them into nested groups shown as outlines. Milestones M0–M3 are done. M4 (groups, regions and routes) is nearly done: routes and the `?` shortcut panel are next. The system and orbit views come in M5 and M6. Progress is tracked task by task in the [plan's status section](docs/plan/README.md#status).
+
+## What you can do today
+
+- **Explore a galaxy:** a procedural spiral or elliptical galaxy with your objects on it. Each kind of body has its own look: systems as stars ringed by their planets (binaries and triples in each star's color), black holes as lensed accretion discs, stations and markers as icons.
+- **Regions:** nebulae and anomalies as round or flat clouds, storms seen from above (the Eye of Terror, with a gap in its rim for the Cadian Gate, from a generated or uploaded picture), and rifts along a curve (the Great Rift).
+- **Groups:** nested groups such as Segmentum › Sector › Sub-sector, drawn as colored outlines with their names, shown or hidden by layer.
+- **Read about anything:** select an object or group for its details, images, facts and links. Potential spoilers stay blacked out until you reveal them, one at a time or all at once.
+- **Build it, in edit mode (E):**
+  - add, move, duplicate and delete objects;
+  - edit their details, with rich text and images;
+  - group a selection (⌘/Ctrl + G);
+  - reshape regions with handles on the map;
+  - change the galaxy's look, or trace over an uploaded map image;
+  - undo anything, or revert it later from the History panel.
+- **Universe settings** (from the universe menu): the universe's details, and its group types, event categories, object subtypes and custom fields.
+
+Try it with the demo data: after setup, `pnpm db:reset` loads the **Example Universe** (at `/u/example-universe/main`) and `pnpm db:seed stress` adds a 5,000-object map for performance testing (`/u/stress-test/main`).
 
 ## Documentation
 
@@ -65,9 +82,7 @@ Run these once, in the repository folder.
    pnpm dev
    ```
 
-3. Open **http://localhost:5173**. For now it's a placeholder starfield:
-   - drag to orbit;
-   - scroll or pinch to zoom toward the pointer.
+3. Open **http://localhost:5173** and choose a universe. If the list is empty, load the demo with `pnpm db:reset` (it wipes the dev database first) or start your own from the home page.
 
 4. Press **Ctrl+C** in the terminal to stop the app. To stop the databases too:
 
@@ -77,8 +92,34 @@ Run these once, in the repository folder.
 
    Your dev data is kept. The test database starts empty every time.
 
-Other pages:
-- http://localhost:5173/?perf=1 adds the **performance HUD**: frame rate, frame times, draw calls and pixel ratio. When nothing moves it reads "idle", because the app draws nothing until something changes. [docs/perf/README.md](docs/perf/README.md#reading-the-hud) explains each row.
+### Controls
+
+| Do | Mouse or trackpad | Keyboard |
+|---|---|---|
+| Orbit | drag (Option/Alt + drag in edit mode) | — |
+| Pan | right-drag, or ⌘/Ctrl + drag | arrow keys |
+| Zoom toward the pointer | scroll, or pinch | `+` and `−` |
+| Select | click; Shift or ⌘/Ctrl + click adds | Esc clears |
+| Fly to the selection | double-click | F |
+| Reset the camera | — | H |
+| Labels: hover only, group names, all | — | L cycles; hold Space for all |
+| Show or hide spoilers | the Spoilers button | Shift + S |
+| Edit mode | the Edit button | E |
+
+In edit mode:
+- dragging empty space draws a selection box, with Shift adding to the selection;
+- dragging an object moves it, with Shift snapping to the grid;
+- right-click opens the object's menu;
+- N adds an object;
+- ⌘/Ctrl + D duplicates, ⌘/Ctrl + G groups, and Delete deletes, after a confirmation that counts what goes with it;
+- ⌘/Ctrl + Z undoes and ⌘/Ctrl + Shift + Z redoes.
+
+The List button (always open in edit mode) shows everything in the view as a tree of layers, groups and objects, usable with the keyboard alone. [ux.md](docs/plan/ux.md#4-keyboard-shortcuts) has the full list, including what's still to come.
+
+### Other pages
+
+- **Universe settings:** `/u/<universe>/settings`, also in the universe menu.
+- Add `?perf=1` to any page for the **performance HUD**: frame rate, frame times, draw calls and pixel ratio. When nothing moves it reads "idle", because the app draws nothing until something changes. [docs/perf/README.md](docs/perf/README.md#reading-the-hud) explains each row.
 - http://127.0.0.1:3100/api/health reports whether the API can reach its database.
 - http://127.0.0.1:3100/api/docs is the interactive API documentation.
 
@@ -97,6 +138,12 @@ Database commands:
 - `pnpm db:reset` wipes the dev database, migrates it again and loads the demo universe;
 - `pnpm db:seed demo` loads (or refreshes) the small "Example Universe", and `pnpm db:seed stress` adds a 5,000-object map for performance testing;
 - `pnpm db:psql` opens a SQL prompt on the dev database.
+
+After pulling new code, run `pnpm db:migrate` before `pnpm dev`: new migrations aren't applied automatically.
+
+Other commands:
+- `pnpm perf` measures frame times, draw calls and memory on the stress map in visible Chrome and WebKit windows, and fails on a missed budget. `pnpm perf --edit` does the same in edit mode. Leave the mouse alone while it runs: a pointer over the windows counts as interaction. [docs/perf/README.md](docs/perf/README.md) explains the report.
+- `pnpm api:generate` regenerates the typed API client after a route or schema change, and `pnpm api:check` fails if it's out of date (CI runs it).
 
 [AGENTS.md](AGENTS.md#commands) lists every command.
 
@@ -124,3 +171,6 @@ Everything listens on this machine only (127.0.0.1 or localhost), not on your ne
 
 - **The page loads but `/api/health` says `"db": "down"`:** the databases aren't running. Run `pnpm db:up`.
 - **`DATABASE_URL is not set` or `TEST_DATABASE_URL is not set`:** create `.env` from `.env.example`.
+- **The databases stopped by themselves:** quitting or restarting Docker Desktop stops them. Run `pnpm db:up` again; your data is kept.
+- **Errors about a missing column or table after pulling:** run `pnpm db:migrate`.
+- **The e2e tests can't start their server:** the test database isn't running (`pnpm db:up`), or something holds port 4173 or 3101.
