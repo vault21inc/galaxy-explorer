@@ -12,6 +12,7 @@ import {
 } from '../tuning.ts';
 import { angleOf, type GlyphBuffers } from './use-glyph-quads.ts';
 import { systemGlyphCell } from './system-glyph-atlas.ts';
+import { viewOpenedBy } from '@/state/opens-view.ts';
 
 /** What a system's glyph shows, before it's packed for the GPU. Pure and unit-tested. */
 export interface SystemGlyph {
@@ -90,6 +91,7 @@ export function buildSystemGlyphBuffers(
       state,
       color,
       pickPriority: 1,
+      opensView: viewOpenedBy(object) !== null,
       label: labelText(object, policy),
       labelPriority: object.appearance.labelPriority ?? 0,
     });

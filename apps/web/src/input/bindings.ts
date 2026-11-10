@@ -182,6 +182,7 @@ export type KeyAction =
   | 'reset-view'
   | 'frame-selection'
   | 'clear-selection'
+  | 'enter-selection'
   | 'cycle-labels'
   | 'show-all-labels'
   | 'toggle-spoilers'
@@ -206,6 +207,8 @@ export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
   // Esc cancels placing an object, or clears the selection; with nothing selected it goes up
   // one view (M5-T1).
   Escape: 'clear-selection',
+  // Enter opens the selected system's or planet's view, or flies to anything else (M5-T2).
+  Enter: 'enter-selection',
   // Labels (ux.md §7): L cycles hover → groups → all; Space shows all while held.
   l: 'cycle-labels',
   L: 'cycle-labels',
@@ -241,6 +244,10 @@ export const KEY_ACTION_HELP: Readonly<
   'frame-selection': { description: 'Fly to the selection', section: 'everywhere' },
   'clear-selection': {
     description: 'Clear the selection or stop placing an object; otherwise go up one view',
+    section: 'everywhere',
+  },
+  'enter-selection': {
+    description: 'Enter the selected system or planet, or fly to the selection',
     section: 'everywhere',
   },
   'cycle-labels': { description: 'Labels: hover only, group names, all', section: 'everywhere' },

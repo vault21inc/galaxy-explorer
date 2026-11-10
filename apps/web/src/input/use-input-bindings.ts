@@ -1,6 +1,7 @@
 import { CameraControlsImpl } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { useEffect } from 'react';
+import { gateZoom, noteWheel } from '@/render/camera/zoom-gate.ts';
 import { pickAt } from '@/render/picking/picking.ts';
 import { GESTURE_LOG_SCALE_TO_PX } from '@/render/tuning.ts';
 import { useSelection } from '@/state/selection.ts';
@@ -32,6 +33,9 @@ const normalized = new WeakSet<Event>();
  *   camera-controls would otherwise treat a trackpad pinch (ctrl+wheel) as a field-of-view zoom
  *   instead of moving the camera.
  * - **Safari pinch:** `gesturechange` events become the same wheel events, at the pinch point.
+ * - **Changing view:** each zoom step first passes the zoom gate (render/camera/zoom-gate.ts),
+ *   which stops it at an object's enter or stop distance, turns a push past that into entering
+ *   or leaving a view, and drops trackpad inertia after a change of view.
  * - **Right-click:** the browser's menu is suppressed on the canvas.
  *
  * Listeners sit on `window` in the capture phase, so they run before camera-controls' own.
@@ -81,6 +85,7 @@ export function useInputBindings(mode: Mode): void {
     };
 
     const zoomAt = (deltaPx: number, target: EventTarget, clientX: number, clientY: number) => {
+      if (!gateZoom(get(), deltaPx, clientX, clientY)) return;
       const wheel = new WheelEvent('wheel', {
         deltaY: deltaPx,
         deltaMode: WheelEvent.DOM_DELTA_PIXEL,
@@ -95,10 +100,14 @@ export function useInputBindings(mode: Mode): void {
 
     let gestureActive = false;
     const onWheel = (event: WheelEvent) => {
-      if (normalized.has(event) || !onCanvas(event) || !event.target) return;
+      if (normalized.has(event)) return;
+      // Every wheel event, even one the transition overlay catches, feeds the momentum guard.
+      const allowed = noteWheel(event.timeStamp);
+      if (!onCanvas(event) || !event.target) return;
       // Stop the page from scrolling or zooming, and camera-controls from seeing the raw event.
       event.preventDefault();
       event.stopImmediatePropagation();
+      if (!allowed) return;
       // Safari reports a pinch both ways in some versions; its gesture events win.
       if (gestureActive && event.ctrlKey) return;
       zoomAt(wheelDeltaPx(event, element.clientHeight), event.target, event.clientX, event.clientY);
@@ -117,13 +126,10 @@ export function useInputBindings(mode: Mode): void {
       if (!gestureActive || !event.target) return;
       event.preventDefault();
       const gesture = event as GestureLike;
-      zoomAt(
-        gestureDeltaPx(gesture.scale, lastScale, GESTURE_LOG_SCALE_TO_PX),
-        event.target,
-        gesture.clientX,
-        gesture.clientY,
-      );
+      const deltaPx = gestureDeltaPx(gesture.scale, lastScale, GESTURE_LOG_SCALE_TO_PX);
       lastScale = gesture.scale;
+      if (!noteWheel(event.timeStamp)) return;
+      zoomAt(deltaPx, event.target, gesture.clientX, gesture.clientY);
     };
     const onGestureEnd = (event: Event) => {
       if (!gestureActive) return;

@@ -9,7 +9,7 @@ import { hoverStore } from '@/state/hover.ts';
 import { useSelection } from '@/state/selection.ts';
 import { useNavigation } from '@/state/navigation.ts';
 import { viewNavigation } from '@/state/view-navigator.ts';
-import { viewSettled } from './transition/transition-controller.ts';
+import { transitionsStarted, viewSettled } from './transition/transition-controller.ts';
 import { flyTo } from './camera/fly-to.ts';
 import { galaxyDiscState } from './galaxy/galaxy-disc.tsx';
 import { drawnGroup } from './groups/group-index.ts';
@@ -102,6 +102,8 @@ export interface GeTestHooks {
   exit(): Promise<void>;
   /** Whether a change of view is under way or the address is still being resolved. */
   transitioning(): boolean;
+  /** Animated changes of view started since the page loaded (M5-T2). */
+  transitions(): number;
   /** Flies the camera to an object, as a double-click does; resolves when it has settled. */
   flyTo(id: string): Promise<void>;
   /** Where a page point meets the work plane (y = 0), as placing an object computes it. */
@@ -223,6 +225,7 @@ export function installTestHooks(): void {
       await settled();
     },
     transitioning: () => !viewSettled(),
+    transitions: () => transitionsStarted(),
     flyTo: async (id) => {
       const object = drawnObject(id);
       const controls = canvasState()?.controls;

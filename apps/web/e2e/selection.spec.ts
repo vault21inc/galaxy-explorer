@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { galaxyObjects } from './demo.ts';
+import { galaxyObjects, systemChildren } from './demo.ts';
 import { framesDuring, waitForFirstFrame, waitForIdle } from './test-hooks.ts';
 
 const MAP = '/u/example-universe/main';
@@ -140,22 +140,37 @@ test.describe('picking, hover and selection', () => {
     await expect.poll(() => page.evaluate(() => window.__GE_TEST__?.hoveredId())).toBeNull();
   });
 
-  test('a double-click flies to the object', async ({ page }) => {
-    const [first] = await openMap(page);
-    if (!first) throw new Error('A target expected.');
+  test('a double-click flies to an object that opens no view, and selects it', async ({ page }) => {
+    // Every body in the demo galaxy opens a view (M5-T2), so this happens in a system view.
+    const fenwick = (await galaxyObjects(page.request, 'example-universe', 'main')).find(
+      (object) => object.namePlain === 'Fenwick',
+    );
+    const watch = (await systemChildren(page.request, fenwick?.id ?? '')).find(
+      (child) => child.namePlain === 'Fenwick Watch',
+    );
+    if (!fenwick || !watch) throw new Error('Fenwick Watch expected.');
+    await page.goto(`${MAP}/view/${fenwick.id}`);
+    await waitForFirstFrame(page);
+    const where = () =>
+      page.evaluate((id) => window.__GE_TEST__?.screenPositionOf(id) ?? null, watch.id);
+    await expect.poll(where).not.toBeNull();
+    await waitForIdle(page);
+    const at = await where();
     const center = await page.evaluate(
       (id) => window.__GE_TEST__?.drawnObject(id)?.center,
-      first.id,
+      watch.id,
     );
-    await page.mouse.dblclick(first.x, first.y);
+    await page.mouse.dblclick(at?.x ?? 0, at?.y ?? 0);
     await waitForIdle(page);
+    expect(await page.evaluate(() => window.__GE_TEST__?.selectedIds())).toEqual([watch.id]);
     const pose = await page.evaluate(() => window.__GE_TEST__?.cameraPose());
     const [tx = 0, ty = 0, tz = 0] = pose?.target ?? [];
     const [cx = 0, cy = 0, cz = 0] = center ?? [];
-    expect(Math.hypot(tx - cx, ty - cy, tz - cz)).toBeLessThan(1);
+    expect(Math.hypot(tx - cx, ty - cy, tz - cz)).toBeLessThan(0.01);
     const [px = 0, py = 0, pz = 0] = pose?.position ?? [];
-    // Close in, but framing the neighborhood (FLY_TO_MIN_RADIUS_LY), not the body alone.
-    expect(Math.hypot(px - tx, py - ty, pz - tz)).toBeLessThan(20_000);
+    // Close in, but framing the neighborhood (SYSTEM_FLY_TO_MIN_RADIUS_SU), not the station.
+    expect(Math.hypot(px - tx, py - ty, pz - tz)).toBeLessThan(5);
+    expect(await page.evaluate(() => window.__GE_TEST__?.level()?.level)).toBe('system');
   });
 
   test('F frames the selection', async ({ page }) => {

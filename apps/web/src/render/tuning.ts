@@ -489,7 +489,9 @@ export const SYSTEM_NEAR_SU = 0.01;
 export const SYSTEM_FAR_SU = 10_000;
 /** The target stays within this many extents of the center, and this close to the plane. */
 export const SYSTEM_TARGET_EXTENTS = 1.2;
-export const SYSTEM_TARGET_HEIGHT_EXTENTS = 0.05;
+// Looser than the galaxy's: zooming toward a planet off the middle of the screen puts the
+// camera's target at the planet's depth, a little off the plane (zoom-gate.ts).
+export const SYSTEM_TARGET_HEIGHT_EXTENTS = 0.5;
 /** Flying to an object (F, double-click) frames at least this radius around it. */
 export const SYSTEM_FLY_TO_MIN_RADIUS_SU = 0.6;
 /** Leaving a planet's orbit view without a saved pose: look at it from this many extents. */
@@ -528,3 +530,46 @@ export const VIEW_EXIT_START_FACTOR = 0.45;
  * so a slow request shows its loading panel instead of a black screen.
  */
 export const VIEW_READY_TIMEOUT_MS = 2_000;
+
+// ---------------------------------------------------------------------------------------------
+// Zooming into and out of views (rendering.md §4, M5-T2). Distances are multiples of the zoom
+// target's radius as its renderer draws it (its `size` in the view's unit), keyed by the view
+// the target is seen in.
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Zooming toward an object that opens a view stops this many of its radii away; pushing on
+ * past that enters it. In the galaxy view a 120 ly system enters from 1,440 ly, where its glyph
+ * has reached its largest on-screen size.
+ */
+export const ENTER_DISTANCE_RADII = { galaxy: 12, system: 8, orbit: 8 } as const;
+/** Zooming toward an object that opens no view stops this many of its radii away. */
+export const STOP_DISTANCE_RADII = { galaxy: 6, system: 3, orbit: 3 } as const;
+/**
+ * How much more zoom input, in wheel pixels, it takes past the enter or exit distance to change
+ * view: the hysteresis that keeps a trackpad flick from jumping views. A mouse wheel notch is
+ * about 100 px, so this is a notch and a bit; a trackpad needs a short deliberate push.
+ */
+export const ENTER_PUSH_PX = 120;
+export const EXIT_PUSH_PX = 120;
+/** The push fades if no zoom input arrives for this long, and the progress ring disappears. */
+export const PUSH_RESET_MS = 500;
+/** "At" a distance limit means within this fraction of it, since the camera eases into it. */
+export const DISTANCE_LIMIT_SLACK = 0.03;
+/**
+ * The momentum guard: wheel input is ignored for this long after a change of view starts, so
+ * trackpad inertia can't carry into the next view (rendering.md §4).
+ */
+export const MOMENTUM_GUARD_MS = 400;
+/**
+ * And beyond that, a stream of wheel events that was under way when the change started stays
+ * ignored until it pauses for this long: inertia arrives every frame or so until it has
+ * decayed, while a reader starting a new scroll has lifted their fingers first.
+ */
+export const WHEEL_STREAM_GAP_MS = 150;
+/** The progress ring: this many CSS pixels outside the target's drawn radius, and its stroke. */
+export const PUSH_RING_GAP_PX = 10;
+export const PUSH_RING_MIN_RADIUS_PX = 24;
+export const PUSH_RING_STROKE_PX = 3;
+/** Leaving a view by zooming out, the ring is drawn around the middle of the screen. */
+export const EXIT_RING_RADIUS_PX = 48;

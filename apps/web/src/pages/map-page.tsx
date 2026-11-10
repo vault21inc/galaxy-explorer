@@ -78,7 +78,13 @@ export function MapPage() {
   }
   // A system or orbit view: its own panels. The galaxy view's follow.
   if (top && top.level !== 'galaxy') {
-    return <SubjectViewPanels level={top.level} subjectId={top.subjectId} />;
+    return (
+      <SubjectViewPanels
+        universeId={route.universe.id}
+        level={top.level}
+        subjectId={top.subjectId}
+      />
+    );
   }
   if (view.error) {
     return (

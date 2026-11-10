@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useSearchParams } from 'react-router';
+import { useLocation, useSearchParams } from 'react-router';
 import { sameIds, useSelection } from './selection.ts';
 
 /** `?select=a,b` ↔ ['a', 'b'] (ux.md §9). */
@@ -19,12 +19,15 @@ export function parseSelectParam(value: string | null): string[] {
 export function useSelectionUrlSync(): void {
   const [searchParams, setSearchParams] = useSearchParams();
   const fromUrl = searchParams.get('select');
+  const { pathname } = useLocation();
 
-  // URL → store, whenever the address changes (load, Back, Forward, a link).
+  // URL → store, whenever the address changes (load, Back, Forward, a link, another view).
+  // Another view's address counts even with the same `select`: a click's address update can
+  // still be pending when a double-click enters a view, and the new view starts from its URL.
   useEffect(() => {
     const ids = parseSelectParam(fromUrl);
     if (!sameIds(ids, useSelection.getState().selectedIds)) useSelection.getState().select(ids);
-  }, [fromUrl]);
+  }, [fromUrl, pathname]);
 
   // Store → URL, whenever the selection changes.
   useEffect(

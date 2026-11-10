@@ -81,7 +81,7 @@ Shortcuts are ignored while focus is in a text field. `?` opens this list as an 
 | Keys | Action | Mode |
 |---|---|---|
 | Esc | Clear the selection; if nothing is selected, go up one view | both |
-| Enter | Enter the selected explorable object | both |
+| Enter | Enter the selected explorable object; with anything else selected, fly to it | both |
 | F | Frame the selection | both |
 | H or Home | Reset the camera for this view | both |
 | Arrow keys | Pan | both |
@@ -181,7 +181,7 @@ How hidden content looks (P2, black out rather than remove):
   - `/u/{universeSlug}/settings` is the universe's settings page (M4-T1), so no map may use the slug `settings`.
 
   Every state can be shared as a link, and the browser's Back and Forward move between views.
-- **Entering** (S1, S2): double-click, Enter, or keep zooming toward an explorable object. A progress ring fills while you push past the threshold, then the camera flies in and fades.
+- **Entering** (S1, S2): double-click, Enter, or keep zooming toward an explorable object. A progress ring fills while you push past the threshold, then the camera flies in and fades. Zooming toward an object keeps it under the pointer while the camera closes in.
 - **Not explorable:** zooming stops at a comfortable distance and its info opens.
 - **Leaving:** zoom out past the threshold, press Esc, use a breadcrumb, or go Back. The camera returns to where it was. After entering, Esc and the parent breadcrumb go back through history, as Back does. In a view opened from a link, they open the parent view with the view just left selected.
 - **Links to objects that open no view** (a station, a nebula, a system not marked explorable) open the view they're in, with the object selected.

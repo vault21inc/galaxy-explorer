@@ -144,12 +144,43 @@ async function prepareEditMode(request: APIRequestContext): Promise<string[]> {
   return view.objects.slice(0, EDIT_SELECTION).map((object) => object.id);
 }
 
+/**
+ * Zooms with the wheel at a point. Zooming in over an object would stop at it and push into
+ * its view (M5-T2), which this galaxy path mustn't do, so before each step the pointer moves to
+ * the nearest spot with nothing under it. The system-view phases arrive with M5-T5.
+ */
 async function wheel(page: Page, at: { x: number; y: number }, deltaY: number, ticks: number) {
-  await page.mouse.move(at.x, at.y);
+  let spot = await emptySpotNear(page, at);
   for (let i = 0; i < ticks; i++) {
+    if (deltaY < 0) spot = await emptySpotNear(page, spot);
     await page.mouse.wheel(0, deltaY);
     await page.waitForTimeout(STEP_MS);
   }
+}
+
+/** The first point on growing squares around `at` where the pointer hovers nothing. */
+async function emptySpotNear(page: Page, at: { x: number; y: number }) {
+  for (let radius = 0; radius <= 240; radius += 12) {
+    const offsets =
+      radius === 0
+        ? [[0, 0]]
+        : [
+            [radius, 0],
+            [-radius, 0],
+            [0, radius],
+            [0, -radius],
+            [radius, radius],
+            [-radius, -radius],
+            [radius, -radius],
+            [-radius, radius],
+          ];
+    for (const [dx = 0, dy = 0] of offsets) {
+      const spot = { x: at.x + dx, y: at.y + dy };
+      await page.mouse.move(spot.x, spot.y);
+      if ((await evaluateHooks<string | null>(page, 'h.hoveredId()')) === null) return spot;
+    }
+  }
+  return at;
 }
 
 test('the galaxy view stays within its budgets', async ({ page, browser }, testInfo) => {

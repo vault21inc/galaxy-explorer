@@ -28,6 +28,10 @@ let wanted: ViewTarget[] | null = null;
 let running: Promise<void> | null = null;
 let arrived: (() => void) | null = null;
 let pendingResolves = 0;
+/** When the latest animated change of view started (`performance.now()`), for the momentum guard. */
+let startedAtMs = Number.NEGATIVE_INFINITY;
+/** How many animated changes of view have started since the page loaded (for test hooks). */
+let startedCount = 0;
 /** An address change was asked for and React Router hasn't applied it yet. */
 let navigationPending = false;
 
@@ -80,6 +84,16 @@ export function viewSettled(): boolean {
   return !navigationPending && running === null && pendingResolves === 0;
 }
 
+/** When the latest animated change of view started, and whether one is running now. */
+export function transitionTiming(): { startedAtMs: number; active: boolean } {
+  return { startedAtMs, active: useTransition.getState().active };
+}
+
+/** Animated changes of view started since the page loaded. */
+export function transitionsStarted(): number {
+  return startedCount;
+}
+
 /** The camera's pose now, in the current view's frame. */
 export function currentCameraPose(): CameraPose | null {
   if (!controls) return null;
@@ -104,6 +118,8 @@ async function run(): Promise<void> {
         continue;
       }
       useTransition.setState({ active: true });
+      startedAtMs = performance.now();
+      startedCount++;
       if (plan.flyMs > 0) {
         flyAway(move, navigation.stack.length, target);
         await sleep(plan.flyMs);
@@ -135,7 +151,10 @@ async function run(): Promise<void> {
 function flyAway(move: Move, depth: number, target: readonly ViewTarget[]): void {
   if (!controls) return;
   if (move === 'exit') {
-    void controls.dollyTo(controls.distance * VIEW_FLY_OUT_FACTOR, true);
+    // Zooming out to leave stopped the camera at the view's farthest distance: allow more.
+    const distance = controls.distance * VIEW_FLY_OUT_FACTOR;
+    controls.maxDistance = Math.max(controls.maxDistance, distance);
+    void controls.dollyTo(distance, true);
     return;
   }
   // The first view opened beyond the current one, which is drawn in the current view.
@@ -145,7 +164,9 @@ function flyAway(move: Move, depth: number, target: readonly ViewTarget[]): void
   const center = new Vector3(...object.center);
   // From the object toward the camera: the line the camera dives along.
   const direction = controls.getPosition(new Vector3()).sub(center).normalize();
-  const distance = Math.max(object.radius * VIEW_FLY_END_RADII, controls.minDistance);
+  const distance = object.radius * VIEW_FLY_END_RADII;
+  // Zooming in to enter stopped the camera at the enter distance (zoom-gate.ts): let it closer.
+  controls.minDistance = Math.min(controls.minDistance, distance);
   const end = center.clone().addScaledVector(direction, distance);
   void controls.setLookAt(end.x, end.y, end.z, center.x, center.y, center.z, true);
 }

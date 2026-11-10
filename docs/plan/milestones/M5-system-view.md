@@ -57,11 +57,22 @@
 - A double-click or Enter on an explorable object enters immediately. On a non-explorable object it flies to it and opens its info.
 
 **Done when:**
-- [ ] E2E:
+- [x] E2E:
   - a series of wheel events over an explorable system enters it;
   - over a non-explorable object, zoom stops at the stop distance and the panel opens;
   - zooming out in a system view exits it;
   - a burst of 60 small wheel deltas, imitating trackpad inertia, causes **exactly one** transition.
+
+**As built:**
+- **The zoom gate.** `render/camera/zoom-gate.ts` decides every wheel and pinch step (`input/use-input-bindings.ts`). The pure parts are in `render/camera/thresholds.ts`: the distance functions, `Push` (the hysteresis) and `MomentumGuard`.
+- **Zooming toward the target.** Instead of moving the orbit point and letting camera-controls zoom, the gate moves the camera along the line to the target with the same step size as camera-controls. The target stays exactly under the pointer and the camera stops exactly at the limit. Turning the camera to face the target, the first approach, slid the target out from under the pointer.
+- **The distances** are multiples of the target's drawn radius per view. In the galaxy view, a system enters from 12 radii (1,440 ly for a 120 ly system) and other bodies stop at 6. In the system view, planets enter from 8 radii and other bodies stop at 3. The exit distance is the system camera's farthest distance (3 extents). The push takes 120 px of wheel either way and lapses after 500 ms. The system camera's target may now sit up to half an extent off the plane, since zooming toward an off-center planet puts it at the planet's depth.
+- **The momentum guard.** The plan's 400 ms wasn't enough: trackpad inertia lasts about a second. The guard also ignores the rest of any wheel stream that was flowing when the change started, until a 150 ms pause. Every wheel event feeds it, even those the transition overlay catches.
+- **Prefetching.** An explorable target's view is resolved (payload cached) as soon as it becomes the target.
+- **The progress ring** is a DOM SVG (`render/transition/progress-ring.tsx`) around the target, or around the middle of the screen when leaving.
+- **Double-click** enters an object that opens a view. On anything else it selects the object and flies to it. **Enter** does the same for a single selection. `DrawnObject.opensView` marks what can be entered.
+- **The system view now shows the info panel** for a selected child, so zooming to a station opens its info there too. The rest of M5-T4's panels are still to come.
+- **A fix.** The selection now re-reads `?select=` whenever the path changes. A double-click's selection update could otherwise outlive the move into the system view.
 
 ### M5-T3 System view rendering
 

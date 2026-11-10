@@ -31,6 +31,11 @@ export interface DrawnObject {
   label: string;
   /** 0–10: higher keeps its label when labels collide (ux.md §7). */
   labelPriority: number;
+  /**
+   * It opens a view of its own (a system or planet marked explorable): zooming in far enough,
+   * double-clicking or pressing Enter enters it (M5-T2). Absent means no.
+   */
+  opensView?: boolean;
   /** A region's shape (M4-T6): sphere, disc, storm or rift. */
   shape?: string;
   /**

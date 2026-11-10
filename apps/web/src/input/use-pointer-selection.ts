@@ -8,6 +8,7 @@ import { gizmoBusy } from '@/editor/gizmo-state.ts';
 import { useContextMenu } from '@/state/context-menu.ts';
 import { toolOwnsClicks } from '@/state/editor.ts';
 import { useSelection } from '@/state/selection.ts';
+import { viewNavigation } from '@/state/view-navigator.ts';
 import { resolveBinding, type Gesture, type Mode, type Target } from './bindings.ts';
 import { isClick } from './click.ts';
 import { detectPlatform } from './platform.ts';
@@ -19,7 +20,8 @@ import { detectPlatform } from './platform.ts';
  * - a press released within 4 px is a click: select, toggle or clear, as the bindings say;
  * - in edit mode a right-click (or a Mac Ctrl-click) on an object opens the context menu,
  *   selecting the object first unless it's already part of the selection;
- * - a double-click flies to the object (entering it arrives in M5).
+ * - a double-click on an object that opens a view enters it (M5-T2); on any other object it
+ *   selects it, which opens its info, and flies to it.
  */
 export function usePointerSelection(mode: Mode): void {
   const get = useThree((state) => state.get);
@@ -91,8 +93,15 @@ export function usePointerSelection(mode: Mode): void {
       const hit = pickAt(get(), event.clientX, event.clientY);
       if (!hit) return;
       const action = resolveBinding('double-click', event, mode, targetOf(hit.id), platform);
+      if (action !== 'enter') return;
+      if (hit.opensView) {
+        viewNavigation.enter(hit.id);
+        return;
+      }
+      const selection = useSelection.getState();
+      if (!selection.selectedIds.includes(hit.id)) selection.select([hit.id]);
       const { controls } = get();
-      if (action === 'enter' && controls instanceof CameraControlsImpl) void flyTo(controls, [hit]);
+      if (controls instanceof CameraControlsImpl) void flyTo(controls, [hit]);
     };
 
     // The pointer cursor follows the hover store, without React.

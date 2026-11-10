@@ -3,6 +3,7 @@ import { hexToLinear } from '../color.ts';
 import { labelText } from '../labels/label-text.ts';
 import type { DrawnObject, DrawnState } from '../scene-index.ts';
 import { GALAXY_BODY_MAX_PX, GALAXY_BODY_MIN_PX, REDACTION_COLOR } from '../tuning.ts';
+import { viewOpenedBy } from '@/state/opens-view.ts';
 
 /** `aState` in the body shader: how an object is drawn. */
 export const BODY_STATES: Record<DrawnState, number> = { normal: 0, redacted: 1, draft: 2 };
@@ -67,6 +68,7 @@ export function buildBodyBuffers(
       state,
       color,
       pickPriority: 1,
+      opensView: viewOpenedBy(object) !== null,
       label: labelText(object, policy),
       labelPriority: object.appearance.labelPriority ?? 0,
     });

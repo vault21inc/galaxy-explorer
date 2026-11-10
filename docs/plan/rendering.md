@@ -108,6 +108,12 @@ export const renderers = {
   - **Exit:** in a child view, zooming out past `exitDistance(level)` plus the same push hysteresis exits. Esc, the breadcrumb and the browser's back button exit immediately.
   - **Momentum guard:** wheel input is ignored for 400 ms after a transition starts, so trackpad inertia can't carry into the next view.
 - **The zoom target** is the explorable or non-explorable object under the cursor (screen-space pick), otherwise the selection. While the cursor is over an object, the camera's orbit point moves to it, so zooming converges on it, as in Google Earth.
+- **As built (M5-T2)**, `render/camera/zoom-gate.ts` sees every zoom step before camera-controls does:
+  - Over a target, the gate zooms itself: it moves the camera along the line to the target, keeping its orientation. The target stays under the pointer and the step stops exactly at the limit. The camera's orbit point goes to the target's depth.
+  - Over empty space, camera-controls zooms to the cursor as before. Zooming out is always camera-controls'.
+  - The target stays the target while scrolling continues, even if the pointer drifts off it.
+  - The limits are multiples of the target's drawn radius: `ENTER_DISTANCE_RADII` and `STOP_DISTANCE_RADII`, per view, in `tuning.ts`. The exit distance is the view's farthest camera distance.
+  - The momentum guard also ignores the rest of any wheel stream that was flowing when the change started, until it pauses for 150 ms. Trackpad inertia can outlast 400 ms.
 - All factors and durations live in `render/tuning.ts`.
 
 ## 5. Coordinate frames and cameras

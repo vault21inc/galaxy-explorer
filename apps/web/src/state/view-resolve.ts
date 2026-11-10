@@ -12,6 +12,7 @@ import type { EntityRead } from '@/api/hooks.ts';
 import { queryKeys } from '@/api/keys.ts';
 import { entityRequest, viewRequest, type ReadOptions } from '@/api/requests.ts';
 import type { ViewTarget } from './navigation-stack.ts';
+import { viewOpenedBy } from './opens-view.ts';
 
 /**
  * What a view URL (ux.md §9) asks for:
@@ -53,8 +54,8 @@ export async function resolveView(
 
   const facts = cachedFacts(client, objectId) ?? (await fetchFacts(client, objectId, options));
   if (facts.mapId !== mapId) return { kind: 'elsewhere', mapId: facts.mapId };
-  const level = objectTypes[facts.baseType].explorableAs;
-  if (!level || !facts.explorable) {
+  const level = viewOpenedBy(facts);
+  if (!level) {
     return { kind: 'select', parentId: facts.parentId, objectId };
   }
   const view = await client.query({

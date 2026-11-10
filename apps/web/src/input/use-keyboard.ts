@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { flyTo } from '@/render/camera/fly-to.ts';
 import { resetViewCamera } from '@/render/camera/use-view-camera.ts';
 import { drawnObject, type DrawnObject } from '@/render/scene-index.ts';
-import { useEditor } from '@/state/editor.ts';
+import { toolOwnsClicks, useEditor } from '@/state/editor.ts';
 import { useHelp } from '@/state/help.ts';
 import { useLabels } from '@/state/labels.ts';
 import { useSpoilers } from '@/state/spoilers.ts';
@@ -55,6 +55,20 @@ export function useKeyboard(): void {
             .filter((object): object is DrawnObject => object !== undefined);
           return flyTo(camera, selected);
         }
+        case 'enter-selection': {
+          // While placing or drawing a route, Enter belongs to that tool.
+          if (toolOwnsClicks()) return;
+          const selected = useSelection
+            .getState()
+            .selectedIds.map((id) => drawnObject(id))
+            .filter((object): object is DrawnObject => object !== undefined);
+          const only = selected.length === 1 ? selected[0] : undefined;
+          if (only?.opensView) {
+            viewNavigation.enter(only.id);
+            return;
+          }
+          return flyTo(camera, selected);
+        }
         case 'clear-selection':
           if (useEditor.getState().placing) useEditor.getState().cancelPlacing();
           else if (useSelection.getState().selectedIds.length > 0) useSelection.getState().clear();
@@ -90,7 +104,7 @@ export function useKeyboard(): void {
       const action = KEY_BINDINGS[event.key];
       if (!action) return;
       // Space and Enter press a focused button or link; leave them to it.
-      if (event.key === ' ' && isPressable(event.target)) return;
+      if ((event.key === ' ' || event.key === 'Enter') && isPressable(event.target)) return;
       // "S" alone (Caps Lock) isn't the shortcut: it needs Shift.
       if (action === 'toggle-spoilers' && !event.shiftKey) return;
       event.preventDefault(); // arrows would scroll the page

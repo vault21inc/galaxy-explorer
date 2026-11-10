@@ -44,6 +44,11 @@ export interface ViewCameraConfig {
 /** The current view's setup, for "reset the view" (H or Home). */
 let currentConfig: ViewCameraConfig | null = null;
 
+/** The current view's camera setup, or null when no view is open (zoom-gate.ts). */
+export function viewCameraConfig(): ViewCameraConfig | null {
+  return currentConfig;
+}
+
 /** The smallest radius flying to an object frames in the current view (fly-to.ts). */
 export function frameMinRadius(): number {
   return currentConfig?.frameMinRadius ?? 0;

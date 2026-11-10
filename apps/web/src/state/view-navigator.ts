@@ -14,6 +14,11 @@ export interface ViewNavigator {
   exit: () => void;
   /** Opens any object's view, or the galaxy view (null). */
   goTo: (objectId: string | null) => void;
+  /**
+   * Loads what an object's view needs before it's entered, once it's the zoom target
+   * (rendering.md §4), so the swap behind the fade doesn't wait for the network.
+   */
+  prefetch: (objectId: string) => void;
 }
 
 let navigator: ViewNavigator | null = null;
@@ -26,6 +31,7 @@ export const viewNavigation: ViewNavigator = {
   enter: (objectId) => navigator?.enter(objectId),
   exit: () => navigator?.exit(),
   goTo: (objectId) => navigator?.goTo(objectId),
+  prefetch: (objectId) => navigator?.prefetch(objectId),
 };
 
 /** `/u/{universe}/{map}` for the galaxy view, `…/view/{objectId}` for an object's (ux.md §9). */

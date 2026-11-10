@@ -62,9 +62,9 @@ export function useViewSync({
   const key = `${mapId ?? ''}/${objectId ?? ''}#${attempt.toString()}`;
 
   // Read by the navigator's callbacks at call time, not captured once.
-  const here = useRef({ location, maps });
+  const here = useRef({ location, maps, mapId, options });
   useEffect(() => {
-    here.current = { location, maps };
+    here.current = { location, maps, mapId, options };
   });
 
   useEffect(() => {
@@ -104,11 +104,17 @@ export function useViewSync({
         expectNavigation();
         void navigate(`${viewPath(universeSlug, mapSlug, id)}${kept()}`);
       },
+      prefetch: (id) => {
+        const { mapId: currentMapId, options: currentOptions } = here.current;
+        if (currentMapId === undefined) return;
+        // Resolving fills the cache the new view reads; a failure shows when it's entered.
+        resolveView(client, currentMapId, id, currentOptions).catch(() => undefined);
+      },
     });
     return () => {
       setViewNavigator(null);
     };
-  }, [navigate, universeSlug, mapSlug]);
+  }, [client, navigate, universeSlug, mapSlug]);
 
   useEffect(() => {
     if (mapId === undefined) return;
