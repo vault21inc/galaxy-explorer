@@ -78,7 +78,9 @@ describe('OpenAPI document', () => {
     return response.json<OpenAPIV3_1.Document>();
   }
 
-  it('is valid OpenAPI 3.1', async () => {
+  // The first test here builds the server and the whole document, and the validator walks
+  // every schema: about 0.1 s locally, but over 5 s once on a busy CI runner.
+  it('is valid OpenAPI 3.1', { timeout: 30_000 }, async () => {
     const document = await openApiDocument();
     expect(document.openapi).toBe('3.1.0');
     await expect(SwaggerParser.validate(structuredClone(document))).resolves.toBeDefined();
