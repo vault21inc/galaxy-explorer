@@ -370,8 +370,19 @@ export const GROUP_LABEL_FONT_PX = 11;
 export const GROUP_LABEL_HEIGHT_PX = 15;
 /** Group labels are uppercase with this letter spacing, in em (ux.md §11). */
 export const GROUP_LABEL_LETTER_SPACING_EM = 0.08;
-/** Object labels are white at this opacity (rendering.md §11). */
-export const OBJECT_LABEL_OPACITY = 0.85;
+/**
+ * Object labels are a soft white (rendering.md §11). Opaque, not white at partial opacity: the
+ * outline below is painted under the text, and a see-through fill would let it grey the glyphs.
+ */
+export const OBJECT_LABEL_COLOR = '#e2e4e9';
+/**
+ * Every label's dark outline, so it reads over the bright core and dense star fields: a stroke
+ * this wide, painted under the text (`paint-order: stroke fill`), so half of it shows outside
+ * each glyph, plus a soft shadow around that.
+ */
+export const LABEL_OUTLINE_PX = 3;
+export const LABEL_OUTLINE_COLOR = 'rgb(0 0 0 / 0.85)';
+export const LABEL_SHADOW = '0 0 4px rgb(0 0 0 / 0.9), 0 0 1px rgb(0 0 0)';
 
 // ---- group outlines (rendering.md §6, M4-T3) --------------------------------------------------
 

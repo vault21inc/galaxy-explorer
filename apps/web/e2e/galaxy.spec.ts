@@ -34,6 +34,34 @@ test.describe('the galaxy background', () => {
     expect(info?.textures).toBe(1);
   });
 
+  test('the quality popover thins and dims the depth stars, and 0 stops drawing them', async ({
+    page,
+  }) => {
+    await page.goto('/u/example-universe/after-the-fall');
+    await waitForFirstFrame(page);
+    const info = () => page.evaluate(() => window.__GE_TEST__?.renderInfo());
+    await expect
+      .poll(async () => (await info())?.points, { timeout: 15_000 })
+      .toBe(SKY_POINTS + DEPTH_STARS);
+    const calls = (await info())?.calls ?? 0;
+
+    await page.getByRole('button', { name: 'Quality settings' }).click();
+    const popover = page.getByRole('dialog');
+    await popover.getByRole('slider', { name: 'Number' }).fill('25');
+    await expect.poll(async () => (await info())?.points).toBe(SKY_POINTS + DEPTH_STARS / 4);
+    await popover.getByRole('slider', { name: 'Brightness' }).fill('50');
+    await expect(popover.getByText('50%')).toBeVisible();
+    await popover.getByRole('slider', { name: 'Number' }).fill('0');
+    await expect.poll(async () => (await info())?.points).toBe(SKY_POINTS);
+    expect((await info())?.calls).toBe(calls - 1);
+
+    // Remembered per browser.
+    await page.reload();
+    await waitForFirstFrame(page);
+    await waitForIdle(page);
+    expect((await info())?.points).toBe(SKY_POINTS);
+  });
+
   test('renders nothing while idle', async ({ page }) => {
     await page.goto('/u/example-universe/main');
     await waitForFirstFrame(page);

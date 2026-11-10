@@ -106,6 +106,7 @@ Run these once, in the repository folder.
 | Reset the camera | — | H |
 | Labels: hover only, group names, all | — | L cycles; hold Space for all |
 | Show or hide spoilers | the Spoilers button | Shift + S |
+| Quality, and how many galaxy stars to draw and how bright | the settings button (top right) | — |
 | Edit mode | the Edit button | E |
 
 In edit mode:

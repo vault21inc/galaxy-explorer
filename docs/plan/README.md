@@ -185,3 +185,4 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-10:** M4-T5 done: the Layers popover shows or hides each layer and group type, remembered per browser, with a legend of the groups shown; outlines and their labels follow it.
 - **2026-11-10:** M4-T6 done: regions take four shapes (round and flat clouds, storms seen from above with a baked or uploaded picture, and rifts along a curve), edited with a radius handle and rift point handles on the map; all regions draw in three calls.
 - **2026-11-10:** M4-T7 done: routes, the first kind added after M1 (a registry entry and a migration): the Route tool, Create route from a selection, a waypoints panel with drag reordering, and lines that follow a dragged waypoint, in two draw calls for any number of routes.
+- **2026-11-10:** labels get a dark outline so they read over bright parts of the galaxy, and the quality popover gains Galaxy stars sliders (number and brightness), remembered per browser.

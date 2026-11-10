@@ -284,7 +284,8 @@ Procedural looks are generated once on the GPU and reused (D-10):
 - Placement updates only `transform: translate3d(…)`. Text content changes only when a pooled element is reassigned.
 - The update runs after each rendered frame (R3F's `addAfterEffect`), when the camera matrices match the frame just drawn. In `all` mode it reuses the picker's projection. Candidates are ranked by one packed number and sorted as a typed array, to stay within 2 ms with 5,000 candidates (M2-T6).
 - Text comes from `labelText(item, spoilerPolicy)`. Hidden spoilers render as a redaction bar of similar length.
-- Group labels are uppercase with letter spacing, in the group's color. Object labels are smaller and white at about 85 % opacity.
+- Group labels are uppercase with letter spacing, in the group's color. Object labels are smaller and a soft white.
+- Every label has a dark outline: a 3 px stroke painted under the text (`-webkit-text-stroke` with `paint-order: stroke fill`), so about 1.5 px shows around each glyph, plus a soft shadow. That keeps names readable over the bright core and dense star fields, in Chrome and Safari alike. Before, labels had only a soft shadow, which bright backgrounds washed out.
 - Labels are `aria-hidden`: the outliner is the accessible list of the same items (ux.md §10).
 
 ## 12. Camera controls
@@ -323,6 +324,10 @@ Input mapping comes from the bindings table (ux.md §3). camera-controls has no 
   The quality guard steps down one setting if the median fps stays below 45 for 2 seconds of interaction, and shows a small notice. It never steps up automatically.
   - It's our own `FrameRateGuard` (M2-T8), not drei's `PerformanceMonitor`. That one counts frames per 250 ms window and keeps its first timestamp across idle time, so under on-demand rendering every pause would read as a low frame rate. The guard measures intervals between rendered frames and skips idle gaps, as the HUD does.
   - It's off under automation (`navigator.webdriver`), so tests and `pnpm perf` measure the default quality.
+- **Galaxy stars:** the same popover has two sliders, Number and Brightness (0–100 %, both 100 % by default). They're remembered per browser (`ge.stars`), so a reader can calm a busy star field without lowering the quality.
+  - Number draws only the first share of the depth stars, through the geometry's draw range. The stars were generated in random order, so that thins them evenly, and nothing is regenerated.
+  - Brightness scales the stars' alpha, which under additive blending scales their light.
+  - At 0 the points aren't drawn at all, one draw call fewer.
 
 ## 14. Test hooks and performance measurement
 

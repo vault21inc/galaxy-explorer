@@ -2,8 +2,11 @@ import {
   GROUP_LABEL_HEIGHT_PX,
   GROUP_LABEL_LETTER_SPACING_EM,
   LABEL_MAX,
+  LABEL_OUTLINE_COLOR,
+  LABEL_OUTLINE_PX,
+  LABEL_SHADOW,
+  OBJECT_LABEL_COLOR,
   OBJECT_LABEL_HEIGHT_PX,
-  OBJECT_LABEL_OPACITY,
 } from '../tuning.ts';
 import { isPrimaryModifier } from '@/input/bindings.ts';
 import { detectPlatform } from '@/input/platform.ts';
@@ -32,7 +35,7 @@ const KIND_STYLES: Record<LabelKind, Partial<CSSStyleDeclaration>> = {
   object: {
     font: LABEL_FONTS.object,
     lineHeight: `${OBJECT_LABEL_HEIGHT_PX.toString()}px`,
-    color: `rgb(255 255 255 / ${OBJECT_LABEL_OPACITY.toString()})`,
+    color: OBJECT_LABEL_COLOR,
     textTransform: 'none',
     letterSpacing: 'normal',
     // Object labels let clicks through to the canvas, which picks the body beneath.
@@ -60,7 +63,9 @@ export function mountLabelPool(container: HTMLElement): () => void {
     const element = document.createElement('div');
     element.style.cssText =
       'position:absolute;left:0;top:0;white-space:nowrap;display:none;will-change:transform;' +
-      'text-shadow:0 0 3px rgb(0 0 0 / 0.9),0 0 1px rgb(0 0 0);';
+      // The outline (tuning.ts): a stroke painted before the fill, so it sits under the text.
+      `-webkit-text-stroke:${LABEL_OUTLINE_PX.toString()}px ${LABEL_OUTLINE_COLOR};` +
+      `paint-order:stroke fill;text-shadow:${LABEL_SHADOW};`;
     container.appendChild(element);
     return { element, id: null, text: '', kind: null, color: null, visible: false };
   });
