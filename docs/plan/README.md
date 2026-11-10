@@ -174,3 +174,4 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-09:** M3-T8 done: Map settings with seven galaxy presets, sliders previewed live (one reused 512² bake), a central bar in the sampler and the disc, and a reference underlay in edit mode.
 - **2026-11-09:** M3-T9 done: the outliner, an ARIA tree of the view's objects that mirrors the canvas selection, with a filter; always on the left in edit mode, behind List in view mode. All M3 tasks are done; the milestone acceptance (an edit-mode perf run, the owner's real map) remains.
 - **2026-11-10:** M3 edit-mode performance check passed: `pnpm perf --edit` ([report](../perf/2026-11-10-M3-edit.md)). What remains of M3 is the owner's real-map trial.
+- **2026-11-10:** D-28: each kind of body gets its own look in the galaxy view (systems as stars with their planets, black holes as lensed discs, stations and markers as icons), planned as M4-T8.

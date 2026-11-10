@@ -4,7 +4,8 @@
 - named, nested groups (sectors, sub-sectors, territories), each drawn as a colored outline with a label;
 - universe-defined group types and layers;
 - nebulae and warp storms as regions;
-- routes between objects.
+- routes between objects;
+- a look of its own for each kind of body in the galaxy view (D-28).
 
 **Depends on:** M3. This milestone can run in parallel with M5; the two touch different files except for the shared registries.
 **Read first:** [data-model.md §3.3, §3.5](../data-model.md), [rendering.md §6](../rendering.md#6-galaxy-view) (outlines, regions, routes), [ux.md §5](../ux.md#5-selecting-and-editing) (grouping).
@@ -16,6 +17,7 @@
 5. Add a nebula and resize it. Recreate the Eye of Terror as a storm disc seen from above: a bright rim around a darker core, with a gap in the rim for the Cadian Gate. Then try it with an uploaded top-down image instead.
 6. Draw the Great Rift as a rift region along a curve across the galaxy.
 7. Draw a route through four systems.
+8. Systems show as glowing stars ringed by their planets, black holes as lensed accretion discs, and stations and markers as icons. Change a system's color and size, and its star follows.
 
 **Out of scope:** Voronoi-style territories and freeform drawn areas (later shape renderers).
 
@@ -160,6 +162,35 @@
 **Done when:**
 - [ ] The M1 generic contract suite covers `route` with **no new test code**, only the registry entry.
 - [ ] E2E: creating a route through four systems draws it; moving a waypoint system updates the line.
+
+### M4-T8 A look per kind of body in the galaxy view
+
+**Where:** `apps/web/src/render/bodies/`, `src/render/bake/`, `src/render/registry.ts`, `apps/api/src/services/view-service.ts`, `packages/domain/src/schemas/views.ts`.
+
+The details are in D-28 and rendering.md §6. This task doesn't depend on T1–T7 and can come first.
+
+- **Payload:** galaxy-view systems gain `planetCount`, the number of `planet` objects directly inside them that the reader may see (drafts only with `includeDrafts`, as everywhere). It's computed with one grouped query. The view snapshot test changes by that field only.
+- **`SystemGlyphs`:**
+  - A baked atlas of star glyphs for 0–6 planets: a core and halo, faint rings, and a dot on each ring.
+  - One instanced draw, tinted by the system's resolved color and sized by its radius (the form's Color and Size fields).
+  - A per-instance turn from the id.
+  - Redacted systems use the redaction color and no rings: the count could hint at the content.
+  - Drafts are drawn like drafts elsewhere.
+- **`BlackHoles`:**
+  - A baked atlas of the lensed disc at four elevations: shadow, photon ring, disc with Doppler-brighter side, the far side's arch and the underside's arc.
+  - One instanced draw that blends the two nearest elevations and lines the disc up with the galactic plane on screen.
+  - Tinted by color.
+  - A larger maximum on-screen size than other bodies (`BLACK_HOLE_MAX_PX` in `tuning.ts`, a starting value of 96 px).
+- **`IconSprites`** for stations and markers: a small atlas with two built-in shapes until M6-T4's icon set replaces them, one instanced draw.
+- **Planets** stay in `InstancedBodies`, which keeps every base type without its own renderer.
+- **Unchanged:** picking, selection rings, labels, the move preview and the placement ghost work for every renderer through the scene index, with the same tests. The Add menu's ghost shows the new look of the type being placed.
+- **Comments** explain each bake and shader in plain words (AGENTS.md: the owner is new to three.js).
+
+**Done when:**
+- [ ] Unit tests: the planet-count query (drafts and spoilers), the atlas cell for each planet count, and the elevation blend weights.
+- [ ] E2E: `drawnObject` reports each renderer for a system, a planet, a station, a marker and a black hole. A system with three planets reports `planetCount` 3. Changing a system's color and size changes its glyph's color and on-screen size.
+- [ ] Screenshots of each look at a few zoom levels are attached to the commit, for the owner to judge against the NASA reference.
+- [ ] The galaxy view's draw calls rise by at most 3, and `pnpm perf` (view and `--edit`) still meets every budget. Before and after numbers are in the commit message.
 
 ---
 

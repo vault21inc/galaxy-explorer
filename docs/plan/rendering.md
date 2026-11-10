@@ -82,7 +82,8 @@ Each rule removes one of the usual causes of a hot, laggy three.js page: continu
 
 ```ts
 export const renderers = {
-  galaxy: { default: InstancedBodies, nebula: RegionCloud, anomaly: RegionCloud },
+  galaxy: { system: SystemGlyphs, black_hole: BlackHoles, station: IconSprites, marker: IconSprites,
+            default: InstancedBodies, nebula: RegionCloud, anomaly: RegionCloud },   // D-28, M4-T8
   system: { star: StarBody, planet: PlanetBody, asteroid_belt: AsteroidBelt,
             station: IconSprites, marker: IconSprites, default: InstancedBodies },
   orbit:  { subject: { planet: Globe, moon: Globe },               // O3: add station: StationModel later
@@ -160,6 +161,19 @@ void main() {
 - The CPU picker (§10) uses the same clamp, sharing constants from `tuning.ts`.
 
 **Hover and selection visuals:** instanced ring billboards with the same pixel clamp, as a separate draw. Selecting never rewrites the main instance buffer.
+
+**A look per kind of body** (D-28, M4-T8). `InstancedBodies` keeps planets and any base type without its own renderer. Three renderers take the rest, each one instanced draw call, all with the pixel clamp above (each with its own limits in `tuning.ts`), and each publishing to the scene index so picking, rings and labels work unchanged:
+
+- **`SystemGlyphs`:** camera-facing quads showing a star system.
+  - The star is a bright core and a soft halo, tinted by the system's resolved color and sized by its radius.
+  - Around it are faint orbit rings, with one small dot on each for the system's planets: `planetCount` in the galaxy payload, capped at 6.
+  - The glyph for each planet count (0–6) is baked once, in white, into one atlas (rendering.md §9); the shader picks the cell and tints it. A per-instance angle (from the id) turns each glyph, so neighbouring systems don't look stamped.
+  - Static: the dots don't orbit, since ambient motion stays opt-in (§2).
+- **`BlackHoles`:** camera-facing quads with a baked lensed-disc image, after NASA's visualization (an accretion disc seen near edge-on, its far side lensed over the shadow, its underside below, one side brighter from Doppler beaming).
+  - The bake makes the image at four viewing elevations (0°, 30°, 60° and 90°, the last a ring seen from above) in one atlas.
+  - The shader picks and blends the two nearest to the camera's elevation above the galactic plane, and turns the quad so the disc lies along the plane's on-screen direction.
+  - Tinted by the black hole's color (default orange). Black holes get a larger on-screen maximum than other bodies, so the detail can be seen.
+- **`IconSprites`:** small camera-facing icons for stations and markers from the icon atlas (§8, M6-T4). Until M6-T4 picks the icon set, two built-in shapes (a station ring and a marker diamond) are drawn into the atlas.
 
 **Regions** (`RegionCloud`, nebulae and anomalies):
 
