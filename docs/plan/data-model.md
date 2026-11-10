@@ -112,13 +112,16 @@ create table celestial_objects (
   y            double precision not null default 0,
   z            double precision not null default 0,
   appearance   jsonb not null default '{}',          -- Appearance (sparse overrides)
+  orbit_center_id uuid,                              -- a star in the same parent that this orbits (D-29, M5); null = the parent's center
   ‹entity-fk›,
   foreign key (parent_id, map_id) references celestial_objects (entity_id, map_id) on delete cascade deferrable,
+  foreign key (orbit_center_id, map_id) references celestial_objects (entity_id, map_id) on delete set null deferrable,
   check (parent_id is distinct from entity_id)
 );
 create index celestial_objects_parent_idx on celestial_objects (map_id, parent_id);
 -- Rules enforced in the service layer (registry-driven): parent's base_type is in objectTypes[base_type].parents
--- ('map' = parent_id null); explorable only if objectTypes[base_type].explorableAs is set; no cycles.
+-- ('map' = parent_id null); explorable only if objectTypes[base_type].explorableAs is set; no cycles;
+-- orbit_center_id names a 'star' with the same parent_id, never the object itself (D-29).
 
 create table object_groups (                          -- territories, sectors, sub-sectors (T5, U6)
   entity_id        uuid primary key,

@@ -244,7 +244,7 @@ View endpoints return compact, render-ready projections: one request per view, w
 }
 ```
 
-The system and orbit payloads have the same shape: the subject, its direct children, the map and the subject's ancestors (for breadcrumbs), and, for orbit views, the pins (places and events located on the subject). Every named record also carries `nameRedacted`, its name with spoilers blacked out, which labels show by default, and objects carry their resolved `size`. Galaxy-view systems also carry `planetCount`, the planets directly inside them that the reader may see, for their glyph (D-28). The schemas are `GalaxyView`, `SystemView` and `OrbitView` in `@ge/domain`. Resolution uses `resolveAppearance()` from `packages/domain`, the same function the client uses for live editing previews.
+The system and orbit payloads have the same shape: the subject, its direct children, the map and the subject's ancestors (for breadcrumbs), and, for orbit views, the pins (places and events located on the subject). Every named record also carries `nameRedacted`, its name with spoilers blacked out, which labels show by default, and objects carry their resolved `size`. Galaxy-view systems also carry `planetCount`, the planets directly inside them that the reader may see, and `stars`, up to 3 of their visible stars by size (`{ color, sizeShare }`), for their glyph (D-28, D-29). The schemas are `GalaxyView`, `SystemView` and `OrbitView` in `@ge/domain`. Resolution uses `resolveAppearance()` from `packages/domain`, the same function the client uses for live editing previews.
 
 ## 7. Auth modes
 

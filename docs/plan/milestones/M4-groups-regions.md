@@ -169,10 +169,12 @@
 
 The details are in D-28 and rendering.md §6. This task doesn't depend on T1–T7 and can come first.
 
-- **Payload:** galaxy-view systems gain `planetCount`, the number of `planet` objects directly inside them that the reader may see (drafts only with `includeDrafts`, as everywhere). It's computed with one grouped query. The view snapshot test changes by that field only.
+- **Payload:** galaxy-view systems gain two fields, computed with grouped queries; the view snapshot test changes by those fields only. Both count only what the reader may see (drafts only with `includeDrafts`, as everywhere).
+  - `planetCount`: the `planet` objects directly inside the system.
+  - `stars`: up to 3 of its `star` objects, largest first, each `{ color, sizeShare }` (resolved color; size relative to the largest) (D-29).
 - **`SystemGlyphs`:**
-  - A baked atlas of star glyphs for 0–6 planets: a core and halo, faint rings, and a dot on each ring.
-  - One instanced draw, tinted by the system's resolved color and sized by its radius (the form's Color and Size fields).
+  - A baked atlas of star glyphs for 1–3 stars and 0–6 planets: a core and halo per star, faint rings, and a dot on each ring. Each star's light sits in its own color channel, so the shader tints each star separately (rendering.md §6).
+  - One instanced draw. A system without star objects is one star tinted by the system's resolved color; one with stars shows up to 3 in their own colors. The glyph is sized by the system's radius (the form's Color and Size fields).
   - A per-instance turn from the id.
   - Redacted systems use the redaction color and no rings: the count could hint at the content.
   - Drafts are drawn like drafts elsewhere.
@@ -187,8 +189,8 @@ The details are in D-28 and rendering.md §6. This task doesn't depend on T1–T
 - **Comments** explain each bake and shader in plain words (AGENTS.md: the owner is new to three.js).
 
 **Done when:**
-- [ ] Unit tests: the planet-count query (drafts and spoilers), the atlas cell for each planet count, and the elevation blend weights.
-- [ ] E2E: `drawnObject` reports each renderer for a system, a planet, a station, a marker and a black hole. A system with three planets reports `planetCount` 3. Changing a system's color and size changes its glyph's color and on-screen size.
+- [ ] Unit tests: the planet-count and stars queries (drafts and spoilers), the atlas cell for each star and planet count, and the elevation blend weights.
+- [ ] E2E: `drawnObject` reports each renderer for a system, a planet, a station, a marker and a black hole. A system with three planets reports `planetCount` 3, and a binary (two stars of different colors) reports both in `stars`. Changing a system's color and size changes its glyph's color and on-screen size.
 - [ ] Screenshots of each look at a few zoom levels are attached to the commit, for the owner to judge against the NASA reference.
 - [ ] The galaxy view's draw calls rise by at most 3, and `pnpm perf` (view and `--edit`) still meets every budget. Before and after numbers are in the commit message.
 

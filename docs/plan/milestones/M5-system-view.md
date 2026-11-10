@@ -68,7 +68,7 @@
 - The system background: sky points and a dim galaxy band.
 
 **Done when:**
-- [ ] A system with 1 star, 12 planets, 2 belts and 5 stations stays within 80 draw calls.
+- [ ] A system with 1 star, 12 planets, 2 belts and 5 stations stays within 80 draw calls; so does a triple-star system with 12 planets, lit by all three stars (D-29).
 - [ ] Hover, selection and labels behave as in the galaxy view (shared e2e helpers).
 - [ ] Screenshots are reviewed by the owner against the references.
 
@@ -83,9 +83,15 @@
 
   Any level-specific branching belongs in the level registry, not in the tools.
 - New fields: `showOrbit` in the appearance editor; the explorable switch on planets and moons. A planet with it on shows "Orbit view coming in M6" until M6.
+- **Multiple stars and S-type orbits (D-29):**
+  - A migration adds `celestial_objects.orbit_center_id`: an optional star with the same parent, with a composite foreign key, `on delete set null`. The rule service checks it's a star in the same system and not the object itself, as for parents.
+  - The edit form gains an **Orbits** select for a system's non-star children: "the system's center" or one of its stars. It needs a new select source for sibling objects of a base type, added to the form metadata; no per-kind code.
+  - Moving a star with the move tool moves every object that orbits it, by the same offset, in the same batch ("Moved Alpha Centauri B and 2 orbiting objects").
 
 **Done when:**
 - [ ] E2E: inside a system, adding a star, three planets and a belt works; moving a planet moves its orbit ring; undo restores it.
+- [ ] E2E, a binary: add stars A and B either side of the center, a planet around both and a planet with Orbits set to B. The second planet's ring centers on B; moving B moves that planet and its ring, as one undo step.
+- [ ] Integration: `orbitCenterId` must name a star with the same parent (422 otherwise), and deleting the star clears it.
 - [ ] Code review confirms no `if (level === 'system')` inside `src/editor/`.
 
 ### M5-T5 Resource lifecycle and performance gate

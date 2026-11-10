@@ -166,6 +166,9 @@ void main() {
 
 - **`SystemGlyphs`:** camera-facing quads showing a star system.
   - The star is a bright core and a soft halo, tinted by the system's resolved color and sized by its radius.
+  - **Multi-star systems (D-29)** show up to 3 stars, from `stars` in the galaxy payload (each star's resolved color and its size relative to the largest), placed as a close pair or triangle at the glyph's center.
+    - The atlas cell keeps each star's light in its own channel (red, green and blue: stars 1–3) and the rings and dots in alpha. The shader colors each channel with that star's per-instance color, so different-colored stars still take one texture and one draw.
+    - A system without star objects is drawn as one star in the system's own color.
   - Around it are faint orbit rings, with one small dot on each for the system's planets: `planetCount` in the galaxy payload, capped at 6.
   - The glyph for each planet count (0–6) is baked once, in white, into one atlas (rendering.md §9); the shader picks the cell and tints it. A per-instance angle (from the id) turns each glyph, so neighbouring systems don't look stamped.
   - Static: the dots don't orbit, since ambient motion stays opt-in (§2).
@@ -208,9 +211,9 @@ void main() {
   - a sphere with a baked granulation texture;
   - a color from `appearance.star.temperatureK` (blackbody table);
   - a glow billboard;
-  - one `PointLight` at the primary star that lights the planets.
+  - one `PointLight` per star, up to 3, so a binary or triple lights its planets from each star (D-29). More stars are drawn but unlit.
 - **Planets:** spheres with 32 × 16 segments and 256 × 128 baked textures from the same planet baker as the orbit view (§9). Before M6 lands they use a flat color. Rings are drawn when enabled.
-- **Orbit rings:** a circle around the system center for each child, at its distance in the X/Z plane. They're merged into one `LineSegments2`, with a per-object toggle `appearance.showOrbit` (default true for planets).
+- **Orbit rings:** a circle for each child, at its distance in the X/Z plane from what it orbits: its `orbitCenterId` star if it has one (an S-type orbit in a binary, D-29), otherwise the system's center. They're merged into one `LineSegments2`, with a per-object toggle `appearance.showOrbit` (default true for planets).
 - **Asteroid belts:** one instanced draw per belt, at most 2,000 seeded rocks in a torus band.
 - **Stations and markers:** instanced icon billboards from the icon atlas (§8, pins).
 - **Background:** the sky points, plus a dim band of the galaxy disc texture.
