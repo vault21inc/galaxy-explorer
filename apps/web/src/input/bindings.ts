@@ -203,8 +203,8 @@ export const KEY_BINDINGS: Readonly<Record<string, KeyAction>> = {
   Home: 'reset-view',
   f: 'frame-selection',
   F: 'frame-selection',
-  // Esc cancels placing an object, or clears the selection; with nothing selected it will go
-  // up one view (M5).
+  // Esc cancels placing an object, or clears the selection; with nothing selected it goes up
+  // one view (M5-T1).
   Escape: 'clear-selection',
   // Labels (ux.md §7): L cycles hover → groups → all; Space shows all while held.
   l: 'cycle-labels',
@@ -240,7 +240,7 @@ export const KEY_ACTION_HELP: Readonly<
   'reset-view': { description: 'Reset the camera', section: 'everywhere' },
   'frame-selection': { description: 'Fly to the selection', section: 'everywhere' },
   'clear-selection': {
-    description: 'Clear the selection, or stop placing an object',
+    description: 'Clear the selection or stop placing an object; otherwise go up one view',
     section: 'everywhere',
   },
   'cycle-labels': { description: 'Labels: hover only, group names, all', section: 'everywhere' },

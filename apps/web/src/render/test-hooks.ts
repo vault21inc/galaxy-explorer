@@ -7,6 +7,9 @@ import { toNdc, workPlanePoint } from '@/editor/work-plane.ts';
 import { detectPlatform, type Platform } from '@/input/platform.ts';
 import { hoverStore } from '@/state/hover.ts';
 import { useSelection } from '@/state/selection.ts';
+import { useNavigation } from '@/state/navigation.ts';
+import { viewNavigation } from '@/state/view-navigator.ts';
+import { viewSettled } from './transition/transition-controller.ts';
 import { flyTo } from './camera/fly-to.ts';
 import { galaxyDiscState } from './galaxy/galaxy-disc.tsx';
 import { drawnGroup } from './groups/group-index.ts';
@@ -24,8 +27,7 @@ import { worldPerPxAt1 } from './screen-scale.ts';
 
 /**
  * `window.__GE_TEST__`: lets end-to-end tests and `pnpm perf` read 3D state instead of guessing
- * from pixels (rendering.md §14). Later milestones add `level()`, `selectedIds()`,
- * `screenPositionOf()` and the rest of the interface in rendering.md.
+ * from pixels (rendering.md §14).
  *
  * This module is loaded only when DIAGNOSTICS_ENABLED is true (see stage.tsx).
  */
@@ -89,6 +91,17 @@ export interface GeTestHooks {
   stormTexture(id: string): 'generated' | 'upload' | null;
   /** The object under the pointer, or null. */
   hoveredId(): string | null;
+  /**
+   * The view on top: its level and subject (null for the galaxy view, whose subject is the map),
+   * or null when no view is open (M5-T1).
+   */
+  level(): { level: 'galaxy' | 'system' | 'orbit'; subjectId: string | null } | null;
+  /** Opens an object's view, as zooming in does; resolves once the transition has finished. */
+  enter(id: string): Promise<void>;
+  /** Goes up one view, as Esc does; resolves once the transition has finished. */
+  exit(): Promise<void>;
+  /** Whether a change of view is under way or the address is still being resolved. */
+  transitioning(): boolean;
   /** Flies the camera to an object, as a double-click does; resolves when it has settled. */
   flyTo(id: string): Promise<void>;
   /** Where a page point meets the work plane (y = 0), as placing an object computes it. */
@@ -196,12 +209,34 @@ export function installTestHooks(): void {
     resetLabelStats: () => {
       labelTimeline.reset();
     },
+    level: () => {
+      const top = useNavigation.getState().stack.at(-1);
+      if (!top) return null;
+      return { level: top.level, subjectId: top.level === 'galaxy' ? null : top.subjectId };
+    },
+    enter: async (id) => {
+      viewNavigation.enter(id);
+      await settled();
+    },
+    exit: async () => {
+      viewNavigation.exit();
+      await settled();
+    },
+    transitioning: () => !viewSettled(),
     flyTo: async (id) => {
       const object = drawnObject(id);
       const controls = canvasState()?.controls;
       if (object && controls instanceof CameraControlsImpl) await flyTo(controls, [object]);
     },
   };
+}
+
+/** Resolves once the new address has been resolved and the change of view has run. */
+async function settled(): Promise<void> {
+  // Timers, not animation frames: those pause in a background tab.
+  const tick = () => new Promise((resolve) => setTimeout(resolve, 20));
+  const deadline = performance.now() + 10_000;
+  while (!viewSettled() && performance.now() < deadline) await tick();
 }
 
 // Scratch vectors: the hooks may be called in tight loops by tests.

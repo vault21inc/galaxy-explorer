@@ -5,6 +5,7 @@ import { containerName } from '@/lib/container-name.ts';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { LayersPopover } from '@/panels/layers/layers-popover.tsx';
 import { ShortcutHelp } from '@/panels/shortcut-help/shortcut-help.tsx';
+import { Breadcrumbs } from './breadcrumbs.tsx';
 import { QualityPopover } from './quality-popover.tsx';
 import { EditToggle } from './edit-toggle.tsx';
 import { SpoilerToggle } from './spoiler-toggle.tsx';
@@ -86,18 +87,7 @@ function UniverseControls({ universeSlug }: { universeSlug: string }) {
           onSelect={(slug) => void navigate(`/u/${universeSlug}/${slug}${keep}`)}
         />
       )}
-      {map && (
-        <>
-          {/* The current view's ancestors; the system and orbit views (M5) add their own. */}
-          <nav aria-label="Breadcrumbs" className="ml-2 text-sm text-muted-foreground">
-            <ol className="flex items-center gap-1.5">
-              <li aria-current="page" className="text-foreground">
-                Galaxy
-              </li>
-            </ol>
-          </nav>
-        </>
-      )}
+      {map && <Breadcrumbs universeSlug={universeSlug} mapSlug={map.slug} mapId={map.id} />}
     </>
   );
 }

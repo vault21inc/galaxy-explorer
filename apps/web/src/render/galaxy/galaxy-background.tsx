@@ -1,15 +1,12 @@
 import { resolveGalaxySettings, type GalaxySettings } from '@ge/domain';
 import { useMemo } from 'react';
 import { useQualityPreset } from '@/state/quality.ts';
-import { useViewCamera } from '../camera/use-view-camera.ts';
 import { CoreGlow } from './core-glow.tsx';
 import { DepthStars } from './depth-stars.tsx';
-import { galaxyCamera } from './galaxy-camera.ts';
 import { GalaxyDisc } from './galaxy-disc.tsx';
 import { useGalaxyPoints } from './use-galaxy-points.ts';
 
 interface GalaxyBackgroundProps {
-  mapId: string;
   settings: GalaxySettings;
   /** Unsaved settings the Map settings panel is previewing (M3-T8), or null. */
   preview: GalaxySettings | null;
@@ -30,7 +27,7 @@ function useResolved(settings: GalaxySettings | null) {
  * While settings are previewed, the disc and the glow follow the preview; the depth stars keep
  * the saved settings and regenerate in the worker once the change is saved (rendering.md §9).
  */
-export function GalaxyBackground({ mapId, settings, preview }: GalaxyBackgroundProps) {
+export function GalaxyBackground({ settings, preview }: GalaxyBackgroundProps) {
   const resolved = useResolved(settings);
   const previewed = useResolved(preview);
   const quality = useQualityPreset();
@@ -38,7 +35,6 @@ export function GalaxyBackground({ mapId, settings, preview }: GalaxyBackgroundP
   const starCount = Math.min(settings.starPoints ?? quality.starPoints, quality.starPoints);
   const saved = resolved ?? resolveGalaxySettings({});
   const points = useGalaxyPoints(saved, starCount);
-  useViewCamera(galaxyCamera(mapId, saved));
 
   return (
     <group>

@@ -2,7 +2,6 @@ import { createBrowserRouter } from 'react-router';
 import { HomePage } from '@/pages/home-page.tsx';
 import { MapPage } from '@/pages/map-page.tsx';
 import { NotFoundPage } from '@/pages/not-found-page.tsx';
-import { ObjectViewPage } from '@/pages/object-view-page.tsx';
 import { UniversePage } from '@/pages/universe-page.tsx';
 import { AppShell } from './app-shell.tsx';
 
@@ -25,7 +24,8 @@ export const router = createBrowserRouter([
         }),
       },
       { path: '/u/:universeSlug/:mapSlug', element: <MapPage /> },
-      { path: '/u/:universeSlug/:mapSlug/view/:objectId', element: <ObjectViewPage /> },
+      // The same page for an object's view, so moving between views doesn't remount it.
+      { path: '/u/:universeSlug/:mapSlug/view/:objectId', element: <MapPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

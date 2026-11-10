@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { useViewPayload } from '@/api/hooks.ts';
 import { useReadOptions } from '@/api/read-options.ts';
 import { errorMessage, RouteStates } from '@/app/route-states.tsx';
@@ -12,9 +12,12 @@ import { HistoryPanel } from '@/panels/history/history-panel.tsx';
 import { OutlinerSlot } from '@/panels/outliner/outliner-slot.tsx';
 import { useEditor } from '@/state/editor.ts';
 import { useHistory } from '@/state/history.ts';
-import { useNavigation } from '@/state/navigation.ts';
+import { topView, useNavigation } from '@/state/navigation.ts';
+import { useViewSync } from '@/state/use-view-sync.ts';
 import { useSelection } from '@/state/selection.ts';
 import { useSelectionUrlSync } from '@/state/selection-url.ts';
+import { viewPath } from '@/state/view-navigator.ts';
+import { SubjectViewPanels } from './subject-view-panels.tsx';
 
 // Loaded on first use: it brings the rich-text parsers, which the galaxy view doesn't need.
 const InfoPanel = lazy(() => import('@/panels/info-panel.tsx'));
@@ -22,16 +25,24 @@ const InfoPanel = lazy(() => import('@/panels/info-panel.tsx'));
 const MapSettingsPanel = lazy(() => import('@/panels/map-settings/map-settings-panel.tsx'));
 
 /**
- * `/u/:universeSlug/:mapSlug`: the galaxy view of one map. It loads the galaxy view payload
- * (architecture.md §6) and tells the canvas to show it; the panels here cover loading, errors
- * and empty maps.
+ * `/u/:universeSlug/:mapSlug` and `…/view/:objectId`: one map, in its galaxy view or an object's
+ * view (ux.md §9). The view sync turns the address into the views the canvas shows; the panels
+ * here follow the view on top: the galaxy view's tools and panels, or the system or orbit
+ * view's, and the loading, error and empty states.
  */
 export function MapPage() {
-  const { universeSlug = '', mapSlug = '' } = useParams();
+  const { universeSlug = '', mapSlug = '', objectId } = useParams();
   const route = useUniverseRoute(universeSlug, mapSlug);
   const mapId = route.status === 'ready' ? route.map?.id : undefined;
   const view = useViewPayload('galaxy', mapId, useReadOptions());
-  const show = useNavigation((state) => state.show);
+  const problem = useViewSync({
+    universeSlug,
+    mapSlug,
+    mapId,
+    objectId,
+    maps: route.status === 'ready' ? route.maps : [],
+  });
+  const top = useNavigation(topView);
   const hasSelection = useSelection((state) => state.selectedIds.length > 0);
   const editing = useEditor((state) => state.editing);
   const universeId = route.status === 'ready' ? route.universe.id : undefined;
@@ -46,15 +57,29 @@ export function MapPage() {
     };
   }, [universeId]);
 
-  useEffect(() => {
-    if (mapId === undefined) return;
-    show({ level: 'galaxy', subjectId: mapId });
-    return () => {
-      show(null);
-    };
-  }, [mapId, show]);
-
   if (route.status !== 'ready') return <RouteStates route={route} />;
+  if (problem?.kind === 'missing') {
+    return (
+      <StatusPanel tone="empty" title="No such object on this map">
+        It may have been deleted, or be a draft only editors see.{' '}
+        <Link to={viewPath(universeSlug, mapSlug, null)} className="text-primary underline">
+          Open the galaxy view
+        </Link>
+        .
+      </StatusPanel>
+    );
+  }
+  if (problem?.kind === 'error') {
+    return (
+      <StatusPanel tone="error" title="Couldn't open this view" onRetry={problem.retry}>
+        {errorMessage(problem.error)}
+      </StatusPanel>
+    );
+  }
+  // A system or orbit view: its own panels. The galaxy view's follow.
+  if (top && top.level !== 'galaxy') {
+    return <SubjectViewPanels level={top.level} subjectId={top.subjectId} />;
+  }
   if (view.error) {
     return (
       <StatusPanel tone="error" title="Couldn't load this map" onRetry={() => void view.refetch()}>

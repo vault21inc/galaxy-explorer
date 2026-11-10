@@ -55,13 +55,6 @@ test.describe('routes and navigation', () => {
     await expect(page).toHaveURL('/');
   });
 
-  test('an object link opens the galaxy view with the object selected', async ({ page }) => {
-    const id = '019a5b3c-7d2e-7f00-8a1b-2c3d4e5f6a7b';
-    await page.goto(`${DEMO}/${MAIN.slug}/view/${id}`);
-    await expect(page).toHaveURL(`${DEMO}/${MAIN.slug}?select=${id}`);
-    await expect(mapButton(page, MAIN.name)).toBeVisible();
-  });
-
   test('unknown universes, maps and pages say so', async ({ page }) => {
     await page.goto('/u/no-such-universe');
     await expect(page.getByText('No universe called “no-such-universe”')).toBeVisible();

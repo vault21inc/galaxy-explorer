@@ -4,6 +4,8 @@ import { useReadOptions } from '@/api/read-options.ts';
 import { MoveTool } from '@/editor/move-tool.tsx';
 import { Placement } from '@/editor/placement.tsx';
 import { resolveGalaxySettings } from '@ge/domain';
+import { useViewCamera } from '@/render/camera/use-view-camera.ts';
+import { galaxyCamera } from '@/render/galaxy/galaxy-camera.ts';
 import { GalaxyBackground } from '@/render/galaxy/galaxy-background.tsx';
 import { GroupOutlines } from '@/render/groups/group-outlines.tsx';
 import { RouteLines } from '@/render/routes/route-lines.tsx';
@@ -55,6 +57,16 @@ export default function GalaxyLevel({ subjectId }: { subjectId: string }) {
     );
   }, [partitions, regionPreview]);
   const editing = useEditor((state) => state.editing);
+  // The camera's limits and starting pose follow the saved settings, not a preview.
+  useViewCamera(
+    view.data
+      ? galaxyCamera(
+          subjectId,
+          resolveGalaxySettings(view.data.map.galaxySettings),
+          view.data.objects,
+        )
+      : null,
+  );
   if (!view.data) return null;
   const { underlayAssetId } = view.data.map;
   const underlay = preview?.underlay ?? view.data.map.underlay;
@@ -65,7 +77,6 @@ export default function GalaxyLevel({ subjectId }: { subjectId: string }) {
         <UnderlayImage underlay={underlay} assetId={underlayAssetId} />
       )}
       <GalaxyBackground
-        mapId={subjectId}
         settings={view.data.map.galaxySettings}
         preview={preview?.galaxySettings ?? null}
       />

@@ -97,7 +97,8 @@ export const renderers = {
   3. The new view's camera starts at its far "entry pose" and eases to its default pose over about 300 ms while the fade clears.
 
   The parent view's camera pose is saved on the navigation stack.
-- **Leaving** does the same in reverse and restores the saved pose.
+- **Leaving** does the same in reverse and restores the saved pose. A view opened from a link has no saved pose for its parent, so the parent's camera looks at the object just left instead (M5-T1).
+- **The URL decides** which views are open (ux.md §9). Each address is resolved into a chain of views, and the transition controller (`render/transition/`) animates from what's shown to that chain, committing it to the stack behind the fade. Links, Back, Forward, breadcrumbs and Esc all go through it. If the address changes again mid-transition, the swap commits the latest chain.
 - `prefers-reduced-motion` replaces both animations with a single quick fade.
 - **When zoom triggers a switch** (S1):
   - **Enter:** the zoom target is explorable, the camera's distance to it drops below `enterDistance(target) = ENTER_FACTOR[level] × displayedRadius(target)`, and the zoom input accumulated after crossing that distance exceeds `ENTER_PUSH_PX` (about 120 px of wheel delta). The push requirement is hysteresis, so a trackpad flick doesn't jump views.
@@ -336,7 +337,8 @@ Input mapping comes from the bindings table (ux.md §3). camera-controls has no 
 ```ts
 interface GeTestHooks {
   frameCount: number;                                  // incremented once per rendered frame
-  level(): { level: 'galaxy' | 'system' | 'orbit'; subjectId: string | null };
+  level(): { level: 'galaxy' | 'system' | 'orbit'; subjectId: string | null } | null; // null subject: the galaxy view
+  transitioning(): boolean;                            // a change of view is resolving or running
   selectedIds(): string[];
   hoveredId(): string | null;
   visibleLabels(): { id: string; text: string }[];

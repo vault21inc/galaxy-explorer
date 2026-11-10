@@ -183,7 +183,8 @@ How hidden content looks (P2, black out rather than remove):
   Every state can be shared as a link, and the browser's Back and Forward move between views.
 - **Entering** (S1, S2): double-click, Enter, or keep zooming toward an explorable object. A progress ring fills while you push past the threshold, then the camera flies in and fades.
 - **Not explorable:** zooming stops at a comfortable distance and its info opens.
-- **Leaving:** zoom out past the threshold, press Esc, use a breadcrumb, or go Back. The camera returns to where it was.
+- **Leaving:** zoom out past the threshold, press Esc, use a breadcrumb, or go Back. The camera returns to where it was. After entering, Esc and the parent breadcrumb go back through history, as Back does. In a view opened from a link, they open the parent view with the view just left selected.
+- **Links to objects that open no view** (a station, a nebula, a system not marked explorable) open the view they're in, with the object selected.
 - **Following a link** (from search, events or an outliner of another view) chains the transitions: galaxy → system → orbit, each shortened to 250 ms.
 
 ## 10. Accessibility

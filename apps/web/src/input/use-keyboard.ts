@@ -9,14 +9,15 @@ import { useHelp } from '@/state/help.ts';
 import { useLabels } from '@/state/labels.ts';
 import { useSpoilers } from '@/state/spoilers.ts';
 import { useSelection } from '@/state/selection.ts';
+import { viewNavigation } from '@/state/view-navigator.ts';
 import { KEY_PAN_FRACTION, KEY_ZOOM_FACTOR } from '@/render/tuning.ts';
 import { KEY_BINDINGS, type KeyAction } from './bindings.ts';
 
 /**
  * Keyboard shortcuts (ux.md §4): arrows pan, `+`/`−` zoom, H or Home resets the view, F frames
- * the selection and Esc clears it. Camera steps scale with the camera's distance to its target,
- * so a press feels the same zoomed in or out. Keys are ignored while focus is in a text field
- * or a widget that uses arrows itself.
+ * the selection and Esc clears it, or with nothing selected goes up one view. Camera steps
+ * scale with the camera's distance to its target, so a press feels the same zoomed in or out.
+ * Keys are ignored while focus is in a text field or a widget that uses arrows itself.
  */
 export function useKeyboard(): void {
   const get = useThree((state) => state.get);
@@ -56,7 +57,9 @@ export function useKeyboard(): void {
         }
         case 'clear-selection':
           if (useEditor.getState().placing) useEditor.getState().cancelPlacing();
-          else useSelection.getState().clear();
+          else if (useSelection.getState().selectedIds.length > 0) useSelection.getState().clear();
+          // Nothing to clear: up one view, if there is one above (ux.md §4, §9).
+          else viewNavigation.exit();
           return;
         case 'add-object':
           useEditor.getState().setAddMenuOpen(true);

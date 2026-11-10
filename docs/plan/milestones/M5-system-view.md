@@ -35,8 +35,18 @@
 - The `__GE_TEST__` hooks `level()`, `enter()`, `exit()`.
 
 **Done when:**
-- [ ] Unit tests cover the state machine: enter, exit, goTo across levels, rebuilding from a deep link, and Back/Forward.
-- [ ] E2E: a deep link opens the system view with correct breadcrumbs; Back returns to the galaxy view at the saved pose (`cameraPose` within a tolerance).
+- [x] Unit tests cover the state machine: enter, exit, goTo across levels, rebuilding from a deep link, and Back/Forward.
+- [x] E2E: a deep link opens the system view with correct breadcrumbs; Back returns to the galaxy view at the saved pose (`cameraPose` within a tolerance).
+
+**As built:**
+- **The URL is the source of truth.** `state/navigation-stack.ts` is the pure state machine (`goTo`, `enter`, `exit`, `moveBetween`), and `state/navigation.ts` holds the stack and how the camera should arrive. `state/use-view-sync.ts` resolves each address (`state/view-resolve.ts`) into a chain of views and hands it to the transition controller (`render/transition/transition-controller.ts`), which flies, fades, commits the chain behind the black and fades back once the new view's camera is placed. A link, Back, Forward, a breadcrumb and Esc all take that one path.
+- **Navigator actions.** `enter(objectId)`, `exit()` and `goTo(objectId | null)` are in `state/view-navigator.ts`, and change the address. Entering pushes a history entry marked with the view it came from. Leaving goes back through history when the previous entry is that view; otherwise, for a view opened from a link, it pushes the parent view with the view just left selected. The plan's `restore(pose)` became the arrival logic in `use-view-camera.ts`.
+- **Where the camera arrives.** It goes to the saved pose; else, leaving a view opened from a link, to a pose looking at the object just left (`focusPose`); else to the view's default pose. Entering, the camera starts 1.8 times farther and eases in; leaving, it starts at 0.45 of the distance and eases out.
+- **One page for both addresses.** `/view/{id}` uses the map page itself, so moving between views doesn't remount the page.
+- **Resolving an object.** Its level comes from its base type and its `explorable` flag. Objects that open no view (stations, nebulae, systems not marked explorable) open the view they sit in, with themselves selected. An object on another map redirects to that map, and an unknown one shows "No such object on this map". Entering from a view needs only the new view's payload, because the object is already in a cached payload; a cold link first reads the object.
+- **Breadcrumbs** (`app/breadcrumbs.tsx`) come from the stack, with names from the top view's ancestors through `labelText`, so hidden spoilers are redacted.
+- **The system level** (`levels/system-level.tsx`) draws children with the registry's system entries: spheres and icons until M5-T3. Its camera is `render/system/system-camera.ts`: extent from the farthest child, exit distance at 3 extents, fixed 0.01 / 10,000 su planes. The orbit level is a placeholder (sky only, and a notice). F and double-click take their minimum framing radius from the current view.
+- **Test hooks:** `level()` (`subjectId` null for the galaxy view), `enter()`, `exit()` and `transitioning()`.
 
 ### M5-T2 Zoom thresholds and entering
 

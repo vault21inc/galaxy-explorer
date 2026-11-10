@@ -9,6 +9,7 @@ import { FrameProbe } from './frame-probe.tsx';
 import { LabelDriver } from './labels/label-driver.tsx';
 import { QualityGuard } from './quality-guard.tsx';
 import { Sky } from './sky.tsx';
+import { TransitionRig } from './transition/transition-rig.tsx';
 import { ViewHost } from './view-host.tsx';
 import {
   CAMERA_DRAGGING_SMOOTH_TIME_S,
@@ -69,6 +70,8 @@ export function Stage() {
       />
       {/* Assigns the camera controls' buttons per press from the bindings table (ux.md §3). */}
       <InputBindings mode={editing ? 'edit' : 'view'} />
+      {/* Lets the transition between views fly the camera (rendering.md §4). */}
+      <TransitionRig />
       <Sky />
       {/* The current view, which sets its own camera limits (rendering.md §4–5). */}
       <ViewHost />

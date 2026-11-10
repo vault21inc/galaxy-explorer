@@ -1,13 +1,16 @@
 import { Suspense } from 'react';
 import { levels } from '@/levels/registry.ts';
-import { useNavigation } from '@/state/navigation.ts';
+import { topView, useNavigation } from '@/state/navigation.ts';
 
-/** Draws the current view, from the levels registry (rendering.md §4). */
+/**
+ * Draws the view on top of the navigation stack, from the levels registry (rendering.md §4).
+ * The views below it aren't drawn: entering a system unmounts the galaxy view, which frees its
+ * GPU resources, and leaving draws it again from TanStack Query's cached payload.
+ */
 export function ViewHost() {
-  const current = useNavigation((state) => state.current);
+  const current = useNavigation(topView);
   if (!current) return null;
-  const Level = levels[current.level]?.component;
-  if (!Level) return null;
+  const Level = levels[current.level].component;
   return (
     // While a view's code loads, the canvas shows just the sky.
     <Suspense fallback={null}>

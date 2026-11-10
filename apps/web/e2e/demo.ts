@@ -29,3 +29,11 @@ export async function galaxyObjects(
   };
   return view.data.objects;
 }
+
+/** The children of a system's view, read from the API the app uses (M5-T1). */
+export async function systemChildren(request: APIRequestContext, systemId: string) {
+  const view = (await (await request.get(`/api/v1/objects/${systemId}/views/system`)).json()) as {
+    data: { children: { id: string; namePlain: string; baseType: string }[] };
+  };
+  return view.data.children;
+}

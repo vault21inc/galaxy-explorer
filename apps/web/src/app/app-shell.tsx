@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Outlet, useSearchParams } from 'react-router';
 import { LabelLayer } from '@/render/labels/label-layer.tsx';
 import { Stage } from '@/render/stage.tsx';
+import { TransitionOverlay } from '@/render/transition/transition-overlay.tsx';
 import { QualityNotice } from './quality-notice.tsx';
 import { Toaster } from './toaster.tsx';
 import { TopBar } from './top-bar.tsx';
@@ -25,6 +26,8 @@ export function AppShell() {
         <Stage />
       </div>
       <LabelLayer />
+      {/* The fade between views covers the canvas and labels, not the top bar. */}
+      <TransitionOverlay />
       <TopBar />
       <Outlet />
       <QualityNotice />

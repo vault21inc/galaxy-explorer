@@ -188,3 +188,4 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-10:** labels get a dark outline so they read over bright parts of the galaxy, and the quality popover gains Galaxy stars sliders (number and brightness), remembered per browser.
 - **2026-11-10:** M4-T9 done: `?` or the Help button opens the keyboard shortcuts, generated from the binding tables for this platform and mode. All M4 tasks are done; the milestone's acceptance checks remain.
 - **2026-11-10:** M4 performance reports committed (view and edit mode, every budget met). The last M4 acceptance item is the owner's: recreating a real sector structure by tracing the underlay.
+- **2026-11-10:** M5-T1 done: the navigation stack with saved camera poses, view URLs that rebuild it (Back and Forward enter and leave), breadcrumbs, Esc going up a view, the levels registry with the system view and an orbit placeholder, and the fly, fade, swap and ease between views (one quick fade with reduced motion).

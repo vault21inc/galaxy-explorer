@@ -2,7 +2,7 @@
 
 A browser app for building and exploring galaxies from any fictional universe, starting with Warhammer 40,000. The owner builds each galaxy by hand in 3D: star systems, sectors, nebulae, planets, places and events. Visitors explore it at three levels: galaxy, system and orbit. Potential spoilers stay hidden until a visitor chooses to see them.
 
-**Status (10 November 2026):** the galaxy view can be explored and edited. You can place and edit systems, planets, stations, black holes and regions, organize them into nested groups shown as outlines, and draw routes between them. Milestones M0–M3 are done. M4's tasks (groups, regions and routes) are done; its acceptance checks remain. The system and orbit views come in M5 and M6. Progress is tracked task by task in the [plan's status section](docs/plan/README.md#status).
+**Status (10 November 2026):** the galaxy view can be explored and edited. You can place and edit systems, planets, stations, black holes and regions, organize them into nested groups shown as outlines, and draw routes between them. Milestones M0–M3 are done. M4 (groups, regions and routes) is done except the owner's sector-tracing trial. M5 has begun: a link to a system marked explorable (`…/view/{id}`) opens its own view, and Back, Esc and the breadcrumbs return to the galaxy at the same camera position. Zooming in to enter, the system's stars and planets, and editing inside it come next. The orbit view comes in M6. Progress is tracked task by task in the [plan's status section](docs/plan/README.md#status).
 
 ## What you can do today
 
@@ -101,7 +101,7 @@ Run these once, in the repository folder.
 | Orbit | drag (Option/Alt + drag in edit mode) | — |
 | Pan | right-drag, or ⌘/Ctrl + drag | arrow keys |
 | Zoom toward the pointer | scroll, or pinch | `+` and `−` |
-| Select | click; Shift or ⌘/Ctrl + click adds | Esc clears |
+| Select | click; Shift or ⌘/Ctrl + click adds | Esc clears; with nothing selected, Esc goes up one view |
 | Fly to the selection | double-click | F |
 | Reset the camera | — | H |
 | Labels: hover only, group names, all | — | L cycles; hold Space for all |

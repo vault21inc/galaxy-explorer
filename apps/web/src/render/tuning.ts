@@ -452,3 +452,79 @@ export const RIFT_BILLBOARDS_MIN = 6;
 export const RIFT_BILLBOARDS_MAX = 60;
 /** The flat band under a rift's billboards: its peak opacity across the middle. */
 export const RIFT_RIBBON_OPACITY = 0.45;
+
+// ---------------------------------------------------------------------------------------------
+// Galaxy view: arriving from a system without a saved pose (M5-T1)
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Leaving a system that was opened from a link has no saved galaxy pose to return to, so the
+ * galaxy camera looks at that system from this many galaxy radii away, at the start tilt:
+ * close enough to see its neighbors, far enough to see where it is.
+ */
+export const GALAXY_FOCUS_DISTANCE_RADII = 0.12;
+
+// ---------------------------------------------------------------------------------------------
+// System view camera (rendering.md §5, §7). Distances in system units (su, about an AU), or in
+// the system's extent ("_EXTENTS"): the distance from its center to its farthest child.
+// ---------------------------------------------------------------------------------------------
+
+/** An empty or tiny system is framed as if it reached this far. */
+export const SYSTEM_MIN_EXTENT_SU = 4;
+/** Where the camera starts: this many extents from the center, tilted like the galaxy view. */
+export const SYSTEM_START_DISTANCE_EXTENTS = 1.6;
+export const SYSTEM_START_TILT_DEG = 55;
+/** The closest the camera may get to its target. M5-T2 replaces it with the target's stop distance. */
+export const SYSTEM_MIN_DISTANCE_SU = 0.2;
+/**
+ * The farthest the camera may get: zooming out past this exits to the parent view (rendering.md
+ * §4–5, "exit beyond 3 × the system's extent"; the push that triggers it arrives in M5-T2).
+ */
+export const SYSTEM_EXIT_EXTENTS = 3;
+/**
+ * Fixed clipping planes (rendering.md §5). A system is small enough for one pair: far ÷ near is
+ * 10⁶, well within a 24-bit depth buffer at these distances.
+ */
+export const SYSTEM_NEAR_SU = 0.01;
+export const SYSTEM_FAR_SU = 10_000;
+/** The target stays within this many extents of the center, and this close to the plane. */
+export const SYSTEM_TARGET_EXTENTS = 1.2;
+export const SYSTEM_TARGET_HEIGHT_EXTENTS = 0.05;
+/** Flying to an object (F, double-click) frames at least this radius around it. */
+export const SYSTEM_FLY_TO_MIN_RADIUS_SU = 0.6;
+/** Leaving a planet's orbit view without a saved pose: look at it from this many extents. */
+export const SYSTEM_FOCUS_DISTANCE_EXTENTS = 0.35;
+
+// ---------------------------------------------------------------------------------------------
+// Moving between views (rendering.md §4, ux.md §9)
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Entering or leaving a view: the camera flies toward the object (or away, leaving) for this
+ * long, the screen fades to black, the views swap behind the black, and the screen fades back
+ * while the new camera eases into place.
+ */
+export const VIEW_FLY_MS = 350;
+export const VIEW_FADE_OUT_MS = 150;
+export const VIEW_FADE_IN_MS = 300;
+/** With `prefers-reduced-motion`, no camera moves: one quick fade out and back in instead. */
+export const VIEW_REDUCED_FADE_MS = 100;
+/**
+ * The fly toward an object ends this many of its drawn radii away from it: close enough to feel
+ * like diving in, never inside it.
+ */
+export const VIEW_FLY_END_RADII = 3;
+/** Leaving, the camera flies out to this many times its distance before the fade. */
+export const VIEW_FLY_OUT_FACTOR = 2;
+/**
+ * Where the new view's camera starts before easing to its resting pose: entering, this many
+ * times farther from its target (arriving from afar); leaving, this fraction of the distance
+ * (pulling back out of the view just left).
+ */
+export const VIEW_ENTER_START_FACTOR = 1.8;
+export const VIEW_EXIT_START_FACTOR = 0.45;
+/**
+ * The swap waits at most this long for the new view's data and camera before fading back in,
+ * so a slow request shows its loading panel instead of a black screen.
+ */
+export const VIEW_READY_TIMEOUT_MS = 2_000;
