@@ -213,6 +213,76 @@ describe('view payloads', () => {
       expect(withDrafts.objects.map((object: any) => object.namePlain)).toContain('Draft System');
     }));
 
+  it('galaxy: each system says what its glyph shows (D-28, D-29)', () =>
+    run(async (api) => {
+      const universeId = (
+        await api.expect(201, 'POST', '/universes', { slug: 'g', name: rt.plain('G') })
+      ).body.data.id as string;
+      const mapId = (
+        await api.expect(201, 'POST', `/universes/${universeId}/maps`, {
+          slug: 'm',
+          name: rt.plain('M'),
+        })
+      ).body.data.id as string;
+      const child = (name: string, baseType: string, extra: object = {}) => ({
+        op: 'create',
+        kind: 'celestial_object',
+        mapId,
+        data: { name: rt.plain(name), baseType, parentId: '$op:0', ...extra },
+      });
+      await api.expect(200, 'POST', '/batch', {
+        description: 'A busy system',
+        operations: [
+          {
+            op: 'create',
+            kind: 'celestial_object',
+            mapId,
+            data: { name: rt.plain('Alpha'), baseType: 'system' },
+          },
+          child('A', 'star', { appearance: { color: '#ffeeaa', scale: { system: 1.2 } } }),
+          child('B', 'star', { appearance: { color: '#ff8844', scale: { system: 0.6 } } }),
+          child('C', 'star', { appearance: { color: '#ff4422', scale: { system: 0.3 } } }),
+          child('D', 'star', { appearance: { color: '#ffffff', scale: { system: 0.1 } } }),
+          child('I', 'planet'),
+          child('II', 'planet'),
+          child('III', 'planet', { isSpoiler: true }),
+          child('IV', 'planet', { status: 'draft' }),
+          child('Belt', 'asteroid_belt'),
+          {
+            op: 'create',
+            kind: 'celestial_object',
+            mapId,
+            data: { name: rt.plain('Rogue'), baseType: 'planet' },
+          },
+        ],
+      });
+      const objects = async (query = '') =>
+        (await api.expect(200, 'GET', `/maps/${mapId}/views/galaxy${query}`)).body.data.objects as {
+          namePlain: string;
+          planetCount: number;
+          spoilerPlanetCount: number;
+          stars: unknown[];
+        }[];
+
+      const [alpha, rogue] = await objects();
+      // Readers: the draft planet doesn't count; the spoiler planet counts apart.
+      expect(alpha).toMatchObject({ namePlain: 'Alpha', planetCount: 2, spoilerPlanetCount: 1 });
+      // The three largest stars, largest first, sized against the largest.
+      expect(alpha?.stars).toEqual([
+        { color: '#ffeeaa', sizeShare: 1, isSpoiler: false },
+        { color: '#ff8844', sizeShare: 0.5, isSpoiler: false },
+        { color: '#ff4422', sizeShare: 0.25, isSpoiler: false },
+      ]);
+      expect(rogue).toMatchObject({
+        namePlain: 'Rogue',
+        planetCount: 0,
+        spoilerPlanetCount: 0,
+        stars: [],
+      });
+      // Editors see the draft too.
+      expect((await objects('?includeDrafts=true'))[0]?.planetCount).toBe(3);
+    }));
+
   it('system: subject, direct children with subtype and object appearance layered, and breadcrumbs', () =>
     run(async (api) => {
       const f = await buildFixture(api);

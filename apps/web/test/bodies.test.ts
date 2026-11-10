@@ -64,17 +64,26 @@ describe('clampedRadiusPx', () => {
 });
 
 describe('partitionByRenderer', () => {
-  it('sends regions to the region cloud and everything else to the instanced bodies', () => {
+  it('sends each type to its own renderer, and the rest to the instanced bodies (D-28)', () => {
     const groups = partitionByRenderer('galaxy', [
       viewObject('a', 'system'),
       viewObject('n', 'nebula', { size: null }),
       viewObject('p', 'planet'),
       viewObject('m', 'anomaly', { size: null }),
+      viewObject('s', 'station'),
+      viewObject('w', 'marker'),
+      viewObject('b', 'black_hole'),
     ]);
-    expect(groups.map((group) => [group.renderer.name, group.objects.map((o) => o.id)])).toEqual([
-      ['instanced-bodies', ['a', 'p']],
-      ['region-cloud', ['n', 'm']],
-    ]);
+    const byRenderer = Object.fromEntries(
+      groups.map((group) => [group.renderer.name, group.objects.map((o) => o.id)]),
+    );
+    expect(byRenderer).toEqual({
+      'system-glyphs': ['a'],
+      'region-cloud': ['n', 'm'],
+      'instanced-bodies': ['p'],
+      'icon-sprites': ['s', 'w'],
+      'black-holes': ['b'],
+    });
   });
 
   it('draws nothing for a view without renderers yet', () => {

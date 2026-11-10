@@ -4,13 +4,14 @@ import {
   resolveAppearance,
   type Appearance,
   type BaseType,
+  type GalaxyObject,
   type GalaxyView,
   type OrbitView,
   type SystemView,
   type ViewLevel,
   type ViewObject,
 } from '@ge/domain';
-import { and, asc, eq, isNull, type SQL } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, type SQL } from 'drizzle-orm';
 import { InvalidRequest, NotFound } from './errors.ts';
 import { getMap } from './container-service.ts';
 import { named, published } from './view-common.ts';
@@ -100,6 +101,16 @@ export async function galaxyView(ex: Executor, mapId: string, viewer: Viewer): P
       and(eq(celestialObjects.mapId, mapId), isNull(celestialObjects.parentId), published(viewer)),
     )
   ).map((row) => toViewObject(row, 'galaxy', subtypes));
+  const glyphs = await systemGlyphs(
+    ex,
+    objects.filter((object) => object.baseType === 'system').map((object) => object.id),
+    viewer,
+    subtypes,
+  );
+  const galaxyObjects: GalaxyObject[] = objects.map((object) => ({
+    ...object,
+    ...(glyphs.get(object.id) ?? { ...NO_GLYPH, stars: [] }),
+  }));
 
   const groupRows = await ex
     .select({
@@ -140,7 +151,7 @@ export async function galaxyView(ex: Executor, mapId: string, viewer: Viewer): P
       underlay: map.underlay,
       underlayAssetId: map.underlayAssetId,
     },
-    objects,
+    objects: galaxyObjects,
     groups: groupRows.map((group) => ({
       id: group.id as GalaxyView['groups'][number]['id'],
       ...named(group),
@@ -172,6 +183,71 @@ export async function galaxyView(ex: Executor, mapId: string, viewer: Viewer): P
  * The system or orbit view of an object: the subject, its ancestors for breadcrumbs, its direct
  * children, and (orbit views) the pins on it. The subject's base type must open this view.
  */
+/** The glyph fields of an object that isn't a system, or a system with nothing inside. */
+const NO_GLYPH = { planetCount: 0, spoilerPlanetCount: 0 } as const;
+
+/** Stars a system's galaxy glyph shows at most (D-29). */
+const GLYPH_STARS = 3;
+
+/**
+ * What each system's galaxy-view glyph shows (D-28, D-29): its planets, counted apart by spoiler
+ * flag so hidden ones stay hidden, and up to 3 of its stars, largest first, with their resolved
+ * colors. One query for every system; only what the reader may see (drafts with includeDrafts).
+ */
+async function systemGlyphs(
+  ex: Executor,
+  systemIds: readonly string[],
+  viewer: Viewer,
+  subtypes: ReadonlyMap<string, Appearance>,
+): Promise<Map<string, Pick<GalaxyObject, 'planetCount' | 'spoilerPlanetCount' | 'stars'>>> {
+  const glyphs = new Map<
+    string,
+    Pick<GalaxyObject, 'planetCount' | 'spoilerPlanetCount' | 'stars'>
+  >();
+  if (systemIds.length === 0) return glyphs;
+  const children = await selectObjects(
+    ex,
+    and(
+      inArray(celestialObjects.parentId, [...systemIds]),
+      inArray(celestialObjects.baseType, ['planet', 'star']),
+      published(viewer),
+    ),
+  );
+  const stars = new Map<string, { color: string; size: number; isSpoiler: boolean }[]>();
+  for (const child of children) {
+    const parentId = child.parentId ?? '';
+    const glyph = glyphs.get(parentId) ?? { planetCount: 0, spoilerPlanetCount: 0, stars: [] };
+    glyphs.set(parentId, glyph);
+    if (child.baseType === 'planet') {
+      if (child.isSpoiler) glyph.spoilerPlanetCount++;
+      else glyph.planetCount++;
+      continue;
+    }
+    // A star's size in its system view is what makes it the largest; its color, the glyph's.
+    const { appearance, size } = resolveAppearance({
+      baseType: 'star',
+      subtypeDefaults: child.subtypeId ? (subtypes.get(child.subtypeId) ?? null) : null,
+      overrides: child.appearance,
+      view: 'system',
+    });
+    const list = stars.get(parentId) ?? [];
+    list.push({ color: appearance.color, size: size ?? 1, isSpoiler: child.isSpoiler });
+    stars.set(parentId, list);
+  }
+  for (const [systemId, list] of stars) {
+    const glyph = glyphs.get(systemId);
+    if (!glyph) continue;
+    list.sort((a, b) => b.size - a.size);
+    const largest = list[0]?.size ?? 1;
+    glyph.stars = list.slice(0, GLYPH_STARS).map((star) => ({
+      color: star.color as GalaxyObject['stars'][number]['color'],
+      sizeShare: largest > 0 ? Math.min(1, star.size / largest) : 1,
+      isSpoiler: star.isSpoiler,
+    }));
+  }
+  return glyphs;
+}
+
 async function subjectView(
   ex: Executor,
   id: string,

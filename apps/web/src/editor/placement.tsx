@@ -1,13 +1,17 @@
 import { objectTypes, resolveAppearance } from '@ge/domain';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useRef } from 'react';
-import { Vector2, Vector3, type Mesh } from 'three';
+import { useEffect, useMemo, useRef } from 'react';
+import { Vector2, Vector3, type Object3D } from 'three';
 import { isClick } from '@/input/click.ts';
 import { clampedRadiusPx } from '@/render/bodies/body-scale.ts';
 import { worldPerPxAt1 } from '@/render/screen-scale.ts';
+import { renderers } from '@/render/registry.ts';
 import { GALAXY_BODY_MAX_PX, GALAXY_BODY_MIN_PX } from '@/render/tuning.ts';
 import { useEditor } from '@/state/editor.ts';
-import { useCreateObject } from './use-create-object.ts';
+import { optimisticObject, useCreateObject } from './use-create-object.ts';
+
+/** Renderers that can draw a ghost of their own look (D-28); others get a plain sphere. */
+const GHOST_RENDERERS = new Set(['system-glyphs', 'black-holes', 'icon-sprites']);
 import { toNdc, workPlanePoint } from './work-plane.ts';
 
 /** Where the ghost is now, for the test hooks; null while it isn't shown. */
@@ -29,7 +33,7 @@ export function Placement({ mapId }: { mapId: string }) {
   const get = useThree((state) => state.get);
   const invalidate = useThree((state) => state.invalidate);
   const create = useCreateObject(mapId);
-  const ghost = useRef<Mesh>(null);
+  const ghost = useRef<Object3D>(null);
 
   useEffect(() => {
     if (!placing) return;
@@ -40,11 +44,11 @@ export function Placement({ mapId }: { mapId: string }) {
       workPlanePoint(get().camera, toNdc(event.clientX, event.clientY, canvas, ndc));
 
     const onPointerMove = (event: PointerEvent) => {
-      const mesh = ghost.current;
+      const object = ghost.current;
       const at = pointAt(event);
-      if (!mesh) return;
-      mesh.visible = at !== null;
-      if (at) mesh.position.set(...at);
+      if (!object) return;
+      object.visible = at !== null;
+      if (at) object.position.set(...at);
       ghostAt = at ? { baseType: placing, position: at } : null;
       invalidate();
     };
@@ -82,10 +86,19 @@ export function Placement({ mapId }: { mapId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [placing, get, invalidate]);
 
-  // The ghost keeps the size a body of its type would have, clamped like InstancedBodies.
+  // A type with its own look (D-28) is drawn by its renderer, at the origin of the ghost's
+  // group, which follows the pointer; that renderer clamps its own size.
+  const renderer = placing ? renderers.galaxy?.[placing] : undefined;
+  const glyph = renderer && GHOST_RENDERERS.has(renderer.name) ? renderer : undefined;
+  const ghostObjects = useMemo(
+    () => (placing ? [optimisticObject({ baseType: placing, position: [0, 0, 0] })] : []),
+    [placing],
+  );
+
+  // A sphere ghost keeps the size a body of its type would have, clamped like InstancedBodies.
   useFrame(({ camera, size }) => {
     const mesh = ghost.current;
-    if (!mesh?.visible || !placing) return;
+    if (!mesh?.visible || !placing || glyph) return;
     const radius = resolveAppearance({ baseType: placing, view: 'galaxy' }).size ?? 1_000;
     scratch.copy(mesh.position).applyMatrix4(camera.matrixWorldInverse);
     const perPx = worldPerPxAt1(camera, size.height);
@@ -101,6 +114,13 @@ export function Placement({ mapId }: { mapId: string }) {
   });
 
   if (!placing) return null;
+  if (glyph) {
+    return (
+      <group ref={ghost} visible={false}>
+        <glyph.component objects={ghostObjects} ghost />
+      </group>
+    );
+  }
   const color = objectTypes[placing].defaultAppearance.color;
   return (
     <mesh ref={ghost} visible={false} renderOrder={11} frustumCulled={false}>

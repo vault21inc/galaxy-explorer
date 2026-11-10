@@ -65,20 +65,21 @@ test.describe('the galaxy background', () => {
       .poll(async () => (await info())?.points, { timeout: 15_000 })
       .toBe(SKY_POINTS + DEPTH_STARS);
 
-    // "After the Fall" has its own galaxy settings, so its own disc: three textures with the
-    // first map's disc and the region sprite.
+    // "After the Fall" has its own galaxy settings, so its own disc: four textures with the
+    // first map's disc, the region sprite and the system glyph atlas (M4-T8), which the bake
+    // cache keeps.
     await page.getByRole('button', { name: 'Map: The Present Era' }).click();
     await page.getByRole('menuitemradio', { name: 'After the Fall' }).click();
     await expect(page).toHaveURL(/after-the-fall$/);
-    await expect.poll(async () => (await info())?.textures, { timeout: 15_000 }).toBe(3);
+    await expect.poll(async () => (await info())?.textures, { timeout: 15_000 }).toBe(4);
 
-    // Back on the first map, its disc comes from the bake cache: still three textures. The
-    // geometries are the sky, disc, glow, depth stars, bodies, regions and selection rings, so
-    // the other map's were disposed.
+    // Back on the first map, its disc comes from the bake cache: still four textures. The
+    // geometries are the sky, disc, glow, depth stars, bodies, system glyphs, regions and
+    // selection rings, so the other map's were disposed.
     // Polled as a whole: until the first frame after Back, the numbers describe the other map.
     await page.goBack();
     await expect
       .poll(info, { timeout: 15_000 })
-      .toMatchObject({ points: SKY_POINTS + DEPTH_STARS, textures: 3, geometries: 7 });
+      .toMatchObject({ points: SKY_POINTS + DEPTH_STARS, textures: 4, geometries: 8 });
   });
 });

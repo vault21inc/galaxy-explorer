@@ -176,3 +176,4 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-10:** M3 edit-mode performance check passed: `pnpm perf --edit` ([report](../perf/2026-11-10-M3-edit.md)). What remains of M3 is the owner's real-map trial.
 - **2026-11-10:** D-28: each kind of body gets its own look in the galaxy view (systems as stars with their planets, black holes as lensed discs, stations and markers as icons), planned as M4-T8.
 - **2026-11-10:** D-29: multi-star systems (binaries, triples) and S-type orbits through a new `orbitCenterId`; planned in M4-T8 (galaxy look) and M5 (data, editing, lighting).
+- **2026-11-10:** M4-T8 done: systems are drawn as stars with their planets (binaries and triples in each star's color), black holes as lensed discs, and stations and markers as icons, each in one instanced draw. Galaxy draw calls go from 6 to 8 on the stress map.

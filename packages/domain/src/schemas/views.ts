@@ -45,6 +45,28 @@ export const ViewObject = z.object({
 });
 export type ViewObject = z.infer<typeof ViewObject>;
 
+/** One of a system's stars, as its galaxy-view glyph shows it (D-29). */
+export const SystemStar = z.object({
+  /** Resolved color. */
+  color: HexColor,
+  /** Its size relative to the system's largest star: 1 for the largest. */
+  sizeShare: z.number().min(0).max(1),
+  isSpoiler: z.boolean(),
+});
+
+/**
+ * An object in the galaxy view. Systems also say what their glyph shows (D-28, D-29): how many
+ * planets they hold and up to 3 of their stars, largest first. Other types have 0 and [].
+ */
+export const GalaxyObject = ViewObject.extend({
+  /** Planets directly in the system that the reader may see and that aren't spoilers. */
+  planetCount: z.int().nonnegative(),
+  /** The same planets flagged as potential spoilers, counted apart so they can stay hidden. */
+  spoilerPlanetCount: z.int().nonnegative(),
+  stars: z.array(SystemStar).max(3),
+});
+export type GalaxyObject = z.infer<typeof GalaxyObject>;
+
 export const ViewGroupMember = z.object({ objectId: Uuid, isSpoiler: z.boolean() });
 
 export const ViewGroup = z.object({
@@ -76,7 +98,7 @@ export const GalaxyView = z.object({
     underlayAssetId: Uuid.nullable(),
   }),
   /** Top-level objects: what sits directly in the galaxy. */
-  objects: z.array(ViewObject),
+  objects: z.array(GalaxyObject),
   groups: z.array(ViewGroup),
   /** Arrive in M4. */
   routes: z.array(z.never()),

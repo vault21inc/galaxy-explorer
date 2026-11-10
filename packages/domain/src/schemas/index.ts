@@ -47,7 +47,9 @@ export {
   OPERATION_REFERENCE,
 } from './batch.ts';
 export {
+  GalaxyObject,
   GalaxyView,
+  SystemStar,
   OrbitView,
   SystemView,
   ViewGroup,

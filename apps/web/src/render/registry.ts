@@ -1,6 +1,9 @@
 import type { BaseType, ViewLevel, ViewObject } from '@ge/domain';
 import type { ComponentType } from 'react';
 import { INSTANCED_BODIES, InstancedBodies } from './bodies/instanced-bodies.tsx';
+import { BLACK_HOLES, BlackHoles } from './glyphs/black-holes.tsx';
+import { ICON_SPRITES, IconSprites } from './glyphs/icon-sprites.tsx';
+import { SYSTEM_GLYPHS, SystemGlyphs } from './glyphs/system-glyphs.tsx';
 import { REGION_CLOUD, RegionCloud } from './regions/region-cloud.tsx';
 import type { RendererProps } from './renderer-types.ts';
 
@@ -18,11 +21,24 @@ export interface RendererDef {
 
 const instancedBodies: RendererDef = { name: INSTANCED_BODIES, component: InstancedBodies };
 const regionCloud: RendererDef = { name: REGION_CLOUD, component: RegionCloud };
+const systemGlyphs: RendererDef = { name: SYSTEM_GLYPHS, component: SystemGlyphs };
+const blackHoles: RendererDef = { name: BLACK_HOLES, component: BlackHoles };
+const iconSprites: RendererDef = { name: ICON_SPRITES, component: IconSprites };
 
 type LevelRenderers = Partial<Record<BaseType, RendererDef>> & { default: RendererDef };
 
 export const renderers: Partial<Record<ViewLevel, LevelRenderers>> = {
-  galaxy: { default: instancedBodies, nebula: regionCloud, anomaly: regionCloud },
+  // A look per kind of body (D-28): systems, black holes and icons have their own renderers;
+  // planets and anything else stay small spheres.
+  galaxy: {
+    default: instancedBodies,
+    system: systemGlyphs,
+    black_hole: blackHoles,
+    station: iconSprites,
+    marker: iconSprites,
+    nebula: regionCloud,
+    anomaly: regionCloud,
+  },
 };
 
 /** The view's objects grouped by the renderer that draws them, in first-seen order. */

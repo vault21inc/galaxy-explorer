@@ -4,7 +4,7 @@ import {
   rt,
   type BaseType,
   type GalaxyView,
-  type ViewObject,
+  type GalaxyObject,
 } from '@ge/domain';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { errorMessage } from '@/app/route-states.tsx';
@@ -74,8 +74,8 @@ export function useCreateObject(mapId: string) {
   });
 }
 
-/** How the new object looks until the server's payload replaces it. */
-function optimisticObject({ baseType, position }: NewObject): ViewObject {
+/** How the new object looks until the server's payload replaces it (also the placement ghost). */
+export function optimisticObject({ baseType, position }: NewObject): GalaxyObject {
   const { appearance, size } = resolveAppearance({ baseType, view: 'galaxy' });
   const name = defaultName(baseType);
   return {
@@ -92,5 +92,10 @@ function optimisticObject({ baseType, position }: NewObject): ViewObject {
     position,
     appearance,
     size,
-  } as ViewObject;
+    // A new system holds nothing yet.
+    planetCount: 0,
+    spoilerPlanetCount: 0,
+    stars: [],
+    // A pending id isn't a UUID until the server answers; nothing sends it anywhere.
+  } as unknown as GalaxyObject;
 }

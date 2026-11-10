@@ -62,6 +62,8 @@ export function openApiComponents(): Record<string, z.ZodType> {
     ViewGroupType: views.ViewGroupType,
     ViewPin: views.ViewPin,
     GalaxyView: views.GalaxyView,
+    GalaxyObject: views.GalaxyObject,
+    SystemStar: views.SystemStar,
     SystemView: views.SystemView,
     OrbitView: views.OrbitView,
   };

@@ -165,13 +165,14 @@
 
 ### M4-T8 A look per kind of body in the galaxy view
 
-**Where:** `apps/web/src/render/bodies/`, `src/render/bake/`, `src/render/registry.ts`, `apps/api/src/services/view-service.ts`, `packages/domain/src/schemas/views.ts`.
+**Where:** `apps/web/src/render/glyphs/` (as built: the three renderers, their atlases and the shared quad hook), `src/render/registry.ts`, `apps/api/src/services/view-service.ts`, `packages/domain/src/schemas/views.ts`.
 
 The details are in D-28 and rendering.md §6. This task doesn't depend on T1–T7 and can come first.
 
 - **Payload:** galaxy-view systems gain two fields, computed with grouped queries; the view snapshot test changes by those fields only. Both count only what the reader may see (drafts only with `includeDrafts`, as everywhere).
   - `planetCount`: the `planet` objects directly inside the system.
   - `stars`: up to 3 of its `star` objects, largest first, each `{ color, sizeShare }` (resolved color; size relative to the largest) (D-29).
+  - As built, spoilers are counted apart, since the client hides or shows them without a refetch: `spoilerPlanetCount`, and `isSpoiler` on each star. The glyph adds them only while spoilers are shown.
 - **`SystemGlyphs`:**
   - A baked atlas of star glyphs for 1–3 stars and 0–6 planets: a core and halo per star, faint rings, and a dot on each ring. Each star's light sits in its own color channel, so the shader tints each star separately (rendering.md §6).
   - One instanced draw. A system without star objects is one star tinted by the system's resolved color; one with stars shows up to 3 in their own colors. The glyph is sized by the system's radius (the form's Color and Size fields).
@@ -182,17 +183,17 @@ The details are in D-28 and rendering.md §6. This task doesn't depend on T1–T
   - A baked atlas of the lensed disc at four elevations: shadow, photon ring, disc with Doppler-brighter side, the far side's arch and the underside's arc.
   - One instanced draw that blends the two nearest elevations and lines the disc up with the galactic plane on screen.
   - Tinted by color.
-  - A larger maximum on-screen size than other bodies (`BLACK_HOLE_MAX_PX` in `tuning.ts`, a starting value of 96 px).
+  - A larger maximum on-screen size than other bodies (`BLACK_HOLE_MAX_PX` in `tuning.ts`, a starting value of 96 px; as built, 48 px, chosen from the screenshots, with the quad twice the object's radius wide).
 - **`IconSprites`** for stations and markers: a small atlas with two built-in shapes until M6-T4's icon set replaces them, one instanced draw.
 - **Planets** stay in `InstancedBodies`, which keeps every base type without its own renderer.
 - **Unchanged:** picking, selection rings, labels, the move preview and the placement ghost work for every renderer through the scene index, with the same tests. The Add menu's ghost shows the new look of the type being placed.
 - **Comments** explain each bake and shader in plain words (AGENTS.md: the owner is new to three.js).
 
 **Done when:**
-- [ ] Unit tests: the planet-count and stars queries (drafts and spoilers), the atlas cell for each star and planet count, and the elevation blend weights.
-- [ ] E2E: `drawnObject` reports each renderer for a system, a planet, a station, a marker and a black hole. A system with three planets reports `planetCount` 3, and a binary (two stars of different colors) reports both in `stars`. Changing a system's color and size changes its glyph's color and on-screen size.
-- [ ] Screenshots of each look at a few zoom levels are attached to the commit, for the owner to judge against the NASA reference.
-- [ ] The galaxy view's draw calls rise by at most 3, and `pnpm perf` (view and `--edit`) still meets every budget. Before and after numbers are in the commit message.
+- [x] Unit tests: the planet-count and stars queries (drafts and spoilers), the atlas cell for each star and planet count, and the elevation blend weights.
+- [x] E2E: `drawnObject` reports each renderer for a system, a planet, a station, a marker and a black hole. A system with three planets reports `planetCount` 3, and a binary (two stars of different colors) reports both in `stars`. Changing a system's color and size changes its glyph's color and on-screen size.
+- [x] Screenshots of each look at a few zoom levels are attached to the commit, for the owner to judge against the NASA reference.
+- [x] The galaxy view's draw calls rise by at most 3, and `pnpm perf` (view and `--edit`) still meets every budget. Before and after numbers are in the commit message.
 
 ---
 

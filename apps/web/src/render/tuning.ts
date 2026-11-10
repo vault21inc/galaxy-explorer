@@ -222,6 +222,44 @@ export const GALAXY_BODY_MAX_PX = 40;
  */
 export const REDACTION_COLOR = '#6b7280';
 
+// ---------------------------------------------------------------------------------------------
+// A look per kind of body (D-28, D-29, M4-T8; rendering.md §6)
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * A system's glyph (its star, rings and planet dots) spans this many times the system's radius,
+ * since the rings reach well beyond the star. Picking, selection rings and labels keep using
+ * the radius itself, so they fit the star as they fit the old sphere.
+ */
+export const SYSTEM_GLYPH_EXTENT = 2.4;
+
+/** The star at a glyph's center stays between these on-screen radii, in CSS pixels. */
+export const SYSTEM_STAR_MIN_PX = 4;
+export const SYSTEM_STAR_MAX_PX = 20;
+
+/** Planet dots a glyph shows at most, one per ring (D-28). */
+export const SYSTEM_GLYPH_MAX_PLANETS = 6;
+
+/** Each cell of the system glyph atlas, in pixels: 8 × 4 cells (planets 0–7 × stars 1–3). */
+export const SYSTEM_GLYPH_CELL_PX = 128;
+
+/**
+ * Black holes may grow larger on screen than other bodies, so their lensed disc can be seen
+ * (D-28): an on-screen radius between these, in CSS pixels. The quad spans the disc's full
+ * width, BLACK_HOLE_EXTENT times the object's radius.
+ */
+export const BLACK_HOLE_MIN_PX = 6;
+export const BLACK_HOLE_MAX_PX = 48;
+export const BLACK_HOLE_EXTENT = 2;
+
+/** Each of the black hole atlas's four viewing elevations (0°, 30°, 60°, 90°), in pixels. */
+export const BLACK_HOLE_CELL_PX = 256;
+
+/** Station and marker icons: on-screen radius in CSS pixels, and atlas cell size. */
+export const ICON_MIN_PX = 6;
+export const ICON_MAX_PX = 14;
+export const ICON_CELL_PX = 128;
+
 /**
  * Regions (nebulae, anomalies) are clouds of soft billboards (rendering.md §6). Each region gets
  * between REGION_BILLBOARDS_MIN and _MAX of them, more for denser regions.

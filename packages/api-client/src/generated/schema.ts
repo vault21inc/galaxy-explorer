@@ -1886,10 +1886,40 @@ export interface components {
                 underlay: components["schemas"]["UnderlayInput"] | null;
                 underlayAssetId: string | null;
             };
-            objects: components["schemas"]["ViewObjectInput"][];
+            objects: components["schemas"]["GalaxyObjectInput"][];
             groups: components["schemas"]["ViewGroupInput"][];
             routes: unknown[];
             groupTypes: components["schemas"]["ViewGroupTypeInput"][];
+        };
+        GalaxyObjectInput: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            baseType: "system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker";
+            subtypeId: string | null;
+            namePlain: string;
+            nameSpoiler: boolean;
+            nameRedacted: string;
+            isSpoiler: boolean;
+            /** @enum {string} */
+            status: "draft" | "published";
+            version: number;
+            explorable: boolean;
+            position: [
+                number,
+                number,
+                number
+            ];
+            appearance: components["schemas"]["AppearanceInput"];
+            size: number | null;
+            planetCount: number;
+            spoilerPlanetCount: number;
+            stars: components["schemas"]["SystemStarInput"][];
+        };
+        SystemStarInput: {
+            color: string;
+            sizeShare: number;
+            isSpoiler: boolean;
         };
         SystemViewInput: {
             map: {
@@ -3308,10 +3338,40 @@ export interface components {
                 underlay: components["schemas"]["Underlay"] | null;
                 underlayAssetId: string | null;
             };
-            objects: components["schemas"]["ViewObject"][];
+            objects: components["schemas"]["GalaxyObject"][];
             groups: components["schemas"]["ViewGroup"][];
             routes: unknown[];
             groupTypes: components["schemas"]["ViewGroupType"][];
+        };
+        GalaxyObject: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            baseType: "system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker";
+            subtypeId: string | null;
+            namePlain: string;
+            nameSpoiler: boolean;
+            nameRedacted: string;
+            isSpoiler: boolean;
+            /** @enum {string} */
+            status: "draft" | "published";
+            version: number;
+            explorable: boolean;
+            position: [
+                number,
+                number,
+                number
+            ];
+            appearance: components["schemas"]["Appearance"];
+            size: number | null;
+            planetCount: number;
+            spoilerPlanetCount: number;
+            stars: components["schemas"]["SystemStar"][];
+        };
+        SystemStar: {
+            color: string;
+            sizeShare: number;
+            isSpoiler: boolean;
         };
         SystemView: {
             map: {

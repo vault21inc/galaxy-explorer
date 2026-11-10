@@ -8,36 +8,50 @@ const GALAXY_BODY_MIN_PX = 8;
 const REGIONS = new Set(['nebula', 'anomaly']);
 
 test.describe('bodies and regions in the galaxy view', () => {
-  test('the stress map draws 5,000 objects in one call for bodies and one for regions', async ({
-    page,
-  }) => {
+  test('the stress map draws 5,000 objects in one call per renderer', async ({ page }) => {
     const objects = await galaxyObjects(page.request, 'stress-test', 'main');
     expect(objects.length).toBe(5_000);
-    const someRegion = objects.find((object) => REGIONS.has(object.baseType));
-    const someBody = objects.find((object) => !REGIONS.has(object.baseType));
+    // The stress map is mostly systems, with stations, black holes and regions (seeds/stress.ts),
+    // and no top-level planets, so the instanced bodies draw nothing.
+    const sample = (type: string) => objects.find((object) => object.baseType === type)?.id ?? '';
+    const ids = {
+      system: sample('system'),
+      station: sample('station'),
+      blackHole: sample('black_hole'),
+      region: sample('nebula'),
+    };
 
     await page.goto('/u/stress-test/main');
     await waitForFirstFrame(page);
-    // Wait for every layer: the depth stars (points) and both object renderers.
+    // Wait for every layer: the depth stars (points) and each object renderer.
     await expect
       .poll(
         () =>
-          page.evaluate(
-            ([body, region]) => ({
-              points: window.__GE_TEST__?.renderInfo()?.points,
-              body: window.__GE_TEST__?.drawnObject(body)?.renderer,
-              region: window.__GE_TEST__?.drawnObject(region)?.renderer,
-            }),
-            [someBody?.id ?? '', someRegion?.id ?? ''] as [string, string],
-          ),
+          page.evaluate((sampled) => {
+            const hooks = window.__GE_TEST__;
+            return {
+              points: hooks?.renderInfo()?.points,
+              system: hooks?.drawnObject(sampled.system)?.renderer,
+              station: hooks?.drawnObject(sampled.station)?.renderer,
+              blackHole: hooks?.drawnObject(sampled.blackHole)?.renderer,
+              region: hooks?.drawnObject(sampled.region)?.renderer,
+            };
+          }, ids),
         { timeout: 20_000 },
       )
-      .toEqual({ points: 25_000, body: 'instanced-bodies', region: 'region-cloud' });
+      .toEqual({
+        points: 25_000,
+        system: 'system-glyphs',
+        station: 'icon-sprites',
+        blackHole: 'black-holes',
+        region: 'region-cloud',
+      });
     await waitForIdle(page);
 
-    // Four for the background (galaxy.spec.ts), one for all bodies, one for all regions.
+    // Four for the background (galaxy.spec.ts), then one each for the systems, icons, black
+    // holes and regions: M4-T8 allows at most three more than the six before it.
     const info = await page.evaluate(() => window.__GE_TEST__?.renderInfo());
-    expect(info?.calls).toBe(6);
+    expect(info?.calls).toBe(8);
   });
 
   test('zoomed all the way out, every body is still at least the minimum size', async ({
