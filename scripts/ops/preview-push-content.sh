@@ -24,7 +24,9 @@ echo "== Uploading"
 scp -q "$WORK/ge.dump" "$WORK/media.tgz" "$HOST:/tmp/"
 
 echo "== Restoring on the server"
-ssh "$HOST" 'sudo bash -s' <<'REMOTE'
+# The restore runs as a file on the server, not fed through ssh's input, where any command
+# reading its input (docker compose exec does) would swallow the rest of the script.
+cat > "$WORK/restore.sh" <<'REMOTE'
 set -euo pipefail
 ROOT_DIR=/srv/galaxy-explorer
 compose() { docker compose --env-file "$ROOT_DIR/preview.env" -f "$ROOT_DIR/app/ops/preview/compose.yml" "$@"; }
@@ -34,9 +36,14 @@ compose exec -T db pg_restore -U ge -d ge --clean --if-exists --no-owner --singl
 rm -rf "$ROOT_DIR/media"
 tar -C "$ROOT_DIR" -xzf /tmp/media.tgz
 chown -R ge:ge "$ROOT_DIR/media"
-rm -f /tmp/ge.dump /tmp/media.tgz
+rm -f /tmp/ge.dump /tmp/media.tgz /tmp/ge-restore.sh
 systemctl start galaxy-explorer-api
-sleep 2
-curl -fsS http://127.0.0.1:3100/api/health; echo
+for attempt in $(seq 1 30); do
+  curl -fsS http://127.0.0.1:3100/api/health >/dev/null 2>&1 && break
+  sleep 1
+done
+echo "Objects on the server: $(compose exec -T db psql -U ge -d ge -tAc "select count(*) from celestial_objects" < /dev/null)"
 REMOTE
+scp -q "$WORK/restore.sh" "$HOST:/tmp/ge-restore.sh"
+ssh "$HOST" 'sudo bash /tmp/ge-restore.sh'
 echo "Done."
