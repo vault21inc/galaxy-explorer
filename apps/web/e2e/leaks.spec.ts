@@ -16,6 +16,20 @@ test.use({ reducedMotion: 'reduce' });
 const MAP = '/u/example-universe/main';
 const ROUND_TRIPS = 20;
 
+/**
+ * Waits until no change of view is under way and nothing has been drawn for a while: the view
+ * has arrived and drawn itself. In CI, which renders in software, a view can take seconds to
+ * arrive, and memory read before then misses what it hasn't uploaded yet.
+ */
+async function settled(page: Page) {
+  await expect
+    .poll(() => page.evaluate(() => window.__GE_TEST__?.transitioning() ?? true), {
+      timeout: 20_000,
+    })
+    .toBe(false);
+  await waitForIdle(page);
+}
+
 async function memory(page: Page) {
   const info = await page.evaluate(() => window.__GE_TEST__?.renderInfo());
   if (!info) throw new Error('No render info.');
@@ -51,11 +65,11 @@ test('20 galaxy ↔ system round trips leave GPU memory level', async ({ page })
   await waitForIdle(page);
 
   await roundTrip(page, aster.id);
-  await waitForIdle(page);
+  await settled(page);
   const before = await memory(page);
 
   for (let trip = 0; trip < ROUND_TRIPS; trip++) await roundTrip(page, aster.id);
-  await waitForIdle(page);
+  await settled(page);
   const after = await memory(page);
 
   test.info().annotations.push({
@@ -86,11 +100,11 @@ test('20 galaxy → system → orbit round trips leave GPU memory level', async 
   await waitForIdle(page);
 
   await deepTrip(page, aster.id, primus.id);
-  await waitForIdle(page);
+  await settled(page);
   const before = await memory(page);
 
   for (let trip = 0; trip < ROUND_TRIPS; trip++) await deepTrip(page, aster.id, primus.id);
-  await waitForIdle(page);
+  await settled(page);
   const after = await memory(page);
 
   test.info().annotations.push({

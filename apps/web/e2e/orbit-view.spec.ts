@@ -75,8 +75,11 @@ const cameraPose = (page: Page): Promise<Pose> =>
   page.evaluate(() => window.__GE_TEST__?.cameraPose() ?? null);
 
 async function settled(page: Page): Promise<void> {
+  // CI renders in software: a view can take well over the default 5 s to arrive there.
   await expect
-    .poll(() => page.evaluate(() => window.__GE_TEST__?.transitioning() ?? true))
+    .poll(() => page.evaluate(() => window.__GE_TEST__?.transitioning() ?? true), {
+      timeout: 20_000,
+    })
     .toBe(false);
   await waitForIdle(page, 500);
 }
