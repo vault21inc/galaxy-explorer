@@ -17,7 +17,8 @@ read -r -p "This replaces all content on $HOST with your local content. Continue
 
 echo "== Dumping the local database and images"
 docker compose -f docker/compose.dev.yml exec -T db pg_dump -U ge -d ge --format=custom > "$WORK/ge.dump"
-tar -C .data -czf "$WORK/media.tgz" media
+# --no-mac-metadata: leave out macOS extended attributes, which Linux tar warns about.
+tar --no-mac-metadata -C .data -czf "$WORK/media.tgz" media
 ls -lh "$WORK"
 
 echo "== Uploading"

@@ -49,7 +49,7 @@ This:
 - creates the `ge` user that runs the app;
 - schedules the nightly backup.
 
-It's safe to run again. It ends by printing a **deploy key**. From now on log in as `deploy`:
+It's safe to run again. Its first run turns off root's SSH login, so run it again as `deploy`, with `sudo ADMIN_USER=deploy bash preview-provision.sh`. It ends by printing a **deploy key**. From now on log in as `deploy`:
 
 ```bash
 ssh deploy@203.0.113.5
@@ -218,4 +218,9 @@ On the owner's Mac, Caddy's Docker image ran this Caddyfile in front of an API i
 - the editor's writes reached the API;
 - built assets were cached for a year and pages not at all.
 
-The server setup itself (steps 1–6) gets corrected here the first time it's followed for real.
+The runbook was first followed for real on 2026-11-11, for `galaxyexplorer.perturbatory.com`, on a DigitalOcean droplet (Ubuntu 24.04.5, 2 vCPU, 4 GB). What it corrected:
+- **The setup script stopped near its end.** Ubuntu 24.04's `ssh-keyscan` has no `-q`. By then it had already turned off root login, so later runs are as `deploy`, with `sudo`.
+- **Deploying before the sign-ins are set** now leaves Caddy alone and says so, instead of failing on a Caddyfile it can't load.
+- **The content copy restored nothing.** Its server half came through ssh's input, and `docker compose exec` swallowed it. It now runs as a file on the server.
+- **`pg_restore --clean` can't drop `celestial_objects`,** whose foreign keys point at itself. Restores now go into a fresh database.
+- **macOS adds extended attributes** to the media archive, which Linux `tar` warns about. They're left out now.
