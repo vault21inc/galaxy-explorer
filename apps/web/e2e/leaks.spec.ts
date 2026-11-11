@@ -10,6 +10,10 @@ import { waitForFirstFrame, waitForIdle } from './test-hooks.ts';
  * The baseline is taken after one warm-up trip: the first entry bakes the star surface
  * (granulation-bake.ts) into the app's bake cache, which keeps it for the page on purpose.
  * Reduced motion makes each change of view a quick fade; the views swap the same way.
+ *
+ * Not in CI (playwright.config.js leaves this file out there): CI renders in software, where
+ * 20 round trips are slow and timing-sensitive. It runs locally with `pnpm test:e2e`, and
+ * `pnpm perf` repeats both checks on the reference Mac's GPU.
  */
 test.use({ reducedMotion: 'reduce' });
 

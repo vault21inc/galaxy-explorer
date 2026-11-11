@@ -63,6 +63,8 @@ export interface SystemResult {
   /** Each entry and exit, in order; the first entry also loads the view's code and data. */
   transitions: { enterMs: number[]; exitMs: number[] };
   roundTrips: { count: number; before: RenderInfo; after: RenderInfo };
+  /** Galaxy → system → orbit round trips (M6-T3): the orbit view's leak check. */
+  orbitRoundTrips: { count: number; before: RenderInfo; after: RenderInfo };
 }
 
 /** One browser's run, written by path.spec.ts and read by report.ts. */

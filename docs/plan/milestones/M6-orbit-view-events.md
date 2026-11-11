@@ -96,7 +96,7 @@
 - [x] E2E: enter a planet from its system and then one of its moons; exiting twice returns to the system view at its saved pose.
 - [x] At most 40 draw calls.
 - [x] Idle renders 0 frames with ambient motion off and at most 30 fps with it on.
-- [x] The leak test from M5-T5 is extended to galaxy → system → orbit round trips, and passes.
+- [x] The leak test from M5-T5 is extended to galaxy → system → orbit round trips, and passes. (Since the owner's review, both leak tests run locally and in `pnpm perf`, not in CI.)
 
 **As built:**
 - **Sunlight in the payload:** the orbit view carries `sunlight`, the unit direction from the body to the star that lights it and the star's color: the star it orbits (D-29), else its system's largest, among those the reader may see. A moon takes its planet's; a body outside any system gets none and the client lights it from `ORBIT_DEFAULT_SUN_*`, a dim cool glow. The globe publishes that light to the system-view light uniforms (at 10⁴ radii, so in parallel), which light the moons.

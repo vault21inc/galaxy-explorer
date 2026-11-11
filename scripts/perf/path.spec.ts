@@ -229,7 +229,7 @@ test('the galaxy view stays within its budgets', async ({ page, browser }, testI
   // region, and the depth stars (6 draw calls, 25,000 points). Measured in the page, on its
   // own clock, which starts at navigation.
   const selection = EDITING ? await prepareEditMode(page.request) : [];
-  const systemId = EDITING ? null : await prepareSystem(page.request);
+  const prepared = EDITING ? null : await prepareSystem(page.request);
   await page.goto(EDITING ? `${MAP}?select=${selection.join(',')}` : MAP);
   const firstFrame = await page.waitForFunction(
     () => {
@@ -290,10 +290,11 @@ test('the galaxy view stays within its budgets', async ({ page, browser }, testI
   const end = await renderInfo();
 
   inGalaxy = false;
-  const system = systemId
+  const system = prepared
     ? await systemPhases({
         page,
-        systemId,
+        systemId: prepared.systemId,
+        planetId: prepared.planetId,
         center,
         phase: (name, run) => phase(name, run),
         drag: (from, by) => drag(page, from, by),

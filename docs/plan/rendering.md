@@ -45,7 +45,7 @@ These are **acceptance criteria**. A milestone that touches 3D isn't done until 
 9. **Labels come only from the label layer** (§11): a pool of at most 200 elements. Never one drei `<Html>` per object.
 10. **Hover picking at most once per frame,** with pointer events coalesced, using the screen-space picker.
 11. **Size textures to their use:** at most 2,048 × 1,024 in the orbit view (4,096 × 2,048 on High) and 256 × 128 in the system view, always mipmapped. Uploaded images are resized on the server.
-12. **Dispose of each view's resources on unmount,** checked by the M5 leak test.
+12. **Dispose of each view's resources on unmount,** checked by the leak tests: galaxy ↔ system and galaxy → system → orbit round trips, in `pnpm perf` on the reference Mac and in `leaks.spec.ts` locally (not in CI, where software rendering made them unreliable).
 13. Use `powerPreference: 'default'`, so dual-GPU Macs don't switch to the hot discrete GPU.
 14. **Every rendering commit states its numbers:** draw calls and median and p95 frame time from the dev HUD and `pnpm perf`, before and after.
 

@@ -214,6 +214,21 @@ function systemChecks(): Check[] {
         );
       }),
     },
+    {
+      metric: `GPU memory: geometries / textures before and after ${String(runs[0]?.system?.orbitRoundTrips.count ?? 20)} galaxy → system → orbit round trips (M6-T3)`,
+      budget: `within ±${(BUDGETS.memoryDrift * 100).toFixed(0)} %`,
+      values: each((r) => {
+        const { before, after } = sys(r).orbitRoundTrips;
+        return `${memory(before)} → ${memory(after)}`;
+      }),
+      pass: all((r) => {
+        const { before, after } = sys(r).orbitRoundTrips;
+        return (
+          drift(before.geometries, after.geometries) <= BUDGETS.memoryDrift &&
+          drift(before.textures, after.textures) <= BUDGETS.memoryDrift
+        );
+      }),
+    },
   ];
 }
 
@@ -260,7 +275,7 @@ Written by \`pnpm perf\` (scripts/perf/) against the budgets in [rendering.md §
 - **Display refresh rate, measured:** ${results.map((r) => `${r.project} ${r.refreshHz.toString()} Hz`).join(', ')}. Frame intervals can't be shorter than the display's.
 - **Mode:** ${modeLine}.
 - **Content:** the stress map, ${results[0]?.objects.toLocaleString('en') ?? '?'} objects (300 groups and 50 routes are drawn from M4).
-- **Path:** load; 3 s idle; orbit (3 left-drags); pan (2 right-drags); zoom toward the cursor (100 wheel steps at two points); orbit again holding Space (every label shown). ${editing ? '' : "Then the system view: the map's first system made busy (1 star, 12 planets, one ringed, 2 belts, 5 stations); 3 timed entries and exits; orbit (3 left-drags) and zoom (48 wheel steps over empty space) inside it; 20 more round trips. "}3 s idle after each phase. Pointer steps are 16 ms apart.
+- **Path:** load; 3 s idle; orbit (3 left-drags); pan (2 right-drags); zoom toward the cursor (100 wheel steps at two points); orbit again holding Space (every label shown). ${editing ? '' : "Then the system view: the map's first system made busy (1 star, 12 planets, one ringed, 2 belts, 5 stations); 3 timed entries and exits; orbit (3 left-drags) and zoom (48 wheel steps over empty space) inside it; 20 more round trips; then 20 galaxy → system → orbit round trips through an explorable planet with a moon. "}3 s idle after each phase. Pointer steps are 16 ms apart.
 
 ## Budgets
 
@@ -269,7 +284,7 @@ Written by \`pnpm perf\` (scripts/perf/) against the budgets in [rendering.md §
 ${checks.map((check) => row([check.metric, check.budget, ...check.values, check.pass ? 'pass' : '**miss**'])).join('\n')}
 ${row([jsCheck.metric, jsCheck.budget, ...results.map((_, i) => (i === 0 ? (jsCheck.values[0] ?? '') : 'same build')), jsCheck.pass ? 'pass' : '**miss**'])}
 
-${editing ? 'The system view and transitions are measured in view-mode runs.' : 'Not measured yet: the orbit view (M6), whose round trips join the memory check.'}
+${editing ? 'The system view and transitions are measured in view-mode runs.' : 'The orbit view joins the memory check through 20 galaxy → system → orbit round trips; its frame times join the path in M6-T8.'}
 
 ## Phases
 

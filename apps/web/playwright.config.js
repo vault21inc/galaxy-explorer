@@ -29,6 +29,9 @@ e2eDatabaseUrl.pathname = '/ge_e2e';
  */
 export default defineConfig({
   testDir: './e2e',
+  // GPU memory over 20 round trips: too slow and timing-sensitive with software rendering.
+  // `pnpm perf` checks it on the reference Mac (scripts/perf/system-path.ts).
+  testIgnore: isCI ? ['**/leaks.spec.ts'] : [],
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,

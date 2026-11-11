@@ -3,8 +3,12 @@ import type { FrameStats, RenderInfo, SystemResult } from './shared.ts';
 
 /**
  * The system view's part of `pnpm perf` (M5-T5, rendering.md §2, §14): entering and leaving a
- * busy system (the transitions' times), orbiting and zooming inside it, and 20 galaxy ↔ system
- * round trips for GPU memory. path.spec.ts runs it after the galaxy phases, in view mode.
+ * busy system (the transitions' times), orbiting and zooming inside it, 20 galaxy ↔ system
+ * round trips for GPU memory, and 20 galaxy → system → orbit round trips through one of its
+ * planets (M6-T3). path.spec.ts runs it after the galaxy phases, in view mode.
+ *
+ * The round trips are the leak tests: they run here, on the reference Mac's GPU, not in CI,
+ * where software rendering made them slow and timing-sensitive.
  */
 
 const plain = (source: string) => ({ format: 'plain', source, spoiler: false });
@@ -14,12 +18,18 @@ const ROUND_TRIPS = 20;
 /** Entries and exits timed; the first entry also loads the system view's code and data. */
 const TIMED_TRIPS = 3;
 
+/** The planet entered for the orbit round trips: one of the 12, explorable, with a moon. */
+const ORBIT_PLANET = 3;
+
 /**
  * Makes the stress map's first system a busy one, through the API before the page loads: M5-T3's
- * test system, with 1 star, 12 planets (one ringed), 2 belts and 5 stations, marked explorable.
- * The map's top level is unchanged, so the galaxy phases see the same 5,000 objects.
+ * test system, with 1 star, 12 planets (one ringed, one explorable with a moon), 2 belts and 5
+ * stations, marked explorable. The map's top level is unchanged, so the galaxy phases see the
+ * same 5,000 objects. Returns the system and the planet to enter.
  */
-export async function prepareSystem(request: APIRequestContext): Promise<string> {
+export async function prepareSystem(
+  request: APIRequestContext,
+): Promise<{ systemId: string; planetId: string }> {
   const json = async (url: string) => (await (await request.get(url)).json()) as { data: unknown };
   const universes = (await json('/api/v1/universes')).data as { id: string; slug: string }[];
   const universe = universes.find((item) => item.slug === 'stress-test');
@@ -54,8 +64,27 @@ export async function prepareSystem(request: APIRequestContext): Promise<string>
         x: distance * Math.cos(angle),
         z: distance * Math.sin(angle),
         ...(i === 5 ? { appearance: { planet: { rings: { enabled: true } } } } : {}),
+        ...(i === ORBIT_PLANET
+          ? {
+              explorable: true,
+              appearance: { planet: { preset: 'ocean', clouds: { enabled: true } } },
+            }
+          : {}),
       });
     }),
+    // The update is operation 0 and the star 1, so the planets start at 2.
+    {
+      op: 'create',
+      kind: 'celestial_object',
+      mapId: map.id,
+      data: {
+        name: plain('Perf Moon'),
+        baseType: 'moon',
+        parentId: `$op:${(2 + ORBIT_PLANET).toString()}`,
+        x: 3,
+        z: 1,
+      },
+    },
     inside('Inner Belt', 'asteroid_belt', { x: 4 }),
     inside('Outer Belt', 'asteroid_belt', { x: -11 }),
     ...Array.from({ length: 5 }, (_, i) =>
@@ -66,13 +95,18 @@ export async function prepareSystem(request: APIRequestContext): Promise<string>
     data: { description: 'Perf system', operations },
   });
   expect(response.ok(), await response.text()).toBe(true);
-  return system.id;
+  const { results } = ((await response.json()) as { data: { results: { id: string }[] } }).data;
+  const planetId = results[2 + ORBIT_PLANET]?.id;
+  if (!planetId) throw new Error('The batch made no planet to enter.');
+  return { systemId: system.id, planetId };
 }
 
 /** What the system part needs from path.spec.ts. */
 export interface SystemContext {
   page: Page;
   systemId: string;
+  /** A planet of the system with an orbit view, for the orbit round trips. */
+  planetId: string;
   center: { x: number; y: number };
   /** Runs a phase and records its frames and counters under `name`. */
   phase: (name: string, run: () => Promise<void>) => Promise<void>;
@@ -98,7 +132,7 @@ async function timed(page: Page, call: string): Promise<number> {
 const BAKE_PRESETS = ['ocean', 'gas_giant', 'city'] as const;
 
 export async function systemPhases(context: SystemContext): Promise<SystemResult> {
-  const { page, systemId, center, phase, drag, wheel, waitForIdle, renderInfo } = context;
+  const { page, systemId, planetId, center, phase, drag, wheel, waitForIdle, renderInfo } = context;
   const enterMs: number[] = [];
   const exitMs: number[] = [];
   let maxDrawCalls = 0;
@@ -149,6 +183,22 @@ export async function systemPhases(context: SystemContext): Promise<SystemResult
   await waitForIdle();
   const after = await renderInfo();
 
+  // The same through the orbit view (M6-T3): a warm-up trip first, which also bakes the globe's
+  // textures into the bake cache (kept for the page on purpose).
+  const deepTrip = async () => {
+    await hooks(page, `h.enter(${JSON.stringify(systemId)})`);
+    await hooks(page, `h.enter(${JSON.stringify(planetId)})`);
+    expect(await hooks<string>(page, 'h.level().level')).toBe('orbit');
+    await hooks(page, 'h.exit()');
+    await hooks(page, 'h.exit()');
+  };
+  await deepTrip();
+  await waitForIdle();
+  const orbitBefore = await renderInfo();
+  for (let trip = 0; trip < ROUND_TRIPS; trip++) await deepTrip();
+  await waitForIdle();
+  const orbitAfter = await renderInfo();
+
   // Planet surfaces at the orbit view's full size, on this machine's GPU (M6-T2).
   const planetBakeMs: Record<string, number> = {};
   for (const preset of BAKE_PRESETS) {
@@ -164,5 +214,6 @@ export async function systemPhases(context: SystemContext): Promise<SystemResult
     planetBakeMs,
     transitions: { enterMs, exitMs },
     roundTrips: { count: ROUND_TRIPS, before, after },
+    orbitRoundTrips: { count: ROUND_TRIPS, before: orbitBefore, after: orbitAfter },
   };
 }
