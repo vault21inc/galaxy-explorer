@@ -183,8 +183,18 @@ sudo systemctl stop galaxy-explorer-api
 ```
 
 ```bash
-sudo docker compose --env-file /srv/galaxy-explorer/preview.env -f /srv/galaxy-explorer/app/ops/preview/compose.yml exec -T db pg_restore -U ge -d ge --clean --if-exists --no-owner --single-transaction < /srv/galaxy-explorer/backups/ge-<date>.dump
+cd /srv/galaxy-explorer && alias pc='sudo docker compose --env-file preview.env -f app/ops/preview/compose.yml'
 ```
+
+```bash
+pc exec -T db sh -c 'dropdb -U ge --force ge && createdb -U ge ge' < /dev/null
+```
+
+```bash
+pc exec -T db pg_restore -U ge -d ge --no-owner --exit-on-error < backups/ge-<date>.dump
+```
+
+A fresh database, then the dump: `pg_restore --clean` can't drop `celestial_objects`, whose foreign keys point at itself.
 
 ```bash
 sudo systemctl start galaxy-explorer-api

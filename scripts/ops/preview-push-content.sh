@@ -32,7 +32,12 @@ ROOT_DIR=/srv/galaxy-explorer
 compose() { docker compose --env-file "$ROOT_DIR/preview.env" -f "$ROOT_DIR/app/ops/preview/compose.yml" "$@"; }
 bash "$ROOT_DIR/app/scripts/ops/preview-backup.sh"
 systemctl stop galaxy-explorer-api
-compose exec -T db pg_restore -U ge -d ge --clean --if-exists --no-owner --single-transaction < /tmp/ge.dump
+# Whatever happens below, the API comes back up.
+trap 'systemctl start galaxy-explorer-api' EXIT
+# A fresh database, then the dump. (pg_restore --clean can't drop tables whose foreign keys
+# point at themselves, such as celestial_objects.)
+compose exec -T db sh -c 'dropdb -U ge --force ge && createdb -U ge ge' < /dev/null
+compose exec -T db pg_restore -U ge -d ge --no-owner --exit-on-error < /tmp/ge.dump
 rm -rf "$ROOT_DIR/media"
 tar -C "$ROOT_DIR" -xzf /tmp/media.tgz
 chown -R ge:ge "$ROOT_DIR/media"
