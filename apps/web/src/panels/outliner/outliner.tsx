@@ -22,6 +22,7 @@ import {
   outlinerRows,
   visibleRows,
   type OutlinerRow,
+  type Person,
 } from './outliner-tree.ts';
 
 /**
@@ -43,12 +44,15 @@ export function Outliner({
   groups = [],
   groupTypes = [],
   routes = [],
+  people = [],
   onClose,
 }: {
   objects: readonly ViewObject[];
   groups?: readonly ViewGroup[];
   groupTypes?: readonly ViewGroupType[];
   routes?: readonly ViewRoute[];
+  /** The universe's characters (M6-T6). */
+  people?: readonly Person[];
   /** View mode's List button opened it; edit mode shows it always. */
   onClose?: () => void;
 }) {
@@ -62,8 +66,8 @@ export function Outliner({
   const rowRefs = useRef(new Map<string, HTMLElement>());
 
   const all = useMemo(
-    () => outlinerRows(objects, groups, groupTypes, policy, routes),
-    [objects, groups, groupTypes, policy, routes],
+    () => outlinerRows(objects, groups, groupTypes, policy, routes, people),
+    [objects, groups, groupTypes, policy, routes, people],
   );
   const isOpen = (row: OutlinerRow) => openByDefault(row) !== toggled.has(row.key);
   const needle = filter.trim().toLowerCase();

@@ -1737,6 +1737,9 @@ export interface components {
                 namePlain: string;
                 isSpoiler: boolean;
                 nameSpoiler: boolean;
+                mapId: string | null;
+                dateText: string | null;
+                dateSort: number | null;
             };
         };
         RelationWriteInput: {
@@ -3526,6 +3529,9 @@ export interface components {
                 namePlain: string;
                 isSpoiler: boolean;
                 nameSpoiler: boolean;
+                mapId: string | null;
+                dateText: string | null;
+                dateSort: number | null;
             };
         };
         RelationWrite: {

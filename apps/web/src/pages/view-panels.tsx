@@ -61,7 +61,13 @@ export function ViewPanels({
       ) : (
         <>
           <SelectionAnnouncer objects={objects} />
-          <OutlinerSlot objects={objects} groups={groups} groupTypes={groupTypes} routes={routes} />
+          <OutlinerSlot
+            universeId={universeId}
+            objects={objects}
+            groups={groups}
+            groupTypes={groupTypes}
+            routes={routes}
+          />
         </>
       )}
       <EditToolbar />

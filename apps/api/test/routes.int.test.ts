@@ -300,9 +300,22 @@ describe('aspects', () => {
             namePlain: expect.any(String) as string,
             isSpoiler: false,
             nameSpoiler: false,
+            // A character belongs to no map and has no date.
+            mapId: null,
+            dateText: null,
+            dateSort: null,
           },
         }),
       ]);
+      // An event at the other end brings its map and date, for a character's events (M6-T6).
+      const fromCharacter = (await api.expect(200, 'GET', `/entities/${s.characterId}/relations`))
+        .body.data;
+      const eventRow = (await api.expect(200, 'GET', `/events/${s.eventId}`)).body.data;
+      expect(fromCharacter[0].other).toMatchObject({
+        mapId: s.mapId,
+        dateText: eventRow.dateText,
+        dateSort: eventRow.dateSort,
+      });
 
       // A spoiler at the other end: its name is blacked out under spoilers=exclude.
       const character = (await api.expect(200, 'GET', `/characters/${s.characterId}`)).body.data;

@@ -15,6 +15,11 @@ export interface ViewNavigator {
   /** Opens any object's view, or the galaxy view (null). */
   goTo: (objectId: string | null) => void;
   /**
+   * Opens a view with something selected in it (M6-T6): an event's pin or marker, from a
+   * character's events. `mapId` opens a view of another map of the universe.
+   */
+  show: (objectId: string | null, options: { select: string; mapId?: string | null }) => void;
+  /**
    * Loads what an object's view needs before it's entered, once it's the zoom target
    * (rendering.md §4), so the swap behind the fade doesn't wait for the network.
    */
@@ -31,6 +36,7 @@ export const viewNavigation: ViewNavigator = {
   enter: (objectId) => navigator?.enter(objectId),
   exit: () => navigator?.exit(),
   goTo: (objectId) => navigator?.goTo(objectId),
+  show: (objectId, options) => navigator?.show(objectId, options),
   prefetch: (objectId) => navigator?.prefetch(objectId),
 };
 

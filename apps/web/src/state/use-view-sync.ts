@@ -104,6 +104,15 @@ export function useViewSync({
         expectNavigation();
         void navigate(`${viewPath(universeSlug, mapSlug, id)}${kept()}`);
       },
+      show: (id, { select, mapId: targetMapId }) => {
+        const { maps: knownMaps, mapId: currentMapId } = here.current;
+        const slug =
+          targetMapId && targetMapId !== currentMapId
+            ? (knownMaps.find((map) => map.id === targetMapId)?.slug ?? mapSlug)
+            : mapSlug;
+        expectNavigation();
+        void navigate(`${viewPath(universeSlug, slug, id)}${kept({ select })}`);
+      },
       prefetch: (id) => {
         const { mapId: currentMapId, options: currentOptions } = here.current;
         if (currentMapId === undefined) return;

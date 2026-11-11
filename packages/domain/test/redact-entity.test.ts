@@ -281,6 +281,40 @@ describe('redactEntity', () => {
   });
 });
 
+describe('a relation’s other end (M6-T6)', () => {
+  const withEvent = (isSpoiler: boolean) => ({
+    ...entity(),
+    relations: [
+      {
+        id: 'r1',
+        relationType: 'participant',
+        toEntityId: 'e9',
+        isSpoiler: false,
+        role: null,
+        other: {
+          id: 'e9',
+          namePlain: 'Siege of Calyx',
+          isSpoiler,
+          nameSpoiler: false,
+          dateText: '240.M41',
+        },
+      },
+    ],
+  });
+
+  it('blacks out a hidden event’s name and date', () => {
+    const out = redactEntity(withEvent(true), HIDE_SPOILERS);
+    expect(out.relations?.[0]).toMatchObject({ other: { namePlain: BAR, dateText: null } });
+  });
+
+  it('keeps a visible event’s date', () => {
+    const out = redactEntity(withEvent(false), HIDE_SPOILERS);
+    expect(out.relations?.[0]).toMatchObject({
+      other: { namePlain: 'Siege of Calyx', dateText: '240.M41' },
+    });
+  });
+});
+
 describe('redactMap and redactUniverse', () => {
   const map = {
     id: 'm1',

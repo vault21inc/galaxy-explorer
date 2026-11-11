@@ -194,6 +194,11 @@ export const RelationEnd = z.object({
   namePlain: z.string(),
   isSpoiler: z.boolean(),
   nameSpoiler: z.boolean(),
+  /** Its map, for a map-scoped entity (to go to an event in its own map, M6-T6); else null. */
+  mapId: Uuid.nullable(),
+  /** An event's date and sort key, so a character's events list in date order (M6-T6). */
+  dateText: z.string().nullable(),
+  dateSort: z.number().nullable(),
 });
 export const RelationRead = z.object({
   id: Uuid,

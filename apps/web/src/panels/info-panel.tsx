@@ -2,6 +2,7 @@ import type { EntityKind, ViewGroup, ViewObject, ViewLocated, ViewRoute } from '
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button.tsx';
+import { usePeople } from './outliner/outliner-slot.tsx';
 import { labelText } from '@/render/labels/label-text.ts';
 import { SpoilerProvider } from '@/richtext/spoiler-context.tsx';
 import { useSelection } from '@/state/selection.ts';
@@ -32,6 +33,8 @@ export default function InfoPanel({
   const clear = useSelection((state) => state.clear);
   const select = useSelection((state) => state.select);
   const policy = useSpoilerPolicy();
+  // Characters belong to the universe, not the view: the outliner's People (M6-T6).
+  const people = usePeople(universeId);
   const [collapsed, setCollapsed] = useState(false);
   if (selectedIds.length === 0) return null;
 
@@ -43,7 +46,9 @@ export default function InfoPanel({
       ? 'group'
       : routes.some((route) => route.id === id)
         ? 'route'
-        : (pins.find((pin) => pin.id === id)?.kind ?? 'celestial_object');
+        : people.some((person) => person.id === id)
+          ? 'character'
+          : (pins.find((pin) => pin.id === id)?.kind ?? 'celestial_object');
   return (
     <SpoilerProvider>
       <aside
@@ -82,7 +87,8 @@ export default function InfoPanel({
                       objects.find((item) => item.id === id) ??
                       groups.find((item) => item.id === id) ??
                       routes.find((item) => item.id === id) ??
-                      pins.find((item) => item.id === id);
+                      pins.find((item) => item.id === id) ??
+                      people.find((item) => item.id === id);
                     return (
                       <li key={id}>
                         <button

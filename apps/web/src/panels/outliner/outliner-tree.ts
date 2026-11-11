@@ -21,7 +21,7 @@ export interface OutlinerRow {
   key: string;
   /** The entity a click selects; null for layer and group type rows, which only expand. */
   id: string | null;
-  kind: 'layer' | 'type' | 'group' | 'route' | 'object';
+  kind: 'layer' | 'type' | 'group' | 'route' | 'object' | 'person';
   /** What's shown: the name, or a redaction bar for a hidden spoiler (as the 3D labels do). */
   text: string;
   hidden: boolean;
@@ -47,6 +47,15 @@ type Group = Pick<
   | 'nameRedacted'
 >;
 type GroupType = Pick<ViewGroupType, 'id' | 'name' | 'layer' | 'sortKey'>;
+/** A character, named as view items are (labels/label-text.ts). */
+export interface Person {
+  id: string;
+  namePlain: string;
+  nameRedacted: string;
+  isSpoiler: boolean;
+  nameSpoiler: boolean;
+  status: 'draft' | 'published';
+}
 type Route = Pick<
   ViewRoute,
   'id' | 'waypoints' | 'status' | 'isSpoiler' | 'namePlain' | 'nameSpoiler' | 'nameRedacted'
@@ -83,6 +92,8 @@ export function outlinerRows(
   groupTypes: readonly GroupType[],
   policy: SpoilerPolicy,
   routes: readonly Route[] = [],
+  /** The universe's characters (M6-T6), under a "People" row at the end. */
+  people: readonly Person[] = [],
 ): OutlinerRow[] {
   const objectsById = new Map(objects.map((object) => [object.id as string, object]));
   const groupIds = new Set(groups.map((group) => group.id as string));
@@ -223,6 +234,40 @@ export function outlinerRows(
       .map((object) => objectRow(object, policy, `object:${object.id}`, 1, null))
       .toSorted(byText),
   );
+
+  // Then the universe's people: characters belong to no map or view, but to every one.
+  if (people.length > 0) {
+    rows.push({
+      key: 'people',
+      id: null,
+      kind: 'layer',
+      text: 'People',
+      hidden: false,
+      badge: '',
+      draft: false,
+      spoiler: false,
+      level: 1,
+      parentKey: null,
+      childCount: people.length,
+    });
+    rows.push(
+      ...people
+        .map((person): OutlinerRow => ({
+          key: `person:${person.id}`,
+          id: person.id,
+          kind: 'person',
+          text: labelText(person, policy),
+          hidden: isHidden(person.isSpoiler, spoilerKeys.record(person.id), policy),
+          badge: 'Person',
+          draft: person.status === 'draft',
+          spoiler: person.isSpoiler || person.nameSpoiler,
+          level: 2,
+          parentKey: 'people',
+          childCount: 0,
+        }))
+        .toSorted(byText),
+    );
+  }
   return rows;
 }
 

@@ -46,7 +46,13 @@ export interface RedactableRelation extends Flagged {
   relationType: string;
   role?: RichText | null;
   /** The entity at the other end (RelationRead.other); its name follows its own flags. */
-  other?: { id: string; namePlain: string; isSpoiler: boolean; nameSpoiler: boolean };
+  other?: {
+    id: string;
+    namePlain: string;
+    isSpoiler: boolean;
+    nameSpoiler: boolean;
+    dateText?: string | null;
+  };
 }
 export interface RedactableMember extends Flagged {
   objectId: string;
@@ -193,5 +199,12 @@ function redactRelationEnd<O extends NonNullable<RedactableRelation['other']>>(
     spoilerKeys.record(other.id),
     policy,
   );
-  return hiddenName ? { ...other, namePlain: redactionBar(other.namePlain) } : other;
+  if (!hiddenName) return other;
+  // A hidden event's date is part of it, as its own panel hides it (`contentFields`).
+  const whole = isHidden(other.isSpoiler, spoilerKeys.record(other.id), policy);
+  return {
+    ...other,
+    namePlain: redactionBar(other.namePlain),
+    ...(whole && other.dateText !== undefined ? { dateText: null } : {}),
+  };
 }

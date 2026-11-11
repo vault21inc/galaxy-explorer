@@ -11,6 +11,7 @@ const {
   entityLinks,
   entityLocations,
   entityRelations,
+  events,
   fieldValues,
   groupMembers,
 } = schema;
@@ -101,8 +102,12 @@ export async function withOtherEnds<R extends RelationRow>(
       namePlain: entities.namePlain,
       isSpoiler: entities.isSpoiler,
       name: entities.name,
+      mapId: entities.mapId,
+      dateText: events.dateText,
+      dateSort: events.dateSort,
     })
     .from(entities)
+    .leftJoin(events, eq(events.entityId, entities.id))
     .where(and(inArray(entities.id, ids), entityVisible(viewer)));
   const byId = new Map(
     others.map(({ name, ...other }) => [other.id, { ...other, nameSpoiler: name.spoiler }]),

@@ -1,15 +1,19 @@
 import { entityKinds, relationTypes, spoilerKeys, toPlainText } from '@ge/domain';
 import { Redactable } from '@/richtext/redactable.tsx';
 import { RichTextView } from '@/richtext/rich-text-view.tsx';
+import { UNTYPED_RELATIONS } from '../relations/relation-sections.ts';
 import type { SectionProps } from '../types.ts';
 import { SectionHeading } from './section-heading.tsx';
 
 /**
- * Relations (architecture.md §3.4): "Involved in" on a character, "People involved" on an
- * event, "Related to" both ways. The other end's name follows its own spoiler flags.
+ * Relations open to any kind (architecture.md §3.4): "Related to", both ways. Typed ones, such
+ * as an event's people, have sections of their own (relations/relation-section.tsx). The other
+ * end's name follows its own spoiler flags.
  */
 export function RelationsSection({ entity }: SectionProps) {
-  const relations = entity.relations ?? [];
+  const relations = (entity.relations ?? []).filter((relation) =>
+    UNTYPED_RELATIONS.has(relation.relationType),
+  );
   if (relations.length === 0) return null;
   return (
     <section>

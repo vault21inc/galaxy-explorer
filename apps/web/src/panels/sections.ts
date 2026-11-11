@@ -8,6 +8,7 @@ import { LinksSection } from './sections/links-section.tsx';
 import { LocationSection } from './sections/location-section.tsx';
 import { MembersSection } from './sections/members-section.tsx';
 import { NestingSection } from './sections/nesting-section.tsx';
+import { typedRelationSections } from './relations/relation-sections.ts';
 import { RelationsSection } from './sections/relations-section.tsx';
 import { textSection } from './sections/text-section.tsx';
 import { WaypointsSection } from './sections/waypoints-section.tsx';
@@ -25,7 +26,8 @@ export interface SectionDef {
   component: ComponentType<SectionProps>;
   /** The aspect the section needs loaded with the entity, if any. */
   include?: EntityInclude;
-  appliesTo: (kind: EntityKindDef) => boolean;
+  /** Given the kind's definition and its name. */
+  appliesTo: (kind: EntityKindDef, name: EntityKind) => boolean;
   /** Shown only when reading ('view') or only in edit mode ('edit'); both by default. */
   mode?: 'view' | 'edit';
 }
@@ -42,7 +44,7 @@ export const PANEL_SECTIONS: readonly SectionDef[] = [
     mode: 'view',
   },
   { id: 'description', component: textSection('description'), appliesTo: always, mode: 'view' },
-  // Where a place or event is (M6-T4); editing it arrives in M6-T5.
+  // Where a place or event is (M6-T4), and in edit mode its editor (M6-T5).
   {
     id: 'location',
     component: LocationSection,
@@ -81,6 +83,8 @@ export const PANEL_SECTIONS: readonly SectionDef[] = [
     include: 'links',
     appliesTo: (kind) => kind.aspects.links,
   },
+  // An event's people, a character's events (M6-T6): one per end of each typed relation.
+  ...typedRelationSections(),
   {
     id: 'relations',
     component: RelationsSection,
@@ -94,7 +98,7 @@ export function sectionsFor(kind: EntityKind, mode?: 'view' | 'edit'): readonly 
   const def: EntityKindDef = entityKinds[kind];
   return PANEL_SECTIONS.filter(
     (section) =>
-      section.appliesTo(def) &&
+      section.appliesTo(def, kind) &&
       (mode === undefined || section.mode === undefined || section.mode === mode),
   );
 }

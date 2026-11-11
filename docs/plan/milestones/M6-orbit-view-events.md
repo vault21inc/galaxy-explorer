@@ -208,7 +208,15 @@
 - In the outliner, characters appear under a universe-level "People" section.
 
 **Done when:**
-- [ ] E2E: adding two people with roles to an event works; opening one of them lists the event; clicking it navigates through the views to the pin and selects it.
+- [x] E2E: adding two people with roles to an event works; opening one of them lists the event; clicking it navigates through the views to the pin and selects it.
+
+**As built:**
+- **Sections from the registry:** each end of each typed relation in the relation-types registry gets a panel section (`panels/relations/relation-sections.ts`): `participant` gives an event **People involved** and a character **Involved in** (the registry's labels; the plan's "Events" list). Relations open to any kind (`related`) stay in the generic Relations section. A new typed relation needs no panel code. The section registry's `appliesTo` now also gets the kind's name.
+- **Editing** (`relation-section.tsx`): each person or event with its role (plain text, saved as RichText), its spoiler switch and a remove button; each change is one history entry. The picker (`panels/people-picker/entity-picker.tsx`) is a search-or-create combobox over the other end's kind: characters in the universe, or events in the map. "Create “…”" makes the entity and the relation in one batch, so one undo removes both.
+- **Reading:** an event's people with their roles; a character's events in date order (`dateSort`, undated last) with their date. A relation's other end (`RelationRead.other`) now carries its `mapId`, `dateText` and `dateSort`, so this needs no request per event; a hidden event's date is blacked out with its name.
+- **Going to an event** (`relations/shown-where.ts`): the event's location says which view shows it. A pin on or at a planet opens that body's orbit view, and a marker opens the galaxy or system view. An event at a place follows the place. An event at an object nothing draws it beside (a station) selects the object. The navigator's new `show(objectId, { select, mapId })` changes the address, and the views change one after another to it as for any link (ux.md §9).
+- **Characters in the outliner:** a **People** row at the end lists the universe's characters, and selecting one opens its panel (the info panel knows characters by the same list).
+- **Tests:** `apps/web/e2e/people.spec.ts` (the "Done when" flow, from the orbit view, then from the galaxy view to the pin), `apps/web/test/shown-where.test.ts`, a People case in `outliner-tree.test.ts`, a hidden event's date in `packages/domain/test/redact-entity.test.ts`, and the other end's map and date in `apps/api/test/routes.int.test.ts`.
 
 ### M6-T7 Events list
 

@@ -94,6 +94,31 @@ describe('outlinerRows', () => {
     expect(secret?.text).not.toContain('Veil');
   });
 
+  it('ends with the universe’s people, a hidden one redacted (M6-T6)', () => {
+    const person = (id: string, name: string, isSpoiler = false) => ({
+      id,
+      namePlain: name,
+      nameRedacted: name,
+      isSpoiler,
+      nameSpoiler: false,
+      status: 'published' as const,
+    });
+    const withPeople = outlinerRows(
+      objects,
+      [],
+      [],
+      HIDE_SPOILERS,
+      [],
+      [person('p2', 'Ravenor'), person('p1', 'Eisenhorn', true)],
+    );
+    const [heading, ...people] = withPeople.slice(-3);
+    expect(heading).toMatchObject({ kind: 'layer', level: 1, text: 'People', childCount: 2 });
+    const byId = (id: string) => people.find((row) => row.id === id);
+    expect(byId('p2')).toMatchObject({ kind: 'person', level: 2, text: 'Ravenor', hidden: false });
+    expect(byId('p1')).toMatchObject({ kind: 'person', hidden: true, parentKey: 'people' });
+    expect(byId('p1')?.text).not.toContain('Eisenhorn');
+  });
+
   it('survives a cycle of parents', () => {
     const cycle = outlinerRows(
       objects,
