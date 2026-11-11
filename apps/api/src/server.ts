@@ -16,6 +16,7 @@ import {
 } from 'fastify-type-provider-zod';
 import packageJson from '../package.json' with { type: 'json' };
 import type { Config } from './config.ts';
+import { guardPreviewRoles } from './http/preview-roles.ts';
 import { handleError, handleNotFound, problemSchema } from './http/problems.ts';
 import { assetRoutes, mediaRoutes } from './routes/assets.ts';
 import { batchRoutes } from './routes/batch.ts';
@@ -63,6 +64,8 @@ export async function buildServer(config: Config) {
     },
   });
   app.addHook('onClose', () => db.$client.end());
+  // The private preview: only the proxy's editor may write (docs/ops/preview.md).
+  guardPreviewRoles(app, config.previewRoles);
 
   await app.register(fastifySensible);
   await app.register(fastifyCompress);
@@ -93,6 +96,7 @@ export async function buildServer(config: Config) {
     db,
     version: packageJson.version,
     authMode: config.authMode,
+    previewRoles: config.previewRoles,
   });
   await app.register(
     async (v1) => {

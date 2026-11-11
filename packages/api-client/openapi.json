@@ -16404,13 +16404,17 @@
                             "none",
                             "required"
                           ]
+                        },
+                        "canEdit": {
+                          "type": "boolean"
                         }
                       },
                       "required": [
                         "status",
                         "db",
                         "version",
-                        "authMode"
+                        "authMode",
+                        "canEdit"
                       ],
                       "additionalProperties": false
                     }
@@ -16456,13 +16460,17 @@
                             "none",
                             "required"
                           ]
+                        },
+                        "canEdit": {
+                          "type": "boolean"
                         }
                       },
                       "required": [
                         "status",
                         "db",
                         "version",
-                        "authMode"
+                        "authMode",
+                        "canEdit"
                       ],
                       "additionalProperties": false
                     }

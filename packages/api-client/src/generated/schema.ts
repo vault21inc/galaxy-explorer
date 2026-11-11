@@ -4789,6 +4789,7 @@ export interface operations {
                             version: string;
                             /** @enum {string} */
                             authMode: "none" | "required";
+                            canEdit: boolean;
                         };
                     };
                 };
@@ -4808,6 +4809,7 @@ export interface operations {
                             version: string;
                             /** @enum {string} */
                             authMode: "none" | "required";
+                            canEdit: boolean;
                         };
                     };
                 };

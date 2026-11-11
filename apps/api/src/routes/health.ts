@@ -1,5 +1,6 @@
 import { pingDatabase, type Database } from '@ge/db';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
+import { isEditor } from '../http/preview-roles.ts';
 import { z } from 'zod';
 
 const healthResponse = z.object({
@@ -12,6 +13,12 @@ const healthResponse = z.object({
      * which is how the web app decides to offer edit mode until logins arrive in M8.
      */
     authMode: z.enum(['none', 'required']),
+    /**
+     * Whether this request may edit, which decides whether the web app offers edit mode. With
+     * `authMode: none` that's everyone, except readers of the private preview
+     * (docs/ops/preview.md).
+     */
+    canEdit: z.boolean(),
   }),
 });
 
@@ -19,6 +26,7 @@ export interface HealthRouteOptions {
   db: Database;
   version: string;
   authMode: 'none' | 'required';
+  previewRoles: boolean;
 }
 
 /** `GET /api/health`: liveness for humans, uptime monitors and deploy scripts. */
@@ -35,7 +43,7 @@ export const healthRoutes: FastifyPluginCallbackZod<HealthRouteOptions> = (app, 
         response: { 200: healthResponse, 503: healthResponse },
       },
     },
-    async (_request, reply) => {
+    async (request, reply) => {
       const dbUp = await pingDatabase(options.db);
       return reply.code(dbUp ? 200 : 503).send({
         data: {
@@ -43,6 +51,7 @@ export const healthRoutes: FastifyPluginCallbackZod<HealthRouteOptions> = (app, 
           db: dbUp ? 'ok' : 'down',
           version: options.version,
           authMode: options.authMode,
+          canEdit: options.authMode === 'none' && isEditor(request, options.previewRoles),
         },
       });
     },

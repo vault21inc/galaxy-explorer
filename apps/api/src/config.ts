@@ -23,6 +23,11 @@ const configSchema = z
       .default('info'),
     /** Where uploaded images are stored (architecture.md §8). */
     GE_MEDIA_DIR: z.string().min(1).default('./.data/media'),
+    /**
+     * The private preview's proxy decides who may edit (http/preview-roles.ts,
+     * docs/ops/preview.md). Off on your own machine.
+     */
+    GE_PREVIEW_ROLES: z.enum(['on', 'off']).default('off'),
   })
   // Without login, anyone who can reach the API can change everything, so it must stay local.
   .refine((env) => env.GE_AUTH_MODE !== 'none' || LOOPBACK_HOSTS.has(env.GE_HOST), {
@@ -35,6 +40,7 @@ const configSchema = z
     host: env.GE_HOST,
     port: env.GE_PORT,
     logLevel: env.GE_LOG_LEVEL,
+    previewRoles: env.GE_PREVIEW_ROLES === 'on',
     mediaDir: isAbsolute(env.GE_MEDIA_DIR)
       ? env.GE_MEDIA_DIR
       : resolve(REPO_ROOT, env.GE_MEDIA_DIR),

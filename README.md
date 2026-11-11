@@ -29,6 +29,7 @@ Try it with the demo data: after setup, `pnpm db:reset` loads the **Example Univ
 - [Decisions](docs/plan/decisions.md): every product and technical decision
 - [Agent instructions](AGENTS.md): rules for AI coding agents working in this repository, and the full command list
 - [Performance log](docs/perf/README.md): the reference machine, how to measure, and baseline numbers
+- [Private preview](docs/ops/preview.md): putting the app on one password-protected server for invited testers, before M8's public site
 
 ## Getting started
 

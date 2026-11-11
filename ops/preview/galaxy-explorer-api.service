@@ -1,0 +1,26 @@
+# The API for the private preview (docs/ops/preview.md), run by systemd as the `ge` user.
+# Copy to /etc/systemd/system/, then: systemctl daemon-reload && systemctl enable --now
+# galaxy-explorer-api.
+[Unit]
+Description=Galaxy Explorer API (private preview)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+User=ge
+Group=ge
+WorkingDirectory=/srv/galaxy-explorer/app/apps/api
+# DATABASE_URL, GE_MEDIA_DIR, GE_PREVIEW_ROLES=on and the rest (preview.env.example).
+EnvironmentFile=/srv/galaxy-explorer/preview.env
+ExecStart=/usr/bin/node src/main.ts
+Restart=on-failure
+RestartSec=3
+# Hardening: a read-only system, no new privileges, writes only where the media lives.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/srv/galaxy-explorer/media
+
+[Install]
+WantedBy=multi-user.target

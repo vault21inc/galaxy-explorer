@@ -1,0 +1,54 @@
+# The private preview's web server (docs/ops/preview.md): HTTPS, a password for everyone, and
+# the one place that decides who may edit. Not the production setup, which is M8's.
+#
+# Values come from the environment Caddy runs with (/etc/default/caddy on the server):
+#   GE_PREVIEW_HOST   the site's name, such as galaxy.example.com or 203-0-113-5.sslip.io
+#   GE_EDITOR_USER    your user name; GE_EDITOR_HASH its password hash (caddy hash-password)
+#   GE_TESTER_USER    the testers' shared user name; GE_TESTER_HASH its password hash
+#   GE_WEB_ROOT       the built web app (apps/web/dist)
+#   GE_API_UPSTREAM   where the API listens; 127.0.0.1:3100 unless set
+
+{$GE_PREVIEW_HOST} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+		-Server
+	}
+
+	# One route, so everything runs in the order written: sign-in first, then the role header
+	# the API trusts, then the app. (Outside a route, Caddy sorts directives itself, and its
+	# `handle` blocks would answer before the sign-in ever ran.)
+	route {
+		basic_auth {
+			{$GE_EDITOR_USER} {$GE_EDITOR_HASH}
+			{$GE_TESTER_USER} {$GE_TESTER_HASH}
+		}
+
+		# Whatever the browser sent is dropped; only the editor's sign-in sets it.
+		request_header -X-GE-Role
+		@editor vars {http.auth.user.id} {$GE_EDITOR_USER}
+		request_header @editor X-GE-Role editor
+
+		handle /api/* {
+			reverse_proxy {$GE_API_UPSTREAM:127.0.0.1:3100}
+		}
+		handle /media/* {
+			reverse_proxy {$GE_API_UPSTREAM:127.0.0.1:3100}
+		}
+		handle {
+			root * {$GE_WEB_ROOT}
+			# Built files have a content hash in their names, so they never change: cache for good.
+			@hashed path /assets/*
+			header @hashed Cache-Control "public, max-age=31536000, immutable"
+			@page not path /assets/*
+			header @page Cache-Control "no-cache"
+			# Addresses like /u/example/main/view/… are the app's own: they all get index.html.
+			try_files {path} /index.html
+			file_server
+		}
+	}
+}

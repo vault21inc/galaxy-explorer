@@ -12,9 +12,15 @@ describe('loadConfig', () => {
       host: '127.0.0.1',
       port: 3100,
       logLevel: 'info',
+      previewRoles: false,
       // Relative to the repository root, wherever the API is started from.
       mediaDir: fileURLToPath(new URL('../../../.data/media', import.meta.url)),
     });
+  });
+
+  it('turns on the preview roles only when asked', () => {
+    expect(loadConfig({ DATABASE_URL, GE_PREVIEW_ROLES: 'on' }).previewRoles).toBe(true);
+    expect(() => loadConfig({ DATABASE_URL, GE_PREVIEW_ROLES: 'yes' })).toThrow(ConfigError);
   });
 
   it('keeps an absolute media directory as it is', () => {

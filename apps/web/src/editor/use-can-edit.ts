@@ -1,9 +1,10 @@
 import { useHealth } from '@/api/health.ts';
 
 /**
- * Whether this reader may edit. While the API runs with `GE_AUTH_MODE=none` (local use, the
- * only mode until M8), everyone may; M8 adds the owner's session.
+ * Whether this reader may edit, as the API says for this request (`canEdit`): everyone while
+ * it runs with `GE_AUTH_MODE=none` on your machine; only the editor in the private preview
+ * (docs/ops/preview.md); M8 adds the owner's session.
  */
 export function useCanEdit(): boolean {
-  return useHealth().data?.authMode === 'none';
+  return useHealth().data?.canEdit === true;
 }

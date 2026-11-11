@@ -256,6 +256,8 @@ The system and orbit payloads have the same shape: the subject, its direct child
 | `none` (default in development) | local proof of concept | Every request acts as actor `{ type: 'local', label: 'local' }` with full rights. The API **binds to 127.0.0.1 only**, and Docker publishes Postgres on 127.0.0.1 only. |
 | `required` (production, M8) | public site | Anonymous visitors can read published content only. Writes need an owner session (cookie) or an API token with the `write` scope. |
 
+**The private preview (D-31)** runs `none` behind a password-protected proxy with `GE_PREVIEW_ROLES=on`: only requests the proxy marks `X-GE-Role: editor` may write or read drafts. `/api/health` reports `canEdit` for the request, and the web app offers edit mode only when it's true ([docs/ops/preview.md](../ops/preview.md)).
+
 ## 8. Media and uploads
 
 - `BlobStore` interface: `put(key, data, contentType)`, `get(key)`, `delete(key)`, `publicUrl(key)`. `LocalBlobStore` writes to `GE_MEDIA_DIR`; in development Fastify serves the files under `/media/`, in production Caddy does.

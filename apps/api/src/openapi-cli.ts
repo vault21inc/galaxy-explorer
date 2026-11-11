@@ -21,6 +21,7 @@ const app = await buildServer({
   mediaDir: '/nonexistent/ge-media',
   port: 0,
   logLevel: 'silent',
+  previewRoles: false,
 });
 await app.ready();
 await writeFile(output, `${JSON.stringify(app.swagger(), null, 2)}\n`);
