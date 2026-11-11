@@ -28,8 +28,15 @@
 - A comment block with an ASCII diagram explains the axes: +Y is north, and `lon_deg = 0` is the texture's center (data-model §5).
 
 **Done when:**
-- [ ] Unit tests cover round trips, both poles, the ±180° antimeridian, and ray hits and misses.
-- [ ] An **alignment test** shows that the lat/lon of every vertex of a `SphereGeometry` (64 × 32) matches `uvToLatLon` of its UV within 1e-6.
+- [x] Unit tests cover round trips, both poles, the ±180° antimeridian, and ray hits and misses.
+- [x] An **alignment test** shows that the lat/lon of every vertex of a `SphereGeometry` (64 × 32) matches `uvToLatLon` of its UV within 1e-6.
+
+**As built:**
+- **One file.** Everything is in `packages/domain/src/geo/latlon.ts`, exported from `@ge/domain`, with `normalizeLonDeg` added. The plan's `sphere.ts` wasn't needed: `raySphereIntersect` is a few lines beside the rest.
+- **The convention, matched to three's `SphereGeometry`:** lon 0 is +X (u = 0.5), east is −Z, north is +Y, and v runs from 0 at the south pole to 1 at the north. At a pole, longitude is reported as 0. Longitudes run over [−180, 180), so u = 1 and u = 0 are the same meridian (−180).
+- **`slerpLatLon`** moves at an even angular pace. Between opposite points, where every great circle is equally short, it goes over the pole on the start point's side.
+- **`raySphereIntersect`** returns the nearest hit in front of the ray, the exit point from inside, or null.
+- **Tests:** `packages/domain/test/latlon.test.ts` (12 tests), plus the alignment test in `apps/web/test/latlon-alignment.test.ts`, which needs three.js and so can't live in the domain package. It compares points on the unit sphere rather than degrees: three stores positions as 32-bit floats, and near the poles a tiny step is many degrees of longitude.
 
 ### M6-T2 Planet appearance and baking
 

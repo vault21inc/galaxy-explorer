@@ -36,6 +36,17 @@ export {
   polylineLength,
   type CurvePoint,
 } from './geo/rift.ts';
+export {
+  greatCircleDistanceRad,
+  latLonToUnitVector,
+  latLonToUv,
+  normalizeLonDeg,
+  raySphereIntersect,
+  slerpLatLon,
+  unitVectorToLatLon,
+  uvToLatLon,
+  type LatLon,
+} from './geo/latlon.ts';
 export { gaussian, seededRandom } from './random.ts';
 export { Slug, Uuid } from './ids.ts';
 export * from './patterns.ts';
