@@ -1,4 +1,4 @@
-import type { EntityKind, ViewGroup, ViewObject, ViewRoute } from '@ge/domain';
+import type { EntityKind, ViewGroup, ViewObject, ViewPin, ViewRoute } from '@ge/domain';
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button.tsx';
@@ -19,11 +19,14 @@ export default function InfoPanel({
   objects,
   groups = [],
   routes = [],
+  pins = [],
 }: {
   universeId: string;
   objects: readonly ViewObject[];
   groups?: readonly ViewGroup[];
   routes?: readonly ViewRoute[];
+  /** An orbit view's places and events (M6-T4). */
+  pins?: readonly ViewPin[];
 }) {
   const selectedIds = useSelection((state) => state.selectedIds);
   const clear = useSelection((state) => state.clear);
@@ -40,7 +43,7 @@ export default function InfoPanel({
       ? 'group'
       : routes.some((route) => route.id === id)
         ? 'route'
-        : 'celestial_object';
+        : (pins.find((pin) => pin.id === id)?.kind ?? 'celestial_object');
   return (
     <SpoilerProvider>
       <aside
@@ -78,7 +81,8 @@ export default function InfoPanel({
                     const object =
                       objects.find((item) => item.id === id) ??
                       groups.find((item) => item.id === id) ??
-                      routes.find((item) => item.id === id);
+                      routes.find((item) => item.id === id) ??
+                      pins.find((item) => item.id === id);
                     return (
                       <li key={id}>
                         <button

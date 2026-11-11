@@ -778,7 +778,7 @@ export interface paths {
          *     ```json
          *     {
          *       "name": "Battle",
-         *       "icon": "swords",
+         *       "icon": "game-icons:crossed-swords",
          *       "color": "#d9534f"
          *     }
          *     ```
@@ -1422,6 +1422,46 @@ export interface paths {
          * @description Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths. Empty text clears a field. The credit is shown under the image wherever it appears.
          */
         patch: operations["assets.update"];
+        trace?: never;
+    };
+    "/api/v1/icons/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search the icon sets
+         * @description The bundled icon sets for event categories and pins (M6-T4): Lucide (ISC) and game-icons.net (CC BY 3.0, credited on the site). An icon key is `set:name`, such as `game-icons:crossed-swords`; a key without a set is Lucide's. Every word of `q` must appear in the name; exact and leading matches come first.
+         */
+        get: operations["icons.search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/icons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get icons' drawings
+         * @description The bundled icon sets for event categories and pins (M6-T4): Lucide (ISC) and game-icons.net (CC BY 3.0, credited on the site). An icon key is `set:name`, such as `game-icons:crossed-swords`; a key without a set is Lucide's. `keys` is a comma-separated list of up to 100 keys; unknown keys are left out of the answer.
+         */
+        get: operations["icons.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
 }
@@ -2106,6 +2146,8 @@ export interface components {
             map: {
                 /** Format: uuid */
                 id: string;
+                /** Format: uuid */
+                universeId: string;
                 namePlain: string;
                 nameSpoiler: boolean;
                 nameRedacted: string;
@@ -2188,6 +2230,8 @@ export interface components {
             map: {
                 /** Format: uuid */
                 id: string;
+                /** Format: uuid */
+                universeId: string;
                 namePlain: string;
                 nameSpoiler: boolean;
                 nameRedacted: string;
@@ -3864,6 +3908,8 @@ export interface components {
             map: {
                 /** Format: uuid */
                 id: string;
+                /** Format: uuid */
+                universeId: string;
                 namePlain: string;
                 nameSpoiler: boolean;
                 nameRedacted: string;
@@ -3946,6 +3992,8 @@ export interface components {
             map: {
                 /** Format: uuid */
                 id: string;
+                /** Format: uuid */
+                universeId: string;
                 namePlain: string;
                 nameSpoiler: boolean;
                 nameRedacted: string;
@@ -11610,6 +11658,138 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["AssetRead"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "icons.search": {
+        parameters: {
+            query?: {
+                q?: string;
+                set?: "lucide" | "game-icons";
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            key: string;
+                            /** @enum {string} */
+                            set: "lucide" | "game-icons";
+                            name: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "icons.get": {
+        parameters: {
+            query: {
+                keys: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            key: string;
+                            body: string;
+                            width: number;
+                            height: number;
+                        }[];
                     };
                 };
             };

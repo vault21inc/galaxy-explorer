@@ -595,6 +595,36 @@ export const GLOBE_SPIN_DEG_PER_S = 4;
 export const GLOBE_CLOUD_DRIFT_DEG_PER_S = 1.5;
 
 // ---------------------------------------------------------------------------------------------
+// Pins on the globe (rendering.md §8, M6-T4)
+// ---------------------------------------------------------------------------------------------
+
+/** The icon atlas: a square canvas of this many pixels, in cells of this many (16 × 16). */
+export const ICON_ATLAS_PX = 1_024;
+export const ICON_ATLAS_CELL_PX = 64;
+/** A pin's on-screen radius in CSS pixels, at any distance. */
+export const PIN_RADIUS_PX = 12;
+/** Pins sit this far out from the globe's center, in radii: just above its surface. */
+export const PIN_LIFT_RADII = 1.005;
+/**
+ * A pin is drawn this many radii nearer the camera than its point, so the globe's curve doesn't
+ * cut off the bottom of a pin standing near the edge of the visible side.
+ */
+export const PIN_TOWARD_CAMERA_RADII = 0.02;
+/**
+ * Pins located "at the body" rather than at a point on it (an event aboard a moon) stand in a
+ * ring at this latitude, spread evenly around it, so each can be seen and clicked.
+ */
+export const PIN_AT_BODY_LAT_DEG = 70;
+/** Pins at the same point fan out this many degrees of arc apart (pin-items.ts). */
+export const PIN_FAN_DEG = 4;
+/** Icons for pins without a category of their own: places, and events without one. */
+export const PIN_PLACE_ICON = 'lucide:landmark';
+export const PIN_EVENT_ICON = 'lucide:sparkle';
+/** And their colors. */
+export const PIN_PLACE_COLOR = '#b9c4d0';
+export const PIN_EVENT_COLOR = '#e8eaed';
+
+// ---------------------------------------------------------------------------------------------
 // Moving between views (rendering.md §4, ux.md §9)
 // ---------------------------------------------------------------------------------------------
 

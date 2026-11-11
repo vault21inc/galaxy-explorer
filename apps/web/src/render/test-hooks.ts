@@ -16,6 +16,8 @@ import { planetSurfaceOf } from './planets/planet-bodies.tsx';
 import { currentLights } from './stars/system-lights.ts';
 import { litLightCounts } from './stars/use-lit-uniforms.ts';
 import { globeState } from './globe/globe-state.ts';
+import { pinOf } from './pins/pins.tsx';
+import { latLonToUnitVector } from '@ge/domain';
 import { transitionsStarted, viewSettled } from './transition/transition-controller.ts';
 import { flyTo } from './camera/fly-to.ts';
 import { galaxyDiscState } from './galaxy/galaxy-disc.tsx';
@@ -136,6 +138,25 @@ export interface GeTestHooks {
     rings: boolean;
     sunFromStar: boolean;
     spinDeg: number;
+  } | null;
+  /**
+   * Where a latitude and longitude of the orbit view's globe is in the world now, `liftRadii`
+   * from its center (1 is the surface), after its tilt and turn; null outside an orbit view.
+   */
+  globePoint(latDeg: number, lonDeg: number, liftRadii?: number): [number, number, number] | null;
+  /** Turns the orbit view's camera to look straight down at a latitude and longitude. */
+  faceGlobePoint(latDeg: number, lonDeg: number, distanceRadii?: number): void;
+  /**
+   * A pin as drawn on the globe (M6-T4): its shape, icon (null for a redacted pin's "?"),
+   * color, state and the latitude and longitude it stands at; null if it isn't drawn.
+   */
+  pin(id: string): {
+    shape: 'event' | 'place';
+    icon: string | null;
+    color: string;
+    state: 'normal' | 'redacted' | 'draft';
+    latDeg: number;
+    lonDeg: number;
   } | null;
   /**
    * A body's orbit ring as drawn (M5-T4): its center (the system's, or its star's, D-29) and
@@ -307,8 +328,29 @@ export function installTestHooks(): void {
     globe: () => {
       const state = globeState();
       if (!state) return null;
-      const { spinDeg, ...rest } = state;
+      const { spinDeg, toWorld: _toWorld, ...rest } = state;
       return { ...rest, spinDeg: spinDeg() };
+    },
+    globePoint: (latDeg, lonDeg, liftRadii = 1) => {
+      const state = globeState();
+      if (!state) return null;
+      const [x, y, z] = latLonToUnitVector({ latDeg, lonDeg });
+      return state.toWorld([x * liftRadii, y * liftRadii, z * liftRadii]);
+    },
+    faceGlobePoint: (latDeg, lonDeg, distanceRadii = 2.6) => {
+      const state = globeState();
+      const controls = canvasState()?.controls;
+      if (!state || !(controls instanceof CameraControlsImpl)) return;
+      const [x, y, z] = latLonToUnitVector({ latDeg, lonDeg });
+      const [px, py, pz] = state.toWorld([x * distanceRadii, y * distanceRadii, z * distanceRadii]);
+      void controls.setLookAt(px, py, pz, 0, 0, 0, false);
+      canvasState()?.invalidate();
+    },
+    pin: (id) => {
+      const item = pinOf(id);
+      if (!item) return null;
+      const { shape, icon, color, state, latDeg, lonDeg } = item;
+      return { shape, icon, color, state, latDeg, lonDeg };
     },
     flyTo: async (id) => {
       const object = drawnObject(id);

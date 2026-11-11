@@ -160,7 +160,8 @@ export const Satellite = ViewObject.extend({ parentId: Uuid });
 export type Satellite = z.infer<typeof Satellite>;
 
 export const SystemView = z.object({
-  map: z.object({ id: Uuid, ...Named }),
+  /** The map, and its universe for the universe's settings (pins' categories, M6-T4). */
+  map: z.object({ id: Uuid, universeId: Uuid, ...Named }),
   /** Outermost first, ending with the subject's parent; empty for a top-level subject. */
   ancestors: z.array(Ancestor),
   subject: Subject,

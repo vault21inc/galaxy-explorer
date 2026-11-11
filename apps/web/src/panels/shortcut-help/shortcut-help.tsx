@@ -1,3 +1,4 @@
+import { ICON_CREDITS, ICON_SETS } from '@ge/domain';
 import { CircleHelp, X } from 'lucide-react';
 import { useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button.tsx';
@@ -117,6 +118,24 @@ export function ShortcutHelp() {
               </section>
             ))}
           </div>
+          {/* game-icons.net's licence (CC BY 3.0) asks for this credit (D-32). */}
+          <footer className="border-t pt-3 text-xs text-muted-foreground">
+            Icons:{' '}
+            {ICON_SETS.map((set, index) => (
+              <span key={set}>
+                {index > 0 && '; '}
+                <a
+                  href={ICON_CREDITS[set].url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline"
+                >
+                  {ICON_CREDITS[set].text}
+                </a>
+              </span>
+            ))}
+            .
+          </footer>
         </DialogContent>
       </Dialog>
     </>

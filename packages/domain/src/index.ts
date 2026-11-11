@@ -64,3 +64,15 @@ export * from './richtext/index.ts';
 export * from './schemas/index.ts';
 export * from './spoilers/index.ts';
 export type { Deg, Ly, Px, Radii, Su } from './units.ts';
+export {
+  ICON_CREDITS,
+  ICON_KEY_PATTERN,
+  ICON_SET_LABELS,
+  ICON_SETS,
+  IconKey,
+  IconSummary,
+  IconSvg,
+  iconKey,
+  parseIconKey,
+  type IconSet,
+} from './icons.ts';

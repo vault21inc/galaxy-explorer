@@ -5,6 +5,7 @@ import { FactsSection } from './sections/facts-section.tsx';
 import { HeaderSection } from './sections/header-section.tsx';
 import { ImagesSection } from './images/images-section.tsx';
 import { LinksSection } from './sections/links-section.tsx';
+import { LocationSection } from './sections/location-section.tsx';
 import { MembersSection } from './sections/members-section.tsx';
 import { NestingSection } from './sections/nesting-section.tsx';
 import { RelationsSection } from './sections/relations-section.tsx';
@@ -15,8 +16,7 @@ import type { SectionProps } from './types.ts';
 /**
  * The panel-sections registry (architecture.md §3.5): the info panel's sections in order, and
  * which kinds show each. A kind shows an aspect's section only if the entity-kinds registry
- * says it has that aspect, so a new kind gets the right panel with no code here. Location
- * joins in M6.
+ * says it has that aspect, so a new kind gets the right panel with no code here.
  *
  * In edit mode the generated form (M3-T4) takes the place of the name and text sections.
  */
@@ -42,6 +42,13 @@ export const PANEL_SECTIONS: readonly SectionDef[] = [
     mode: 'view',
   },
   { id: 'description', component: textSection('description'), appliesTo: always, mode: 'view' },
+  // Where a place or event is (M6-T4); editing it arrives in M6-T5.
+  {
+    id: 'location',
+    component: LocationSection,
+    include: 'location',
+    appliesTo: (kind) => kind.aspects.location !== 'none',
+  },
   {
     id: 'members',
     component: MembersSection,

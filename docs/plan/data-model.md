@@ -298,7 +298,7 @@ create table event_categories (
   id           uuid primary key default uuidv7(),
   universe_id  uuid not null references universes on delete cascade,
   name         text not null,
-  icon         text not null,                          -- icon key from the bundled icon set
+  icon         text not null,                          -- icon key, set:name, from the bundled sets (D-32)
   color        text not null,
   sort_key     numeric not null default 0,
   unique (universe_id, name)

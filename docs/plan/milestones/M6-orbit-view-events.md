@@ -133,10 +133,20 @@
   - a **hidden location** draws no pin until spoilers are shown or that item is revealed in the panel.
 
 **Done when:**
-- [ ] E2E on the demo seed:
+- [x] E2E on the demo seed:
   - pins appear at their coordinates (`screenPositionOf` versus the projected lat/lon);
   - a spoiler event shows a grey "?" pin;
   - a location spoiler has no pin while hidden and gets one when shown.
+
+**As built:**
+- **The icon set (D-32):** the owner chose both Lucide and game-icons.net. Keys are `set:name`; a key without a set is Lucide's. The API serves the sets from their pinned Iconify JSON packages: `GET /icons/search` for the picker and `GET /icons?keys=…` for drawings, cached for a day. The help dialog credits both sets.
+- **The icon picker** (`icon` widget, `panels/entity-form/fields/icon-field.tsx`) is the event categories table's Icon column: a button with the icon and its name opens a search over both sets, narrowed to one if wanted, in a grid of 60 results.
+- **The icon atlas** (`render/icons/icon-atlas.ts`): the pins' icons rasterized once from their SVGs into a 1,024² canvas texture in 64 px cells, white on transparent; cell 0 is the "?" of a redacted pin.
+- **`Pins`** (`render/pins/`): one instanced draw of camera-facing quads, 12 px in radius on screen, inside the globe's turning group so they tilt and spin with the surface. An event is a round pin in its category's color and icon; a place a diamond with a landmark icon; a redacted pin is grey with "?"; a draft is faded. Pins at the same point (a place and the events there) fan out east; pins located "at the body" stand in a ring at 70° north.
+- **Picking:** pins are in the scene index (hover label, click selects and opens the panel, selection ring). A new `onSphere` on scene-index entries lets the picker leave out pins on the globe's far side as the camera turns; the globe hides them from view by the depth test.
+- **Spoilers** (ux.md §6): a hidden spoiler entity is a grey "?" pin with a redacted label; a hidden location draws no pin and isn't in the scene index until spoilers are shown or the location is revealed in the panel's new **Location** section ("12.5° N, 40.2° W on Primus"), which blacks it out until then.
+- **The info panel** opens places and events selected as pins; the orbit view's payload gained the map's `universeId`, which the pins need for the universe's categories.
+- **Tests:** `apps/web/e2e/pins.spec.ts` (the three "Done when" checks on the demo seed, hover, click and the panel's location; the icon picker saving `game-icons:crossed-swords`), `apps/api/test/icons.int.test.ts`, `packages/domain/test/icons.test.ts`, `apps/web/test/pin-items.test.ts`.
 
 ### M6-T5 Places and events: creating and editing
 

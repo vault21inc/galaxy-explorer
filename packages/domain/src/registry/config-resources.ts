@@ -1,3 +1,4 @@
+import { IconKey } from '../icons.ts';
 import { z } from 'zod';
 import { HexColor } from '../colors.ts';
 import { Uuid } from '../ids.ts';
@@ -65,8 +66,8 @@ export const groupTypeSchema = z.object({
 
 export const eventCategorySchema = z.object({
   name,
-  /** Key in the bundled icon set. */
-  icon: z.string().min(1).max(100),
+  /** Its pins' icon: `set:name` from the bundled sets (icons.ts, M6-T4). */
+  icon: IconKey,
   color: HexColor,
   sortKey,
 });
@@ -129,14 +130,13 @@ export const configResources = defineConfigResources({
     schema: eventCategorySchema,
     description:
       'A category for events, with the icon and color of their pins, such as Battle or Discovery.',
-    example: { name: 'Battle', icon: 'swords', color: '#d9534f' },
+    example: { name: 'Battle', icon: 'game-icons:crossed-swords', color: '#d9534f' },
     columns: [
       { path: 'name', widget: 'text', label: 'Name' },
-      // A text key until M6-T4 brings the icon set and its picker.
-      { path: 'icon', widget: 'text', label: 'Icon' },
+      { path: 'icon', widget: 'icon', label: 'Icon' },
       { path: 'color', widget: 'color', label: 'Color' },
     ],
-    defaults: { color: NEW_COLOR, icon: 'circle' },
+    defaults: { color: NEW_COLOR, icon: 'lucide:circle' },
   },
   object_subtypes: {
     plural: 'object-subtypes',

@@ -1,4 +1,4 @@
-import type { ViewGroup, ViewGroupType, ViewObject, ViewRoute } from '@ge/domain';
+import type { ViewPin, ViewGroup, ViewGroupType, ViewObject, ViewRoute } from '@ge/domain';
 import { lazy, Suspense } from 'react';
 import { SelectionAnnouncer } from '@/app/selection-announcer.tsx';
 import { StatusPanel } from '@/app/status-panel.tsx';
@@ -23,6 +23,8 @@ interface ViewPanelsProps {
   groups?: readonly ViewGroup[];
   groupTypes?: readonly ViewGroupType[];
   routes?: readonly ViewRoute[];
+  /** An orbit view's places and events, selectable as pins (M6-T4). */
+  pins?: readonly ViewPin[];
   /** The Map settings panel belongs to this view (levels/registry.ts). */
   mapSettings: boolean;
   /** What an empty view says (levels/registry.ts `emptyTitle`). */
@@ -43,6 +45,7 @@ export function ViewPanels({
   groups = [],
   groupTypes = [],
   routes = [],
+  pins = [],
   mapSettings,
   emptyTitle,
 }: ViewPanelsProps) {
@@ -77,9 +80,15 @@ export function ViewPanels({
           <MapSettingsPanel universeId={universeId} mapId={mapId} />
         </Suspense>
       )}
-      {hasSelection && !empty && (
+      {hasSelection && (!empty || pins.length > 0) && (
         <Suspense fallback={null}>
-          <InfoPanel universeId={universeId} objects={objects} groups={groups} routes={routes} />
+          <InfoPanel
+            universeId={universeId}
+            objects={objects}
+            groups={groups}
+            routes={routes}
+            pins={pins}
+          />
         </Suspense>
       )}
     </>

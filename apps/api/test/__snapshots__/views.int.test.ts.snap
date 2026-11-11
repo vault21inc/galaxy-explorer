@@ -496,6 +496,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
       "namePlain": "The Present Era",
       "nameRedacted": "The Present Era",
       "nameSpoiler": false,
+      "universeId": "<id 1>",
     },
     "pins": [
       {
@@ -689,6 +690,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
       "namePlain": "The Present Era",
       "nameRedacted": "The Present Era",
       "nameSpoiler": false,
+      "universeId": "<id 1>",
     },
     "satellites": [
       {

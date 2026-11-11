@@ -19,6 +19,7 @@ import type { Config } from './config.ts';
 import { guardPreviewRoles } from './http/preview-roles.ts';
 import { handleError, handleNotFound, problemSchema } from './http/problems.ts';
 import { assetRoutes, mediaRoutes } from './routes/assets.ts';
+import { iconRoutes } from './routes/icons.ts';
 import { batchRoutes } from './routes/batch.ts';
 import { configRoutes } from './routes/config.ts';
 import { containerRoutes } from './routes/containers.ts';
@@ -110,6 +111,7 @@ export async function buildServer(config: Config) {
       await v1.register(historyRoutes, { db });
       await v1.register(viewRoutes, { db });
       await v1.register(assetRoutes, { db, store });
+      await v1.register(iconRoutes);
     },
     { prefix: '/api/v1' },
   );

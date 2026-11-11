@@ -9,6 +9,7 @@ export type PanelEntity = EntityReadOf<EntityKind> & {
   members?: components['schemas']['MemberRead'][];
   waypoints?: components['schemas']['WaypointRead'][];
   images?: components['schemas']['ImageRead'][];
+  location?: components['schemas']['LocationRead'] | null;
 };
 
 /** What every panel section gets. */

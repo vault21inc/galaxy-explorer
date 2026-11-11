@@ -156,7 +156,10 @@ function zoomable(object: DrawnObject | null | undefined): object is DrawnObject
 }
 
 function zoomTarget(state: RootState, clientX: number, clientY: number, nowMs: number) {
-  const hovered = pickAt(state, clientX, clientY);
+  // Bodies only: a wheel turned with the pointer over some system's label would otherwise
+  // stop at that system and push into it, which reads as a zoom gone astray. Labels are for
+  // hovering, clicking and dragging.
+  const hovered = pickAt(state, clientX, clientY, { labels: false });
   let target: DrawnObject | null = zoomable(hovered) ? hovered : null;
   if (!target && held && nowMs - held.lastMs <= PUSH_RESET_MS) {
     const kept = drawnObject(held.id);

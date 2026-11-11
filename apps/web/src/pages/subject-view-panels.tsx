@@ -58,6 +58,7 @@ export function SubjectViewPanels({
       universeSlug={universeSlug}
       mapId={mapId}
       objects={view.data.children}
+      pins={'pins' in view.data ? view.data.pins : []}
       mapSettings={edit.mapSettings}
       emptyTitle={edit.emptyTitle}
     />

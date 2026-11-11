@@ -15,6 +15,11 @@ export interface GlobeState {
   sunFromStar: boolean;
   /** The surface's turn about its axis so far, in degrees: grows only with ambient motion. */
   spinDeg: () => number;
+  /**
+   * Where a point of the globe's frame is in the world now, after its tilt and turn: for
+   * checking pins against their latitude and longitude.
+   */
+  toWorld: (point: readonly [number, number, number]) => [number, number, number];
 }
 
 let current: GlobeState | null = null;

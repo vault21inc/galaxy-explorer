@@ -3213,6 +3213,11 @@
                 "format": "uuid",
                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
               },
+              "universeId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
               "namePlain": {
                 "type": "string"
               },
@@ -3228,6 +3233,7 @@
             },
             "required": [
               "id",
+              "universeId",
               "namePlain",
               "nameSpoiler",
               "nameRedacted",
@@ -3624,6 +3630,11 @@
                 "format": "uuid",
                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
               },
+              "universeId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
               "namePlain": {
                 "type": "string"
               },
@@ -3639,6 +3650,7 @@
             },
             "required": [
               "id",
+              "universeId",
               "namePlain",
               "nameSpoiler",
               "nameRedacted",
@@ -5964,8 +5976,8 @@
           },
           "icon": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 100
+            "maxLength": 100,
+            "pattern": "^(?:(?:lucide|game-icons):)?[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "color": {
             "type": "string",
@@ -5992,8 +6004,8 @@
           },
           "icon": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 100
+            "maxLength": 100,
+            "pattern": "^(?:(?:lucide|game-icons):)?[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "color": {
             "type": "string",
@@ -6015,8 +6027,8 @@
           },
           "icon": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 100
+            "maxLength": 100,
+            "pattern": "^(?:(?:lucide|game-icons):)?[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "color": {
             "type": "string",
@@ -11871,6 +11883,11 @@
                 "format": "uuid",
                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
               },
+              "universeId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
               "namePlain": {
                 "type": "string"
               },
@@ -11886,6 +11903,7 @@
             },
             "required": [
               "id",
+              "universeId",
               "namePlain",
               "nameSpoiler",
               "nameRedacted",
@@ -12289,6 +12307,11 @@
                 "format": "uuid",
                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
               },
+              "universeId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
               "namePlain": {
                 "type": "string"
               },
@@ -12304,6 +12327,7 @@
             },
             "required": [
               "id",
+              "universeId",
               "namePlain",
               "nameSpoiler",
               "nameRedacted",
@@ -14644,8 +14668,8 @@
           },
           "icon": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 100
+            "maxLength": 100,
+            "pattern": "^(?:(?:lucide|game-icons):)?[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "color": {
             "type": "string",
@@ -14672,8 +14696,8 @@
           },
           "icon": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 100
+            "maxLength": 100,
+            "pattern": "^(?:(?:lucide|game-icons):)?[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "color": {
             "type": "string",
@@ -14695,8 +14719,8 @@
           },
           "icon": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 100
+            "maxLength": 100,
+            "pattern": "^(?:(?:lucide|game-icons):)?[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "color": {
             "type": "string",
@@ -23285,7 +23309,7 @@
         "tags": [
           "event-categories"
         ],
-        "description": "A category for events, with the icon and color of their pins, such as Battle or Discovery.\n\nExample body:\n\n```json\n{\n  \"name\": \"Battle\",\n  \"icon\": \"swords\",\n  \"color\": \"#d9534f\"\n}\n```",
+        "description": "A category for events, with the icon and color of their pins, such as Battle or Discovery.\n\nExample body:\n\n```json\n{\n  \"name\": \"Battle\",\n  \"icon\": \"game-icons:crossed-swords\",\n  \"color\": \"#d9534f\"\n}\n```",
         "requestBody": {
           "required": true,
           "content": {
@@ -28339,6 +28363,246 @@
           }
         }
       }
+    },
+    "/api/v1/icons/search": {
+      "get": {
+        "operationId": "icons.search",
+        "summary": "Search the icon sets",
+        "tags": [
+          "icons"
+        ],
+        "description": "The bundled icon sets for event categories and pins (M6-T4): Lucide (ISC) and game-icons.net (CC BY 3.0, credited on the site). An icon key is `set:name`, such as `game-icons:crossed-swords`; a key without a set is Lucide's. Every word of `q` must appear in the name; exact and leading matches come first.",
+        "parameters": [
+          {
+            "schema": {
+              "default": "",
+              "type": "string",
+              "maxLength": 100
+            },
+            "in": "query",
+            "name": "q",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "lucide",
+                "game-icons"
+              ]
+            },
+            "in": "query",
+            "name": "set",
+            "required": false
+          },
+          {
+            "schema": {
+              "default": 60,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "set": {
+                            "type": "string",
+                            "enum": [
+                              "lucide",
+                              "game-icons"
+                            ]
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "set",
+                          "name"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/icons": {
+      "get": {
+        "operationId": "icons.get",
+        "summary": "Get icons' drawings",
+        "tags": [
+          "icons"
+        ],
+        "description": "The bundled icon sets for event categories and pins (M6-T4): Lucide (ISC) and game-icons.net (CC BY 3.0, credited on the site). An icon key is `set:name`, such as `game-icons:crossed-swords`; a key without a set is Lucide's. `keys` is a comma-separated list of up to 100 keys; unknown keys are left out of the answer.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "keys",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "body": {
+                            "type": "string"
+                          },
+                          "width": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "height": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "body",
+                          "width",
+                          "height"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "tags": [
@@ -28401,6 +28665,10 @@
     {
       "name": "assets",
       "description": "Uploading images, and the universe’s image library."
+    },
+    {
+      "name": "icons",
+      "description": "The bundled icon sets for event categories and pins: Lucide and game-icons.net (M6-T4)."
     },
     {
       "name": "links",

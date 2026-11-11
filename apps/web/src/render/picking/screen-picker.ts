@@ -22,6 +22,8 @@ export interface Viewport {
   heightPx: number;
   /** World units per CSS pixel at distance 1 (screen-scale.ts). */
   worldPerPxAt1: number;
+  /** The camera's position, for objects hidden on the far side of a sphere (`onSphere`). */
+  cameraPosition?: readonly [number, number, number];
 }
 
 export interface ScreenRect {
@@ -99,6 +101,13 @@ export class ScreenPicker {
       }
       this.#curveCount[count] = 0;
       const [x, y, z] = object.center;
+      if (
+        object.onSphere &&
+        viewport.cameraPosition &&
+        !facesCamera(object.onSphere, object.center, viewport.cameraPosition)
+      ) {
+        continue;
+      }
       // Clip coordinates: the matrix times (x, y, z, 1). For a perspective camera, w is the
       // distance in front of the camera; w ≤ 0 means behind it.
       const clipX = (m[0] ?? 0) * x + (m[4] ?? 0) * y + (m[8] ?? 0) * z + (m[12] ?? 0);
@@ -406,4 +415,18 @@ export class ScreenPicker {
     this.#curveStart = new Int32Array(size);
     this.#curveCount = new Int32Array(size);
   }
+}
+
+/**
+ * Whether a point on a sphere's surface faces the camera: the camera is on the outward side of
+ * the plane that touches the sphere there, so the line from the point to the camera leaves
+ * the sphere at once instead of passing through it.
+ */
+function facesCamera(
+  sphere: { center: readonly [number, number, number] },
+  [px, py, pz]: readonly [number, number, number],
+  [cx, cy, cz]: readonly [number, number, number],
+): boolean {
+  const [sx, sy, sz] = sphere.center;
+  return (px - sx) * (cx - px) + (py - sy) * (cy - py) + (pz - sz) * (cz - pz) > 0;
 }

@@ -382,7 +382,11 @@ async function subjectView(
     surfaceTexture: surfaces.get(object.id) ?? null,
   });
   return {
-    map: { id: map.id as ViewObject['id'], ...named(map) },
+    map: {
+      id: map.id as ViewObject['id'],
+      universeId: map.universeId as ViewObject['id'],
+      ...named(map),
+    },
     ancestors,
     subject: {
       ...withSurface(subjectObject),

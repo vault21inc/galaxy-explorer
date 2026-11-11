@@ -27,7 +27,9 @@ export type FormWidget =
   /** A planet's random seed, with a dice button for a new one (M6-T2). */
   | 'seed'
   /** A planet's palette: 2–6 colors, previewed live while picked (M6-T2). */
-  | 'palette';
+  | 'palette'
+  /** An icon from the bundled sets, searched and picked (an event category's, M6-T4). */
+  | 'icon';
 
 /** Where a select's choices come from. */
 export type FormOptions =

@@ -49,6 +49,11 @@ export interface DrawnObject {
    * line (label-driver.tsx). A move in progress shifts the points at moving objects.
    */
   waypointIds?: readonly string[];
+  /**
+   * It lies on this sphere's surface, so it's hidden while it's on the far side from the camera:
+   * a pin on the orbit view's globe (M6-T4). The picker leaves it out then.
+   */
+  onSphere?: { center: readonly [number, number, number]; radius: number };
 }
 
 const sources = new Map<string, readonly DrawnObject[]>();

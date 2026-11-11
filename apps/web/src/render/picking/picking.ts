@@ -31,10 +31,12 @@ function ensureFresh(state: RootState): void {
   ) {
     return;
   }
+  const { x, y, z } = camera.position;
   picker.rebuild(drawnObjects(), matrix, {
     widthPx: size.width,
     heightPx: size.height,
     worldPerPxAt1: worldPerPxAt1(camera, size.height),
+    cameraPosition: [x, y, z],
   });
   lastMatrix.set(matrix);
   lastVersion = drawnVersion();
@@ -55,12 +57,19 @@ export function projected(state: RootState): ScreenPicker {
  * but over a wide target (a belt's band, a rift, a route, a body larger on screen than
  * LABEL_OVER_AREA_PX) an object's label, drawn on top, wins (label-hits.ts).
  */
-export function pickAt(state: RootState, clientX: number, clientY: number): DrawnObject | null {
+export function pickAt(
+  state: RootState,
+  clientX: number,
+  clientY: number,
+  /** `false`: bodies only, as zooming wants (zoom-gate.ts). */
+  { labels = true }: { labels?: boolean } = {},
+): DrawnObject | null {
   ensureFresh(state);
   const rect = state.gl.domElement.getBoundingClientRect();
   const xPx = clientX - rect.left;
   const yPx = clientY - rect.top;
   const body = picker.pick(xPx, yPx);
+  if (!labels) return body;
   if (body && picker.lastHitRadiusPx <= LABEL_OVER_AREA_PX) return body;
   const labelled = labelHitAt(xPx, yPx);
   const viaLabel = labelled === null ? undefined : drawnObject(labelled);

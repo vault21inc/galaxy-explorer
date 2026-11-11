@@ -1,7 +1,7 @@
-import { planetDefaults, type Sunlight, type ViewObject } from '@ge/domain';
+import { planetDefaults, type Sunlight, type ViewObject, type ViewPin } from '@ge/domain';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
-import { AdditiveBlending, BackSide, SphereGeometry, type Mesh } from 'three';
+import { AdditiveBlending, BackSide, SphereGeometry, Vector3, type Group, type Mesh } from 'three';
 import { useAppearancePreview, useRateLimited, withPreview } from '@/state/appearance-preview.ts';
 import { useAmbientMotion } from '@/state/quality.ts';
 import { hexToLinear } from '../color.ts';
@@ -26,6 +26,7 @@ import {
   GLOBE_TERMINATOR_WRAP,
   PLANET_BAKE_DEBOUNCE_MS,
 } from '../tuning.ts';
+import { Pins } from '../pins/pins.tsx';
 import { GlobeRings } from './globe-rings.tsx';
 import {
   ATMOSPHERE_FRAGMENT,
@@ -53,7 +54,18 @@ const MAX_STEP_S = 0.1;
  * little faster; it asks for a frame AMBIENT_MOTION_FPS times a second and nothing more, and
  * when it's off nothing moves and nothing is drawn.
  */
-export function Globe({ subject, sunlight }: { subject: ViewObject; sunlight: Sunlight | null }) {
+export function Globe({
+  subject,
+  sunlight,
+  pins,
+  universeId,
+}: {
+  subject: ViewObject;
+  sunlight: Sunlight | null;
+  /** Places and events on it (M6-T4), drawn on the surface and turning with it. */
+  pins: readonly ViewPin[];
+  universeId: string;
+}) {
   const invalidate = useThree((state) => state.invalidate);
   const previews = useRateLimited(
     useAppearancePreview((state) => state.values),
@@ -167,7 +179,7 @@ export function Globe({ subject, sunlight }: { subject: ViewObject; sunlight: Su
       clearInterval(timer);
     };
   }, [motion, invalidate]);
-  const surfaceMesh = useRef<Mesh>(null);
+  const surface = useRef<Group>(null);
   const cloudMesh = useRef<Mesh>(null);
   const spin = useRef({ angleRad: 0, lastMs: 0 });
   useFrame(() => {
@@ -178,7 +190,7 @@ export function Globe({ subject, sunlight }: { subject: ViewObject; sunlight: Su
       state.angleRad += stepS * GLOBE_SPIN_DEG_PER_S * DEG;
     }
     state.lastMs = now;
-    if (surfaceMesh.current) surfaceMesh.current.rotation.y = state.angleRad;
+    if (surface.current) surface.current.rotation.y = state.angleRad;
     if (cloudMesh.current) {
       const driftRad = (state.angleRad / GLOBE_SPIN_DEG_PER_S) * GLOBE_CLOUD_DRIFT_DEG_PER_S;
       cloudMesh.current.rotation.y = state.angleRad + driftRad;
@@ -197,6 +209,13 @@ export function Globe({ subject, sunlight }: { subject: ViewObject; sunlight: Su
       rings: rings !== null,
       sunFromStar: sun.fromStar,
       spinDeg: () => spin.current.angleRad / DEG,
+      toWorld: (point) => {
+        const group = surface.current;
+        if (!group) return [...point];
+        group.updateWorldMatrix(true, false);
+        const world = new Vector3(...point).applyMatrix4(group.matrixWorld);
+        return [world.x, world.y, world.z];
+      },
     });
     invalidate();
     return () => {
@@ -206,13 +225,17 @@ export function Globe({ subject, sunlight }: { subject: ViewObject; sunlight: Su
 
   return (
     <group rotation-x={tiltRad}>
-      <mesh ref={surfaceMesh} geometry={geometries.surface}>
-        <shaderMaterial
-          vertexShader={GLOBE_VERTEX}
-          fragmentShader={GLOBE_FRAGMENT}
-          uniforms={surfaceUniforms}
-        />
-      </mesh>
+      {/* The surface and its pins turn together about the globe's axis. */}
+      <group ref={surface}>
+        <mesh geometry={geometries.surface}>
+          <shaderMaterial
+            vertexShader={GLOBE_VERTEX}
+            fragmentShader={GLOBE_FRAGMENT}
+            uniforms={surfaceUniforms}
+          />
+        </mesh>
+        <Pins pins={pins} universeId={universeId} />
+      </group>
       {clouds && (
         <mesh ref={cloudMesh} geometry={geometries.clouds} renderOrder={1}>
           <shaderMaterial

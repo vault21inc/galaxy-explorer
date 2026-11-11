@@ -22,6 +22,8 @@
     "@fastify/swagger-ui": "6.1.3",
     "@ge/db": "workspace:*",
     "@ge/domain": "workspace:*",
+    "@iconify-json/game-icons": "1.2.4",
+    "@iconify-json/lucide": "1.2.153",
     "drizzle-orm": "catalog:",
     "fastify": "5.12.8",
     "fastify-type-provider-zod": "7.0.0",

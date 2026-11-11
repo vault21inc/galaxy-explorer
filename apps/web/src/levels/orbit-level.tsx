@@ -32,7 +32,12 @@ export default function OrbitLevel({ subjectId }: { subjectId: string }) {
   return (
     <>
       <GalaxyBand />
-      <Globe subject={view.data.subject} sunlight={view.data.sunlight} />
+      <Globe
+        subject={view.data.subject}
+        sunlight={view.data.sunlight}
+        pins={view.data.pins}
+        universeId={view.data.map.universeId}
+      />
       <OrbitRings objects={view.data.children} />
       {partitions.map(({ renderer, objects }) => (
         <renderer.component key={renderer.name} objects={objects} />
