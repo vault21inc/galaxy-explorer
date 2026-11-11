@@ -3,6 +3,7 @@ import { useViewPayload } from '@/api/hooks.ts';
 import { useReadOptions } from '@/api/read-options.ts';
 import { EditTools } from '@/editor/edit-tools.tsx';
 import { useViewCamera } from '@/render/camera/use-view-camera.ts';
+import { EventMarkers } from '@/render/markers/event-markers.tsx';
 import { SelectionRings } from '@/render/picking/selection-rings.tsx';
 import { partitionByRenderer } from '@/render/registry.ts';
 import { OrbitRings } from '@/render/orbits/orbit-rings.tsx';
@@ -42,6 +43,12 @@ export default function SystemLevel({ subjectId }: { subjectId: string }) {
       {partitions.map(({ renderer, objects }) => (
         <renderer.component key={renderer.name} objects={objects} orbitCenters={centers} />
       ))}
+      {/* Events in space in the system (M6-T5). */}
+      <EventMarkers
+        markers={view.data.markers}
+        objects={view.data.children}
+        universeId={view.data.map.universeId}
+      />
       <SelectionRings />
       {/* Placing and moving, the same tools as the galaxy view's (M5-T4). */}
       <EditTools />

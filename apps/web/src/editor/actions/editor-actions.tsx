@@ -1,4 +1,4 @@
-import type { ViewGroup, ViewGroupType, ViewObject, ViewRoute } from '@ge/domain';
+import type { ViewGroup, ViewGroupType, ViewObject, ViewLocated, ViewRoute } from '@ge/domain';
 import { useEffect, useRef } from 'react';
 import { resolveEditKey, type EditKeyAction } from '@/input/bindings.ts';
 import { detectPlatform } from '@/input/platform.ts';
@@ -37,6 +37,7 @@ export function EditorActions({
   groups = [],
   groupTypes = [],
   routes = [],
+  pins = [],
 }: {
   mapId: string;
   universeSlug: string;
@@ -44,6 +45,8 @@ export function EditorActions({
   groups?: readonly ViewGroup[];
   groupTypes?: readonly ViewGroupType[];
   routes?: readonly ViewRoute[];
+  /** An orbit view's places and events (M6-T5): deletable when selected. */
+  pins?: readonly ViewLocated[];
 }) {
   const editing = useEditor((state) => state.editing);
   const selectedIds = useSelection((state) => state.selectedIds);
@@ -64,6 +67,10 @@ export function EditorActions({
   const selectedGroups = () => {
     const ids = new Set(useSelection.getState().selectedIds);
     return groups.filter((group) => ids.has(group.id));
+  };
+  const selectedPins = () => {
+    const ids = new Set(useSelection.getState().selectedIds);
+    return pins.filter((pin) => ids.has(pin.id));
   };
   const selectedRoutes = () => {
     const ids = new Set(useSelection.getState().selectedIds);
@@ -88,6 +95,7 @@ export function EditorActions({
           ...selected(),
           ...selectedGroups().map((group) => ({ ...group, kind: 'group' as const })),
           ...selectedRoutes().map((route) => ({ ...route, kind: 'route' as const })),
+          ...selectedPins(),
         ]);
         return;
       case 'group':

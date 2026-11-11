@@ -94,6 +94,7 @@ export function MapPage() {
       groups={view.data.groups}
       groupTypes={view.data.groupTypes}
       routes={view.data.routes}
+      pins={view.data.markers}
       mapSettings={edit?.mapSettings ?? false}
       emptyTitle={edit?.emptyTitle ?? 'Nothing here yet'}
     />

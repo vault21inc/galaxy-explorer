@@ -126,6 +126,50 @@ export const ViewGroupType = z.object({
 });
 export type ViewGroupType = z.infer<typeof ViewGroupType>;
 
+/** What pins and markers share: a place or event, how it's named, and its look's inputs. */
+const Located = {
+  id: Uuid,
+  kind: z.enum(['place', 'event']),
+  /** For edits from the view, such as deleting the pin (M6-T5). */
+  version: z.int().positive(),
+  ...Named,
+  status: z.enum(['draft', 'published']),
+  /** The location itself is a spoiler: the pin isn't drawn while spoilers are hidden (P2). */
+  locationSpoiler: z.boolean(),
+  categoryId: Uuid.nullable(),
+  dateText: z.string().nullable(),
+};
+
+/** A place or event shown as a pin on the globe (E3, E4). */
+export const ViewPin = z.object({
+  ...Located,
+  /** How it's located: on the surface (lat/lon), at the body, or at a place on the surface. */
+  mode: z.enum(LOCATION_MODES),
+  latDeg: z.number().nullable(),
+  lonDeg: z.number().nullable(),
+  /** For mode 'place': the place it's at, whose coordinates it uses. */
+  placeId: Uuid.nullable(),
+});
+export type ViewPin = z.infer<typeof ViewPin>;
+
+/**
+ * An event shown outside a globe (E3, M6-T5): in a galaxy or system view, as a small diamond.
+ * It's either at a point in the view's frame (mode `space`), or at one of the view's objects
+ * (mode `object`: a system or deep-space object in the galaxy view), beside which it's drawn.
+ */
+export const ViewMarker = z.object({
+  ...Located,
+  mode: z.enum(['space', 'object']),
+  /** Mode `object`: the object it's at. */
+  objectId: Uuid.nullable(),
+  /** Mode `space`: where, in the view's frame and unit. */
+  position: Position.nullable(),
+});
+export type ViewMarker = z.infer<typeof ViewMarker>;
+
+/** A place or event as the view panels list it: a pin or a marker. */
+export type ViewLocated = ViewPin | ViewMarker;
+
 export const GalaxyView = z.object({
   map: z.object({
     id: Uuid,
@@ -143,6 +187,8 @@ export const GalaxyView = z.object({
   /** Routes whose waypoints the reader may see (M4-T7). */
   routes: z.array(ViewRoute),
   groupTypes: z.array(ViewGroupType),
+  /** Events in deep space, or at a top-level object (M6-T5). */
+  markers: z.array(ViewMarker),
 });
 export type GalaxyView = z.infer<typeof GalaxyView>;
 
@@ -159,7 +205,7 @@ const Subject = ViewObject.extend({ parentId: Uuid.nullable() });
 export const Satellite = ViewObject.extend({ parentId: Uuid });
 export type Satellite = z.infer<typeof Satellite>;
 
-export const SystemView = z.object({
+const SubjectViewBase = z.object({
   /** The map, and its universe for the universe's settings (pins' categories, M6-T4). */
   map: z.object({ id: Uuid, universeId: Uuid, ...Named }),
   /** Outermost first, ending with the subject's parent; empty for a top-level subject. */
@@ -173,26 +219,14 @@ export const SystemView = z.object({
    */
   satellites: z.array(Satellite),
 });
-export type SystemView = z.infer<typeof SystemView>;
+/** What the system and orbit views share (the API builds it once for both). */
+export type SubjectViewBase = z.infer<typeof SubjectViewBase>;
 
-/** A place or event shown as a pin on the globe (E3, E4). */
-export const ViewPin = z.object({
-  id: Uuid,
-  kind: z.enum(['place', 'event']),
-  ...Named,
-  status: z.enum(['draft', 'published']),
-  /** How it's located: on the surface (lat/lon), at the body, or at a place on the surface. */
-  mode: z.enum(LOCATION_MODES),
-  latDeg: z.number().nullable(),
-  lonDeg: z.number().nullable(),
-  /** For mode 'place': the place it's at, whose coordinates it uses. */
-  placeId: Uuid.nullable(),
-  /** The location itself is a spoiler: the pin isn't drawn while spoilers are hidden (P2). */
-  locationSpoiler: z.boolean(),
-  categoryId: Uuid.nullable(),
-  dateText: z.string().nullable(),
+export const SystemView = SubjectViewBase.extend({
+  /** Events in space in the system's frame (M6-T5). */
+  markers: z.array(ViewMarker),
 });
-export type ViewPin = z.infer<typeof ViewPin>;
+export type SystemView = z.infer<typeof SystemView>;
 
 /**
  * The light on an orbit view's globe (M6-T3, rendering.md §8): the direction from the body to
@@ -207,7 +241,7 @@ export const Sunlight = z.object({
 });
 export type Sunlight = z.infer<typeof Sunlight>;
 
-export const OrbitView = SystemView.extend({
+export const OrbitView = SubjectViewBase.extend({
   pins: z.array(ViewPin),
   sunlight: Sunlight.nullable(),
 });

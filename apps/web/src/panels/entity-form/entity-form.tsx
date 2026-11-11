@@ -10,7 +10,10 @@ import {
   type ConfigReadOf,
   type FormCondition,
   type FormFieldDef,
+  type RichText,
+  toPlainText,
 } from '@ge/domain';
+import { useUniverses } from '@/api/containers.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import { cachedFacts } from '@/state/view-resolve.ts';
 import type { SectionProps } from '../types.ts';
@@ -39,6 +42,7 @@ export function EntityForm(props: SectionProps) {
   const parentId = (entity as { parentId?: string | null }).parentId ?? null;
   const parent = parentId === null ? undefined : cachedFacts(client, parentId);
   const context: FormContext = { subtypes, inSystem: parent?.baseType === 'system' };
+  const universe = useUniverses().data?.find((item) => item.id === entity.universeId);
 
   return (
     <form
@@ -54,7 +58,8 @@ export function EntityForm(props: SectionProps) {
         return (
           <section key={group.heading ?? index} className="flex flex-col gap-2">
             {group.heading && <SectionHeading>{group.heading}</SectionHeading>}
-            {fields.map((field, fieldIndex) => {
+            {fields.map((listed, fieldIndex) => {
+              const field = withUniverseHint(listed, universe);
               const Widget = widgetFor(field);
               return (
                 <div key={fieldPaths(field).join(',')} className="contents">
@@ -80,6 +85,16 @@ export function EntityForm(props: SectionProps) {
       <ConflictDialog conflict={conflict} />
     </form>
   );
+}
+
+/** A field whose hint comes from the universe (`hintFrom`), with that hint filled in. */
+function withUniverseHint(
+  field: FormFieldDef,
+  universe: { dateFormatNotes?: RichText | null } | undefined,
+): FormFieldDef {
+  if (field.hintFrom !== 'dateFormatNotes' || !universe?.dateFormatNotes) return field;
+  const notes = toPlainText(universe.dateFormatNotes).trim();
+  return notes ? { ...field, hint: notes } : field;
 }
 
 /** What field conditions need beyond the entity itself. */

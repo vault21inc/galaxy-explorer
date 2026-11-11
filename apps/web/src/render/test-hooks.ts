@@ -16,6 +16,7 @@ import { planetSurfaceOf } from './planets/planet-bodies.tsx';
 import { currentLights } from './stars/system-lights.ts';
 import { litLightCounts } from './stars/use-lit-uniforms.ts';
 import { globeState } from './globe/globe-state.ts';
+import { markerOf } from './markers/event-markers.tsx';
 import { pinOf } from './pins/pins.tsx';
 import { latLonToUnitVector } from '@ge/domain';
 import { transitionsStarted, viewSettled } from './transition/transition-controller.ts';
@@ -157,6 +158,18 @@ export interface GeTestHooks {
     state: 'normal' | 'redacted' | 'draft';
     latDeg: number;
     lonDeg: number;
+  } | null;
+  /**
+   * An event marker as drawn in a galaxy or system view (M6-T5): its icon (null for "?"),
+   * color, state, the point it stands at in the view's frame, and its offset on screen beside
+   * its object; null if it isn't drawn.
+   */
+  marker(id: string): {
+    icon: string | null;
+    color: string;
+    state: 'normal' | 'redacted' | 'draft';
+    position: [number, number, number];
+    offsetPx: [number, number];
   } | null;
   /**
    * A body's orbit ring as drawn (M5-T4): its center (the system's, or its star's, D-29) and
@@ -352,6 +365,12 @@ export function installTestHooks(): void {
       const { shape, icon, color, state, latDeg, lonDeg } = item;
       return { shape, icon, color, state, latDeg, lonDeg };
     },
+    marker: (id) => {
+      const item = markerOf(id);
+      if (!item) return null;
+      const { icon, color, state, position, offsetPx } = item;
+      return { icon, color, state, position: [...position], offsetPx: [...offsetPx] };
+    },
     flyTo: async (id) => {
       const object = drawnObject(id);
       const controls = canvasState()?.controls;
@@ -380,7 +399,10 @@ const scratch = new Vector3();
 
 function screenPositionOf(id: string): { x: number; y: number } | null {
   const object = drawnObject(id);
-  return object ? pageProjection(object.center) : null;
+  const at = object ? pageProjection(object.center) : null;
+  if (!object || !at) return null;
+  // Where it's drawn: beside its center when it has an offset (an event marker, M6-T5).
+  return { x: at.x + (object.offsetPx?.[0] ?? 0), y: at.y - (object.offsetPx?.[1] ?? 0) };
 }
 
 /** A world point on the page, in CSS pixels, or null when it's off screen or behind the camera. */

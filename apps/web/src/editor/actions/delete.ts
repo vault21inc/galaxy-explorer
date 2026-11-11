@@ -1,9 +1,12 @@
 import { entityKinds, type BatchRequest, type ViewObject } from '@ge/domain';
 
-/** Something the editor can delete from the view: an object, a group (M4-T2) or a route (M4-T7). */
+/**
+ * Something the editor can delete from the view: an object, a group (M4-T2), a route (M4-T7),
+ * or a place or event shown as a pin (M6-T5).
+ */
 export interface Deletable extends Pick<ViewObject, 'id' | 'version' | 'namePlain'> {
   /** An object when left out. */
-  kind?: 'celestial_object' | 'group' | 'route';
+  kind?: 'celestial_object' | 'group' | 'route' | 'place' | 'event';
 }
 
 const count = (n: number, one: string, many: string) => `${n.toString()} ${n === 1 ? one : many}`;

@@ -1,16 +1,30 @@
 import { spoilerKeys } from '@ge/domain';
 import { useEntity } from '@/api/hooks.ts';
 import { Redactable } from '@/richtext/redactable.tsx';
+import { useEditor } from '@/state/editor.ts';
+import { LocationEditor } from '../location/location-editor.tsx';
 import type { SectionProps } from '../types.ts';
 import { SectionHeading } from './section-heading.tsx';
 
 /**
  * Where a place or event is (E3, E4, M6-T4): on a body's surface at a latitude and longitude,
  * at a body, at a place, or in space. A location flagged as a spoiler is blacked out
- * ("Location: ▇▇▇▇", ux.md §6), and revealing it here also shows its pin on the globe.
+ * ("Location: ▇▇▇▇", ux.md §6), and revealing it here also shows its pin on the globe. In edit
+ * mode it's the location editor instead (location/location-editor.tsx).
  */
-export function LocationSection({ entity }: SectionProps) {
+export function LocationSection(props: SectionProps) {
+  const { entity } = props;
+  const editing = useEditor((state) => state.editing);
   const location = entity.location;
+  // In edit mode, the location editor (M6-T5), even for an event that's nowhere yet.
+  if (editing) {
+    return (
+      <section>
+        <SectionHeading>Location</SectionHeading>
+        <LocationEditor {...props} />
+      </section>
+    );
+  }
   if (!location) return null;
   return (
     <section>

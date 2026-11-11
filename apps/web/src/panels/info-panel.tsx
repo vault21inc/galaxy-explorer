@@ -1,4 +1,4 @@
-import type { EntityKind, ViewGroup, ViewObject, ViewPin, ViewRoute } from '@ge/domain';
+import type { EntityKind, ViewGroup, ViewObject, ViewLocated, ViewRoute } from '@ge/domain';
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button.tsx';
@@ -26,7 +26,7 @@ export default function InfoPanel({
   groups?: readonly ViewGroup[];
   routes?: readonly ViewRoute[];
   /** An orbit view's places and events (M6-T4). */
-  pins?: readonly ViewPin[];
+  pins?: readonly ViewLocated[];
 }) {
   const selectedIds = useSelection((state) => state.selectedIds);
   const clear = useSelection((state) => state.clear);

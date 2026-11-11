@@ -15,6 +15,7 @@ const { entities, entityLocations, events } = schema;
 const pinColumns = {
   id: entities.id,
   kind: entities.kind,
+  version: entities.version,
   name: entities.name,
   namePlain: entities.namePlain,
   isSpoiler: entities.isSpoiler,
@@ -44,6 +45,7 @@ function toPin(row: PinRow, at?: PinRow): ViewPin {
   return {
     id: row.id as ViewPin['id'],
     kind: row.kind as ViewPin['kind'],
+    version: row.version,
     ...named(row),
     status: row.status as ViewPin['status'],
     mode: row.mode as ViewPin['mode'],

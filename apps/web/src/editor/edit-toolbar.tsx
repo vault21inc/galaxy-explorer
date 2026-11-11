@@ -48,6 +48,7 @@ const TOOLS: readonly Tool[] = [
 export function EditToolbar() {
   const editing = useEditor((state) => state.editing);
   const placing = useEditor((state) => state.placing);
+  const placingLocated = useEditor((state) => state.placingLocated);
   const routing = useEditor((state) => state.routing);
   const stops = useRouteDraft((state) => state.waypoints.length);
   // The view being edited: its grid, and which tools belong in it (levels/registry.ts).
@@ -114,7 +115,7 @@ export function EditToolbar() {
     >
       {TOOLS.map(({ label, icon: Icon, arrives, active, keys }) => {
         const { onClick, disabled = false, pressed, why } = behaviour(label);
-        const on = (active === true && !placing && !routing) || pressed === true;
+        const on = (active === true && !placing && !placingLocated && !routing) || pressed === true;
         return (
           <span key={label} className="contents">
             <Button
@@ -167,6 +168,14 @@ export function EditToolbar() {
       {placing && (
         <p role="status" className="px-2 text-xs text-muted-foreground">
           Click to place a {objectTypes[placing].label.toLowerCase()} · Esc cancels
+        </p>
+      )}
+      {placingLocated && (
+        <p role="status" className="px-2 text-xs text-muted-foreground">
+          {edit?.located.mode === 'surface'
+            ? `Click the globe to place the ${placingLocated}`
+            : `Click to place the ${placingLocated}`}{' '}
+          · Esc cancels
         </p>
       )}
     </div>

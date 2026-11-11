@@ -174,10 +174,26 @@
 - **Event markers outside globes** (E3): events with mode `space`, or mode `object` on a system or deep-space object, appear in the galaxy and system views as small diamond icon billboards, through the icon renderer. In those views, edit mode has **"Add event here"**.
 
 **Done when:**
-- [ ] E2E: adding an event on the globe at a clicked spot gives a stored lat/lon within 0.5° of the clicked point.
-- [ ] Editing every field, dragging the pin, deleting the event and undoing all work.
-- [ ] Adding a deep-space event in the galaxy view shows a diamond marker there.
-- [ ] An event at a place moves with the place when the place's pin is dragged.
+- [x] E2E: adding an event on the globe at a clicked spot gives a stored lat/lon within 0.5° of the clicked point.
+- [x] Editing every field, dragging the pin, deleting the event and undoing all work.
+- [x] Adding a deep-space event in the galaxy view shows a diamond marker there.
+- [x] An event at a place moves with the place when the place's pin is dragged.
+
+**As built:**
+- **Files** differ from the plan's "Where": the placing tools are `editor/located-placement.tsx` and `editor/pin-drag.tsx` (no `editor/tools/pin.ts`); the location editor is in `panels/location/`; the markers are `render/markers/`.
+- **Adding:** the Add menu lists **Place** and **Event** in the orbit view, and **Event here** in the galaxy and system views (the levels registry's `located` entry). In the orbit view a click on the globe is turned into a latitude and longitude by a ray–sphere hit (`render/globe/globe-hit.ts`); in the other views it's a point on the work plane, in the system's frame, or the galaxy's for deep space. Creating the entity and setting its location is one batch, so one undo removes both. The new entity is selected, with its name focused.
+- **Dragging a pin** (edit mode, orbit view) moves a pin on the surface along the sphere, previewed without a re-render of the payload (`state/pin-preview.ts`); events at a place follow their place's pin during the drag. Letting go saves one change, "Move “…”". A pin at the body, or an event at a place, isn't dragged itself.
+- **The location editor** (`panels/location/location-editor.tsx`) replaces the Location section in edit mode. It offers the four modes, plus "Nowhere yet" for events:
+  - on a surface: the body, latitude and longitude, and "Pick on the globe" in that body's orbit view;
+  - at an object: any object in the view, or the view's own subject;
+  - in space: x, y and z in the view's frame, and "Pick a point";
+  - at a place: one of the map's places.
+
+  It also has the location's spoiler switch. Each change is saved at once as one change in the history (`save-location.ts`).
+- **The event form** shows the universe's date format notes as the date's hint (`hintFrom: 'dateFormatNotes'` in the registry), falling back to the generic hint.
+- **Deleting** a selected pin or marker goes through the same Delete command as objects: view pins and markers carry their `version` for it.
+- **Event markers** (`render/markers/`): the galaxy view's payload gained `markers`, the events in deep space or at one of its top-level objects; a system view's are the events in space in its frame. They're diamonds in their category's color and icon, 9 px in radius, drawn with the pins' instanced billboards (`render/pins/billboards.tsx`, now shared). A marker at an object stands 16 px right of and above it on screen, so it doesn't cover the object's glyph; scene-index entries gained `offsetPx` for this, which the picker, labels and selection rings apply. Spoilers work as for pins.
+- **Tests:** `apps/web/e2e/locations.spec.ts` (the four "Done when" checks), `apps/web/test/marker-items.test.ts`, and a markers case in `apps/api/test/views.int.test.ts`.
 
 ### M6-T6 Characters and the people involved
 

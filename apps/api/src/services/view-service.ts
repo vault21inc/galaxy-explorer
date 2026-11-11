@@ -10,6 +10,7 @@ import {
   type GalaxyObject,
   type GalaxyView,
   type OrbitView,
+  type SubjectViewBase,
   type SystemView,
   type ViewLevel,
   type ViewObject,
@@ -18,6 +19,7 @@ import { and, asc, eq, inArray, isNull, type SQL } from 'drizzle-orm';
 import { InvalidRequest, NotFound } from './errors.ts';
 import { getMap } from './container-service.ts';
 import { named, published } from './view-common.ts';
+import { loadGalaxyMarkers, loadSystemMarkers } from './view-markers.ts';
 import { loadPins } from './view-pins.ts';
 import type { Sunlight } from '@ge/domain';
 import { loadRoutes } from './view-routes.ts';
@@ -204,6 +206,7 @@ export async function galaxyView(ex: Executor, mapId: string, viewer: Viewer): P
         .where(eq(groupTypes.universeId, map.universeId))
         .orderBy(asc(groupTypes.sortKey), asc(groupTypes.name))
     ).map(({ universeId: _universeId, ...type }) => type) as GalaxyView['groupTypes'],
+    markers: await loadGalaxyMarkers(ex, mapId, [...shownObjects], viewer),
   };
 }
 
@@ -325,7 +328,7 @@ async function subjectView(
   id: string,
   level: 'system' | 'orbit',
   viewer: Viewer,
-): Promise<SystemView> {
+): Promise<SubjectViewBase> {
   const [subject] = await selectObjects(ex, and(eq(entities.id, id), entityVisible(viewer)));
   if (!subject) throw new NotFound('object', id);
   const type = objectTypes[subject.baseType as BaseType];
@@ -397,8 +400,11 @@ async function subjectView(
   };
 }
 
-export function systemView(ex: Executor, id: string, viewer: Viewer): Promise<SystemView> {
-  return subjectView(ex, id, 'system', viewer);
+export async function systemView(ex: Executor, id: string, viewer: Viewer): Promise<SystemView> {
+  return {
+    ...(await subjectView(ex, id, 'system', viewer)),
+    markers: await loadSystemMarkers(ex, id, viewer),
+  };
 }
 
 export async function orbitView(ex: Executor, id: string, viewer: Viewer): Promise<OrbitView> {
@@ -418,7 +424,7 @@ export async function orbitView(ex: Executor, id: string, viewer: Viewer): Promi
  */
 async function loadSunlight(
   ex: Executor,
-  view: SystemView,
+  view: SubjectViewBase,
   viewer: Viewer,
 ): Promise<OrbitView['sunlight']> {
   const parent = view.ancestors.at(-1);
@@ -468,7 +474,7 @@ async function loadSunlight(
 
 /**
  * `spoilers=exclude` for view payloads: names become their redacted form, memberships flagged
- * as spoilers are left out of outlines, and pins whose location is a spoiler aren't sent at all
+ * as spoilers are left out of outlines, and pins and markers whose location is a spoiler aren't sent at all
  * (ux.md §6). Flags stay, so the client still draws redacted records as redacted.
  */
 export function excludeViewSpoilers<T extends object>(view: T): T {
@@ -481,6 +487,11 @@ export function excludeViewSpoilers<T extends object>(view: T): T {
   }
   if (Array.isArray(result.pins)) {
     result.pins = (result.pins as OrbitView['pins']).filter((pin) => !pin.locationSpoiler);
+  }
+  if (Array.isArray(result.markers)) {
+    result.markers = (result.markers as GalaxyView['markers']).filter(
+      (marker) => !marker.locationSpoiler,
+    );
   }
   return result as T;
 }

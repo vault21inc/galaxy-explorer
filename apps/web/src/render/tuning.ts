@@ -625,6 +625,20 @@ export const PIN_PLACE_COLOR = '#b9c4d0';
 export const PIN_EVENT_COLOR = '#e8eaed';
 
 // ---------------------------------------------------------------------------------------------
+// Event markers outside globes (rendering.md §8, M6-T5)
+// ---------------------------------------------------------------------------------------------
+
+/** An event marker's on-screen radius in CSS pixels: a little smaller than a globe's pins. */
+export const MARKER_RADIUS_PX = 9;
+/**
+ * A marker at an object (a system, a nebula) is drawn this many CSS pixels right of and above
+ * the object's center, beside its glyph rather than over it; more at the same object step right
+ * by MARKER_FAN_PX each.
+ */
+export const MARKER_BESIDE_PX = 16;
+export const MARKER_FAN_PX = 20;
+
+// ---------------------------------------------------------------------------------------------
 // Moving between views (rendering.md §4, ux.md §9)
 // ---------------------------------------------------------------------------------------------
 

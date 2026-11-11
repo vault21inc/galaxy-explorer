@@ -11,6 +11,16 @@ interface EditorState {
   available: boolean;
   /** Placing a new object: its base type, while the ghost follows the pointer (M3-T2). */
   placing: BaseType | null;
+  /**
+   * Placing a new place or event (M6-T5): a click on the globe (orbit view) or the plane
+   * (galaxy and system views) puts it there.
+   */
+  placingLocated: LocatedKind | null;
+  /**
+   * Picking a new spot for an existing place or event (the panel's location editor, M6-T5):
+   * the next click on the globe or plane becomes its location.
+   */
+  pickingLocation: { entityId: string; name: string; isSpoiler: boolean } | null;
   /** The Route tool is on (M4-T7): clicks add waypoints instead of selecting. */
   routing: boolean;
   /** The Add menu is open (the toolbar button or N). */
@@ -27,6 +37,8 @@ interface EditorState {
   toggle: () => void;
   setAvailable: (available: boolean) => void;
   startPlacing: (baseType: BaseType) => void;
+  startPlacingLocated: (kind: LocatedKind) => void;
+  startPickingLocation: (target: NonNullable<EditorState['pickingLocation']>) => void;
   cancelPlacing: () => void;
   startRouting: () => void;
   stopRouting: () => void;
@@ -35,7 +47,17 @@ interface EditorState {
 }
 
 /** Leaving edit mode ends whatever the editor was in the middle of. */
-const IDLE = { editing: false, placing: null, routing: false, addMenuOpen: false } as const;
+const IDLE = {
+  editing: false,
+  placing: null,
+  placingLocated: null,
+  pickingLocation: null,
+  routing: false,
+  addMenuOpen: false,
+} as const;
+
+/** The kinds placed by location rather than position (M6-T5). */
+export type LocatedKind = 'place' | 'event';
 
 /** Edit mode. It changes on a click or the E key, never per frame. */
 export const useEditor = create<EditorState>()((set, get) => ({
@@ -58,13 +80,51 @@ export const useEditor = create<EditorState>()((set, get) => ({
     set(available ? { available } : { available, ...IDLE });
   },
   startPlacing: (baseType) => {
-    if (get().editing) set({ placing: baseType, routing: false, addMenuOpen: false });
+    if (get().editing) {
+      set({
+        placing: baseType,
+        placingLocated: null,
+        pickingLocation: null,
+        routing: false,
+        addMenuOpen: false,
+      });
+    }
+  },
+  startPlacingLocated: (kind) => {
+    if (get().editing) {
+      set({
+        placingLocated: kind,
+        pickingLocation: null,
+        placing: null,
+        routing: false,
+        addMenuOpen: false,
+      });
+    }
+  },
+  startPickingLocation: (target) => {
+    if (get().editing) {
+      set({
+        pickingLocation: target,
+        placingLocated: null,
+        placing: null,
+        routing: false,
+        addMenuOpen: false,
+      });
+    }
   },
   cancelPlacing: () => {
-    set({ placing: null });
+    set({ placing: null, placingLocated: null, pickingLocation: null });
   },
   startRouting: () => {
-    if (get().editing) set({ routing: true, placing: null, addMenuOpen: false });
+    if (get().editing) {
+      set({
+        routing: true,
+        placing: null,
+        placingLocated: null,
+        pickingLocation: null,
+        addMenuOpen: false,
+      });
+    }
   },
   stopRouting: () => {
     set({ routing: false });
@@ -82,6 +142,6 @@ export const useEditor = create<EditorState>()((set, get) => ({
  * (M4-T7). Selection, box selection, the move tool and double-click step aside meanwhile.
  */
 export function toolOwnsClicks(): boolean {
-  const { placing, routing } = useEditor.getState();
-  return placing !== null || routing;
+  const { placing, placingLocated, pickingLocation, routing } = useEditor.getState();
+  return placing !== null || placingLocated !== null || pickingLocation !== null || routing;
 }

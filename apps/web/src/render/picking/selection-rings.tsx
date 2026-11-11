@@ -41,6 +41,7 @@ const VERTEX_SHADER = /* glsl */ `
   attribute float aRadius;
   attribute vec2 aClampPx;     // the object's min and max on-screen radius
   attribute vec4 aColor;       // rgb + opacity
+  attribute vec2 aOffsetPx;    // drawn this far from its center on screen (DrawnObject.offsetPx)
   varying vec2 vCornerPx;
   varying float vRingPx;
   varying vec4 vColor;
@@ -53,7 +54,7 @@ const VERTEX_SHADER = /* glsl */ `
     float halfSizePx = vRingPx + uWidthPx + 1.0;
     vCornerPx = position.xy * halfSizePx;
     vColor = aColor;
-    centerView.xy += position.xy * halfSizePx * worldPerPx;
+    centerView.xy += (position.xy * halfSizePx + aOffsetPx) * worldPerPx;
     gl_Position = projectionMatrix * centerView;
   }
 `;
@@ -90,6 +91,10 @@ function makeGeometry(capacity: number) {
     new InstancedBufferAttribute(new Float32Array(capacity * 2), 2),
   );
   geometry.setAttribute('aColor', new InstancedBufferAttribute(new Float32Array(capacity * 4), 4));
+  geometry.setAttribute(
+    'aOffsetPx',
+    new InstancedBufferAttribute(new Float32Array(capacity * 2), 2),
+  );
   geometry.instanceCount = 0;
   quad.dispose();
   return geometry;
@@ -149,6 +154,7 @@ export function SelectionRings() {
       const radii = geometry.getAttribute('aRadius') as InstancedBufferAttribute;
       const clamps = geometry.getAttribute('aClampPx') as InstancedBufferAttribute;
       const colors = geometry.getAttribute('aColor') as InstancedBufferAttribute;
+      const offsets = geometry.getAttribute('aOffsetPx') as InstancedBufferAttribute;
       let count = 0;
       const written: string[] = [];
       for (const id of ids) {
@@ -158,6 +164,7 @@ export function SelectionRings() {
         centers.setXYZ(count, ...object.center);
         radii.setX(count, object.radius);
         clamps.setXY(count, object.minRadiusPx, object.maxRadiusPx);
+        offsets.setXY(count, object.offsetPx?.[0] ?? 0, object.offsetPx?.[1] ?? 0);
         const [r = 1, g = 1, b = 1, a = 1] = selectedIds.includes(id)
           ? SELECTED
           : (members.get(id) ?? HOVER);
@@ -166,7 +173,9 @@ export function SelectionRings() {
         count++;
       }
       ringed = written;
-      for (const attribute of [centers, radii, clamps, colors]) attribute.needsUpdate = true;
+      for (const attribute of [centers, radii, clamps, colors, offsets]) {
+        attribute.needsUpdate = true;
+      }
       geometry.instanceCount = count;
       invalidate();
     };

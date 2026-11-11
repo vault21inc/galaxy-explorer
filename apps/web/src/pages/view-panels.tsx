@@ -1,4 +1,4 @@
-import type { ViewPin, ViewGroup, ViewGroupType, ViewObject, ViewRoute } from '@ge/domain';
+import type { ViewLocated, ViewGroup, ViewGroupType, ViewObject, ViewRoute } from '@ge/domain';
 import { lazy, Suspense } from 'react';
 import { SelectionAnnouncer } from '@/app/selection-announcer.tsx';
 import { StatusPanel } from '@/app/status-panel.tsx';
@@ -23,8 +23,8 @@ interface ViewPanelsProps {
   groups?: readonly ViewGroup[];
   groupTypes?: readonly ViewGroupType[];
   routes?: readonly ViewRoute[];
-  /** An orbit view's places and events, selectable as pins (M6-T4). */
-  pins?: readonly ViewPin[];
+  /** The view's places and events: an orbit view's pins (M6-T4), or event markers (M6-T5). */
+  pins?: readonly ViewLocated[];
   /** The Map settings panel belongs to this view (levels/registry.ts). */
   mapSettings: boolean;
   /** What an empty view says (levels/registry.ts `emptyTitle`). */
@@ -73,6 +73,7 @@ export function ViewPanels({
         groups={groups}
         groupTypes={groupTypes}
         routes={routes}
+        pins={pins}
       />
       {editing && <HistoryPanel universeId={universeId} />}
       {editing && mapSettings && (

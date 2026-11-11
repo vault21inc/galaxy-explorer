@@ -51,7 +51,14 @@ export function useDeleteObjects() {
       const selection = useSelection.getState();
       selection.select(selection.selectedIds.filter((id) => !deleted.has(id)));
       setPending(null);
-      await refreshAfterWrite(queryClient, [['view'], ['celestial_object'], ['group'], ['route']]);
+      await refreshAfterWrite(queryClient, [
+        ['view'],
+        ['celestial_object'],
+        ['group'],
+        ['route'],
+        ['place'],
+        ['event'],
+      ]);
     }, fail);
   };
 

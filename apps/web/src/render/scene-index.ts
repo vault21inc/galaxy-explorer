@@ -54,6 +54,11 @@ export interface DrawnObject {
    * a pin on the orbit view's globe (M6-T4). The picker leaves it out then.
    */
   onSphere?: { center: readonly [number, number, number]; radius: number };
+  /**
+   * It's drawn this many CSS pixels from where `center` projects, right and up: an event marker
+   * beside the system it's at (M6-T5). The picker, labels and rings all apply it.
+   */
+  offsetPx?: readonly [number, number];
 }
 
 const sources = new Map<string, readonly DrawnObject[]>();

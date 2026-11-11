@@ -44,8 +44,8 @@ const scratch = new Vector3();
 function projectOne(state: RootState, object: DrawnObject, perPx: number) {
   scratch.set(...object.center).project(state.camera);
   if (scratch.z < -1 || scratch.z > 1) return null;
-  const x = ((scratch.x + 1) / 2) * state.size.width;
-  const y = ((1 - scratch.y) / 2) * state.size.height;
+  const x = ((scratch.x + 1) / 2) * state.size.width + (object.offsetPx?.[0] ?? 0);
+  const y = ((1 - scratch.y) / 2) * state.size.height - (object.offsetPx?.[1] ?? 0);
   // Depth along the view direction, as the shaders compute it.
   scratch.set(...object.center).applyMatrix4(state.camera.matrixWorldInverse);
   const radiusPx = clampedRadiusPx(

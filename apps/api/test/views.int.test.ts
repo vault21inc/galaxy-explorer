@@ -348,6 +348,76 @@ describe('view payloads', () => {
       ]);
     }));
 
+  it('galaxy and system views: event markers in space and at top-level objects (M6-T5)', () =>
+    run(async (api) => {
+      const f = await buildFixture(api);
+      const event = (name: string) => ({
+        op: 'create',
+        kind: 'event',
+        mapId: f.mapId,
+        data: { name: rt.plain(name) },
+      });
+      const gudrun = f.ids[0] ?? '';
+      await api.expect(200, 'POST', '/batch', {
+        description: 'Markers',
+        operations: [
+          event('Deep-space battle'), // 0
+          {
+            op: 'setLocation',
+            id: '$op:0',
+            data: { mode: 'space', objectId: null, x: 1, y: 2, z: 3 },
+          },
+          event('Warp storm at Gudrun'), // 2
+          { op: 'setLocation', id: '$op:2', data: { mode: 'object', objectId: gudrun } },
+          event('Fleet in Gudrun'), // 4
+          {
+            op: 'setLocation',
+            id: '$op:4',
+            data: { mode: 'space', objectId: gudrun, x: 7, y: 0, z: 1 },
+          },
+          event('Secret rendezvous'), // 6
+          {
+            op: 'setLocation',
+            id: '$op:6',
+            data: { mode: 'space', objectId: null, x: 0, y: 0, z: 0, isSpoiler: true },
+          },
+          event('On a planet'), // 8
+          { op: 'setLocation', id: '$op:8', data: { mode: 'object', objectId: f.ids[2] } },
+        ],
+      });
+      const galaxy = (await api.expect(200, 'GET', `/maps/${f.mapId}/views/galaxy`)).body.data;
+      const byName = Object.fromEntries(galaxy.markers.map((m: any) => [m.namePlain, m]));
+      // A planet's event is its orbit view's pin; a system's frame, its system view's marker.
+      expect(Object.keys(byName).sort()).toEqual([
+        'Deep-space battle',
+        'Secret rendezvous',
+        'Warp storm at Gudrun',
+      ]);
+      expect(byName['Deep-space battle']).toMatchObject({
+        kind: 'event',
+        mode: 'space',
+        objectId: null,
+        position: [1, 2, 3],
+        locationSpoiler: false,
+      });
+      expect(byName['Warp storm at Gudrun']).toMatchObject({
+        mode: 'object',
+        objectId: gudrun,
+        position: null,
+      });
+      const system = (await api.expect(200, 'GET', `/objects/${gudrun}/views/system`)).body.data;
+      expect(system.markers.map((m: any) => [m.namePlain, m.position])).toEqual([
+        ['Fleet in Gudrun', [7, 0, 1]],
+      ]);
+      const hidden = (
+        await api.expect(200, 'GET', `/maps/${f.mapId}/views/galaxy?spoilers=exclude`)
+      ).body.data;
+      expect(hidden.markers.map((m: any) => m.namePlain).sort()).toEqual([
+        'Deep-space battle',
+        'Warp storm at Gudrun',
+      ]);
+    }));
+
   it('spoilers=exclude: redacted names, no spoiler memberships, no spoiler-located pins', () =>
     run(async (api) => {
       const f = await buildFixture(api);

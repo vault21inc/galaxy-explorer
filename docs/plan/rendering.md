@@ -257,6 +257,8 @@ void main() {
   - hidden behind the globe by the normal depth test;
   - per-instance attributes: atlas cell, color, state (normal, hovered, selected, redacted, draft).
 - **Placing pins** (edit mode): an analytic ray–sphere intersection gives the hit point, which `latLonFromVector()` converts to coordinates (`packages/domain/src/geo`).
+- **Dragging pins** (edit mode, M6-T5): the same hit, every pointer move, shown as a preview (`state/pin-preview.ts`) that the events at a dragged place follow; the release saves once.
+- **Event markers outside globes** (M6-T5): events in space, or at a system or deep-space object, are drawn in the galaxy and system views by `EventMarkers` (`render/markers/`) with the pins' instanced billboards (`render/pins/billboards.tsx`): diamonds, 9 px in radius, one draw call. A marker at an object stands a fixed 16 px right of and above it on screen (`offsetPx` on its scene-index entry, applied by the shader, the picker, the labels and the selection rings), so it sits beside the object's glyph at any zoom.
 
 ## 9. Baking procedural textures
 

@@ -6,6 +6,7 @@ import { resolveGalaxySettings } from '@ge/domain';
 import { useViewCamera } from '@/render/camera/use-view-camera.ts';
 import { galaxyCamera } from '@/render/galaxy/galaxy-camera.ts';
 import { GalaxyBackground } from '@/render/galaxy/galaxy-background.tsx';
+import { EventMarkers } from '@/render/markers/event-markers.tsx';
 import { GroupOutlines } from '@/render/groups/group-outlines.tsx';
 import { RouteLines } from '@/render/routes/route-lines.tsx';
 import { SelectionRings } from '@/render/picking/selection-rings.tsx';
@@ -92,6 +93,12 @@ export default function GalaxyLevel({ subjectId }: { subjectId: string }) {
       {groups.map(({ renderer, objects }) => (
         <renderer.component key={renderer.name} objects={objects} />
       ))}
+      {/* Events in deep space or at a system (M6-T5). */}
+      <EventMarkers
+        markers={view.data.markers}
+        objects={view.data.objects}
+        universeId={view.data.map.universeId}
+      />
       <SelectionRings />
       {editing && <RegionHandles objects={view.data.objects} />}
       {editing && <RouteTool mapId={subjectId} objects={view.data.objects} />}

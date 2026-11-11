@@ -2741,6 +2741,11 @@
               "event"
             ]
           },
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
           "namePlain": {
             "type": "string"
           },
@@ -2758,6 +2763,27 @@
             "enum": [
               "draft",
               "published"
+            ]
+          },
+          "locationSpoiler": {
+            "type": "boolean"
+          },
+          "categoryId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dateText": {
+            "type": [
+              "string",
+              "null"
             ]
           },
           "mode": {
@@ -2792,6 +2818,64 @@
                 "type": "null"
               }
             ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "version",
+          "namePlain",
+          "nameSpoiler",
+          "nameRedacted",
+          "isSpoiler",
+          "status",
+          "locationSpoiler",
+          "categoryId",
+          "dateText",
+          "mode",
+          "latDeg",
+          "lonDeg",
+          "placeId"
+        ]
+      },
+      "ViewMarkerInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "place",
+              "event"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "namePlain": {
+            "type": "string"
+          },
+          "nameSpoiler": {
+            "type": "boolean"
+          },
+          "nameRedacted": {
+            "type": "string"
+          },
+          "isSpoiler": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
           },
           "locationSpoiler": {
             "type": "boolean"
@@ -2813,23 +2897,66 @@
               "string",
               "null"
             ]
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "space",
+              "object"
+            ]
+          },
+          "objectId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "items": false,
+                "minItems": 3,
+                "maxItems": 3
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
           "id",
           "kind",
+          "version",
           "namePlain",
           "nameSpoiler",
           "nameRedacted",
           "isSpoiler",
           "status",
-          "mode",
-          "latDeg",
-          "lonDeg",
-          "placeId",
           "locationSpoiler",
           "categoryId",
-          "dateText"
+          "dateText",
+          "mode",
+          "objectId",
+          "position"
         ]
       },
       "GalaxyViewInput": {
@@ -2974,6 +3101,12 @@
             "items": {
               "$ref": "#/components/schemas/ViewGroupTypeInput"
             }
+          },
+          "markers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ViewMarkerInput"
+            }
           }
         },
         "required": [
@@ -2981,7 +3114,8 @@
           "objects",
           "groups",
           "routes",
-          "groupTypes"
+          "groupTypes",
+          "markers"
         ]
       },
       "GalaxyObjectInput": {
@@ -3609,6 +3743,12 @@
                 "parentId"
               ]
             }
+          },
+          "markers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ViewMarkerInput"
+            }
           }
         },
         "required": [
@@ -3616,7 +3756,8 @@
           "ancestors",
           "subject",
           "children",
-          "satellites"
+          "satellites",
+          "markers"
         ]
       },
       "OrbitViewInput": {
@@ -11403,6 +11544,11 @@
               "event"
             ]
           },
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
           "namePlain": {
             "type": "string"
           },
@@ -11420,6 +11566,27 @@
             "enum": [
               "draft",
               "published"
+            ]
+          },
+          "locationSpoiler": {
+            "type": "boolean"
+          },
+          "categoryId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dateText": {
+            "type": [
+              "string",
+              "null"
             ]
           },
           "mode": {
@@ -11454,6 +11621,65 @@
                 "type": "null"
               }
             ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "version",
+          "namePlain",
+          "nameSpoiler",
+          "nameRedacted",
+          "isSpoiler",
+          "status",
+          "locationSpoiler",
+          "categoryId",
+          "dateText",
+          "mode",
+          "latDeg",
+          "lonDeg",
+          "placeId"
+        ],
+        "additionalProperties": false
+      },
+      "ViewMarker": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "place",
+              "event"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "namePlain": {
+            "type": "string"
+          },
+          "nameSpoiler": {
+            "type": "boolean"
+          },
+          "nameRedacted": {
+            "type": "string"
+          },
+          "isSpoiler": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
           },
           "locationSpoiler": {
             "type": "boolean"
@@ -11475,23 +11701,66 @@
               "string",
               "null"
             ]
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "space",
+              "object"
+            ]
+          },
+          "objectId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "items": false,
+                "minItems": 3,
+                "maxItems": 3
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
           "id",
           "kind",
+          "version",
           "namePlain",
           "nameSpoiler",
           "nameRedacted",
           "isSpoiler",
           "status",
-          "mode",
-          "latDeg",
-          "lonDeg",
-          "placeId",
           "locationSpoiler",
           "categoryId",
-          "dateText"
+          "dateText",
+          "mode",
+          "objectId",
+          "position"
         ],
         "additionalProperties": false
       },
@@ -11639,6 +11908,12 @@
             "items": {
               "$ref": "#/components/schemas/ViewGroupType"
             }
+          },
+          "markers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ViewMarker"
+            }
           }
         },
         "required": [
@@ -11646,7 +11921,8 @@
           "objects",
           "groups",
           "routes",
-          "groupTypes"
+          "groupTypes",
+          "markers"
         ],
         "additionalProperties": false
       },
@@ -12285,6 +12561,12 @@
               ],
               "additionalProperties": false
             }
+          },
+          "markers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ViewMarker"
+            }
           }
         },
         "required": [
@@ -12292,7 +12574,8 @@
           "ancestors",
           "subject",
           "children",
-          "satellites"
+          "satellites",
+          "markers"
         ],
         "additionalProperties": false
       },

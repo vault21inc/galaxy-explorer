@@ -116,8 +116,9 @@ export class ScreenPicker {
       if (clipW <= 0) continue;
       // Divide by w for normalized device coordinates (−1 to 1), then scale to CSS pixels,
       // with y flipped: device y points up, screen y points down.
-      const screenX = ((clipX / clipW + 1) / 2) * widthPx;
-      const screenY = ((1 - clipY / clipW) / 2) * heightPx;
+      // A marker beside its object is drawn offset on screen (right and up), and picked there.
+      const screenX = ((clipX / clipW + 1) / 2) * widthPx + (object.offsetPx?.[0] ?? 0);
+      const screenY = ((1 - clipY / clipW) / 2) * heightPx - (object.offsetPx?.[1] ?? 0);
       const drawnRadius = clampedRadiusPx(
         object.radius,
         clipW,

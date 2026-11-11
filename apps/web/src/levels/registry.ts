@@ -5,6 +5,7 @@ import {
   type ViewPayload,
 } from '@ge/domain';
 import { lazy, type ComponentType } from 'react';
+import type { LocatedKind } from '@/state/editor.ts';
 import { systemExtentSu } from '@/render/system/system-camera.ts';
 import {
   GALAXY_BODY_MAX_PX,
@@ -42,6 +43,12 @@ export interface LevelEdit {
   mapSettings: boolean;
   /** What an empty view says, with a hint at adding something. */
   emptyTitle: string;
+  /**
+   * Places and events added here (M6-T5): which kinds the Add menu offers, and how a click
+   * locates them: on the globe's surface (orbit view), or at a point in space in the view's
+   * frame (galaxy and system views, "Add event here").
+   */
+  located: { kinds: readonly LocatedKind[]; mode: 'surface' | 'space' };
 }
 
 export interface LevelDef {
@@ -77,6 +84,7 @@ export const levels: Record<ViewLevel, LevelDef> = {
       groupsAndRoutes: true,
       mapSettings: true,
       emptyTitle: 'This map is empty',
+      located: { kinds: ['event'], mode: 'space' },
     },
   },
   system: {
@@ -92,6 +100,7 @@ export const levels: Record<ViewLevel, LevelDef> = {
       groupsAndRoutes: false,
       mapSettings: false,
       emptyTitle: 'This system is empty',
+      located: { kinds: ['event'], mode: 'space' },
     },
   },
   // The globe and what orbits it (M6-T3): moons, stations and markers are placed and moved
@@ -109,6 +118,7 @@ export const levels: Record<ViewLevel, LevelDef> = {
       groupsAndRoutes: false,
       mapSettings: false,
       emptyTitle: 'Nothing orbits this world',
+      located: { kinds: ['place', 'event'], mode: 'surface' },
     },
   },
 };

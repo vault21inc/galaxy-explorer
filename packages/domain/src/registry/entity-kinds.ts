@@ -331,7 +331,13 @@ export const entityKinds = defineEntityKinds({
     contentFields: ['dateText', 'dateSort'],
     form: {
       details: [
-        { path: 'dateText', widget: 'text', label: 'Date', hint: "In the universe's own format." },
+        {
+          path: 'dateText',
+          widget: 'text',
+          label: 'Date',
+          hint: "In the universe's own format.",
+          hintFrom: 'dateFormatNotes',
+        },
         { path: 'dateSort', widget: 'number', label: 'Sort key', hint: 'Orders events by date.' },
         {
           path: 'categoryId',

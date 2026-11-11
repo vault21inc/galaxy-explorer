@@ -110,6 +110,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
       "underlayAssetId": null,
       "universeId": "<id 1>",
     },
+    "markers": [],
     "objects": [
       {
         "appearance": {
@@ -514,6 +515,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "nameSpoiler": false,
         "placeId": null,
         "status": "published",
+        "version": 1,
       },
       {
         "categoryId": "<id 25>",
@@ -530,6 +532,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "nameSpoiler": false,
         "placeId": "<id 23>",
         "status": "published",
+        "version": 1,
       },
     ],
     "satellites": [],
@@ -692,6 +695,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
       "nameSpoiler": false,
       "universeId": "<id 1>",
     },
+    "markers": [],
     "satellites": [
       {
         "appearance": {

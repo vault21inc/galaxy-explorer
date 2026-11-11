@@ -2053,20 +2053,45 @@ export interface components {
             id: string;
             /** @enum {string} */
             kind: "place" | "event";
+            version: number;
             namePlain: string;
             nameSpoiler: boolean;
             nameRedacted: string;
             isSpoiler: boolean;
             /** @enum {string} */
             status: "draft" | "published";
+            locationSpoiler: boolean;
+            categoryId: string | null;
+            dateText: string | null;
             /** @enum {string} */
             mode: "surface" | "object" | "space" | "place";
             latDeg: number | null;
             lonDeg: number | null;
             placeId: string | null;
+        };
+        ViewMarkerInput: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "place" | "event";
+            version: number;
+            namePlain: string;
+            nameSpoiler: boolean;
+            nameRedacted: string;
+            isSpoiler: boolean;
+            /** @enum {string} */
+            status: "draft" | "published";
             locationSpoiler: boolean;
             categoryId: string | null;
             dateText: string | null;
+            /** @enum {string} */
+            mode: "space" | "object";
+            objectId: string | null;
+            position: [
+                number,
+                number,
+                number
+            ] | null;
         };
         GalaxyViewInput: {
             map: {
@@ -2098,6 +2123,7 @@ export interface components {
                 waypoints: string[];
             }[];
             groupTypes: components["schemas"]["ViewGroupTypeInput"][];
+            markers: components["schemas"]["ViewMarkerInput"][];
         };
         GalaxyObjectInput: {
             /** Format: uuid */
@@ -2225,6 +2251,7 @@ export interface components {
                 /** Format: uuid */
                 parentId: string;
             }[];
+            markers: components["schemas"]["ViewMarkerInput"][];
         };
         OrbitViewInput: {
             map: {
@@ -3815,20 +3842,45 @@ export interface components {
             id: string;
             /** @enum {string} */
             kind: "place" | "event";
+            version: number;
             namePlain: string;
             nameSpoiler: boolean;
             nameRedacted: string;
             isSpoiler: boolean;
             /** @enum {string} */
             status: "draft" | "published";
+            locationSpoiler: boolean;
+            categoryId: string | null;
+            dateText: string | null;
             /** @enum {string} */
             mode: "surface" | "object" | "space" | "place";
             latDeg: number | null;
             lonDeg: number | null;
             placeId: string | null;
+        };
+        ViewMarker: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "place" | "event";
+            version: number;
+            namePlain: string;
+            nameSpoiler: boolean;
+            nameRedacted: string;
+            isSpoiler: boolean;
+            /** @enum {string} */
+            status: "draft" | "published";
             locationSpoiler: boolean;
             categoryId: string | null;
             dateText: string | null;
+            /** @enum {string} */
+            mode: "space" | "object";
+            objectId: string | null;
+            position: [
+                number,
+                number,
+                number
+            ] | null;
         };
         GalaxyView: {
             map: {
@@ -3860,6 +3912,7 @@ export interface components {
                 waypoints: string[];
             }[];
             groupTypes: components["schemas"]["ViewGroupType"][];
+            markers: components["schemas"]["ViewMarker"][];
         };
         GalaxyObject: {
             /** Format: uuid */
@@ -3987,6 +4040,7 @@ export interface components {
                 /** Format: uuid */
                 parentId: string;
             }[];
+            markers: components["schemas"]["ViewMarker"][];
         };
         OrbitView: {
             map: {

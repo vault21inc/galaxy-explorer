@@ -81,6 +81,11 @@ interface FieldBase {
   label: string;
   /** A short explanation under the field. */
   hint?: string;
+  /**
+   * The hint comes from the universe instead, when it has one: its date format notes for an
+   * event's date (M6-T5). `hint` is the fallback.
+   */
+  hintFrom?: 'dateFormatNotes';
   /** Every condition must hold. */
   showWhen?: FormCondition | readonly FormCondition[];
 }

@@ -20,6 +20,8 @@ export interface GlobeState {
    * checking pins against their latitude and longitude.
    */
   toWorld: (point: readonly [number, number, number]) => [number, number, number];
+  /** And back: a world point in the globe's own frame, as its latitude and longitude use. */
+  toGlobe: (point: readonly [number, number, number]) => [number, number, number];
 }
 
 let current: GlobeState | null = null;

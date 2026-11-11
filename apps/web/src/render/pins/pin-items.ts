@@ -6,7 +6,8 @@ import {
   type SpoilerPolicy,
   type ViewPin,
 } from '@ge/domain';
-import type { DrawnState } from '../scene-index.ts';
+import type { PinPreview } from '@/state/pin-preview.ts';
+import type { BillboardItem } from './billboards.tsx';
 import {
   PIN_AT_BODY_LAT_DEG,
   PIN_FAN_DEG,
@@ -22,18 +23,11 @@ const DEG = Math.PI / 180;
 /** The two pin shapes: an event's round pin, a place's diamond (rendering.md §8). */
 export type PinShape = 'event' | 'place';
 
-/** One pin as drawn: where it is on the globe, and how it looks. */
-export interface PinItem {
-  id: string;
-  /** In the globe's own frame (before its tilt and turn), in radii. */
-  position: [number, number, number];
+/** One pin as drawn: where it is on the globe (its own frame, in radii), and how it looks. */
+export interface PinItem extends BillboardItem {
   latDeg: number;
   lonDeg: number;
   shape: PinShape;
-  /** The icon key, or null for a redacted pin, which shows "?". */
-  icon: string | null;
-  color: string;
-  state: DrawnState;
   pin: ViewPin;
 }
 
@@ -53,11 +47,17 @@ export function pinItems(
   pins: readonly ViewPin[],
   categories: readonly ConfigReadOf<'event_categories'>[],
   policy: SpoilerPolicy,
+  /** A pin being dragged (M6-T5): it, and the events at it if it's a place, stand there. */
+  preview: PinPreview | null = null,
 ): PinItem[] {
   const byId = new Map(categories.map((category) => [category.id, category]));
-  const shown = pins.filter(
-    (pin) => !isHidden(pin.locationSpoiler, spoilerKeys.location(pin.id), policy),
-  );
+  const moved = (pin: ViewPin): ViewPin =>
+    preview && (pin.id === preview.id || pin.placeId === preview.id)
+      ? { ...pin, latDeg: preview.latDeg, lonDeg: preview.lonDeg }
+      : pin;
+  const shown = pins
+    .map(moved)
+    .filter((pin) => !isHidden(pin.locationSpoiler, spoilerKeys.location(pin.id), policy));
   const atBody = shown.filter((pin) => pin.latDeg === null || pin.lonDeg === null);
   const seen = new Map<string, number>();
   return shown.map((pin): PinItem => {
@@ -82,6 +82,8 @@ export function pinItems(
       latDeg,
       lonDeg,
       shape,
+      diamond: shape === 'place',
+      offsetPx: [0, 0],
       icon: redacted
         ? null
         : shape === 'place'

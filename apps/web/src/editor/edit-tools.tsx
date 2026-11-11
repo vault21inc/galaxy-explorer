@@ -1,5 +1,7 @@
 import { useEditView } from '@/levels/use-edit-view.ts';
+import { LocatedPlacement } from './located-placement.tsx';
 import { MoveTool } from './move-tool.tsx';
+import { PinDrag } from './pin-drag.tsx';
 import { Placement } from './placement.tsx';
 
 /**
@@ -13,7 +15,9 @@ export function EditTools() {
   return (
     <>
       <Placement view={view} />
+      <LocatedPlacement view={view} />
       <MoveTool view={view} />
+      <PinDrag view={view} />
     </>
   );
 }

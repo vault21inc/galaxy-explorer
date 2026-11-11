@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { objectTypes } from '@ge/domain';
+import { entityKinds, objectTypes } from '@ge/domain';
 import { ChevronDown, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import {
@@ -7,6 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx';
 import { levels } from '@/levels/registry.ts';
@@ -26,6 +27,9 @@ export function AddMenu() {
   // A type was chosen: the menu mustn't take focus back when it finishes closing.
   const chose = useRef(false);
   const startPlacing = useEditor((state) => state.startPlacing);
+  const startPlacingLocated = useEditor((state) => state.startPlacingLocated);
+  // Places and events (M6-T5): on the globe, or an event at a point in space.
+  const located = levels[level].edit?.located;
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
@@ -60,6 +64,24 @@ export function AddMenu() {
             {objectTypes[type].label}
           </DropdownMenuItem>
         ))}
+        {located && (
+          <>
+            <DropdownMenuSeparator />
+            {located.kinds.map((kind) => (
+              <DropdownMenuItem
+                key={kind}
+                onSelect={() => {
+                  chose.current = true;
+                  startPlacingLocated(kind);
+                }}
+              >
+                {located.mode === 'surface'
+                  ? entityKinds[kind].label.one
+                  : `${entityKinds[kind].label.one} here`}
+              </DropdownMenuItem>
+            ))}
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

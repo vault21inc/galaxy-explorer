@@ -216,6 +216,13 @@ export function Globe({
         const world = new Vector3(...point).applyMatrix4(group.matrixWorld);
         return [world.x, world.y, world.z];
       },
+      toGlobe: (point) => {
+        const group = surface.current;
+        if (!group) return [...point];
+        group.updateWorldMatrix(true, false);
+        const local = group.worldToLocal(new Vector3(...point));
+        return [local.x, local.y, local.z];
+      },
     });
     invalidate();
     return () => {
