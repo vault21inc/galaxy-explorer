@@ -33,6 +33,8 @@ export interface PlanetPresetDef {
   bands: { count: number; turbulence: number } | null;
   /** What glows on the night side: city lights, or the glow of lava cracks. */
   lights: { kind: 'cities' | 'cracks'; color: HexColor; intensity: number } | null;
+  /** The haze around the globe in the orbit view, or null for an airless world. */
+  atmosphere: { color: HexColor; thickness: number } | null;
 }
 
 const hex = (value: string) => value as HexColor;
@@ -50,6 +52,7 @@ export const planetPresets: Readonly<Record<PlanetPresetName, PlanetPresetDef>> 
     polarCaps: null,
     bands: null,
     lights: null,
+    atmosphere: null,
   },
   desert: {
     label: 'Desert',
@@ -63,6 +66,7 @@ export const planetPresets: Readonly<Record<PlanetPresetName, PlanetPresetDef>> 
     polarCaps: 0.92,
     bands: null,
     lights: null,
+    atmosphere: { color: hex('#e8b98a'), thickness: 0.05 },
   },
   ice: {
     label: 'Ice',
@@ -76,6 +80,7 @@ export const planetPresets: Readonly<Record<PlanetPresetName, PlanetPresetDef>> 
     polarCaps: 0.55,
     bands: null,
     lights: null,
+    atmosphere: { color: hex('#bfe0ff'), thickness: 0.05 },
   },
   ocean: {
     label: 'Ocean',
@@ -89,6 +94,7 @@ export const planetPresets: Readonly<Record<PlanetPresetName, PlanetPresetDef>> 
     polarCaps: 0.85,
     bands: null,
     lights: null,
+    atmosphere: { color: hex('#8cc4ff'), thickness: 0.08 },
   },
   jungle: {
     label: 'Jungle',
@@ -102,6 +108,7 @@ export const planetPresets: Readonly<Record<PlanetPresetName, PlanetPresetDef>> 
     polarCaps: null,
     bands: null,
     lights: null,
+    atmosphere: { color: hex('#9fe0c0'), thickness: 0.08 },
   },
   lava: {
     label: 'Lava',
@@ -115,6 +122,7 @@ export const planetPresets: Readonly<Record<PlanetPresetName, PlanetPresetDef>> 
     polarCaps: null,
     bands: null,
     lights: { kind: 'cracks', color: hex('#ff6a1a'), intensity: 1.2 },
+    atmosphere: { color: hex('#ff8a4a'), thickness: 0.06 },
   },
   toxic: {
     label: 'Toxic',
@@ -128,6 +136,7 @@ export const planetPresets: Readonly<Record<PlanetPresetName, PlanetPresetDef>> 
     polarCaps: null,
     bands: null,
     lights: null,
+    atmosphere: { color: hex('#c8e05a'), thickness: 0.12 },
   },
   gas_giant: {
     label: 'Gas giant',
@@ -141,6 +150,7 @@ export const planetPresets: Readonly<Record<PlanetPresetName, PlanetPresetDef>> 
     polarCaps: null,
     bands: { count: 14, turbulence: 0.35 },
     lights: null,
+    atmosphere: { color: hex('#f0d8b0'), thickness: 0.06 },
   },
   city: {
     label: 'City (hive)',
@@ -154,6 +164,7 @@ export const planetPresets: Readonly<Record<PlanetPresetName, PlanetPresetDef>> 
     polarCaps: null,
     bands: null,
     lights: { kind: 'cities', color: hex('#ffd27a'), intensity: 1 },
+    atmosphere: { color: hex('#c0b8a0'), thickness: 0.07 },
   },
   forge: {
     label: 'Forge',
@@ -167,6 +178,7 @@ export const planetPresets: Readonly<Record<PlanetPresetName, PlanetPresetDef>> 
     polarCaps: null,
     bands: null,
     lights: { kind: 'cities', color: hex('#ff7a2a'), intensity: 1.1 },
+    atmosphere: { color: hex('#d0805a'), thickness: 0.06 },
   },
 };
 
@@ -209,7 +221,11 @@ export function planetDefaults(name: PlanetPresetName): PlanetAppearance {
     // A world without seas shows the slider at 0: water below height 0 is no water.
     seaLevel: preset.seaLevel ?? 0,
     axialTiltDeg: 0,
-    atmosphere: { enabled: false, color: hex('#9cc8ff'), thickness: 0.08 },
+    atmosphere: {
+      enabled: preset.atmosphere !== null,
+      color: preset.atmosphere?.color ?? hex('#9cc8ff'),
+      thickness: preset.atmosphere?.thickness ?? 0.08,
+    },
     clouds: { enabled: false, coverage: DEFAULT_CLOUD_COVERAGE, color: DEFAULT_CLOUD_COLOR },
     nightLights: {
       enabled: preset.lights !== null,

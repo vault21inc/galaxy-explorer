@@ -13,7 +13,7 @@ import type { RendererProps } from './renderer-types.ts';
 /**
  * Which component draws each base type in each view (architecture.md §3.5, rendering.md §4):
  * the extension point for new looks (O3). A renderer draws all of its objects at once, so a
- * view makes one draw call per renderer, not per object. The orbit view adds its entries in M6.
+ * view makes one draw call per renderer, not per object.
  */
 export interface RendererDef {
   /** Stable name: the React key, and the renderer's name in the scene index. */
@@ -52,6 +52,15 @@ export const renderers: Partial<Record<ViewLevel, LevelRenderers>> = {
     star: starBodies,
     planet: planetBodies,
     asteroid_belt: asteroidBelts,
+    station: iconSprites,
+    marker: iconSprites,
+  },
+  // Around a globe (rendering.md §8, M6-T3): the globe itself is the orbit level's own; moons
+  // are lit spheres like the system view's planets, stations and markers icons.
+  orbit: {
+    default: instancedBodies,
+    planet: planetBodies,
+    moon: planetBodies,
     station: iconSprites,
     marker: iconSprites,
   },

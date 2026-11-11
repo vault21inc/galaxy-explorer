@@ -149,7 +149,7 @@ const FRAGMENT_SHADER = /* glsl */ `
     // ridged noise.
     float lights = 0.0;
     if (uLightsKind == 1 && sea < 0.5) {
-      float clusters = smoothstep(0.5, 0.72, fbm(dir * uFrequency * 3.0 + uSeedOffset + 31.0, 4));
+      float clusters = smoothstep(0.6, 0.82, fbm(dir * uFrequency * 3.0 + uSeedOffset + 31.0, 4));
       float grain = step(0.45, fbm(dir * 90.0 + uSeedOffset, 2));
       lights = clusters * (0.35 + 0.65 * grain);
     } else if (uLightsKind == 2) {

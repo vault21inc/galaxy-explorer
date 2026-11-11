@@ -62,8 +62,33 @@ export function QualityPopover() {
           Antialiasing changes apply when the page next loads.
         </p>
         <StarFieldControls />
+        <AmbientMotionToggle />
       </PopoverContent>
     </Popover>
+  );
+}
+
+/** Planets spinning and clouds drifting in the orbit view (M6-T3). */
+function AmbientMotionToggle() {
+  const on = useQuality((state) => state.ambientMotion);
+  const setOn = useQuality((state) => state.setAmbientMotion);
+  return (
+    <label className="mt-4 flex cursor-pointer items-start gap-2">
+      <input
+        type="checkbox"
+        checked={on}
+        onChange={(event) => {
+          setOn(event.currentTarget.checked);
+        }}
+        className="mt-1 accent-primary"
+      />
+      <span>
+        Ambient motion
+        <span className="block text-xs text-muted-foreground">
+          Planets turn and clouds drift. Uses more power; off with reduced motion.
+        </span>
+      </span>
+    </label>
   );
 }
 

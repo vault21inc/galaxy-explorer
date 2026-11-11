@@ -180,7 +180,23 @@ export const ViewPin = z.object({
 });
 export type ViewPin = z.infer<typeof ViewPin>;
 
-export const OrbitView = SystemView.extend({ pins: z.array(ViewPin) });
+/**
+ * The light on an orbit view's globe (M6-T3, rendering.md §8): the direction from the body to
+ * the star that lights it, a unit vector in the body's frame (the system's axes), and the
+ * star's color. The star is the one the body orbits (D-29), or else its system's largest; a
+ * moon takes its planet's. Null for a body outside any system (a rogue planet), which the
+ * client lights from a default direction.
+ */
+export const Sunlight = z.object({
+  direction: z.tuple([z.number(), z.number(), z.number()]),
+  color: HexColor,
+});
+export type Sunlight = z.infer<typeof Sunlight>;
+
+export const OrbitView = SystemView.extend({
+  pins: z.array(ViewPin),
+  sunlight: Sunlight.nullable(),
+});
 export type OrbitView = z.infer<typeof OrbitView>;
 
 /**

@@ -10,6 +10,7 @@ import {
   GALAXY_BODY_MAX_PX,
   GALAXY_BODY_MIN_PX,
   GALAXY_MAX_DISTANCE_RADII,
+  ORBIT_EXIT_RADII,
   SYSTEM_EXIT_EXTENTS,
   SYSTEM_PLANET_MAX_PX,
   SYSTEM_PLANET_MIN_PX,
@@ -93,9 +94,22 @@ export const levels: Record<ViewLevel, LevelDef> = {
       emptyTitle: 'This system is empty',
     },
   },
+  // The globe and what orbits it (M6-T3): moons, stations and markers are placed and moved
+  // with the same tools, on the equator's plane. Pins on the surface arrive in M6-T4.
   orbit: {
     component: lazy(() => import('./orbit-level.tsx')),
-    placeholder: 'The orbit view, with the globe and what’s on it, arrives in M6.',
+    edit: {
+      addLabel: 'Add around the world',
+      parentOf: (subjectId) => subjectId,
+      // As far as the orbit camera may go (orbit-camera.ts).
+      workPlaneLimit: () => ORBIT_EXIT_RADII,
+      gridSize: 0.25,
+      duplicateOffset: 0.25,
+      ghostClampPx: { min: SYSTEM_PLANET_MIN_PX, max: SYSTEM_PLANET_MAX_PX },
+      groupsAndRoutes: false,
+      mapSettings: false,
+      emptyTitle: 'Nothing orbits this world',
+    },
   },
 };
 

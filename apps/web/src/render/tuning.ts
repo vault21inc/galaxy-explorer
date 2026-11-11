@@ -513,6 +513,79 @@ export const SYSTEM_FLY_TO_MIN_RADIUS_SU = 0.6;
 export const SYSTEM_FOCUS_DISTANCE_EXTENTS = 0.35;
 
 // ---------------------------------------------------------------------------------------------
+// Orbit view (rendering.md §5, §8, M6-T3). Distances in body radii: the globe's radius is 1.
+// ---------------------------------------------------------------------------------------------
+
+/** The closest the camera may get to the globe's center: just above its surface. */
+export const ORBIT_MIN_DISTANCE_RADII = 1.15;
+/** Zooming out past this leaves the orbit view for the one above it. */
+export const ORBIT_EXIT_RADII = 8;
+/** Where the camera starts: this far out, so the whole globe and its near moons are in view. */
+export const ORBIT_START_DISTANCE_RADII = 3.2;
+/**
+ * How far round from the sunlit side the camera starts, in degrees about the vertical: 0 looks
+ * straight at the day side (flat, no shading), 90 at the line between day and night. Between,
+ * the globe reads as round, with some night side for its lights.
+ */
+export const ORBIT_START_FROM_SUN_DEG = 70;
+/** And how far above the equator it starts, in degrees. */
+export const ORBIT_START_ELEVATION_DEG = 20;
+/** Fixed clipping planes, in radii: far ÷ near is 10⁵, easy for a 24-bit depth buffer. */
+export const ORBIT_NEAR_RADII = 0.01;
+export const ORBIT_FAR_RADII = 1_000;
+/** Flying to a moon (F, double-click) frames at least this radius around it. */
+export const ORBIT_FLY_TO_MIN_RADIUS = 0.25;
+/** Leaving a moon's view without a saved pose: look at it from this many radii away. */
+export const ORBIT_FOCUS_DISTANCE_RADII = 1.5;
+/**
+ * Where the light comes from for a body outside any system (a rogue planet), as a direction
+ * from the body: up and to one side, so the globe is half lit and half in shadow.
+ */
+export const ORBIT_DEFAULT_SUN_DIRECTION = [0.8, 0.3, 0.52] as const;
+/** The default light's color, linear RGB: a faint, cool glow from the galaxy, not a sun. */
+export const ORBIT_DEFAULT_SUN_COLOR = [0.55, 0.6, 0.75] as const;
+
+/** Sphere segments around and pole to pole: the globe, its clouds, its atmosphere. */
+export const GLOBE_SEGMENTS = [128, 64] as const;
+export const GLOBE_CLOUD_SEGMENTS = [96, 48] as const;
+export const GLOBE_ATMOSPHERE_SEGMENTS = [64, 32] as const;
+export const GLOBE_RING_SEGMENTS = 160;
+/** Light on the globe's night side: very little, so it reads as night and its lights stand out. */
+export const GLOBE_AMBIENT = 0.012;
+/**
+ * Softens the line between day and night (the terminator): sunlight fades in from this far past
+ * it, as a cosine (globe-shaders.ts `sunlit`), instead of starting dead where the sun sets.
+ * Real terminators are soft too: the sun is a disc, not a point, and air scatters its light.
+ */
+export const GLOBE_TERMINATOR_WRAP = 0.15;
+/** The same exposure curve as the system view's planets (SYSTEM_PLANET_EXPOSURE). */
+export const GLOBE_EXPOSURE = 2;
+/**
+ * Sunlight glinting off oceans: how tight the highlight is (a Blinn-Phong exponent: higher is a
+ * smaller, sharper glint) and how bright.
+ */
+export const GLOBE_SPECULAR_POWER = 60;
+export const GLOBE_SPECULAR_STRENGTH = 0.6;
+/**
+ * Night lights fade in across the line between day and night: fully on where the sun is this
+ * far below the horizon (as the cosine of the angle), off where it's this far above.
+ */
+export const GLOBE_NIGHT_FULL = -0.12;
+export const GLOBE_NIGHT_NONE = 0.08;
+/** How bright the atmosphere's haze is over the globe's lit edge, in linear light. */
+export const GLOBE_HAZE_STRENGTH = 0.25;
+/** How bright night lights are before their intensity setting, in linear light. */
+export const GLOBE_LIGHTS_GAIN = 1;
+/** Clouds float this far out, in radii, and cover at most this much. */
+export const GLOBE_CLOUD_RADIUS = 1.01;
+export const GLOBE_CLOUD_OPACITY = 0.92;
+/** Ambient motion (rendering.md §8): at most this many frames a second while it runs. */
+export const AMBIENT_MOTION_FPS = 30;
+/** The planet turns this many degrees a second, and its clouds this many more. */
+export const GLOBE_SPIN_DEG_PER_S = 4;
+export const GLOBE_CLOUD_DRIFT_DEG_PER_S = 1.5;
+
+// ---------------------------------------------------------------------------------------------
 // Moving between views (rendering.md §4, ux.md §9)
 // ---------------------------------------------------------------------------------------------
 
@@ -660,6 +733,9 @@ export const PLANET_RINGS_SEGMENTS = 96;
 /** Planet rings without their own color and opacity use these. */
 export const PLANET_RINGS_COLOR = '#d8c9a8';
 export const PLANET_RINGS_OPACITY = 0.6;
+/** And rings without their own span run from and to these many planet radii. */
+export const PLANET_RINGS_INNER_RADII = 1.4;
+export const PLANET_RINGS_OUTER_RADII = 2.2;
 
 /**
  * Orbit rings (rendering.md §7): a circle for each body around the system's center, through

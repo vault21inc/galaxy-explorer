@@ -15,7 +15,9 @@ import { worldPerPxAt1 } from '../screen-scale.ts';
 import { useMovePreview, type InstanceRanges } from '../use-move-preview.ts';
 import {
   PLANET_RINGS_COLOR,
+  PLANET_RINGS_INNER_RADII,
   PLANET_RINGS_OPACITY,
+  PLANET_RINGS_OUTER_RADII,
   PLANET_RINGS_SEGMENTS,
   SYSTEM_PLANET_MAX_PX,
   SYSTEM_PLANET_MIN_PX,
@@ -119,8 +121,11 @@ export function PlanetRings({ objects, buffers }: PlanetRingsProps) {
       const rings = planet?.rings ?? {};
       centers.set(buffers.centers.subarray(index * 3, index * 3 + 3), i * 3);
       radii[i] = buffers.radii[index] ?? 0;
-      const inner = rings.innerRadius ?? 1.4;
-      spans.set([inner, Math.max(inner + 0.05, rings.outerRadius ?? 2.2)], i * 2);
+      const inner = rings.innerRadius ?? PLANET_RINGS_INNER_RADII;
+      spans.set(
+        [inner, Math.max(inner + 0.05, rings.outerRadius ?? PLANET_RINGS_OUTER_RADII)],
+        i * 2,
+      );
       tilts[i] = ((planet?.axialTiltDeg ?? 0) + (rings.tiltDeg ?? 0)) * DEG;
       colors.set(hexToLinear(rings.color ?? PLANET_RINGS_COLOR), i * 3);
       opacities[i] = rings.opacity ?? PLANET_RINGS_OPACITY;

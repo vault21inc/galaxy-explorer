@@ -245,6 +245,7 @@ void main() {
   - Lambert lighting from the star direction, which is the system star's position relative to the body, or a default when the body has no system;
   - the baked night-lights mask, shown only where the surface faces away from the star;
   - optional specular highlights on oceans, using the bake's ocean mask.
+- **Light:** the orbit view's payload names the direction to the star that lights the body and its color (`sunlight`, M6-T3); a body outside any system is lit from a dim default direction. Light fades in across the terminator with an S-curve (`GLOBE_TERMINATOR_WRAP`), and every part goes through the same exposure curve as the system view's planets.
 - **Atmosphere:** a slightly larger back-face sphere with a Fresnel rim shader: one draw.
 - **Clouds:** a sphere at 1.01 radii with a baked alpha texture. It's static unless ambient motion is on.
 - **Rings:** `RingGeometry` with a baked radial gradient, tilted with the body.

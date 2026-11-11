@@ -63,6 +63,7 @@ export {
   GalaxyView,
   SystemStar,
   OrbitView,
+  Sunlight,
   SystemView,
   ViewGroup,
   ViewGroupMember,

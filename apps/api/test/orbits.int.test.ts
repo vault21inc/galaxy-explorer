@@ -68,3 +68,79 @@ describe('orbit centers', () => {
       }
     }));
 });
+
+describe('the orbit view’s sunlight (M6-T3)', () => {
+  it('points from the body to the star it orbits, else the largest; moons share their planet’s', () =>
+    withTestDb(async (_db, url) => {
+      const api = await apiOn(url);
+      try {
+        const universe = (
+          await api.expect(201, 'POST', '/universes', { slug: 'sun', name: rt.plain('Sun') })
+        ).body.data as { id: string };
+        const map = (
+          await api.expect(201, 'POST', `/universes/${universe.id}/maps`, {
+            slug: 'main',
+            name: rt.plain('Main'),
+          })
+        ).body.data as { id: string };
+        const create = async (name: string, baseType: string, extra: object = {}) =>
+          (
+            (
+              await api.expect(201, 'POST', `/maps/${map.id}/objects`, {
+                name: rt.plain(name),
+                baseType,
+                ...extra,
+              })
+            ).body.data as { id: string }
+          ).id;
+        const sunlight = async (id: string) =>
+          (
+            (await api.expect(200, 'GET', `/objects/${id}/views/orbit`)).body.data as {
+              sunlight: { direction: number[]; color: string } | null;
+            }
+          ).sunlight;
+        const closeTo = (actual: number[] | undefined, expected: number[]) => {
+          expected.forEach((value, axis) => {
+            expect(actual?.[axis]).toBeCloseTo(value, 9);
+          });
+        };
+
+        const system = await create('Pair', 'system', { explorable: true });
+        // The large star at the center, a small one off to the side.
+        await create('Big', 'star', { parentId: system, appearance: { scale: { system: 2 } } });
+        const small = await create('Small', 'star', {
+          parentId: system,
+          z: 10,
+          appearance: { star: { temperatureK: 3_000 } },
+        });
+        const planet = await create('World', 'planet', {
+          parentId: system,
+          x: 4,
+          explorable: true,
+        });
+        const moon = await create('Moon', 'moon', { parentId: planet, x: 3, explorable: true });
+
+        // Toward the largest star, at the center: −X from the planet.
+        const lit = await sunlight(planet);
+        closeTo(lit?.direction, [-1, 0, 0]);
+        expect(lit?.color).toMatch(/^#[0-9a-f]{6}$/);
+        // The moon's light comes from where its planet's does.
+        closeTo((await sunlight(moon))?.direction, [-1, 0, 0]);
+
+        // Orbiting the small star instead: toward it, in its redder color.
+        await api.expect(200, 'PATCH', `/objects/${planet}`, {
+          version: 1,
+          orbitCenterId: small,
+        });
+        const around = await sunlight(planet);
+        closeTo(around?.direction, [-4 / Math.hypot(4, 10), 0, 10 / Math.hypot(4, 10)]);
+        expect(around?.color).not.toBe(lit?.color);
+
+        // A rogue planet has no sun.
+        const rogue = await create('Rogue', 'planet', { explorable: true });
+        expect(await sunlight(rogue)).toBeNull();
+      } finally {
+        await api.close();
+      }
+    }));
+});

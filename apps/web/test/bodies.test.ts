@@ -86,7 +86,14 @@ describe('partitionByRenderer', () => {
     });
   });
 
-  it('draws nothing for a view without renderers yet', () => {
-    expect(partitionByRenderer('orbit', [viewObject('a', 'planet')])).toEqual([]);
+  it('draws an orbit view’s moons as lit spheres and its stations as icons (M6-T3)', () => {
+    const partitions = partitionByRenderer('orbit', [
+      viewObject('a', 'moon'),
+      viewObject('b', 'station'),
+    ]);
+    expect(partitions.map(({ renderer, objects }) => [renderer.name, objects.length])).toEqual([
+      ['planet-bodies', 1],
+      ['icon-sprites', 1],
+    ]);
   });
 });

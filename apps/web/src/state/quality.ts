@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { safeStorage } from '@/lib/safe-storage.ts';
@@ -10,6 +11,13 @@ import {
 
 interface QualityState {
   level: QualityLevel;
+  /**
+   * Planets spin and clouds drift in the orbit view (M6-T3, rendering.md §8). Off by default:
+   * it draws up to 30 frames a second while it runs, where a still view draws none. Reduced
+   * motion turns it off whatever this says (`useAmbientMotion`).
+   */
+  ambientMotion: boolean;
+  setAmbientMotion: (on: boolean) => void;
   /** A short message after an automatic step-down, until dismissed. Not remembered. */
   notice: string | null;
   setLevel: (level: QualityLevel) => void;
@@ -26,9 +34,13 @@ export const useQuality = create<QualityState>()(
   persist(
     (set, get) => ({
       level: DEFAULT_QUALITY,
+      ambientMotion: false,
       notice: null,
       setLevel: (level) => {
         set({ level });
+      },
+      setAmbientMotion: (on) => {
+        set({ ambientMotion: on });
       },
       stepDown: () => {
         const index = QUALITY_LEVELS.indexOf(get().level);
@@ -47,11 +59,18 @@ export const useQuality = create<QualityState>()(
       name: 'ge.quality',
       version: 1,
       storage: createJSONStorage(() => safeStorage),
-      partialize: (state) => ({ level: state.level }),
+      partialize: (state) => ({ level: state.level, ambientMotion: state.ambientMotion }),
       // A stored value from a future or broken build falls back to the default.
       merge: (stored, current) => {
-        const level = (stored as { level?: unknown } | undefined)?.level;
-        return isQualityLevel(level) ? { ...current, level } : current;
+        const { level, ambientMotion } = (stored ?? {}) as {
+          level?: unknown;
+          ambientMotion?: unknown;
+        };
+        return {
+          ...current,
+          ...(isQualityLevel(level) ? { level } : {}),
+          ...(typeof ambientMotion === 'boolean' ? { ambientMotion } : {}),
+        };
       },
     },
   ),
@@ -64,4 +83,28 @@ function isQualityLevel(value: unknown): value is QualityLevel {
 /** The current level's preset: DPR range, MSAA, star count and texture size. */
 export function useQualityPreset() {
   return QUALITY_PRESETS[useQuality((state) => state.level)];
+}
+
+/**
+ * Whether ambient motion runs now: switched on in the quality settings, and the reader hasn't
+ * asked their system for reduced motion (checked as it changes).
+ */
+export function useAmbientMotion(): boolean {
+  const on = useQuality((state) => state.ambientMotion);
+  const reduced = useSyncExternalStore(subscribeReducedMotion, prefersReducedMotion, () => false);
+  return on && !reduced;
+}
+
+const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia(REDUCED_MOTION).matches;
+}
+
+function subscribeReducedMotion(onChange: () => void): () => void {
+  const query = window.matchMedia(REDUCED_MOTION);
+  query.addEventListener('change', onChange);
+  return () => {
+    query.removeEventListener('change', onChange);
+  };
 }

@@ -3707,6 +3707,43 @@
             "items": {
               "$ref": "#/components/schemas/ViewPinInput"
             }
+          },
+          "sunlight": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "direction": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ],
+                    "items": false,
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9a-f]{6}$"
+                  }
+                },
+                "required": [
+                  "direction",
+                  "color"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -3714,7 +3751,8 @@
           "ancestors",
           "subject",
           "children",
-          "pins"
+          "pins",
+          "sunlight"
         ]
       },
       "CelestialObjectCreateInput": {
@@ -12022,6 +12060,44 @@
             "items": {
               "$ref": "#/components/schemas/ViewPin"
             }
+          },
+          "sunlight": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "direction": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ],
+                    "items": false,
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9a-f]{6}$"
+                  }
+                },
+                "required": [
+                  "direction",
+                  "color"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -12029,7 +12105,8 @@
           "ancestors",
           "subject",
           "children",
-          "pins"
+          "pins",
+          "sunlight"
         ],
         "additionalProperties": false
       },

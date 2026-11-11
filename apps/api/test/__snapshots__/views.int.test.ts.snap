@@ -561,6 +561,14 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
       "surfaceTexture": null,
       "version": 1,
     },
+    "sunlight": {
+      "color": "#fff2e7",
+      "direction": [
+        -0.9486832980505138,
+        0,
+        -0.31622776601683794,
+      ],
+    },
   },
   "system": {
     "ancestors": [],

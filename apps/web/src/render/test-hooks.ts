@@ -15,6 +15,7 @@ import { probePlanetBake, type PlanetBakeProbe } from './bake/planet/planet-bake
 import { planetSurfaceOf } from './planets/planet-bodies.tsx';
 import { currentLights } from './stars/system-lights.ts';
 import { litLightCounts } from './stars/use-lit-uniforms.ts';
+import { globeState } from './globe/globe-state.ts';
 import { transitionsStarted, viewSettled } from './transition/transition-controller.ts';
 import { flyTo } from './camera/fly-to.ts';
 import { galaxyDiscState } from './galaxy/galaxy-disc.tsx';
@@ -120,6 +121,22 @@ export interface GeTestHooks {
    * renderer: what its shader actually uses (M6-T2).
    */
   litLightCounts(): Record<string, number>;
+  /**
+   * The orbit view's globe (M6-T3), or null outside one: its bake keys (or upload), its layers,
+   * its axial tilt, whether a star lights it, and how far ambient motion has turned it.
+   */
+  globe(): {
+    subjectId: string;
+    albedoKey: string;
+    layersKey: string;
+    uploaded: boolean;
+    tiltDeg: number;
+    clouds: boolean;
+    atmosphere: boolean;
+    rings: boolean;
+    sunFromStar: boolean;
+    spinDeg: number;
+  } | null;
   /**
    * A body's orbit ring as drawn (M5-T4): its center (the system's, or its star's, D-29) and
    * radius, following a drag; null when it has none.
@@ -287,6 +304,12 @@ export function installTestHooks(): void {
         color: [r, g, b],
       })),
     litLightCounts: () => litLightCounts(),
+    globe: () => {
+      const state = globeState();
+      if (!state) return null;
+      const { spinDeg, ...rest } = state;
+      return { ...rest, spinDeg: spinDeg() };
+    },
     flyTo: async (id) => {
       const object = drawnObject(id);
       const controls = canvasState()?.controls;

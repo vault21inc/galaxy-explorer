@@ -2204,6 +2204,14 @@ export interface components {
             };
             children: components["schemas"]["ViewObjectInput"][];
             pins: components["schemas"]["ViewPinInput"][];
+            sunlight: {
+                direction: [
+                    number,
+                    number,
+                    number
+                ];
+                color: string;
+            } | null;
         };
         CelestialObjectCreateInput: {
             name: components["schemas"]["RichTextInput"];
@@ -3892,6 +3900,14 @@ export interface components {
             };
             children: components["schemas"]["ViewObject"][];
             pins: components["schemas"]["ViewPin"][];
+            sunlight: {
+                direction: [
+                    number,
+                    number,
+                    number
+                ];
+                color: string;
+            } | null;
         };
         CelestialObjectCreate: {
             name: components["schemas"]["RichText"];

@@ -157,12 +157,17 @@ test.describe('moving between views', () => {
     await expect(crumbs(page)).toHaveText(['Galaxy', 'Fenwick']);
   });
 
-  test('a planet opens the orbit view, a placeholder until M6', async ({ page }) => {
+  test('a rogue planet opens its orbit view straight from the galaxy (M6-T3)', async ({ page }) => {
+    await page.goto(MAP);
+    await waitForFirstFrame(page);
     const wanderer = await idOf(page, 'Wanderer');
-    await page.goto(`${MAP}/view/${wanderer}`);
+    await page.evaluate((id) => window.__GE_TEST__?.enter(id), wanderer);
     await expect.poll(() => level(page)).toEqual({ level: 'orbit', subjectId: wanderer });
     await expect(crumbs(page)).toHaveText(['Galaxy', 'Wanderer']);
-    await expect(page.getByRole('status')).toContainText('arrives in M6');
+    // Its globe, lit by the default light: it has no system, so no star.
+    const globe = await page.evaluate(() => window.__GE_TEST__?.globe());
+    expect(globe?.subjectId).toBe(wanderer);
+    expect(globe?.sunFromStar).toBe(false);
   });
 
   test('an unknown object says so', async ({ page }) => {

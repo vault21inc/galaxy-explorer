@@ -19,6 +19,7 @@ import { InvalidRequest, NotFound } from './errors.ts';
 import { getMap } from './container-service.ts';
 import { named, published } from './view-common.ts';
 import { loadPins } from './view-pins.ts';
+import type { Sunlight } from '@ge/domain';
 import { loadRoutes } from './view-routes.ts';
 import { entityVisible, type Viewer } from './visibility.ts';
 
@@ -381,7 +382,67 @@ export function systemView(ex: Executor, id: string, viewer: Viewer): Promise<Sy
 
 export async function orbitView(ex: Executor, id: string, viewer: Viewer): Promise<OrbitView> {
   const view = await subjectView(ex, id, 'orbit', viewer);
-  return { ...view, pins: await loadPins(ex, id, viewer) };
+  return {
+    ...view,
+    pins: await loadPins(ex, id, viewer),
+    sunlight: await loadSunlight(ex, view, viewer),
+  };
+}
+
+/**
+ * The orbit view's sunlight (M6-T3): which star lights the body, from where. The body is the
+ * subject when it sits in a system, or its planet when it's a moon (a moon is so close to its
+ * planet, seen from the star, that their directions agree). The star is the one it orbits
+ * (orbitCenterId), else the system's largest, among those the reader may see.
+ */
+async function loadSunlight(
+  ex: Executor,
+  view: SystemView,
+  viewer: Viewer,
+): Promise<OrbitView['sunlight']> {
+  const parent = view.ancestors.at(-1);
+  const grandparent = view.ancestors.at(-2);
+  let body: { position: readonly number[]; orbitCenterId: string | null };
+  let systemId: string;
+  if (parent?.baseType === 'system') {
+    body = view.subject;
+    systemId = parent.id;
+  } else if (parent?.baseType === 'planet' && grandparent?.baseType === 'system') {
+    const [planet] = await selectObjects(ex, eq(entities.id, parent.id));
+    if (!planet) return null;
+    body = { position: [planet.x, planet.y, planet.z], orbitCenterId: planet.orbitCenterId };
+    systemId = grandparent.id;
+  } else {
+    return null;
+  }
+  const [system] = await ex
+    .select({ universeId: entities.universeId })
+    .from(entities)
+    .where(eq(entities.id, systemId));
+  if (!system) return null;
+  const subtypes = await subtypeDefaults(ex, system.universeId);
+  const stars = (
+    await selectObjects(
+      ex,
+      and(
+        eq(celestialObjects.parentId, systemId),
+        eq(celestialObjects.baseType, 'star'),
+        published(viewer),
+      ),
+    )
+  ).map((row) => toViewObject(row, 'system', subtypes));
+  const star =
+    stars.find((candidate) => candidate.id === body.orbitCenterId) ??
+    [...stars].sort((a, b) => (b.size ?? 0) - (a.size ?? 0))[0];
+  if (!star) return null;
+  const [bx = 0, by = 0, bz = 0] = body.position;
+  const [sx, sy, sz] = star.position;
+  const length = Math.hypot(sx - bx, sy - by, sz - bz);
+  if (length === 0) return null;
+  return {
+    direction: [(sx - bx) / length, (sy - by) / length, (sz - bz) / length],
+    color: star.appearance.color ?? ('#ffffff' as Sunlight['color']),
+  };
 }
 
 /**
