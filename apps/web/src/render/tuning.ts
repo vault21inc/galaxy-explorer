@@ -336,6 +336,14 @@ export const PICK_CELL_PX = 64;
  * radius around its center.
  */
 export const PICK_MIN_RADIUS_PX = 10;
+/** An object label is a pick target this many CSS pixels beyond its text's box on every side. */
+export const LABEL_HIT_PADDING_PX = 3;
+/**
+ * Where an object's label and another object overlap under the pointer, the object wins when
+ * its pick circle is at most this radius in CSS pixels (a dot, a small planet), and the label
+ * wins over anything wider: a belt's band, a rift, a route, a large region (picking.ts).
+ */
+export const LABEL_OVER_AREA_PX = 30;
 
 /** Rings around hovered and selected objects: the gap outside the body and the line width, px. */
 export const RING_GAP_PX = 4;
@@ -620,6 +628,17 @@ export const STAR_GLOW_INTENSITY = 0.55;
 export const SYSTEM_MAX_LIGHTS = 3;
 /** Light on every body's night side, so its shape still reads against black space. */
 export const SYSTEM_AMBIENT = 0.07;
+
+/**
+ * Planets' brightness in the system view (M6-T2). Lit light goes through an exposure curve,
+ * 1 − e^(−exposure × light): nearly a plain ×exposure gain for dim surfaces (an ocean world),
+ * easing toward white instead of clipping for bright ones (ice, cloud tops). Real surface
+ * colors are dark (Earth reflects about 30 % of sunlight), and the curve is what a camera's
+ * exposure does to show them.
+ */
+export const SYSTEM_PLANET_EXPOSURE = 2;
+/** Light on a planet's night side: more than SYSTEM_AMBIENT, since surfaces are dark. */
+export const SYSTEM_PLANET_AMBIENT = 0.12;
 
 /** Planets are at least this many CSS pixels in radius, so they never vanish when zoomed out. */
 export const SYSTEM_PLANET_MIN_PX = 4;

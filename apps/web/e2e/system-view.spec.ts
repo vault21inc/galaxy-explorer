@@ -102,14 +102,21 @@ test.describe('the system view (M5-T3)', () => {
     expect(renderers).toEqual(['star-bodies', 'planet-bodies', 'asteroid-belts', 'icon-sprites']);
     const sol = await page.evaluate(() => window.__GE_TEST__?.renderInfo());
     expect(sol?.calls).toBeLessThanOrEqual(DRAW_CALL_BUDGET);
-    // One star, so one light.
+    // One star, so one light, and the planets' and belts' shaders actually use it (M6-T2:
+    // they once held a light count of 0 and were lit by the ambient light alone).
     expect(await page.evaluate(() => window.__GE_TEST__?.systemLights().length)).toBe(1);
+    await expect
+      .poll(() => page.evaluate(() => window.__GE_TEST__?.litLightCounts()))
+      .toEqual({ 'planet-bodies': 1, 'asteroid-belts': 1 });
 
     await openSystem(page, s.url, id('Trinity'));
     const trinity = await page.evaluate(() => window.__GE_TEST__?.renderInfo());
     expect(trinity?.calls).toBeLessThanOrEqual(DRAW_CALL_BUDGET);
     // Lit by all three stars (D-29), largest first, each in its own temperature's color.
     const lights = (await page.evaluate(() => window.__GE_TEST__?.systemLights())) ?? [];
+    await expect
+      .poll(() => page.evaluate(() => window.__GE_TEST__?.litLightCounts()['planet-bodies']))
+      .toBe(3);
     expect(lights.map((light) => light.position)).toEqual([
       [-1.5, 0, 0],
       [1.5, 0, 0],
@@ -154,5 +161,44 @@ test.describe('the system view (M5-T3)', () => {
     if (!across) throw new Error('The belt is off screen');
     await page.mouse.click(across.x, across.y);
     await expect.poll(() => page.evaluate(() => window.__GE_TEST__?.selectedIds())).toEqual([belt]);
+  });
+
+  test('pointing at an object’s label is pointing at the object', async ({ page }) => {
+    const s = await setUp(page.request);
+    const id = (name: string) => s.ids[name] ?? '';
+    await openSystem(page, s.url, id('Sol'));
+    const planet = id('Sol 4');
+    const at = await page.evaluate(
+      (target) => window.__GE_TEST__?.screenPositionOf(target),
+      planet,
+    );
+    if (!at) throw new Error('Sol 4 is off screen');
+    // Labels show on hover by default: point at the planet, then move onto its label.
+    await page.mouse.move(at.x, at.y);
+    await expect
+      .poll(() => page.evaluate(() => window.__GE_TEST__?.visibleLabels().map((l) => l.text)))
+      .toContain('Sol 4');
+    const label = await page.evaluate(
+      (target) => window.__GE_TEST__?.visibleLabels().find((l) => l.id === target) ?? null,
+      planet,
+    );
+    const canvas = await page.locator('canvas').boundingBox();
+    if (!label || !canvas) throw new Error('No label');
+    // The label's far end, clear of the planet's own pick circle.
+    const onLabel = {
+      x: canvas.x + label.left + label.width - 4,
+      y: canvas.y + label.top + label.height / 2,
+    };
+    // Past the planet the pointer crosses the Inner Belt's band: the label, drawn on top, wins over the band.
+    await page.mouse.move(onLabel.x, onLabel.y, { steps: 8 });
+    expect(await page.evaluate(() => window.__GE_TEST__?.hoveredId())).toBe(planet);
+
+    await page.mouse.click(onLabel.x, onLabel.y);
+    await expect
+      .poll(() => page.evaluate(() => window.__GE_TEST__?.selectedIds()))
+      .toEqual([planet]);
+    // Empty space beyond the label picks nothing.
+    await page.mouse.click(onLabel.x + 60, onLabel.y + 40);
+    await expect.poll(() => page.evaluate(() => window.__GE_TEST__?.selectedIds())).toEqual([]);
   });
 });

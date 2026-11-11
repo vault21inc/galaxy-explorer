@@ -14,6 +14,7 @@ import { orbitRingOf } from './orbits/orbit-rings.tsx';
 import { probePlanetBake, type PlanetBakeProbe } from './bake/planet/planet-bake-probe.ts';
 import { planetSurfaceOf } from './planets/planet-bodies.tsx';
 import { currentLights } from './stars/system-lights.ts';
+import { litLightCounts } from './stars/use-lit-uniforms.ts';
 import { transitionsStarted, viewSettled } from './transition/transition-controller.ts';
 import { flyTo } from './camera/fly-to.ts';
 import { galaxyDiscState } from './galaxy/galaxy-disc.tsx';
@@ -115,6 +116,11 @@ export interface GeTestHooks {
    */
   systemLights(): { position: [number, number, number]; color: [number, number, number] }[];
   /**
+   * How many of those lights each lit renderer's material holds (planets, belts), by
+   * renderer: what its shader actually uses (M6-T2).
+   */
+  litLightCounts(): Record<string, number>;
+  /**
    * A body's orbit ring as drawn (M5-T4): its center (the system's, or its star's, D-29) and
    * radius, following a drag; null when it has none.
    */
@@ -163,7 +169,15 @@ export interface GeTestHooks {
     opacity: number;
   } | null;
   /** The labels on screen after the last frame. */
-  visibleLabels(): { id: string; text: string }[];
+  visibleLabels(): {
+    id: string;
+    text: string;
+    /** The label's box on the canvas, in CSS pixels from its top-left corner. */
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  }[];
   /** Label-update durations since the last reset (budget: 2 ms per frame, rendering.md §11). */
   labelStats(): { count: number; medianMs: number; p95Ms: number };
   resetLabelStats(): void;
@@ -235,7 +249,15 @@ export function installTestHooks(): void {
       const { assetId, widthLy, rotationDeg, offsetX, offsetZ, opacity } = state;
       return { assetId, widthLy, rotationDeg, offsetX, offsetZ, opacity };
     },
-    visibleLabels: () => visibleLabels().map(({ id, text }) => ({ id, text })),
+    visibleLabels: () =>
+      visibleLabels().map(({ id, text, left, top, width, height }) => ({
+        id,
+        text,
+        left,
+        top,
+        width,
+        height,
+      })),
     labelStats: () => labelTimeline.stats(),
     resetLabelStats: () => {
       labelTimeline.reset();
@@ -264,6 +286,7 @@ export function installTestHooks(): void {
         position: [x, y, z],
         color: [r, g, b],
       })),
+    litLightCounts: () => litLightCounts(),
     flyTo: async (id) => {
       const object = drawnObject(id);
       const controls = canvasState()?.controls;

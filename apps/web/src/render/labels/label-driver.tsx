@@ -9,6 +9,7 @@ import { drawnGroups } from '../groups/group-index.ts';
 import type { GroupShape } from '../groups/group-shapes.ts';
 import { drawnRoutes } from '../routes/route-index.ts';
 import { routeLabelAnchor, type RouteShape } from '../routes/route-shapes.ts';
+import { publishLabelHits } from '../picking/label-hits.ts';
 import { projected } from '../picking/picking.ts';
 import { drawnObject, type DrawnObject } from '../scene-index.ts';
 import { worldPerPxAt1 } from '../screen-scale.ts';
@@ -202,6 +203,7 @@ function updateLabels(state: RootState): void {
     candidateCount,
   );
   showLabels(lastPlaced);
+  publishLabelHits(lastPlaced);
   labelTimeline.record(performance.now() - started);
 }
 
@@ -233,6 +235,7 @@ export function LabelDriver() {
       stopHover();
       stopSelection();
       showLabels([]);
+      publishLabelHits([]);
     };
   }, [get, invalidate]);
   return null;

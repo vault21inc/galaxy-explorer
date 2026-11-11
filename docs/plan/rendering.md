@@ -284,6 +284,7 @@ Procedural looks are generated once on the GPU and reused (D-10):
   - A pointer move finds the nearest item within `max(radiusPx, 10 px)` by checking neighboring grid cells: O(1) on average, under 1 ms for 5,000 items.
 - **Box selection** tests projected centers against the rectangle.
 - **Group outlines** are picked through their label (a DOM hit area) or through the outliner. Clicks inside an outline select objects, not the group.
+- **Object labels** are pick targets too: pointing at a label is pointing at its object, for hover, click, double-click and drag (`label-hits.ts`). The hit area reaches back across the gap to the body, so the pointer can move from a body to its label without the hover ending. A body under the pointer whose pick circle is at most 30 px across wins over a label drawn across it; over anything wider (a belt's band, a rift, a route) the label wins.
 - **Placing objects:** a ray–plane intersection with the work plane (y = 0, or the height of the selection being moved). **Placing pins:** a ray–sphere intersection (§8).
 
 ## 11. Labels

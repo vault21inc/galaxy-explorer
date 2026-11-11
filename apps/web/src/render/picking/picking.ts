@@ -1,8 +1,10 @@
 import type { RootState } from '@react-three/fiber';
 import { Matrix4 } from 'three';
-import { drawnObjects, drawnVersion, type DrawnObject } from '../scene-index.ts';
+import { drawnObject, drawnObjects, drawnVersion, type DrawnObject } from '../scene-index.ts';
 import { worldPerPxAt1 } from '../screen-scale.ts';
+import { labelHitAt } from './label-hits.ts';
 import { ScreenPicker } from './screen-picker.ts';
+import { LABEL_OVER_AREA_PX } from '../tuning.ts';
 
 /**
  * The app's picker, rebuilt only when needed (rendering.md §10): when the camera has moved,
@@ -46,9 +48,21 @@ export function projected(state: RootState): ScreenPicker {
   return picker;
 }
 
-/** The object under a point given in page coordinates (`clientX`, `clientY`), or null. */
+/**
+ * The object under a point given in page coordinates (`clientX`, `clientY`), or null.
+ *
+ * A body the pointer is on wins, so a dot under a neighbour's label can still be clicked;
+ * but over a wide target (a belt's band, a rift, a route, a body larger on screen than
+ * LABEL_OVER_AREA_PX) an object's label, drawn on top, wins (label-hits.ts).
+ */
 export function pickAt(state: RootState, clientX: number, clientY: number): DrawnObject | null {
   ensureFresh(state);
   const rect = state.gl.domElement.getBoundingClientRect();
-  return picker.pick(clientX - rect.left, clientY - rect.top);
+  const xPx = clientX - rect.left;
+  const yPx = clientY - rect.top;
+  const body = picker.pick(xPx, yPx);
+  if (body && picker.lastHitRadiusPx <= LABEL_OVER_AREA_PX) return body;
+  const labelled = labelHitAt(xPx, yPx);
+  const viaLabel = labelled === null ? undefined : drawnObject(labelled);
+  return viaLabel ?? body;
 }

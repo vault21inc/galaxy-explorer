@@ -57,6 +57,15 @@ export class ScreenPicker {
   }
 
   /**
+   * How big the last `pick` hit was on screen: the pick circle's radius in CSS pixels, or
+   * Infinity for an object picked along a curve (a belt's band, a rift, a route).
+   */
+  get lastHitRadiusPx(): number {
+    return this.#lastHitRadiusPx;
+  }
+  #lastHitRadiusPx = 0;
+
+  /**
    * Projects `objects` with `viewProjection`, the camera's projection × view matrix as 16
    * numbers in three.js's column-major order (`Matrix4.elements`). Objects behind the camera or
    * whose circle lies entirely off screen are left out.
@@ -138,10 +147,12 @@ export class ScreenPicker {
     let bestPriority = -Infinity;
     let bestScore = Infinity;
     let bestDepth = Infinity;
+    let bestRadius = 0;
     const end = this.#cellStart[cell + 1] ?? 0;
     for (let k = this.#cellStart[cell] ?? 0; k < end; k++) {
       const slot = this.#cellItems[k] ?? 0;
       let score: number;
+      let radiusPx = Infinity;
       if ((this.#curveCount[slot] ?? 0) > 0) {
         const curve = this.#curveScore(slot, xPx, yPx);
         if (curve === null) continue;
@@ -153,6 +164,7 @@ export class ScreenPicker {
         const distanceSquared = dx * dx + dy * dy;
         if (distanceSquared > radius * radius) continue;
         score = Math.sqrt(distanceSquared) / radius;
+        radiusPx = radius;
       }
       const object = this.#objectAt(slot);
       const priority = object?.pickPriority ?? 0;
@@ -166,8 +178,10 @@ export class ScreenPicker {
         bestPriority = priority;
         bestScore = score;
         bestDepth = depth;
+        bestRadius = radiusPx;
       }
     }
+    this.#lastHitRadiusPx = best < 0 ? 0 : bestRadius;
     return best < 0 ? null : this.#objectAt(best);
   }
 

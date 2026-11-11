@@ -5,6 +5,7 @@ import {
   UnsignedByteType,
   WebGLArrayRenderTarget,
   type IUniform,
+  type ShaderMaterial,
   type Texture,
   type WebGLRenderer,
 } from 'three';
@@ -28,7 +29,7 @@ export interface PlanetLayer {
 export class PlanetTextureArray {
   readonly widthPx: number;
   readonly heightPx: number;
-  /** The shader uniform to sample: it follows the texture when the stack is replaced. */
+  /** The shader uniform to sample, for the material's first render. */
   readonly uniform: IUniform<Texture>;
   #target: WebGLArrayRenderTarget;
   #keys: (string | null)[];
@@ -39,6 +40,20 @@ export class PlanetTextureArray {
     this.#target = this.#create(initialLayers);
     this.#keys = Array.from({ length: initialLayers }, () => null);
     this.uniform = { value: this.#target.texture };
+  }
+
+  /** The texture now: it changes when the stack grows. */
+  get texture(): Texture {
+    return this.#target.texture;
+  }
+
+  /**
+   * Points a material's sampler at the texture now. The material's own uniform, not
+   * `uniform`: React Three Fiber copies uniforms into the material (use-lit-uniforms.ts).
+   */
+  bindTo(material: ShaderMaterial | null, name: string): void {
+    const sampler = material?.uniforms[name];
+    if (sampler) sampler.value = this.#target.texture;
   }
 
   /** The key baked into each layer, for the test hooks. */

@@ -40,7 +40,7 @@ const hex = (value: string) => value as HexColor;
 export const planetPresets: Readonly<Record<PlanetPresetName, PlanetPresetDef>> = {
   barren: {
     label: 'Barren',
-    palette: ['#4a443f', '#6e655c', '#8f877d', '#b3aca2'].map(hex),
+    palette: ['#5e5751', '#7f766c', '#a0978c', '#c2bbb1'].map(hex),
     seaLevel: null,
     ocean: [hex('#1a2430'), hex('#2a3a4a')],
     frequency: 3,
@@ -81,7 +81,7 @@ export const planetPresets: Readonly<Record<PlanetPresetName, PlanetPresetDef>> 
     label: 'Ocean',
     palette: ['#3f6b35', '#6b8c45', '#a39a6a', '#e6e6e0'].map(hex),
     seaLevel: 0.58,
-    ocean: [hex('#0b2a52'), hex('#1f5f8f')],
+    ocean: [hex('#174a7c'), hex('#2d7fb0')],
     frequency: 2.5,
     octaves: 6,
     warp: 0.6,
@@ -94,7 +94,7 @@ export const planetPresets: Readonly<Record<PlanetPresetName, PlanetPresetDef>> 
     label: 'Jungle',
     palette: ['#173d1b', '#2f6b2a', '#4f8f3a', '#8bb35a'].map(hex),
     seaLevel: 0.4,
-    ocean: [hex('#0e3a4a'), hex('#1f6b6e')],
+    ocean: [hex('#18536a'), hex('#2a8488')],
     frequency: 3.5,
     octaves: 6,
     warp: 0.6,
@@ -105,7 +105,7 @@ export const planetPresets: Readonly<Record<PlanetPresetName, PlanetPresetDef>> 
   },
   lava: {
     label: 'Lava',
-    palette: ['#1a0d0a', '#3a1d14', '#5a2a18', '#2a1410'].map(hex),
+    palette: ['#2e1810', '#4e2a1a', '#6e3a20', '#3e2014'].map(hex),
     seaLevel: null,
     ocean: [hex('#1a0d0a'), hex('#3a1d14')],
     frequency: 3,
@@ -144,9 +144,9 @@ export const planetPresets: Readonly<Record<PlanetPresetName, PlanetPresetDef>> 
   },
   city: {
     label: 'City (hive)',
-    palette: ['#3a3a40', '#55555c', '#6e6e76', '#8a8a92'].map(hex),
+    palette: ['#55555c', '#6e6e76', '#8a8a92', '#a6a6ae'].map(hex),
     seaLevel: 0.25,
-    ocean: [hex('#101820'), hex('#1e2a36')],
+    ocean: [hex('#1c2a38'), hex('#2e4256')],
     frequency: 3,
     octaves: 6,
     warp: 0.3,
@@ -157,7 +157,7 @@ export const planetPresets: Readonly<Record<PlanetPresetName, PlanetPresetDef>> 
   },
   forge: {
     label: 'Forge',
-    palette: ['#2a1d18', '#4a3226', '#6a4632', '#8a5a3e'].map(hex),
+    palette: ['#4a3426', '#6a4a34', '#8a6244', '#a87a56'].map(hex),
     seaLevel: null,
     ocean: [hex('#1a0d0a'), hex('#3a1d14')],
     frequency: 3,

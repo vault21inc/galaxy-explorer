@@ -7,7 +7,10 @@ const isCI = Boolean(
   (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.CI,
 );
 
-const labels = (page: Page) => page.evaluate(() => window.__GE_TEST__?.visibleLabels() ?? []);
+const labels = (page: Page) =>
+  page.evaluate(
+    () => window.__GE_TEST__?.visibleLabels().map(({ id, text }) => ({ id, text })) ?? [],
+  );
 
 /** The label elements actually on screen, with their boxes. */
 async function shownLabelBoxes(page: Page) {

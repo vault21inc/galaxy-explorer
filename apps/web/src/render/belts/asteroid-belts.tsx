@@ -101,11 +101,11 @@ export function AsteroidBelts({ objects }: RendererProps) {
 
   const uniforms = useMemo(() => ({ ...lightUniforms(), uWorldPerPxAt1: { value: 1 } }), []);
   const material = useRef<ShaderMaterial>(null);
-  useLitUniforms(uniforms, invalidate);
   useFrame(({ camera, size }) => {
     const scale = material.current?.uniforms.uWorldPerPxAt1;
     if (scale) scale.value = worldPerPxAt1(camera, size.height);
   });
+  useLitUniforms(ASTEROID_BELTS, material, invalidate);
 
   if (rocks.count === 0) return null;
   return (

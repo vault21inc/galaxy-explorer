@@ -15,6 +15,8 @@ import {
   SYSTEM_PLANET_MAX_PX,
   SYSTEM_PLANET_MIN_PX,
   PLANET_BAKE_DEBOUNCE_MS,
+  SYSTEM_PLANET_AMBIENT,
+  SYSTEM_PLANET_EXPOSURE,
   SYSTEM_PLANET_INITIAL_LAYERS,
   SYSTEM_PLANET_TEXTURE_PX,
 } from '../tuning.ts';
@@ -55,6 +57,7 @@ const FRAGMENT_SHADER = /* glsl */ `
   ${LIGHTING_GLSL}
   uniform sampler2DArray uSurfaces;
   uniform vec2 uSurfaceSize;
+  uniform float uExposure;
   varying vec3 vColor;
   varying float vState;
   varying vec3 vWorldNormal;
@@ -80,6 +83,9 @@ const FRAGMENT_SHADER = /* glsl */ `
     // A thin bright rim on the lit side, as a hint of atmosphere: strongest at the silhouette.
     float facing = clamp(normalize(vViewNormal).z, 0.0, 1.0);
     lit += albedo * pow(1.0 - facing, 4.0) * 0.25 * min(length(lit), 1.0);
+    // Exposure (tuning.ts SYSTEM_PLANET_EXPOSURE): about ×uExposure for dark surfaces, easing
+    // toward white for bright ones, per channel.
+    lit = 1.0 - exp(-uExposure * lit);
     gl_FragColor = vec4(lit, 1.0);
     #include <colorspace_fragment>
   }
@@ -159,6 +165,8 @@ export function PlanetBodies({ objects }: RendererProps) {
   const uniforms = useMemo(
     () => ({
       ...lightUniforms(),
+      uAmbient: { value: SYSTEM_PLANET_AMBIENT },
+      uExposure: { value: SYSTEM_PLANET_EXPOSURE },
       uWorldPerPxAt1: { value: 1 },
       uMinRadiusPx: { value: SYSTEM_PLANET_MIN_PX },
       uMaxRadiusPx: { value: SYSTEM_PLANET_MAX_PX },
@@ -169,11 +177,13 @@ export function PlanetBodies({ objects }: RendererProps) {
     }),
     [textures],
   );
-  useLitUniforms(uniforms, invalidate);
 
   // Bake before the next frame draws, so a planet never shows a blank or stale surface.
   useLayoutEffect(() => {
     textures.update(gl, surfaces.layers);
+    // Through the material: React Three Fiber copied the uniform objects into it (see
+    // use-lit-uniforms.ts), and a stack that grew has a new texture.
+    textures.bindTo(material.current, 'uSurfaces');
     // A previewed tilt changes the attribute without rebuilding the geometry.
     const tilt = geometry.getAttribute('aTiltRad');
     if (tilt.array instanceof Float32Array && tilt.array !== surfaces.tiltsRad) {
@@ -185,7 +195,8 @@ export function PlanetBodies({ objects }: RendererProps) {
       drawnSurfaces.set(id, { layer, key: textures.keys[layer] ?? '' });
     });
     invalidate();
-  }, [gl, textures, surfaces, buffers, geometry, invalidate]);
+  }, [gl, textures, surfaces, buffers, geometry, material, invalidate]);
+  useLitUniforms(PLANET_BODIES, material, invalidate);
   useEffect(
     () => () => {
       drawnSurfaces.clear();
