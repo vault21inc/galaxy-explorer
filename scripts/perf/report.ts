@@ -187,6 +187,19 @@ function systemChecks(): Check[] {
       pass: all((r) => transitions(r).every((ms) => ms <= BUDGETS.transitionMs)),
     },
     {
+      metric: 'Planet surface bake at 2,048 × 1,024: ocean / gas giant / city',
+      budget: `≤ ${fmt(BUDGETS.planetBakeMs)} each`,
+      values: each((r) =>
+        Object.values(sys(r).planetBakeMs)
+          .map((ms) => ms.toFixed(1))
+          .join(' / ')
+          .concat(' ms'),
+      ),
+      pass: all((r) =>
+        Object.values(sys(r).planetBakeMs).every((ms) => ms <= BUDGETS.planetBakeMs),
+      ),
+    },
+    {
       metric: `GPU memory: geometries / textures before and after ${String(runs[0]?.system?.roundTrips.count ?? 20)} galaxy ↔ system round trips`,
       budget: `within ±${(BUDGETS.memoryDrift * 100).toFixed(0)} %`,
       values: each((r) => {

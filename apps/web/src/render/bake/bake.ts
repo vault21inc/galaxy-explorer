@@ -70,11 +70,16 @@ export function bakeTarget(widthPx: number, heightPx: number): WebGLRenderTarget
  * Renders the definition into an existing target, replacing what was there. The live preview
  * of galaxy settings re-bakes into one reused target this way, so dragging a slider never
  * creates textures (M3-T8).
+ *
+ * `layer` picks one layer of an array target (a stack of same-size textures that one shader
+ * can sample by index): the system view keeps every planet's surface in one, so all its
+ * planets still draw in one call (M6-T2).
  */
 export function bakeInto(
   gl: WebGLRenderer,
   definition: BakeDefinition,
   target: WebGLRenderTarget,
+  layer = 0,
 ): void {
   const geometry = new BufferGeometry();
   // x, y, z per corner: three.js reads positions as 3D even when the shader uses only x and y.
@@ -95,7 +100,7 @@ export function bakeInto(
   const camera = new OrthographicCamera();
 
   const previousTarget = gl.getRenderTarget();
-  gl.setRenderTarget(target);
+  gl.setRenderTarget(target, layer);
   gl.render(mesh, camera);
   gl.setRenderTarget(previousTarget);
 

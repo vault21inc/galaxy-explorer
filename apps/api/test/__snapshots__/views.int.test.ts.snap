@@ -142,6 +142,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         ],
         "status": "published",
         "subtypeId": null,
+        "surfaceTexture": null,
         "version": 1,
       },
       {
@@ -175,6 +176,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         ],
         "status": "published",
         "subtypeId": null,
+        "surfaceTexture": null,
         "version": 1,
       },
       {
@@ -208,6 +210,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         ],
         "status": "published",
         "subtypeId": null,
+        "surfaceTexture": null,
         "version": 1,
       },
       {
@@ -241,6 +244,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         ],
         "status": "published",
         "subtypeId": null,
+        "surfaceTexture": null,
         "version": 1,
       },
       {
@@ -274,6 +278,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         ],
         "status": "published",
         "subtypeId": null,
+        "surfaceTexture": null,
         "version": 1,
       },
       {
@@ -307,6 +312,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         ],
         "status": "published",
         "subtypeId": null,
+        "surfaceTexture": null,
         "version": 1,
       },
       {
@@ -339,6 +345,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "stars": [],
         "status": "published",
         "subtypeId": null,
+        "surfaceTexture": null,
         "version": 1,
       },
       {
@@ -376,6 +383,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "stars": [],
         "status": "published",
         "subtypeId": null,
+        "surfaceTexture": null,
         "version": 1,
       },
       {
@@ -413,6 +421,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "stars": [],
         "status": "published",
         "subtypeId": null,
+        "surfaceTexture": null,
         "version": 1,
       },
     ],
@@ -477,6 +486,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 0.27,
         "status": "published",
         "subtypeId": null,
+        "surfaceTexture": null,
         "version": 1,
       },
     ],
@@ -548,6 +558,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
       "size": 1,
       "status": "published",
       "subtypeId": "<id 20>",
+      "surfaceTexture": null,
       "version": 1,
     },
   },
@@ -578,6 +589,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 0.6,
         "status": "published",
         "subtypeId": null,
+        "surfaceTexture": null,
         "version": 1,
       },
       {
@@ -606,6 +618,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 0.25,
         "status": "published",
         "subtypeId": null,
+        "surfaceTexture": null,
         "version": 1,
       },
       {
@@ -634,6 +647,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 0.25,
         "status": "published",
         "subtypeId": "<id 20>",
+        "surfaceTexture": null,
         "version": 1,
       },
       {
@@ -656,6 +670,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "size": 1,
         "status": "published",
         "subtypeId": null,
+        "surfaceTexture": null,
         "version": 1,
       },
     ],
@@ -688,6 +703,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
       "size": null,
       "status": "published",
       "subtypeId": null,
+      "surfaceTexture": null,
       "version": 1,
     },
   },

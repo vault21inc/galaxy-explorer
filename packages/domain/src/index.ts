@@ -47,6 +47,15 @@ export {
   uvToLatLon,
   type LatLon,
 } from './geo/latlon.ts';
+export {
+  planetDefaults,
+  planetPresets,
+  resolvePlanetSurface,
+  seedFromId,
+  type PlanetPresetDef,
+  type PlanetPresetName,
+  type PlanetSurface,
+} from './planet-presets.ts';
 export { gaussian, seededRandom } from './random.ts';
 export { Slug, Uuid } from './ids.ts';
 export * from './patterns.ts';

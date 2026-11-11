@@ -5,6 +5,7 @@ import { useReadOptions } from '@/api/read-options.ts';
 import { parentChoices } from '@/editor/actions/group.ts';
 import { editDescription, type FieldProps } from '../field-props.ts';
 import { changesFor, valueAt } from '../field-path.ts';
+import { inheritedValue } from '../inherited.ts';
 import type { FormFieldDef } from '@ge/domain';
 import { FieldRow, INPUT_CLASS } from './field-row.tsx';
 
@@ -25,6 +26,7 @@ export function SelectField({
   record,
   universeId,
   title,
+  subtypes,
   save,
   compact,
 }: FieldProps<SelectFieldDef>) {
@@ -48,6 +50,9 @@ export function SelectField({
   const schema = fieldSchemaIn(recordSchema, field.path);
   const nullable = schema ? unwrapField(schema).nullable : false;
   const saved = valueAt(record, field.path);
+  // A value the record doesn't set shows its default, dimmed (a planet's preset, M6-T2).
+  const inherited = inheritedValue(record, field.path, subtypes);
+  const fallback = saved === undefined && typeof inherited === 'string' ? inherited : undefined;
   const [pending, setPending] = useState<string | null>(null);
 
   let choices: { value: string; label: string }[];
@@ -78,11 +83,17 @@ export function SelectField({
   }
 
   return (
-    <FieldRow label={field.label} htmlFor={id} hint={field.hint} compact={compact}>
+    <FieldRow
+      label={field.label}
+      htmlFor={id}
+      hint={field.hint}
+      inherited={fallback !== undefined && pending === null}
+      compact={compact}
+    >
       <select
         id={id}
         className={INPUT_CLASS}
-        value={pending ?? (typeof saved === 'string' ? saved : NONE)}
+        value={pending ?? (typeof saved === 'string' ? saved : (fallback ?? NONE))}
         onChange={(event) => {
           const value = event.currentTarget.value;
           setPending(value);
@@ -94,7 +105,7 @@ export function SelectField({
           });
         }}
       >
-        {(nullable || saved == null) && (
+        {(nullable || (saved == null && fallback === undefined)) && (
           <option value={NONE}>{options.from === 'siblings' ? options.noneLabel : 'None'}</option>
         )}
         {choices.map((choice) => (

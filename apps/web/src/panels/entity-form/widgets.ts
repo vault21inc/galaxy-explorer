@@ -3,12 +3,15 @@ import type { ComponentType } from 'react';
 import type { FieldProps } from './field-props.ts';
 import { ColorField } from './fields/color-field.tsx';
 import { ImageRoleField } from './fields/image-role-field.tsx';
+import { PaletteField } from './fields/palette-field.tsx';
 import { PerViewScaleField } from './fields/per-view-scale-field.tsx';
 import { PositionField } from './fields/position-field.tsx';
 import { RiftPathField } from './fields/rift-path-field.tsx';
 import { RimGapsField } from './fields/rim-gaps-field.tsx';
 import { RichTextField } from './fields/rich-text-field.tsx';
+import { SeedField } from './fields/seed-field.tsx';
 import { SelectField } from './fields/select-field.tsx';
+import { SliderField } from './fields/slider-field.tsx';
 import { SwitchField } from './fields/switch-field.tsx';
 import { TextField } from './fields/text-field.tsx';
 
@@ -34,6 +37,9 @@ const widgets: { [W in FormWidget]: ComponentType<FieldProps<DefOf<W>>> } = {
   rimGaps: RimGapsField,
   riftPath: RiftPathField,
   imageRole: ImageRoleField,
+  slider: SliderField,
+  seed: SeedField,
+  palette: PaletteField,
 };
 
 /** The component for a field. Each gets only fields of its own widget, which TypeScript can't follow through the lookup, hence the one cast. */

@@ -1,5 +1,6 @@
 import { schema, type Executor } from '@ge/db';
 import {
+  isPlanetType,
   isRegionType,
   mediaUrl,
   objectTypes,
@@ -99,6 +100,7 @@ function toViewObject(
     orbitCenterId: row.orbitCenterId as ViewObject['orbitCenterId'],
     appearance,
     size,
+    surfaceTexture: null,
   };
 }
 
@@ -121,14 +123,17 @@ export async function galaxyView(ex: Executor, mapId: string, viewer: Viewer): P
     viewer,
     subtypes,
   );
-  const regionTextures = await loadRegionTextures(
+  const regionTextures = await loadRoleImages(
     ex,
     objects.filter((object) => isRegionType(object.baseType)).map((object) => object.id),
+    'region_texture',
   );
+  const surfaceTextures = await loadSurfaceTextures(ex, objects);
   const galaxyObjects: GalaxyObject[] = objects.map((object) => ({
     ...object,
     ...(glyphs.get(object.id) ?? { ...NO_GLYPH, stars: [] }),
     regionTexture: regionTextures.get(object.id) ?? null,
+    surfaceTexture: surfaceTextures.get(object.id) ?? null,
   }));
 
   const groupRows = await ex
@@ -208,13 +213,21 @@ export async function galaxyView(ex: Executor, mapId: string, viewer: Viewer): P
 /** The glyph fields of an object that isn't a system, or a system with nothing inside. */
 const NO_GLYPH = { planetCount: 0, spoilerPlanetCount: 0 } as const;
 
+type ImageRef = NonNullable<GalaxyObject['regionTexture']>;
+
 /**
- * The regions' uploaded top-down pictures (M4-T6), by object: the display variant's URL and the
- * image's spoiler flag, which the client applies like every other spoiler. One query for all.
+ * The entities' images in a one-per-entity role, by entity: a region's top-down picture
+ * (M4-T6) or a planet's surface map (M6-T2), with the URL of the variant drawn (`texture`
+ * when the image has it, else `display`) and the image's spoiler flag, which the client
+ * applies like every other spoiler. One query for all.
  */
-async function loadRegionTextures(ex: Executor, regionIds: readonly string[]) {
-  const found = new Map<string, NonNullable<GalaxyObject['regionTexture']>>();
-  if (regionIds.length === 0) return found;
+async function loadRoleImages(
+  ex: Executor,
+  entityIds: readonly string[],
+  role: 'region_texture' | 'surface_texture',
+): Promise<Map<string, ImageRef>> {
+  const found = new Map<string, ImageRef>();
+  if (entityIds.length === 0) return found;
   const rows = await ex
     .select({
       entityId: entityImages.entityId,
@@ -224,17 +237,24 @@ async function loadRegionTextures(ex: Executor, regionIds: readonly string[]) {
     })
     .from(entityImages)
     .innerJoin(assets, eq(assets.id, entityImages.assetId))
-    .where(
-      and(inArray(entityImages.entityId, [...regionIds]), eq(entityImages.role, 'region_texture')),
-    );
+    .where(and(inArray(entityImages.entityId, [...entityIds]), eq(entityImages.role, role)));
   for (const row of rows) {
     found.set(row.entityId, {
-      assetId: row.assetId as NonNullable<GalaxyObject['regionTexture']>['assetId'],
-      url: mediaUrl(row.variants.display.key),
+      assetId: row.assetId as ImageRef['assetId'],
+      url: mediaUrl((row.variants.texture ?? row.variants.display).key),
       isSpoiler: row.isSpoiler,
     });
   }
   return found;
+}
+
+/** The planets' and moons' uploaded surface maps (M6-T2), by object. */
+function loadSurfaceTextures(ex: Executor, objects: readonly ViewObject[]) {
+  return loadRoleImages(
+    ex,
+    objects.filter((object) => isPlanetType(object.baseType)).map((object) => object.id),
+    'surface_texture',
+  );
 }
 
 /** Stars a system's galaxy glyph shows at most (D-29). */
@@ -335,18 +355,23 @@ async function subjectView(
     parentId = parent.parentId;
   }
 
-  const children = await selectObjects(
-    ex,
-    and(eq(celestialObjects.parentId, id), published(viewer)),
-  );
+  const children = (
+    await selectObjects(ex, and(eq(celestialObjects.parentId, id), published(viewer)))
+  ).map((child) => toViewObject(child, level, subtypes));
+  const subjectObject = toViewObject(subject, level, subtypes);
+  const surfaces = await loadSurfaceTextures(ex, [subjectObject, ...children]);
+  const withSurface = (object: ViewObject): ViewObject => ({
+    ...object,
+    surfaceTexture: surfaces.get(object.id) ?? null,
+  });
   return {
     map: { id: map.id as ViewObject['id'], ...named(map) },
     ancestors,
     subject: {
-      ...toViewObject(subject, level, subtypes),
+      ...withSurface(subjectObject),
       parentId: subject.parentId as ViewObject['subtypeId'],
     },
-    children: children.map((child) => toViewObject(child, level, subtypes)),
+    children: children.map(withSurface),
   };
 }
 

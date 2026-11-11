@@ -271,7 +271,9 @@ Procedural looks are generated once on the GPU and reused (D-10):
 - Outputs per planet: albedo (RGB), plus night lights, clouds and ocean mask when the appearance enables them.
 - Galaxy bakes: the disc texture (2,048², top-down) and the region noise sprite.
 - **Cache:** an LRU keyed by `hash(params, size)`, holding at most 48 textures by default. Evicted textures are disposed. A mid-range Mac recomputes a bake in under 50 ms, so nothing is persisted between sessions.
-- Edits to appearance re-bake on change, debounced by 150 ms, so sliders feel live without re-baking on every tick.
+- Edits to appearance re-bake on change at most every 150 ms (the first change at once, then the latest one every 150 ms while a slider moves), so sliders feel live without re-baking on every tick.
+- **Texel layout:** a planet bake's first and last columns both lie on the ±180° meridian and its first and last rows on the poles (texel x shows u = x / (width − 1)), so its edges match exactly where they meet around the globe. Renderers sample with the same mapping.
+- **System view:** each planet's 256 × 128 surface is one layer of an array texture, so all planets stay in one draw call (M6-T2).
 
 ## 10. Picking
 

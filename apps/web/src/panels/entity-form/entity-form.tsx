@@ -2,6 +2,7 @@ import {
   entityKinds,
   fieldPaths,
   formGroups,
+  isPlanetType,
   isRegionType,
   objectTypes,
   schemasFor,
@@ -108,8 +109,11 @@ function holds(
   }
   if (condition === 'regionType') return baseType !== undefined && isRegionType(baseType);
   if (condition === 'systemChild') return inSystem;
+  if (condition === 'planetType') return baseType !== undefined && isPlanetType(baseType);
   // A value the entity doesn't set falls back to its default, as the field itself shows it.
   const value = valueAt(entity, condition.path) ?? inheritedValue(entity, condition.path, subtypes);
-  if ('notIn' in condition) return !(typeof value === 'string' && condition.notIn.includes(value));
-  return typeof value === 'string' && condition.in.includes(value);
+  const matches = (values: readonly (string | boolean)[]) =>
+    (typeof value === 'string' || typeof value === 'boolean') && values.includes(value);
+  if ('notIn' in condition) return !matches(condition.notIn);
+  return matches(condition.in);
 }

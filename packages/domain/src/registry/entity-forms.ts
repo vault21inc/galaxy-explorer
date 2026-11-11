@@ -21,7 +21,13 @@ export type FormWidget =
   /** A rift's points: their count, and the switch for adding them on the map (M4-T6). */
   | 'riftPath'
   /** The one image an entity has in a role, such as a storm's `region_texture` (M4-T6). */
-  | 'imageRole';
+  | 'imageRole'
+  /** A number between the schema's limits, dragged; the map previews it live (M6-T2). */
+  | 'slider'
+  /** A planet's random seed, with a dice button for a new one (M6-T2). */
+  | 'seed'
+  /** A planet's palette: 2–6 colors, previewed live while picked (M6-T2). */
+  | 'palette';
 
 /** Where a select's choices come from. */
 export type FormOptions =
@@ -55,16 +61,19 @@ export type FormOptions =
  *   (`objectTypes[baseType].explorableAs`);
  * - `regionType`: only for base types drawn as a region (nebulae and anomalies, M4-T6);
  * - `systemChild`: only for an object inside a system (orbits, M5-T4);
+ * - `planetType`: only for base types drawn as a globe (planets and moons, M6-T2);
  * - `{ path, in }`: only while the field at `path`, or its inherited default, is one of these
- *   values, such as the storm fields while `appearance.region.shape` is `storm`;
+ *   values, such as the storm fields while `appearance.region.shape` is `storm`, or the cloud
+ *   fields while `appearance.planet.clouds.enabled` is `true`;
  * - `{ path, notIn }`: only while it's none of them.
  */
 export type FormCondition =
   | 'explorableType'
   | 'regionType'
   | 'systemChild'
-  | { path: string; in: readonly string[] }
-  | { path: string; notIn: readonly string[] };
+  | 'planetType'
+  | { path: string; in: readonly (string | boolean)[] }
+  | { path: string; notIn: readonly (string | boolean)[] };
 
 interface FieldBase {
   label: string;

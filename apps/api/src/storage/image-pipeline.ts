@@ -8,7 +8,9 @@ import sharp from 'sharp';
  * 2. decode with sharp, turn it upright by its EXIF orientation, and re-encode as WebP, which
  *    leaves EXIF, GPS positions and anything else embedded behind;
  * 3. make the variants: `thumb` (at most 256 px) and `display` (at most 1,600 px), never larger
- *    than the original. Surface textures (`texture`) arrive with planets in M6.
+ *    than the original; and for an image about twice as wide as tall, a map of a globe,
+ *    `texture`: exactly 2:1 and a power of two wide, at most 2,048 px (M6-T2). GPUs build
+ *    mipmaps of power-of-two textures best, and the planet shaders read the exact 2:1 shape.
  */
 
 /** What we accept. GIFs keep only their first frame. */
@@ -22,7 +24,12 @@ export const ACCEPTED_TYPES: ReadonlySet<string> = new Set([
 
 /** The longest side of each variant, in pixels. */
 export const VARIANT_SIZES = { thumb: 256, display: 1_600 } as const;
-export type VariantName = keyof typeof VARIANT_SIZES;
+export type VariantName = keyof typeof VARIANT_SIZES | 'texture';
+
+/** The widest `texture` variant, in pixels. */
+export const TEXTURE_MAX_WIDTH_PX = 2_048;
+/** How far from 2:1 an image may be and still count as a globe map: ±5 %. */
+const TEXTURE_ASPECT_TOLERANCE = 0.05;
 
 const WEBP_QUALITY = 82;
 
@@ -36,7 +43,24 @@ export interface ProcessedImage {
   /** Of the original, upright. */
   width: number;
   height: number;
-  variants: Record<VariantName, { data: Buffer; width: number; height: number }>;
+  variants: Record<'thumb' | 'display', ImageVariant> & { texture?: ImageVariant };
+}
+
+export interface ImageVariant {
+  data: Buffer;
+  width: number;
+  height: number;
+}
+
+/**
+ * The `texture` variant's width for an image, or null when it isn't about 2:1: the largest
+ * power of two up to the image's width, at most TEXTURE_MAX_WIDTH_PX. Small maps are enlarged
+ * to at least 256 px wide.
+ */
+export function textureWidthFor(width: number, height: number): number | null {
+  if (Math.abs(width / height / 2 - 1) > TEXTURE_ASPECT_TOLERANCE) return null;
+  const powerOfTwo = 2 ** Math.floor(Math.log2(width));
+  return Math.min(TEXTURE_MAX_WIDTH_PX, Math.max(256, powerOfTwo));
 }
 
 /** The SHA-256 of the original bytes, which identifies duplicates. */
@@ -72,16 +96,33 @@ export async function processImage(data: Buffer): Promise<ProcessedImage> {
       .toBuffer({ resolveWithObject: true });
     return { data: out, width: info.width, height: info.height };
   };
-  let thumb: Awaited<ReturnType<typeof variant>>;
-  let display: Awaited<ReturnType<typeof variant>>;
+  const textureWidth = textureWidthFor(width, height);
+  const texture = async (widthPx: number): Promise<ImageVariant> => {
+    // `fill` stretches the last few percent to exactly 2:1.
+    const { data: out, info } = await upright
+      .clone()
+      .resize({ width: widthPx, height: widthPx / 2, fit: 'fill' })
+      .webp({ quality: WEBP_QUALITY })
+      .toBuffer({ resolveWithObject: true });
+    return { data: out, width: info.width, height: info.height };
+  };
+  let thumb: ImageVariant;
+  let display: ImageVariant;
+  let surface: ImageVariant | null;
   try {
-    [thumb, display] = await Promise.all([
+    [thumb, display, surface] = await Promise.all([
       variant(VARIANT_SIZES.thumb),
       variant(VARIANT_SIZES.display),
+      textureWidth === null ? null : texture(textureWidth),
     ]);
   } catch {
     // The header was fine but the pixels aren't.
     throw new UnsupportedImage('That image is damaged or incomplete, so it can’t be read.');
   }
-  return { sha256: sha256Of(data), width, height, variants: { thumb, display } };
+  return {
+    sha256: sha256Of(data),
+    width,
+    height,
+    variants: { thumb, display, ...(surface ? { texture: surface } : {}) },
+  };
 }

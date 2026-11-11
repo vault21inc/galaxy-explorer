@@ -167,3 +167,12 @@ export function isRegionType(baseType: BaseType): boolean {
   const type: ObjectTypeDef = objectTypes[baseType];
   return type.region === true;
 }
+
+/**
+ * Whether a base type is drawn as a globe with a planet surface (planets and moons, M6-T2):
+ * those whose defaults include `appearance.planet`.
+ */
+export function isPlanetType(baseType: BaseType): boolean {
+  const type: ObjectTypeDef = objectTypes[baseType];
+  return type.defaultAppearance.planet !== undefined;
+}

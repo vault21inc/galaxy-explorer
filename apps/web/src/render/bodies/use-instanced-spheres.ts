@@ -35,6 +35,8 @@ export function useInstancedSpheres(
     const index = sphere.getIndex();
     if (index) instanced.setIndex(index);
     instanced.setAttribute('position', sphere.getAttribute('position'));
+    // Texture coordinates, for renderers that paint a surface on the sphere (planets, M6-T2).
+    if (sphere.hasAttribute('uv')) instanced.setAttribute('uv', sphere.getAttribute('uv'));
     instanced.setAttribute('aCenter', new InstancedBufferAttribute(buffers.centers, 3));
     instanced.setAttribute('aRadius', new InstancedBufferAttribute(buffers.radii, 1));
     instanced.setAttribute('aColor', new InstancedBufferAttribute(buffers.colors, 3));
@@ -86,8 +88,12 @@ export function useInstancedSpheres(
 /**
  * The vertex shader part every sphere renderer shares: the center in view space, the radius
  * clamped on screen (rendering.md §6), and the vertex placed on the sphere. Declares
- * `vWorldNormal` (the sphere's surface direction, unit length; the sphere is never rotated, so
- * object and world directions agree) and `vWorldPosition`.
+ * `vWorldNormal` (the sphere's surface direction in the world, unit length) and
+ * `vWorldPosition`.
+ *
+ * `placeOnSphereRotated` turns the sphere first: a planet's axial tilt (M6-T2). Its texture
+ * stays painted on the turned sphere, because the texture coordinates belong to the vertex,
+ * while lighting uses the turned direction. `placeOnSphere()` doesn't turn it.
  */
 export const SPHERE_VERTEX_GLSL = /* glsl */ `
   uniform float uWorldPerPxAt1;
@@ -104,16 +110,21 @@ export const SPHERE_VERTEX_GLSL = /* glsl */ `
   varying vec3 vViewNormal;
 
   // Call from main(): sets gl_Position and the varyings. Returns the radius used.
-  float placeOnSphere() {
+  float placeOnSphereRotated(mat3 bodyToWorld) {
+    vec3 direction = bodyToWorld * position;
     vec4 centerView = viewMatrix * vec4(aCenter, 1.0);
     float worldPerPx = uWorldPerPxAt1 * max(-centerView.z, 1e-3);
     float radius = clamp(aRadius, uMinRadiusPx * worldPerPx, uMaxRadiusPx * worldPerPx);
-    vWorldNormal = position;
-    vWorldPosition = aCenter + position * radius;
-    vViewNormal = mat3(viewMatrix) * position;
+    vWorldNormal = direction;
+    vWorldPosition = aCenter + direction * radius;
+    vViewNormal = mat3(viewMatrix) * direction;
     vColor = aColor;
     vState = aState;
     gl_Position = projectionMatrix * (centerView + vec4(vViewNormal * radius, 0.0));
     return radius;
+  }
+
+  float placeOnSphere() {
+    return placeOnSphereRotated(mat3(1.0));
   }
 `;

@@ -2543,6 +2543,34 @@
               "number",
               "null"
             ]
+          },
+          "surfaceTexture": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "assetId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "isSpoiler": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "assetId",
+                  "url",
+                  "isSpoiler"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -2559,7 +2587,8 @@
           "position",
           "orbitCenterId",
           "appearance",
-          "size"
+          "size",
+          "surfaceTexture"
         ]
       },
       "ViewGroupInput": {
@@ -3055,6 +3084,34 @@
               "null"
             ]
           },
+          "surfaceTexture": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "assetId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "isSpoiler": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "assetId",
+                  "url",
+                  "isSpoiler"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "planetCount": {
             "type": "integer",
             "minimum": 0,
@@ -3116,6 +3173,7 @@
           "orbitCenterId",
           "appearance",
           "size",
+          "surfaceTexture",
           "planetCount",
           "spoilerPlanetCount",
           "stars",
@@ -3324,6 +3382,34 @@
                   "null"
                 ]
               },
+              "surfaceTexture": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "assetId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "url": {
+                        "type": "string"
+                      },
+                      "isSpoiler": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "assetId",
+                      "url",
+                      "isSpoiler"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "parentId": {
                 "anyOf": [
                   {
@@ -3352,6 +3438,7 @@
               "orbitCenterId",
               "appearance",
               "size",
+              "surfaceTexture",
               "parentId"
             ]
           },
@@ -3549,6 +3636,34 @@
                   "null"
                 ]
               },
+              "surfaceTexture": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "assetId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "url": {
+                        "type": "string"
+                      },
+                      "isSpoiler": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "assetId",
+                      "url",
+                      "isSpoiler"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "parentId": {
                 "anyOf": [
                   {
@@ -3577,6 +3692,7 @@
               "orbitCenterId",
               "appearance",
               "size",
+              "surfaceTexture",
               "parentId"
             ]
           },
@@ -10720,6 +10836,35 @@
               "number",
               "null"
             ]
+          },
+          "surfaceTexture": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "assetId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "isSpoiler": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "assetId",
+                  "url",
+                  "isSpoiler"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -10736,7 +10881,8 @@
           "position",
           "orbitCenterId",
           "appearance",
-          "size"
+          "size",
+          "surfaceTexture"
         ],
         "additionalProperties": false
       },
@@ -11240,6 +11386,35 @@
               "null"
             ]
           },
+          "surfaceTexture": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "assetId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "isSpoiler": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "assetId",
+                  "url",
+                  "isSpoiler"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "planetCount": {
             "type": "integer",
             "minimum": 0,
@@ -11302,6 +11477,7 @@
           "orbitCenterId",
           "appearance",
           "size",
+          "surfaceTexture",
           "planetCount",
           "spoilerPlanetCount",
           "stars",
@@ -11514,6 +11690,35 @@
                   "null"
                 ]
               },
+              "surfaceTexture": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "assetId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "url": {
+                        "type": "string"
+                      },
+                      "isSpoiler": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "assetId",
+                      "url",
+                      "isSpoiler"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "parentId": {
                 "anyOf": [
                   {
@@ -11542,6 +11747,7 @@
               "orbitCenterId",
               "appearance",
               "size",
+              "surfaceTexture",
               "parentId"
             ],
             "additionalProperties": false
@@ -11743,6 +11949,35 @@
                   "null"
                 ]
               },
+              "surfaceTexture": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "assetId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "url": {
+                        "type": "string"
+                      },
+                      "isSpoiler": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "assetId",
+                      "url",
+                      "isSpoiler"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "parentId": {
                 "anyOf": [
                   {
@@ -11771,6 +12006,7 @@
               "orbitCenterId",
               "appearance",
               "size",
+              "surfaceTexture",
               "parentId"
             ],
             "additionalProperties": false

@@ -94,6 +94,9 @@ async function timed(page: Page, call: string): Promise<number> {
   );
 }
 
+/** The presets whose bakes are timed: a sea and coasts, bands, and city lights. */
+const BAKE_PRESETS = ['ocean', 'gas_giant', 'city'] as const;
+
 export async function systemPhases(context: SystemContext): Promise<SystemResult> {
   const { page, systemId, center, phase, drag, wheel, waitForIdle, renderInfo } = context;
   const enterMs: number[] = [];
@@ -146,9 +149,19 @@ export async function systemPhases(context: SystemContext): Promise<SystemResult
   await waitForIdle();
   const after = await renderInfo();
 
+  // Planet surfaces at the orbit view's full size, on this machine's GPU (M6-T2).
+  const planetBakeMs: Record<string, number> = {};
+  for (const preset of BAKE_PRESETS) {
+    planetBakeMs[preset] = await hooks<number>(
+      page,
+      `h.bakePlanet({ preset: ${JSON.stringify(preset)}, clouds: { enabled: true } }, { widthPx: 2048, heightPx: 1024 }).durationMs`,
+    );
+  }
+
   return {
     interaction,
     maxDrawCalls,
+    planetBakeMs,
     transitions: { enterMs, exitMs },
     roundTrips: { count: ROUND_TRIPS, before, after },
   };

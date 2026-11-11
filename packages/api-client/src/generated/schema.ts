@@ -1971,6 +1971,12 @@ export interface components {
             orbitCenterId: string | null;
             appearance: components["schemas"]["AppearanceInput"];
             size: number | null;
+            surfaceTexture: {
+                /** Format: uuid */
+                assetId: string;
+                url: string;
+                isSpoiler: boolean;
+            } | null;
         };
         ViewGroupInput: {
             /** Format: uuid */
@@ -2075,6 +2081,12 @@ export interface components {
             orbitCenterId: string | null;
             appearance: components["schemas"]["AppearanceInput"];
             size: number | null;
+            surfaceTexture: {
+                /** Format: uuid */
+                assetId: string;
+                url: string;
+                isSpoiler: boolean;
+            } | null;
             planetCount: number;
             spoilerPlanetCount: number;
             stars: components["schemas"]["SystemStarInput"][];
@@ -2131,6 +2143,12 @@ export interface components {
                 orbitCenterId: string | null;
                 appearance: components["schemas"]["AppearanceInput"];
                 size: number | null;
+                surfaceTexture: {
+                    /** Format: uuid */
+                    assetId: string;
+                    url: string;
+                    isSpoiler: boolean;
+                } | null;
                 parentId: string | null;
             };
             children: components["schemas"]["ViewObjectInput"][];
@@ -2176,6 +2194,12 @@ export interface components {
                 orbitCenterId: string | null;
                 appearance: components["schemas"]["AppearanceInput"];
                 size: number | null;
+                surfaceTexture: {
+                    /** Format: uuid */
+                    assetId: string;
+                    url: string;
+                    isSpoiler: boolean;
+                } | null;
                 parentId: string | null;
             };
             children: components["schemas"]["ViewObjectInput"][];
@@ -3635,6 +3659,12 @@ export interface components {
             orbitCenterId: string | null;
             appearance: components["schemas"]["Appearance"];
             size: number | null;
+            surfaceTexture: {
+                /** Format: uuid */
+                assetId: string;
+                url: string;
+                isSpoiler: boolean;
+            } | null;
         };
         ViewGroup: {
             /** Format: uuid */
@@ -3739,6 +3769,12 @@ export interface components {
             orbitCenterId: string | null;
             appearance: components["schemas"]["Appearance"];
             size: number | null;
+            surfaceTexture: {
+                /** Format: uuid */
+                assetId: string;
+                url: string;
+                isSpoiler: boolean;
+            } | null;
             planetCount: number;
             spoilerPlanetCount: number;
             stars: components["schemas"]["SystemStar"][];
@@ -3795,6 +3831,12 @@ export interface components {
                 orbitCenterId: string | null;
                 appearance: components["schemas"]["Appearance"];
                 size: number | null;
+                surfaceTexture: {
+                    /** Format: uuid */
+                    assetId: string;
+                    url: string;
+                    isSpoiler: boolean;
+                } | null;
                 parentId: string | null;
             };
             children: components["schemas"]["ViewObject"][];
@@ -3840,6 +3882,12 @@ export interface components {
                 orbitCenterId: string | null;
                 appearance: components["schemas"]["Appearance"];
                 size: number | null;
+                surfaceTexture: {
+                    /** Format: uuid */
+                    assetId: string;
+                    url: string;
+                    isSpoiler: boolean;
+                } | null;
                 parentId: string | null;
             };
             children: components["schemas"]["ViewObject"][];

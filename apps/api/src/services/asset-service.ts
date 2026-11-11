@@ -3,7 +3,7 @@ import { mediaUrl, type AssetMetadata, type AssetRead, type AssetVariants } from
 import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
 import type { z } from 'zod';
 import { assetKey, type BlobStore } from '../storage/blob-store.ts';
-import type { ProcessedImage, VariantName } from '../storage/image-pipeline.ts';
+import type { ImageVariant, ProcessedImage, VariantName } from '../storage/image-pipeline.ts';
 import { NotFound } from './errors.ts';
 
 /** Uploaded images (data-model §3.6, architecture.md §8). */
@@ -55,11 +55,8 @@ export async function storeAsset(
   if (!id) throw new Error('Postgres returned no new id.');
   const written: string[] = [];
   try {
-    const variants = {} as Record<VariantName, AssetVariants['thumb']>;
-    for (const [name, variant] of Object.entries(image.variants) as [
-      VariantName,
-      ProcessedImage['variants'][VariantName],
-    ][]) {
+    const variants = {} as AssetVariants;
+    for (const [name, variant] of Object.entries(image.variants) as [VariantName, ImageVariant][]) {
       const key = assetKey(universeId, id, name);
       await store.put(key, variant.data, 'image/webp');
       written.push(key);

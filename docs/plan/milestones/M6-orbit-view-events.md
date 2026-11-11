@@ -58,10 +58,19 @@
   - a "Use uploaded texture" option: pick or upload an asset, saved as an entity image with role `surface_texture`, which the API resizes to the 2:1 `texture` variant.
 
 **Done when:**
-- [ ] A determinism test: identical parameters give an identical pixel hash, read back with `readPixels` in an e2e helper.
-- [ ] A seam test: texel columns 0 and width − 1 differ by at most 2/255 per channel.
-- [ ] Baking at 2,048 × 1,024 takes under 50 ms on the reference Mac (measured, reported in the commit message).
-- [ ] Dragging a palette slider updates the globe within 200 ms.
+- [x] A determinism test: identical parameters give an identical pixel hash, read back with `readPixels` in an e2e helper.
+- [x] A seam test: texel columns 0 and width − 1 differ by at most 2/255 per channel.
+- [x] Baking at 2,048 × 1,024 takes under 50 ms on the reference Mac (measured, reported in the commit message).
+- [x] Dragging a palette slider updates the globe within 200 ms.
+
+**As built:**
+- **Presets are data** in `packages/domain/src/planet-presets.ts`: palette, sea level, ocean colors, noise frequency and octaves, domain warp, ridged noise, polar caps, gas-giant bands and night lights (city lights, or lava cracks that glow in daylight too). `resolvePlanetSurface` applies an object's overrides; `planetDefaults` gives what the editor shows dimmed; `seedFromId` gives each planet without a seed its own.
+- **The generator** (`apps/web/src/render/bake/planet/planet-surface-bake.ts`) turns each texel into its lat/lon and point on the unit sphere (M6-T1's convention) and computes gradient noise there, in 3D, with a sine-free hash so every GPU gives the same pixels. Two outputs: `surface` (sRGB albedo, ocean mask in alpha) and `layers` (night lights in R, clouds in G) for M6-T3's globe. **Edge texels sit on the edges:** column 0 and the last column are both the ±180° meridian, the first and last rows the poles, so the seam test finds 0/255 difference; renderers sample with the same mapping.
+- **The system view** keeps every planet's 256 × 128 surface as one layer of a `WebGLArrayRenderTarget` (`planet-texture-array.ts`), so the planets still draw in one call; a layer is re-baked only when its key changes. The stack lives as long as the page, like the bake cache: the first perf run, which rebuilt it on every entry, missed the 700 ms transition budget once (712 ms in WebKit), and keeping it brought cached entries back to 626–651 ms. Axial tilt turns each sphere (`placeOnSphereRotated`). A hidden spoiler planet gets a neutral surface, never its own.
+- **Live editing:** sliders and palette pickers write to an appearance preview store (`state/appearance-preview.ts`) while they move and save when let go. The planets re-bake at most every 150 ms (`PLANET_BAKE_DEBOUNCE_MS`): the first change shows at once, a drag every 150 ms, which keeps a drag smooth where a pure debounce would wait for the pointer to stop. The e2e test measures 7 ms from the slider's input event to the re-baked layer.
+- **The editor** is registry data (`packages/domain/src/registry/planet-form.ts`, shown under the `planetType` condition): surface (generated or uploaded), preset, seed with a dice button, palette, sea level, axial tilt, and switches with their own fields for atmosphere, clouds, rings and night lights. New widgets: `slider`, `seed` and `palette`. Selects now show an inherited value dimmed instead of "None".
+- **Uploads:** the image pipeline makes a `texture` variant for any image within 5 % of 2:1, stretched to exactly 2:1 and a power of two wide (at most 2,048). View payloads carry a planet's `surfaceTexture` (that variant, or `display` for other shapes), and the system view bakes it into the planet's layer once loaded. Atmosphere, clouds and night lights are stored and edited now, and drawn by M6-T3's globe.
+- **Tests:** `packages/domain/test/planet-presets.test.ts`, `apps/web/test/appearance-preview.test.ts`, the texture variant and `surfaceTexture` in `apps/api/test/assets.int.test.ts`, and `apps/web/e2e/planet-appearance.spec.ts` (determinism and seams for every preset and both outputs, each planet's own layer, the slider's live preview, dice, preset, and an upload). `pnpm perf` now times a 2,048 × 1,024 bake of three presets against the 50 ms budget: 4.9–10.5 ms in Chrome and 5–7 ms in WebKit on the M4 Max ([report](../../perf/2026-11-11-M6.md)). Headless browsers render in software (about 270 ms), so the e2e test only reports it.
 
 ### M6-T3 Orbit view
 

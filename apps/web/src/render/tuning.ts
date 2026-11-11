@@ -203,6 +203,13 @@ export const GALAXY_GLOW_MAX_PX = 480;
 
 /** Baked textures kept on the GPU; the least recently used is disposed past this. */
 export const BAKE_CACHE_SIZE = 48;
+/**
+ * Appearance edits re-bake a planet this long after the last change (rendering.md §9): sliders
+ * feel live without baking on every tick of a drag.
+ */
+export const PLANET_BAKE_DEBOUNCE_MS = 150;
+/** Uploaded planet maps kept loaded (M6-T2); the oldest is disposed past this. */
+export const UPLOADED_SURFACES_KEPT = 16;
 
 // ---------------------------------------------------------------------------------------------
 // Objects in the galaxy view (rendering.md §6)
@@ -619,6 +626,17 @@ export const SYSTEM_PLANET_MIN_PX = 4;
 export const SYSTEM_PLANET_MAX_PX = 100_000;
 /** A planet's sphere (rendering.md §7): 32 segments around, 16 from pole to pole. */
 export const PLANET_SEGMENTS = 32;
+/**
+ * The system view's planet textures (M6-T2): 256 × 128 texels, 2:1 like every map of a globe
+ * (360° around, 180° from pole to pole). A planet there covers at most a few hundred pixels,
+ * so more would never be seen; the orbit view bakes its own, larger ones.
+ */
+export const SYSTEM_PLANET_TEXTURE_PX = { width: 256, height: 128 } as const;
+/**
+ * Layers the system view's planet stack starts with (planet-texture-array.ts): 16 planets'
+ * surfaces, about 2.8 MB with mipmaps. A system with more grows it once.
+ */
+export const SYSTEM_PLANET_INITIAL_LAYERS = 16;
 export const PLANET_RINGS_SEGMENTS = 96;
 /** Planet rings without their own color and opacity use these. */
 export const PLANET_RINGS_COLOR = '#d8c9a8';

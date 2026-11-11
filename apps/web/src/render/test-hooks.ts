@@ -1,4 +1,5 @@
 import { CameraControlsImpl } from '@react-three/drei';
+import type { PlanetAppearance } from '@ge/domain';
 import { Vector3 } from 'three';
 import { gizmoAnchor, gizmoAxis } from '@/editor/gizmo-state.ts';
 import { GIZMO_SIZE } from '@/editor/move-tool.tsx';
@@ -10,6 +11,8 @@ import { useSelection } from '@/state/selection.ts';
 import { useNavigation } from '@/state/navigation.ts';
 import { viewNavigation } from '@/state/view-navigator.ts';
 import { orbitRingOf } from './orbits/orbit-rings.tsx';
+import { probePlanetBake, type PlanetBakeProbe } from './bake/planet/planet-bake-probe.ts';
+import { planetSurfaceOf } from './planets/planet-bodies.tsx';
 import { currentLights } from './stars/system-lights.ts';
 import { transitionsStarted, viewSettled } from './transition/transition-controller.ts';
 import { flyTo } from './camera/fly-to.ts';
@@ -118,6 +121,20 @@ export interface GeTestHooks {
   orbitRing(id: string): { center: [number, number, number]; radius: number } | null;
   /** Flies the camera to an object, as a double-click does; resolves when it has settled. */
   flyTo(id: string): Promise<void>;
+  /**
+   * Bakes a planet surface off screen and reads it back (M6-T2): a hash of its pixels, how far
+   * its left and right edges and its pole rows disagree (in 1/255 steps), and how long one
+   * bake took. Null without a canvas.
+   */
+  bakePlanet(
+    appearance: PlanetAppearance,
+    options?: { seed?: number; output?: 'surface' | 'layers'; widthPx?: number; heightPx?: number },
+  ): PlanetBakeProbe | null;
+  /**
+   * The surface a planet in the system view draws (M6-T2): its layer in the planets' array
+   * texture and the bake key (everything that shapes its pixels), or null if it isn't drawn.
+   */
+  planetSurface(id: string): { layer: number; key: string } | null;
   /** Where a page point meets the work plane (y = 0), as placing an object computes it. */
   workPlanePointAt(clientX: number, clientY: number): [number, number, number] | null;
   /** The placement ghost: its type and position, or null when nothing is being placed. */
@@ -252,6 +269,13 @@ export function installTestHooks(): void {
       const controls = canvasState()?.controls;
       if (object && controls instanceof CameraControlsImpl) await flyTo(controls, [object]);
     },
+    bakePlanet: (appearance, options = {}) => {
+      const state = canvasState();
+      if (!state) return null;
+      const { seed = 1, output = 'surface', widthPx = 256, heightPx = widthPx / 2 } = options;
+      return probePlanetBake(state.gl, appearance, seed, output, widthPx, heightPx);
+    },
+    planetSurface: (id) => planetSurfaceOf(id),
   };
 }
 

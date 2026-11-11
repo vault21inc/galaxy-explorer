@@ -47,6 +47,13 @@ export const ViewObject = z.object({
   appearance: Appearance,
   /** Displayed size in this view's unit, or null where the type isn't drawn as a body. */
   size: z.number().nullable(),
+  /**
+   * A planet's or moon's uploaded map of its globe (the `surface_texture` image, M6-T2), which
+   * it draws instead of its generated surface when `appearance.planet.texture` is `upload`:
+   * the 2:1 `texture` variant, or the display one for an image that isn't 2:1. Null for every
+   * other object, and for planets without one.
+   */
+  surfaceTexture: z.object({ assetId: Uuid, url: z.string(), isSpoiler: z.boolean() }).nullable(),
 });
 export type ViewObject = z.infer<typeof ViewObject>;
 

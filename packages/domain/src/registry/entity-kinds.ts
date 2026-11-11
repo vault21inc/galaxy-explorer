@@ -7,6 +7,7 @@ import {
   groupExtension,
   routeExtension,
 } from './extensions.ts';
+import { PLANET_FIELDS } from './planet-form.ts';
 
 /**
  * Entity kinds (architecture.md §3.1): everything the author writes about. Routes, query
@@ -223,6 +224,7 @@ export const entityKinds = defineEntityKinds({
           showWhen: 'systemChild',
         },
         ...REGION_FIELDS,
+        ...PLANET_FIELDS,
       ],
     },
     description:

@@ -19,6 +19,8 @@ export const BUDGETS = {
   /** Updating the labels per frame with up to 200 shown (rendering.md §11). */
   labelUpdateP95Ms: 2,
   initialJsGzipKb: 600,
+  /** Baking one planet surface at 2,048 × 1,024 on the GPU (rendering.md §9, M6-T2). */
+  planetBakeMs: 50,
 } as const;
 
 export interface FrameStats {
@@ -56,6 +58,8 @@ export interface SystemResult {
   /** Orbiting and zooming inside the busy system. */
   interaction: FrameStats;
   maxDrawCalls: number;
+  /** One 2,048 × 1,024 planet bake per preset timed, in ms (M6-T2). */
+  planetBakeMs: Record<string, number>;
   /** Each entry and exit, in order; the first entry also loads the view's code and data. */
   transitions: { enterMs: number[]; exitMs: number[] };
   roundTrips: { count: number; before: RenderInfo; after: RenderInfo };

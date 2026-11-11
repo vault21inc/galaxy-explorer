@@ -103,6 +103,53 @@ describe('POST /universes/{id}/assets', () => {
       }
     }));
 
+  it('makes an exactly 2:1, power-of-two `texture` variant for a map of a globe (M6-T2)', () =>
+    run(async (api, { universeId, mapId }) => {
+      const big = (await upload(api, universeId, await png(3_000, 1_500), 'big.png')).body.data;
+      expect(big.variants.texture).toEqual({
+        key: `u/${universeId}/${big.id as string}/texture.webp`,
+        width: 2_048,
+        height: 1_024,
+      });
+      const file = await stored(big.variants.texture.key as string);
+      const meta = await sharp(file).metadata();
+      expect([meta.width, meta.height]).toEqual([2_048, 1_024]);
+      // Nearly 2:1 is stretched to exactly 2:1; a small map gets the power of two below it.
+      const near = (await upload(api, universeId, await png(1_000, 510), 'near.png')).body.data;
+      expect(near.variants.texture).toMatchObject({ width: 512, height: 256 });
+      // Anything else isn't a globe map.
+      const photo = (await upload(api, universeId, await png(900, 600), 'photo.png')).body.data;
+      expect(photo.variants).not.toHaveProperty('texture');
+
+      // A planet's surface map reaches the system view as the texture variant.
+      const system = await api.expect(201, 'POST', `/maps/${mapId}/objects`, {
+        name: rt.plain('Corvid'),
+        baseType: 'system',
+        explorable: true,
+      });
+      const systemId = system.body.data.id as string;
+      const planet = await api.expect(201, 'POST', `/maps/${mapId}/objects`, {
+        name: rt.plain('Corvid Prime'),
+        baseType: 'planet',
+        parentId: systemId,
+        appearance: { planet: { texture: 'upload' } },
+      });
+      const planetId = planet.body.data.id as string;
+      await api.expect(201, 'POST', `/entities/${planetId}/images`, {
+        assetId: big.id,
+        role: 'surface_texture',
+      });
+      const view = await api.expect(200, 'GET', `/objects/${systemId}/views/system`);
+      const child = (view.body.data.children as { id: string; surfaceTexture: unknown }[]).find(
+        (object) => object.id === planetId,
+      );
+      expect(child?.surfaceTexture).toEqual({
+        assetId: big.id,
+        url: `/media/u/${universeId}/${big.id as string}/texture.webp`,
+        isSpoiler: false,
+      });
+    }));
+
   it('never enlarges a small image', () =>
     run(async (api, { universeId }) => {
       const { body } = await upload(api, universeId, await png(120, 80));
