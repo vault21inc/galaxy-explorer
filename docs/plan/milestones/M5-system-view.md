@@ -91,7 +91,7 @@
 **Done when:**
 - [x] A system with 1 star, 12 planets, 2 belts and 5 stations stays within 80 draw calls; so does a triple-star system with 12 planets, lit by all three stars (D-29).
 - [x] Hover, selection and labels behave as in the galaxy view (shared e2e helpers).
-- [ ] Screenshots are reviewed by the owner against the references.
+- [x] Screenshots are reviewed by the owner against the references. (Approved on 2026-11-10: "Looks good". No reference images exist in `docs/design/references/`, so the review was by eye.)
 
 **As built:**
 - **Renderers.** The registry's `system` entries are `StarBodies` (`render/stars/`), `PlanetBodies` with `PlanetRings` (`render/planets/`), `AsteroidBelts` (`render/belts/`) and the existing `IconSprites`; anything else is a small sphere. `OrbitRings` (`render/orbits/`) and `GalaxyBand` (`render/system/`) belong to the level, like the galaxy view's outlines. Stars and planets share `bodies/use-instanced-spheres.ts`: one instanced sphere per renderer, with the move preview and the scene index.
@@ -149,13 +149,20 @@
 - Extend `pnpm perf` with the system-view phases and the transitions.
 
 **Done when:**
-- [ ] The leak test passes in CI (Chromium) and locally (WebKit).
-- [ ] The performance report covers the galaxy view, the system view and transitions, all within rendering.md §2.
+- [x] The leak test passes in CI (Chromium) and locally (WebKit).
+- [x] The performance report covers the galaxy view, the system view and transitions, all within rendering.md §2.
+
+**As built:**
+- **The leak test** (`e2e/leaks.spec.ts`) makes one warm-up round trip on the demo map, then 20 more, and compares `renderInfo()` geometries and textures: 11 / 4 before and after, in Chromium and WebKit. The warm-up exists because the first entry bakes the star granulation into the bake cache, which keeps it for the page by design. Reduced motion keeps each trip short; the views swap the same way.
+- **The disposal audit** found nothing to fix. Every view's `new` geometries, materials and lines are disposed on unmount or replacement; JSX-created materials are R3F's to dispose. The leak test and `pnpm perf`'s round trips both stay level.
+- **`pnpm perf`** gains `scripts/perf/system-path.ts`. In view mode it makes the stress map's first system busy through the API (explorable, 1 star, 12 planets, one ringed, 2 belts, 5 stations), times 3 entries and exits, orbits and zooms inside the system, and checks GPU memory over 20 round trips. The report adds the system view's frame times and draw calls (budget 80), the transition times (700 ms, judged with data cached; the first entry is shown) and the memory drift (±5 %). System phases don't count toward the galaxy view's draw-call budget.
+- **Transitions shortened.** The plan's step lengths (fly 350, fade 150, ease 300 ms) took about 835 ms, over the 700 ms budget. They're now 260, 120 and 220 ms, and entering or leaving takes 627–662 ms with data cached ([report](../../perf/2026-11-11-M5.md)).
+- **The test hooks' `enter()` and `exit()`** resolve when the new view has faded in, which is what the transition times measure.
 
 ---
 
 ## Milestone acceptance
 
 - [ ] All tasks are checked off; CI is green.
-- [ ] The performance report is committed.
+- [x] The performance report is committed ([2026-11-11-M5.md](../../perf/2026-11-11-M5.md)).
 - [ ] The owner has entered and left systems with mouse and trackpad and finds the push threshold neither twitchy nor sticky. Tuning changes are recorded in `tuning.ts` comments.

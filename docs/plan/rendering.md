@@ -92,9 +92,9 @@ export const renderers = {
 ```
 
 - **Entering a view** (S2) happens in three steps:
-  1. The camera flies toward the object, about 350 ms with camera-controls' built-in transition. The next view's payload was already prefetched when the object became the zoom target.
-  2. A 150 ms fade to black, during which the views swap.
-  3. The new view's camera starts at its far "entry pose" and eases to its default pose over about 300 ms while the fade clears.
+  1. The camera flies toward the object, about 260 ms with camera-controls' built-in transition (M5-T5 shortened the plan's 350 ms, fade 150 ms and ease 300 ms to 260, 120 and 220 ms, to meet the 700 ms budget). The next view's payload was already prefetched when the object became the zoom target.
+  2. A 120 ms fade to black, during which the views swap.
+  3. The new view's camera starts at its far "entry pose" and eases to its default pose while the fade clears, over 220 ms.
 
   The parent view's camera pose is saved on the navigation stack.
 - **Leaving** does the same in reverse and restores the saved pose. A view opened from a link has no saved pose for its parent, so the parent's camera looks at the object just left instead (M5-T1).

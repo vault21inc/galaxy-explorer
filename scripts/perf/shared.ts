@@ -9,6 +9,11 @@ export const BUDGETS = {
   interactionMedianMs: 1_000 / 60,
   interactionP95Ms: 25,
   galaxyDrawCalls: 50,
+  systemDrawCalls: 80,
+  /** Entering or leaving a view, from the request to the faded-in new view, data cached. */
+  transitionMs: 700,
+  /** Geometries and textures after 20 view round trips, against before: within 5 %. */
+  memoryDrift: 0.05,
   firstFrameMs: 2_000,
   idleFrames: 0,
   /** Updating the labels per frame with up to 200 shown (rendering.md §11). */
@@ -46,6 +51,16 @@ export const PERF_MODE: PerfMode = process.env.PERF_MODE === 'edit' ? 'edit' : '
 /** Objects selected in edit mode: the M3 acceptance's "100 objects selected". */
 export const EDIT_SELECTION = 100;
 
+/** The system view's part of a run (system-path.ts, M5-T5). */
+export interface SystemResult {
+  /** Orbiting and zooming inside the busy system. */
+  interaction: FrameStats;
+  maxDrawCalls: number;
+  /** Each entry and exit, in order; the first entry also loads the view's code and data. */
+  transitions: { enterMs: number[]; exitMs: number[] };
+  roundTrips: { count: number; before: RenderInfo; after: RenderInfo };
+}
+
 /** One browser's run, written by path.spec.ts and read by report.ts. */
 export interface PerfResult {
   project: string;
@@ -63,4 +78,6 @@ export interface PerfResult {
   maxDrawCalls: number;
   memory: { start: RenderInfo; end: RenderInfo };
   objects: number;
+  /** View mode only (M5-T5). */
+  system?: SystemResult;
 }

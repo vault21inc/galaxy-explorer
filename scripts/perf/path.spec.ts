@@ -3,11 +3,12 @@ import { resolve } from 'node:path';
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import type { FrameStats, PerfResult, PhaseResult, RenderInfo } from './shared.ts';
 import { EDIT_SELECTION, PERF_MODE, REPO_ROOT, RESULTS_DIR } from './shared.ts';
+import { prepareSystem, systemPhases } from './system-path.ts';
 
 /**
- * The scripted path (rendering.md §14), galaxy view only until M5 adds entering and leaving
- * views: load the stress map, sit idle, orbit, pan, zoom toward the cursor, then orbit with
- * every label shown. Each phase records frame times and the renderer's counters through
+ * The scripted path (rendering.md §14): load the stress map, sit idle, orbit, pan, zoom toward
+ * the cursor, then orbit with every label shown. In view mode it then enters and leaves a busy
+ * system, orbits and zooms inside it, and makes 20 round trips (system-path.ts, M5-T5). Each phase records frame times and the renderer's counters through
  * `window.__GE_TEST__`; report.ts checks them against the budgets.
  *
  * With `--edit` (PERF_MODE=edit, the M3 acceptance) the same path runs in edit mode, with a
@@ -27,6 +28,10 @@ interface Hooks {
   visibleLabels(): unknown[];
   underlay(): unknown;
   selectedIds(): string[];
+  hoveredId(): string | null;
+  level(): { level: string; subjectId: string | null } | null;
+  enter(id: string): Promise<void>;
+  exit(): Promise<void>;
 }
 declare global {
   interface Window {
@@ -147,7 +152,7 @@ async function prepareEditMode(request: APIRequestContext): Promise<string[]> {
 /**
  * Zooms with the wheel at a point. Zooming in over an object would stop at it and push into
  * its view (M5-T2), which this galaxy path mustn't do, so before each step the pointer moves to
- * the nearest spot with nothing under it. The system-view phases arrive with M5-T5.
+ * the nearest spot with nothing under it.
  */
 async function wheel(page: Page, at: { x: number; y: number }, deltaY: number, ticks: number) {
   let spot = await emptySpotNear(page, at);
@@ -190,9 +195,11 @@ test('the galaxy view stays within its budgets', async ({ page, browser }, testI
   const idleFrames: number[] = [];
   let maxDrawCalls = 0;
 
+  // Galaxy-view draw calls are counted until the system view's phases begin (budget 80, not 50).
+  let inGalaxy = true;
   const renderInfo = async () => {
     const info = await evaluateHooks<RenderInfo>(page, 'h.renderInfo()');
-    maxDrawCalls = Math.max(maxDrawCalls, info.calls);
+    if (inGalaxy) maxDrawCalls = Math.max(maxDrawCalls, info.calls);
     return info;
   };
   let labelsShown = 0;
@@ -222,6 +229,7 @@ test('the galaxy view stays within its budgets', async ({ page, browser }, testI
   // region, and the depth stars (6 draw calls, 25,000 points). Measured in the page, on its
   // own clock, which starts at navigation.
   const selection = EDITING ? await prepareEditMode(page.request) : [];
+  const systemId = EDITING ? null : await prepareSystem(page.request);
   await page.goto(EDITING ? `${MAP}?select=${selection.join(',')}` : MAP);
   const firstFrame = await page.waitForFunction(
     () => {
@@ -281,6 +289,20 @@ test('the galaxy view stays within its budgets', async ({ page, browser }, testI
   );
   const end = await renderInfo();
 
+  inGalaxy = false;
+  const system = systemId
+    ? await systemPhases({
+        page,
+        systemId,
+        center,
+        phase: (name, run) => phase(name, run),
+        drag: (from, by) => drag(page, from, by),
+        wheel: (at, deltaY, ticks) => wheel(page, at, deltaY, ticks),
+        waitForIdle: () => waitForIdle(page),
+        renderInfo,
+      })
+    : undefined;
+
   const result: PerfResult = {
     project: testInfo.project.name,
     mode: PERF_MODE,
@@ -301,6 +323,7 @@ test('the galaxy view stays within its budgets', async ({ page, browser }, testI
     interaction,
     maxDrawCalls,
     memory: { start, end },
+    ...(system ? { system } : {}),
     objects: await page.evaluate(async () => {
       const universes = (await (await fetch('/api/v1/universes')).json()) as {
         data: { id: string; slug: string }[];

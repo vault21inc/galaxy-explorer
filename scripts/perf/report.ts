@@ -91,7 +91,7 @@ const checks: Check[] = [
     ),
   },
   {
-    metric: 'Draw calls, the most in any phase',
+    metric: 'Galaxy view draw calls, the most in any phase',
     budget: `≤ ${BUDGETS.galaxyDrawCalls.toString()}`,
     values: each((r) => r.maxDrawCalls.toString()),
     pass: all((r) => r.maxDrawCalls <= BUDGETS.galaxyDrawCalls),
@@ -123,7 +123,7 @@ const checks: Check[] = [
     // when the camera turns (edit mode's height gizmo, say) arrives during the first orbit. A
     // leak keeps growing; what matters is that nothing grows after that warm-up.
     metric: 'GPU memory: geometries / textures at the start, after the first orbit, and at the end',
-    budget: 'level after the first orbit (20 view round trips arrive with M5)',
+    budget: 'level after the first orbit',
     values: each((r) => {
       const warm = r.phases.orbit?.render ?? r.memory.start;
       const show = (info: { geometries: number; textures: number }) =>
@@ -135,7 +135,75 @@ const checks: Check[] = [
       return warm.geometries === r.memory.end.geometries && warm.textures === r.memory.end.textures;
     }),
   },
+  ...systemChecks(),
 ];
+
+/**
+ * The system view and moving between views (M5-T5), in view-mode runs. The transition budget
+ * applies "including data when cached", so the first entry, which also loads the system view's
+ * code and payload, is shown but not judged.
+ */
+function systemChecks(): Check[] {
+  const runs = results.filter((r) => r.system);
+  if (runs.length !== results.length) return [];
+  const sys = (r: PerfResult) => {
+    if (!r.system) throw new Error('No system result.');
+    return r.system;
+  };
+  const warm = (times: number[]) => times.slice(1);
+  const transitions = (r: PerfResult) => {
+    const { enterMs, exitMs } = sys(r).transitions;
+    return [...warm(enterMs), ...exitMs];
+  };
+  const memory = (info: { geometries: number; textures: number }) =>
+    `${info.geometries.toString()} / ${info.textures.toString()}`;
+  const drift = (before: number, after: number) => Math.abs(after - before) / Math.max(before, 1);
+  return [
+    {
+      metric:
+        'System view (1 star, 12 planets, 2 belts, 5 stations), orbit and zoom: median / p95 frame',
+      budget: `≤ ${fmt(BUDGETS.interactionMedianMs)} (60 fps) / ≤ ${fmt(BUDGETS.interactionP95Ms)}`,
+      values: each((r) => stats(sys(r).interaction)),
+      pass: all(
+        (r) =>
+          sys(r).interaction.medianMs <= BUDGETS.interactionMedianMs + timerSlackMs(r) &&
+          sys(r).interaction.p95Ms <= BUDGETS.interactionP95Ms,
+      ),
+    },
+    {
+      metric: 'System view draw calls, the most in any phase',
+      budget: `≤ ${BUDGETS.systemDrawCalls.toString()}`,
+      values: each((r) => sys(r).maxDrawCalls.toString()),
+      pass: all((r) => sys(r).maxDrawCalls <= BUDGETS.systemDrawCalls),
+    },
+    {
+      metric:
+        'View transitions, request to faded-in view: entering (first, with loading; then cached) / leaving',
+      budget: `≤ ${fmt(BUDGETS.transitionMs)} with data cached`,
+      values: each((r) => {
+        const { enterMs, exitMs } = sys(r).transitions;
+        return `${enterMs.map((ms) => ms.toFixed(0)).join(', ')} / ${exitMs.map((ms) => ms.toFixed(0)).join(', ')} ms`;
+      }),
+      pass: all((r) => transitions(r).every((ms) => ms <= BUDGETS.transitionMs)),
+    },
+    {
+      metric: `GPU memory: geometries / textures before and after ${String(runs[0]?.system?.roundTrips.count ?? 20)} galaxy ↔ system round trips`,
+      budget: `within ±${(BUDGETS.memoryDrift * 100).toFixed(0)} %`,
+      values: each((r) => {
+        const { before, after } = sys(r).roundTrips;
+        return `${memory(before)} → ${memory(after)}`;
+      }),
+      pass: all((r) => {
+        const { before, after } = sys(r).roundTrips;
+        return (
+          drift(before.geometries, after.geometries) <= BUDGETS.memoryDrift &&
+          drift(before.textures, after.textures) <= BUDGETS.memoryDrift
+        );
+      }),
+    },
+  ];
+}
+
 const jsCheck: Check = {
   metric: 'Initial JavaScript, gzipped; each view its own chunk',
   budget: `≤ ${BUDGETS.initialJsGzipKb.toString()} kB`,
@@ -179,7 +247,7 @@ Written by \`pnpm perf\` (scripts/perf/) against the budgets in [rendering.md §
 - **Display refresh rate, measured:** ${results.map((r) => `${r.project} ${r.refreshHz.toString()} Hz`).join(', ')}. Frame intervals can't be shorter than the display's.
 - **Mode:** ${modeLine}.
 - **Content:** the stress map, ${results[0]?.objects.toLocaleString('en') ?? '?'} objects (300 groups and 50 routes are drawn from M4).
-- **Path:** load; 3 s idle; orbit (3 left-drags); pan (2 right-drags); zoom toward the cursor (100 wheel steps at two points); orbit again holding Space (every label shown). 3 s idle after each phase. Pointer steps are 16 ms apart.
+- **Path:** load; 3 s idle; orbit (3 left-drags); pan (2 right-drags); zoom toward the cursor (100 wheel steps at two points); orbit again holding Space (every label shown). ${editing ? '' : "Then the system view: the map's first system made busy (1 star, 12 planets, one ringed, 2 belts, 5 stations); 3 timed entries and exits; orbit (3 left-drags) and zoom (48 wheel steps over empty space) inside it; 20 more round trips. "}3 s idle after each phase. Pointer steps are 16 ms apart.
 
 ## Budgets
 
@@ -188,7 +256,7 @@ Written by \`pnpm perf\` (scripts/perf/) against the budgets in [rendering.md §
 ${checks.map((check) => row([check.metric, check.budget, ...check.values, check.pass ? 'pass' : '**miss**'])).join('\n')}
 ${row([jsCheck.metric, jsCheck.budget, ...results.map((_, i) => (i === 0 ? (jsCheck.values[0] ?? '') : 'same build')), jsCheck.pass ? 'pass' : '**miss**'])}
 
-Not measured yet: view transitions (M5) and GPU memory over 20 galaxy → system → orbit round trips (M5, M6).
+${editing ? 'The system view and transitions are measured in view-mode runs.' : 'Not measured yet: the orbit view (M6), whose round trips join the memory check.'}
 
 ## Phases
 

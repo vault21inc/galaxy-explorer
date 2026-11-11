@@ -506,9 +506,11 @@ export const SYSTEM_FOCUS_DISTANCE_EXTENTS = 0.35;
  * long, the screen fades to black, the views swap behind the black, and the screen fades back
  * while the new camera eases into place.
  */
-export const VIEW_FLY_MS = 350;
-export const VIEW_FADE_OUT_MS = 150;
-export const VIEW_FADE_IN_MS = 300;
+// Together, with the swap (~35 ms measured), within the 700 ms transition budget (rendering.md
+// §2, M5-T5). The plan's first numbers (350 + 150 + 300 ms) added up to more than the budget.
+export const VIEW_FLY_MS = 260;
+export const VIEW_FADE_OUT_MS = 120;
+export const VIEW_FADE_IN_MS = 220;
 /** With `prefers-reduced-motion`, no camera moves: one quick fade out and back in instead. */
 export const VIEW_REDUCED_FADE_MS = 100;
 /**

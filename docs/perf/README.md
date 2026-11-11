@@ -58,6 +58,7 @@ Added in M2-T8 (rendering.md §14). Run it on the reference Mac, with nothing el
    - sits idle for 3 s;
    - orbits, pans, and zooms toward the cursor (pointer steps 16 ms apart);
    - orbits again holding Space, with every label shown;
+   - in view mode (M5-T5), makes the map's first system busy (1 star, 12 planets, 2 belts, 5 stations), times 3 entries and exits, orbits and zooms inside it, and checks GPU memory over 20 more round trips;
    - sits idle 3 s after each phase.
 4. Writes `docs/perf/<date>-M2.md` (`PERF_LABEL` changes the milestone) with every budget of rendering.md §2 it can measure, and exits with an error if one is missed. Raw results stay in `scripts/perf/results/` (not committed).
 
