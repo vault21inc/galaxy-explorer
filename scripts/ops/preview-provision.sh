@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Sets up a fresh Ubuntu LTS server for the private preview (docs/ops/preview.md, step 2).
-# Run once as root; running it again changes nothing that's already set up.
+# Run once as root; running it again changes nothing that's already set up. The first run
+# turns off root's SSH login, so run it again as the admin user, with sudo:
 #
-#   ADMIN_USER=deploy bash preview-provision.sh
+#   ADMIN_USER=deploy bash preview-provision.sh           (first time, as root)
+#   sudo ADMIN_USER=deploy bash preview-provision.sh      (later, as deploy)
 #
 # It creates your admin login (with root's SSH keys), locks SSH to keys only, opens only SSH,
 # HTTP and HTTPS, turns on automatic security updates, installs Docker, Node, pnpm and Caddy,
@@ -102,10 +104,13 @@ echo "== The app's user and folders"
 id ge >/dev/null 2>&1 || adduser --system --group --home "$ROOT_DIR" --shell /bin/bash ge
 install -d -o ge -g ge "$ROOT_DIR" "$ROOT_DIR/media"
 install -d -o root -g root -m 700 "$ROOT_DIR/backups"
+install -d -m 700 -o ge -g ge "$ROOT_DIR/.ssh"
 if [[ ! -f "$ROOT_DIR/.ssh/id_ed25519" ]]; then
-  install -d -m 700 -o ge -g ge "$ROOT_DIR/.ssh"
   sudo -u ge ssh-keygen -q -t ed25519 -N "" -C "galaxy-explorer-preview" -f "$ROOT_DIR/.ssh/id_ed25519"
-  sudo -u ge sh -c "ssh-keyscan -q github.com >> $ROOT_DIR/.ssh/known_hosts"
+fi
+# GitHub's host keys, so the first clone doesn't stop to ask. (Ubuntu's ssh-keyscan has no -q.)
+if ! grep -q '^github.com ' "$ROOT_DIR/.ssh/known_hosts" 2>/dev/null; then
+  ssh-keyscan github.com 2>/dev/null | sudo -u ge tee -a "$ROOT_DIR/.ssh/known_hosts" >/dev/null
 fi
 
 echo "== Nightly backups at 03:30"
