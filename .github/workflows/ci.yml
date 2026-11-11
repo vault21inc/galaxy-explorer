@@ -22,7 +22,10 @@ permissions:
 jobs:
   ci:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # The e2e suite under software rendering took about 15.5 of a run's 19.5 minutes by M5,
+    # and the next run went over 20. If it nears this again, split the e2e tests across jobs
+    # (Playwright's --shard) rather than raising it further.
+    timeout-minutes: 35
 
     services:
       # The test database server, like `db-test` in docker/compose.dev.yml.
