@@ -32,6 +32,8 @@ export default defineConfig({
   // GPU memory over 20 round trips: too slow and timing-sensitive with software rendering.
   // `pnpm perf` checks it on the reference Mac (scripts/perf/system-path.ts).
   testIgnore: isCI ? ['**/leaks.spec.ts'] : [],
+  // Read by tests whose numbers depend on the machine's speed (test.info().config.metadata).
+  metadata: { softwareRendering: isCI },
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,

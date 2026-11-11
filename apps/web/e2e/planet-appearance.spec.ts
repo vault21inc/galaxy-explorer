@@ -84,6 +84,8 @@ async function planetOf(request: APIRequestContext, id: string) {
 
 test.describe('planet surfaces (M6-T2)', () => {
   test('bakes are deterministic and seamless, for every preset', async ({ page }) => {
+    // Every preset is baked and read back: slow with CI's software rendering.
+    test.slow();
     const s = await setUp(page.request);
     await openSystem(page, `${s.url}/view/${s.system}`);
 
