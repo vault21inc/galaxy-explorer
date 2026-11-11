@@ -64,6 +64,7 @@ export {
   SystemStar,
   OrbitView,
   Sunlight,
+  Satellite,
   SystemView,
   ViewGroup,
   ViewGroupMember,

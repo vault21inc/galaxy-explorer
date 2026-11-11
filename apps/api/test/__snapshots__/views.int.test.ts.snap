@@ -531,6 +531,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "status": "published",
       },
     ],
+    "satellites": [],
     "subject": {
       "appearance": {
         "color": "#c9a66b",
@@ -689,6 +690,38 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
       "nameRedacted": "The Present Era",
       "nameSpoiler": false,
     },
+    "satellites": [
+      {
+        "appearance": {
+          "color": "#c9ccd3",
+          "labelPriority": 2,
+          "planet": {
+            "preset": "barren",
+            "texture": "preset",
+          },
+          "showOrbit": true,
+        },
+        "baseType": "moon",
+        "explorable": true,
+        "id": "<id 22>",
+        "isSpoiler": false,
+        "namePlain": "Primus Minor",
+        "nameRedacted": "Primus Minor",
+        "nameSpoiler": false,
+        "orbitCenterId": null,
+        "parentId": "<id 19>",
+        "position": [
+          3.2,
+          0,
+          0,
+        ],
+        "size": 0.27,
+        "status": "published",
+        "subtypeId": null,
+        "surfaceTexture": null,
+        "version": 1,
+      },
+    ],
     "subject": {
       "appearance": {
         "color": "#ffe6a8",

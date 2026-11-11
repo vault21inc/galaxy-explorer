@@ -51,6 +51,8 @@ export const renderers: Partial<Record<ViewLevel, LevelRenderers>> = {
     default: instancedBodies,
     star: starBodies,
     planet: planetBodies,
+    // Moons beside their planets (system/satellites.ts).
+    moon: planetBodies,
     asteroid_belt: asteroidBelts,
     station: iconSprites,
     marker: iconSprites,

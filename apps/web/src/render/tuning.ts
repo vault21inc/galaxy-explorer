@@ -486,6 +486,11 @@ export const GALAXY_FOCUS_DISTANCE_RADII = 0.12;
 
 /** An empty or tiny system is framed as if it reached this far. */
 export const SYSTEM_MIN_EXTENT_SU = 4;
+/**
+ * Moons and stations beside their planets in the system view (system/satellites.ts): this
+ * many times their orbit-view distance, counted in the planet's system-view radii.
+ */
+export const SYSTEM_SATELLITE_SPREAD = 1;
 /** Where the camera starts: this many extents from the center, tilted like the galaxy view. */
 export const SYSTEM_START_DISTANCE_EXTENTS = 1.6;
 export const SYSTEM_START_TILT_DEG = 55;
@@ -520,8 +525,12 @@ export const SYSTEM_FOCUS_DISTANCE_EXTENTS = 0.35;
 export const ORBIT_MIN_DISTANCE_RADII = 1.15;
 /** Zooming out past this leaves the orbit view for the one above it. */
 export const ORBIT_EXIT_RADII = 8;
-/** Where the camera starts: this far out, so the whole globe and its near moons are in view. */
+/** Where the camera starts: at least this far out, so the whole globe is in view… */
 export const ORBIT_START_DISTANCE_RADII = 3.2;
+/** …and this many times the reach of its farthest moon or station, so they're in view too. */
+export const ORBIT_FRAME_EXTENTS = 1.9;
+/** With moons that far out, zooming out leaves the view this many times the start distance. */
+export const ORBIT_EXIT_BEYOND_START = 1.4;
 /**
  * How far round from the sunlit side the camera starts, in degrees about the vertical: 0 looks
  * straight at the day side (flat, no shading), 90 at the line between day and night. Between,
@@ -529,7 +538,7 @@ export const ORBIT_START_DISTANCE_RADII = 3.2;
  */
 export const ORBIT_START_FROM_SUN_DEG = 70;
 /** And how far above the equator it starts, in degrees. */
-export const ORBIT_START_ELEVATION_DEG = 20;
+export const ORBIT_START_ELEVATION_DEG = 28;
 /** Fixed clipping planes, in radii: far ÷ near is 10⁵, easy for a 24-bit depth buffer. */
 export const ORBIT_NEAR_RADII = 0.01;
 export const ORBIT_FAR_RADII = 1_000;

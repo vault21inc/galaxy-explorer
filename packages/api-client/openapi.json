@@ -3447,13 +3447,170 @@
             "items": {
               "$ref": "#/components/schemas/ViewObjectInput"
             }
+          },
+          "satellites": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "baseType": {
+                  "type": "string",
+                  "enum": [
+                    "system",
+                    "star",
+                    "planet",
+                    "moon",
+                    "asteroid_belt",
+                    "station",
+                    "nebula",
+                    "anomaly",
+                    "black_hole",
+                    "marker"
+                  ]
+                },
+                "subtypeId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "namePlain": {
+                  "type": "string"
+                },
+                "nameSpoiler": {
+                  "type": "boolean"
+                },
+                "nameRedacted": {
+                  "type": "string"
+                },
+                "isSpoiler": {
+                  "type": "boolean"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "draft",
+                    "published"
+                  ]
+                },
+                "version": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "explorable": {
+                  "type": "boolean"
+                },
+                "position": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "items": false,
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "orbitCenterId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "appearance": {
+                  "$ref": "#/components/schemas/AppearanceInput"
+                },
+                "size": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "surfaceTexture": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "assetId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "url": {
+                          "type": "string"
+                        },
+                        "isSpoiler": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "assetId",
+                        "url",
+                        "isSpoiler"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "parentId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              },
+              "required": [
+                "id",
+                "baseType",
+                "subtypeId",
+                "namePlain",
+                "nameSpoiler",
+                "nameRedacted",
+                "isSpoiler",
+                "status",
+                "version",
+                "explorable",
+                "position",
+                "orbitCenterId",
+                "appearance",
+                "size",
+                "surfaceTexture",
+                "parentId"
+              ]
+            }
           }
         },
         "required": [
           "map",
           "ancestors",
           "subject",
-          "children"
+          "children",
+          "satellites"
         ]
       },
       "OrbitViewInput": {
@@ -3702,6 +3859,162 @@
               "$ref": "#/components/schemas/ViewObjectInput"
             }
           },
+          "satellites": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "baseType": {
+                  "type": "string",
+                  "enum": [
+                    "system",
+                    "star",
+                    "planet",
+                    "moon",
+                    "asteroid_belt",
+                    "station",
+                    "nebula",
+                    "anomaly",
+                    "black_hole",
+                    "marker"
+                  ]
+                },
+                "subtypeId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "namePlain": {
+                  "type": "string"
+                },
+                "nameSpoiler": {
+                  "type": "boolean"
+                },
+                "nameRedacted": {
+                  "type": "string"
+                },
+                "isSpoiler": {
+                  "type": "boolean"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "draft",
+                    "published"
+                  ]
+                },
+                "version": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "explorable": {
+                  "type": "boolean"
+                },
+                "position": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "items": false,
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "orbitCenterId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "appearance": {
+                  "$ref": "#/components/schemas/AppearanceInput"
+                },
+                "size": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "surfaceTexture": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "assetId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "url": {
+                          "type": "string"
+                        },
+                        "isSpoiler": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "assetId",
+                        "url",
+                        "isSpoiler"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "parentId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              },
+              "required": [
+                "id",
+                "baseType",
+                "subtypeId",
+                "namePlain",
+                "nameSpoiler",
+                "nameRedacted",
+                "isSpoiler",
+                "status",
+                "version",
+                "explorable",
+                "position",
+                "orbitCenterId",
+                "appearance",
+                "size",
+                "surfaceTexture",
+                "parentId"
+              ]
+            }
+          },
           "pins": {
             "type": "array",
             "items": {
@@ -3751,6 +4064,7 @@
           "ancestors",
           "subject",
           "children",
+          "satellites",
           "pins",
           "sunlight"
         ]
@@ -11795,13 +12109,172 @@
             "items": {
               "$ref": "#/components/schemas/ViewObject"
             }
+          },
+          "satellites": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "baseType": {
+                  "type": "string",
+                  "enum": [
+                    "system",
+                    "star",
+                    "planet",
+                    "moon",
+                    "asteroid_belt",
+                    "station",
+                    "nebula",
+                    "anomaly",
+                    "black_hole",
+                    "marker"
+                  ]
+                },
+                "subtypeId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "namePlain": {
+                  "type": "string"
+                },
+                "nameSpoiler": {
+                  "type": "boolean"
+                },
+                "nameRedacted": {
+                  "type": "string"
+                },
+                "isSpoiler": {
+                  "type": "boolean"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "draft",
+                    "published"
+                  ]
+                },
+                "version": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "explorable": {
+                  "type": "boolean"
+                },
+                "position": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "items": false,
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "orbitCenterId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "appearance": {
+                  "$ref": "#/components/schemas/Appearance"
+                },
+                "size": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "surfaceTexture": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "assetId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "url": {
+                          "type": "string"
+                        },
+                        "isSpoiler": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "assetId",
+                        "url",
+                        "isSpoiler"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "parentId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              },
+              "required": [
+                "id",
+                "baseType",
+                "subtypeId",
+                "namePlain",
+                "nameSpoiler",
+                "nameRedacted",
+                "isSpoiler",
+                "status",
+                "version",
+                "explorable",
+                "position",
+                "orbitCenterId",
+                "appearance",
+                "size",
+                "surfaceTexture",
+                "parentId"
+              ],
+              "additionalProperties": false
+            }
           }
         },
         "required": [
           "map",
           "ancestors",
           "subject",
-          "children"
+          "children",
+          "satellites"
         ],
         "additionalProperties": false
       },
@@ -12055,6 +12528,164 @@
               "$ref": "#/components/schemas/ViewObject"
             }
           },
+          "satellites": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "baseType": {
+                  "type": "string",
+                  "enum": [
+                    "system",
+                    "star",
+                    "planet",
+                    "moon",
+                    "asteroid_belt",
+                    "station",
+                    "nebula",
+                    "anomaly",
+                    "black_hole",
+                    "marker"
+                  ]
+                },
+                "subtypeId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "namePlain": {
+                  "type": "string"
+                },
+                "nameSpoiler": {
+                  "type": "boolean"
+                },
+                "nameRedacted": {
+                  "type": "string"
+                },
+                "isSpoiler": {
+                  "type": "boolean"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "draft",
+                    "published"
+                  ]
+                },
+                "version": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "explorable": {
+                  "type": "boolean"
+                },
+                "position": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "items": false,
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "orbitCenterId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "appearance": {
+                  "$ref": "#/components/schemas/Appearance"
+                },
+                "size": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "surfaceTexture": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "assetId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "url": {
+                          "type": "string"
+                        },
+                        "isSpoiler": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "assetId",
+                        "url",
+                        "isSpoiler"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "parentId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              },
+              "required": [
+                "id",
+                "baseType",
+                "subtypeId",
+                "namePlain",
+                "nameSpoiler",
+                "nameRedacted",
+                "isSpoiler",
+                "status",
+                "version",
+                "explorable",
+                "position",
+                "orbitCenterId",
+                "appearance",
+                "size",
+                "surfaceTexture",
+                "parentId"
+              ],
+              "additionalProperties": false
+            }
+          },
           "pins": {
             "type": "array",
             "items": {
@@ -12105,6 +12736,7 @@
           "ancestors",
           "subject",
           "children",
+          "satellites",
           "pins",
           "sunlight"
         ],

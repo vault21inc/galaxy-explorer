@@ -106,6 +106,10 @@
 - **The orbit camera** (`orbit-camera.ts`) keeps its target on the globe's center (elsewhere, the 1.15-radii minimum could put the camera inside the globe), turns freely to within 1° of the poles, and starts 70° round from the sunlit side so the view shows day and night. Exit beyond 8 radii, through M5-T2's exit push.
 - **Editable:** the levels registry gives the orbit view an `edit` entry, so moons, stations and markers are added and moved around a globe with the same tools as in a system, and the view has its outliner and info panel. Pins arrive in M6-T4.
 - **Ambient motion:** a switch in the quality settings (remembered, off by default, and off under reduced motion whatever it says). While on, a timer asks for 30 frames a second; the planet turns 4° a second and its clouds a little faster.
+- **After the owner's review:**
+  - **Moons in the system view:** a system view's payload carries its planets' children as `satellites`, and the system view draws them beside their planet at their orbit-view distance in the planet's system-view radii (rendering.md §7). They can be selected and entered, not moved there.
+  - **The start pose frames the moons:** the orbit camera starts 1.9 × the farthest child's reach out (at least 3.2 radii) and 28° above the equator, and exits beyond 8 radii or 1.4 × that start.
+  - **Flying to a moon:** the camera's target was pinned to the globe's center, so a double-click on a moon dived into the planet. The target may now move to a moon, and `keepOutsideRadius` keeps the camera itself 1.15 radii from the center.
 - **Tests:** `apps/web/e2e/orbit-view.spec.ts` (system → planet → moon → back twice to the saved pose, draw calls, camera limits, lights; idle 0 frames, ambient motion 21–28 fps in the headless browsers, reduced motion), the leak test's galaxy → system → orbit round trips (11 / 7 → 11 / 7), the rogue planet straight from the galaxy in `views.spec.ts`, and `orbits.int.test.ts` for the sunlight.
 
 ### M6-T4 Pins, the icon set and event categories

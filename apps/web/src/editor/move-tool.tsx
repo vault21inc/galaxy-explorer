@@ -105,8 +105,10 @@ export function MoveTool({ view }: { view: EditView }) {
   };
   // The listeners below read these through refs, current at call time.
   const carriedRef = useRef(carried);
+  const currentRef = useRef(current);
   useEffect(() => {
     carriedRef.current = carried;
+    currentRef.current = current;
   });
   // The pointer and gizmo handlers outlive renders; they call the latest `commit` through this.
   const commitRef = useRef(commit);
@@ -131,8 +133,10 @@ export function MoveTool({ view }: { view: EditView }) {
     const onPointerDown = (event: PointerEvent) => {
       if (event.button !== 0 || event.pointerType === 'touch' || gizmoBusy()) return;
       const hit = pickAt(get(), event.clientX, event.clientY);
-      // A press on a route's line isn't a drag of anything.
+      // A press on a route's line isn't a drag of anything, and an object drawn here that
+      // belongs to another frame (a planet's moon in the system view) isn't moved here.
       if (!hit || hit.waypointIds) return;
+      if (!currentRef.current().some((object) => object.id === hit.id)) return;
       const selected = useSelection.getState().selectedIds.includes(hit.id);
       const action = resolveBinding(
         'left-drag',

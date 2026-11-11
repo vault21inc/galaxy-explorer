@@ -39,7 +39,14 @@ export interface ViewCameraConfig {
    * reader leaves that object's view without a saved pose to return to (opened from a link).
    */
   focusPose?: (objectId: string) => CameraPose | null;
+  /**
+   * The camera never comes closer than this to the view's origin, whatever its target: the
+   * orbit view's globe, which the camera mustn't enter when it turns around a moon (M6-T3).
+   */
+  keepOutsideRadius?: number;
 }
+
+const scratchPosition = new Vector3();
 
 /** The current view's setup, for "reset the view" (H or Home). */
 let currentConfig: ViewCameraConfig | null = null;
@@ -95,6 +102,16 @@ export function useViewCamera(config: ViewCameraConfig | null): void {
     // drawn, so the planes are always right for the frame being rendered.
     const { nearFraction, minNear, farBeyond } = config.clipping;
     const followCamera = () => {
+      const keepOut = config.keepOutsideRadius;
+      if (keepOut !== undefined) {
+        // Pushed back out along the line from the origin: as if the camera slid over the globe.
+        controls.getPosition(scratchPosition, false);
+        const length = scratchPosition.length();
+        if (length < keepOut && length > 0) {
+          scratchPosition.multiplyScalar(keepOut / length);
+          void controls.setPosition(scratchPosition.x, scratchPosition.y, scratchPosition.z, false);
+        }
+      }
       if (!(camera instanceof PerspectiveCamera)) return;
       const distance = controls.distance;
       const near = Math.max(distance * nearFraction, minNear);

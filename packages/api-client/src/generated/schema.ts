@@ -2152,6 +2152,37 @@ export interface components {
                 parentId: string | null;
             };
             children: components["schemas"]["ViewObjectInput"][];
+            satellites: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                baseType: "system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker";
+                subtypeId: string | null;
+                namePlain: string;
+                nameSpoiler: boolean;
+                nameRedacted: string;
+                isSpoiler: boolean;
+                /** @enum {string} */
+                status: "draft" | "published";
+                version: number;
+                explorable: boolean;
+                position: [
+                    number,
+                    number,
+                    number
+                ];
+                orbitCenterId: string | null;
+                appearance: components["schemas"]["AppearanceInput"];
+                size: number | null;
+                surfaceTexture: {
+                    /** Format: uuid */
+                    assetId: string;
+                    url: string;
+                    isSpoiler: boolean;
+                } | null;
+                /** Format: uuid */
+                parentId: string;
+            }[];
         };
         OrbitViewInput: {
             map: {
@@ -2203,6 +2234,37 @@ export interface components {
                 parentId: string | null;
             };
             children: components["schemas"]["ViewObjectInput"][];
+            satellites: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                baseType: "system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker";
+                subtypeId: string | null;
+                namePlain: string;
+                nameSpoiler: boolean;
+                nameRedacted: string;
+                isSpoiler: boolean;
+                /** @enum {string} */
+                status: "draft" | "published";
+                version: number;
+                explorable: boolean;
+                position: [
+                    number,
+                    number,
+                    number
+                ];
+                orbitCenterId: string | null;
+                appearance: components["schemas"]["AppearanceInput"];
+                size: number | null;
+                surfaceTexture: {
+                    /** Format: uuid */
+                    assetId: string;
+                    url: string;
+                    isSpoiler: boolean;
+                } | null;
+                /** Format: uuid */
+                parentId: string;
+            }[];
             pins: components["schemas"]["ViewPinInput"][];
             sunlight: {
                 direction: [
@@ -3848,6 +3910,37 @@ export interface components {
                 parentId: string | null;
             };
             children: components["schemas"]["ViewObject"][];
+            satellites: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                baseType: "system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker";
+                subtypeId: string | null;
+                namePlain: string;
+                nameSpoiler: boolean;
+                nameRedacted: string;
+                isSpoiler: boolean;
+                /** @enum {string} */
+                status: "draft" | "published";
+                version: number;
+                explorable: boolean;
+                position: [
+                    number,
+                    number,
+                    number
+                ];
+                orbitCenterId: string | null;
+                appearance: components["schemas"]["Appearance"];
+                size: number | null;
+                surfaceTexture: {
+                    /** Format: uuid */
+                    assetId: string;
+                    url: string;
+                    isSpoiler: boolean;
+                } | null;
+                /** Format: uuid */
+                parentId: string;
+            }[];
         };
         OrbitView: {
             map: {
@@ -3899,6 +3992,37 @@ export interface components {
                 parentId: string | null;
             };
             children: components["schemas"]["ViewObject"][];
+            satellites: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                baseType: "system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker";
+                subtypeId: string | null;
+                namePlain: string;
+                nameSpoiler: boolean;
+                nameRedacted: string;
+                isSpoiler: boolean;
+                /** @enum {string} */
+                status: "draft" | "published";
+                version: number;
+                explorable: boolean;
+                position: [
+                    number,
+                    number,
+                    number
+                ];
+                orbitCenterId: string | null;
+                appearance: components["schemas"]["Appearance"];
+                size: number | null;
+                surfaceTexture: {
+                    /** Format: uuid */
+                    assetId: string;
+                    url: string;
+                    isSpoiler: boolean;
+                } | null;
+                /** Format: uuid */
+                parentId: string;
+            }[];
             pins: components["schemas"]["ViewPin"][];
             sunlight: {
                 direction: [

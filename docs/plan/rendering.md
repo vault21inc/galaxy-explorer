@@ -122,7 +122,7 @@ export const renderers = {
 |---|---|---|---|---|
 | Galaxy | galaxy frame, light-years | near = distance to target ÷ 1,000 (updated as the camera moves); far = distance + 3 × galaxy radius | min = stop distance of the target, or 20 ly; max = 3 × galaxy radius | the plane stays level: no roll; polar angle 5°–175° |
 | System | system frame, system units (su) | 0.01 / 10,000 su | min = stop distance; exit beyond 3 × the system's extent | level, polar 5°–175° |
-| Orbit | body frame, body radii | 0.01 / 1,000 | min 1.15 (just above the surface); exit beyond 8 | free rotation around the globe; no roll |
+| Orbit | body frame, body radii | 0.01 / 1,000 | min 1.15 (just above the surface, whatever the target); starts far enough out to show every moon (1.9 × the farthest's reach); exit beyond 8, or 1.4 × the start distance when the moons reach further | free rotation around the globe; no roll |
 
 Data is stored in the same frames (data-model.md §5), so no conversion happens between the database and the GPU.
 
@@ -230,7 +230,7 @@ void main() {
 - **Asteroid belts:** one instanced draw per belt, at most 2,000 seeded rocks in a torus band.
 - **Stations and markers:** instanced icon billboards from the icon atlas (§8, pins).
 - **Background:** the sky points, plus a dim band of the galaxy disc texture.
-- Children of planets (moons, stations) aren't shown here. They appear in the planet's orbit view, which keeps the system view readable.
+- **Children of planets** (moons, stations, markers) are shown beside their planet: the system view's payload carries them as `satellites`, in their planet's orbit frame, and the client places them at their orbit-view distance counted in the planet's system-view radii (`SYSTEM_SATELLITE_SPREAD`), drawn by the same renderers in the same draw calls. They can be selected and entered, but not moved here: their positions belong to their planet's frame, so they're moved in its orbit view. (Before the owner's review of M6-T3 they weren't shown here at all.)
 - **As built (M5-T3):**
   - Star colors come from the blackbody table in `resolveAppearance`.
   - The stars' lights are uniforms of the planet and belt shaders, not `PointLight`s.

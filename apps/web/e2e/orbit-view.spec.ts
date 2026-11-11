@@ -183,4 +183,80 @@ test.describe('the orbit view (M6-T3)', () => {
     await waitForIdle(page, 500);
     expect(await framesDuring(page, 1_500)).toBe(0);
   });
+
+  test('the system view shows a planet’s moon and station beside it, not to be dragged there', async ({
+    page,
+  }) => {
+    const s = await setUp(page.request);
+    const dock = await stationId(page.request, s.terra);
+    await page.goto(`${s.url}/view/${s.system}`);
+    await waitForFirstFrame(page);
+    await settled(page);
+    const drawn = (id: string) =>
+      page.evaluate((target) => window.__GE_TEST__?.drawnObject(target), id);
+    const terra = await drawn(s.terra);
+    const luna = await drawn(s.luna);
+    expect(luna?.renderer).toBe('planet-bodies');
+    expect((await drawn(dock))?.renderer).toBe('icon-sprites');
+    // Luna is 3 radii out and 1 across in Terra's orbit view: the same in Terra's system-view
+    // radii here.
+    const radius = terra?.radius ?? 0;
+    const [tx = 0, ty = 0, tz = 0] = terra?.center ?? [];
+    expect(luna?.center[0]).toBeCloseTo(tx + 3 * radius, 6);
+    expect(luna?.center[1]).toBeCloseTo(ty, 6);
+    expect(luna?.center[2]).toBeCloseTo(tz + 1 * radius, 6);
+
+    // It can be selected, but a drag in edit mode doesn't move it: its position is Terra's.
+    await page.keyboard.press('e');
+    const at = await page.evaluate((id) => window.__GE_TEST__?.screenPositionOf(id), s.luna);
+    if (!at) throw new Error('Luna is off screen');
+    await page.mouse.click(at.x, at.y);
+    await expect
+      .poll(() => page.evaluate(() => window.__GE_TEST__?.selectedIds()))
+      .toEqual([s.luna]);
+    await page.mouse.move(at.x, at.y);
+    await page.mouse.down();
+    await page.mouse.move(at.x + 80, at.y + 40, { steps: 8 });
+    await page.mouse.up();
+    const saved = (await (await page.request.get(`/api/v1/objects/${s.luna}`)).json()) as {
+      data: { x: number; z: number };
+    };
+    expect([saved.data.x, saved.data.z]).toEqual([3, 1]);
+  });
+
+  test('the orbit view starts with its moons in view, and flies to one without entering the globe', async ({
+    page,
+  }) => {
+    const s = await setUp(page.request);
+    const dock = await stationId(page.request, s.terra);
+    await page.goto(`${s.url}/view/${s.terra}`);
+    await waitForFirstFrame(page);
+    await settled(page);
+    for (const id of [s.luna, dock]) {
+      expect(
+        await page.evaluate((target) => window.__GE_TEST__?.screenPositionOf(target), id),
+      ).not.toBeNull();
+    }
+    // Double-clicking the station flies to it: the target moves there, and the camera stays
+    // outside the globe.
+    const at = await page.evaluate((id) => window.__GE_TEST__?.screenPositionOf(id), dock);
+    if (!at) throw new Error('The station is off screen');
+    await page.mouse.dblclick(at.x, at.y);
+    await expect.poll(() => page.evaluate(() => window.__GE_TEST__?.selectedIds())).toEqual([dock]);
+    await settled(page);
+    const pose = await cameraPose(page);
+    expect(pose?.target[0]).toBeCloseTo(-2, 1);
+    expect(pose?.target[2]).toBeCloseTo(1.5, 1);
+    expect(Math.hypot(...(pose?.position ?? [0, 0, 0]))).toBeGreaterThanOrEqual(1.15 - 1e-3);
+  });
 });
+
+/** The station around a planet, from its orbit view. */
+async function stationId(request: APIRequestContext, planetId: string): Promise<string> {
+  const view = (await (await request.get(`/api/v1/objects/${planetId}/views/orbit`)).json()) as {
+    data: { children: { id: string; baseType: string }[] };
+  };
+  const station = view.data.children.find((child) => child.baseType === 'station');
+  if (!station) throw new Error('No station');
+  return station.id;
+}

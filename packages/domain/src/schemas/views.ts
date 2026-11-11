@@ -151,6 +151,14 @@ const Ancestor = z.object({ id: Uuid, baseType: z.enum(BASE_TYPES), ...Named });
 
 const Subject = ViewObject.extend({ parentId: Uuid.nullable() });
 
+/**
+ * What orbits one of a system's planets (moons, stations, markers), shown in the system view
+ * beside its planet: as its orbit view has it, with its position and size in the planet's
+ * radii; the client places it around the planet at system scale.
+ */
+export const Satellite = ViewObject.extend({ parentId: Uuid });
+export type Satellite = z.infer<typeof Satellite>;
+
 export const SystemView = z.object({
   map: z.object({ id: Uuid, ...Named }),
   /** Outermost first, ending with the subject's parent; empty for a top-level subject. */
@@ -158,6 +166,11 @@ export const SystemView = z.object({
   subject: Subject,
   /** The subject's direct children: stars, planets, belts, stations… */
   children: z.array(ViewObject),
+  /**
+   * A system view's planets' own children (moons, stations, markers), in their planet's orbit
+   * frame. Empty in an orbit view.
+   */
+  satellites: z.array(Satellite),
 });
 export type SystemView = z.infer<typeof SystemView>;
 

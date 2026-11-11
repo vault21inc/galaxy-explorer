@@ -360,7 +360,23 @@ async function subjectView(
     await selectObjects(ex, and(eq(celestialObjects.parentId, id), published(viewer)))
   ).map((child) => toViewObject(child, level, subtypes));
   const subjectObject = toViewObject(subject, level, subtypes);
-  const surfaces = await loadSurfaceTextures(ex, [subjectObject, ...children]);
+  // A system's planets' moons and stations, as their planet's orbit view has them.
+  const planetIds = children
+    .filter((child) => child.baseType === 'planet')
+    .map((child) => child.id);
+  const satellites =
+    level === 'system' && planetIds.length > 0
+      ? (
+          await selectObjects(
+            ex,
+            and(inArray(celestialObjects.parentId, planetIds), published(viewer)),
+          )
+        ).map((row) => ({
+          ...toViewObject(row, 'orbit', subtypes),
+          parentId: row.parentId as ViewObject['id'],
+        }))
+      : [];
+  const surfaces = await loadSurfaceTextures(ex, [subjectObject, ...children, ...satellites]);
   const withSurface = (object: ViewObject): ViewObject => ({
     ...object,
     surfaceTexture: surfaces.get(object.id) ?? null,
@@ -373,6 +389,7 @@ async function subjectView(
       parentId: subject.parentId as ViewObject['subtypeId'],
     },
     children: children.map(withSurface),
+    satellites: satellites.map((satellite) => ({ ...satellite, ...withSurface(satellite) })),
   };
 }
 
