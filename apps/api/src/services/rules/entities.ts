@@ -24,6 +24,7 @@ export async function checkExtension(
         ...(id === undefined ? {} : { id }),
         baseType: state.baseType as BaseType,
         parentId: (state.parentId as string | null | undefined) ?? null,
+        orbitCenterId: (state.orbitCenterId as string | null | undefined) ?? null,
         subtypeId: (state.subtypeId as string | null | undefined) ?? null,
         explorable: (state.explorable as boolean | undefined) ?? false,
       });

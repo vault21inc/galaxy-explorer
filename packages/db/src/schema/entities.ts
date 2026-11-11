@@ -78,6 +78,12 @@ export const celestialObjects = pgTable(
     ...extensionKey(),
     /** Null puts the object at the top level, in the galaxy view. */
     parentId: uuid(),
+    /**
+     * The star it orbits, in the same system (D-29, an "S-type" orbit); null orbits the system's
+     * center. A composite foreign key, written in the migration, keeps it on the same map and
+     * clears it when the star is deleted.
+     */
+    orbitCenterId: uuid(),
     baseType: text().notNull(),
     subtypeId: uuid(),
     /** Opens its own view; allowed only when the base type has one (checked by the service). */
@@ -92,7 +98,12 @@ export const celestialObjects = pgTable(
     unique('celestial_objects_entity_map_uq').on(t.entityId, t.mapId),
     check('celestial_objects_base_type_check', oneOf(t.baseType, BASE_TYPES)),
     check('celestial_objects_not_own_parent', sql`${t.parentId} is distinct from ${t.entityId}`),
+    check(
+      'celestial_objects_not_own_orbit_center',
+      sql`${t.orbitCenterId} is distinct from ${t.entityId}`,
+    ),
     index('celestial_objects_parent_idx').on(t.mapId, t.parentId),
+    index('celestial_objects_orbit_center_idx').on(t.mapId, t.orbitCenterId),
   ],
 );
 

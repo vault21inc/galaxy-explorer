@@ -10,6 +10,8 @@ import {
   type FormCondition,
   type FormFieldDef,
 } from '@ge/domain';
+import { useQueryClient } from '@tanstack/react-query';
+import { cachedFacts } from '@/state/view-resolve.ts';
 import type { SectionProps } from '../types.ts';
 import { KindLine } from '../sections/kind-line.tsx';
 import { SectionHeading } from '../sections/section-heading.tsx';
@@ -31,6 +33,11 @@ export function EntityForm(props: SectionProps) {
   const { save, conflict, revision } = useEntitySave(kind, entity);
   const groups = formGroups(entityKinds[kind].form);
   const schema = schemasFor(kind).update;
+  // Whether the object sits in a system, from the payload of the view that shows it (M5-T4).
+  const client = useQueryClient();
+  const parentId = (entity as { parentId?: string | null }).parentId ?? null;
+  const parent = parentId === null ? undefined : cachedFacts(client, parentId);
+  const context: FormContext = { subtypes, inSystem: parent?.baseType === 'system' };
 
   return (
     <form
@@ -41,7 +48,7 @@ export function EntityForm(props: SectionProps) {
       }}
     >
       {groups.map((group, index) => {
-        const fields = group.fields.filter((field) => shows(field, entity, subtypes));
+        const fields = group.fields.filter((field) => shows(field, entity, context));
         if (fields.length === 0) return null;
         return (
           <section key={group.heading ?? index} className="flex flex-col gap-2">
@@ -74,30 +81,35 @@ export function EntityForm(props: SectionProps) {
   );
 }
 
+/** What field conditions need beyond the entity itself. */
+interface FormContext {
+  subtypes: readonly ConfigReadOf<'object_subtypes'>[];
+  /** The object's parent is a system. */
+  inSystem: boolean;
+}
+
 /** Whether a field's `showWhen` conditions all hold (entity-forms.ts). */
-function shows(
-  field: FormFieldDef,
-  entity: SectionProps['entity'],
-  subtypes: readonly ConfigReadOf<'object_subtypes'>[],
-): boolean {
+function shows(field: FormFieldDef, entity: SectionProps['entity'], context: FormContext): boolean {
   const { showWhen } = field;
   if (showWhen === undefined) return true;
   const conditions: readonly FormCondition[] =
     typeof showWhen === 'string' || !('length' in showWhen) ? [showWhen] : showWhen;
-  return conditions.every((condition) => holds(condition, entity, subtypes));
+  return conditions.every((condition) => holds(condition, entity, context));
 }
 
 function holds(
   condition: FormCondition,
   entity: SectionProps['entity'],
-  subtypes: readonly ConfigReadOf<'object_subtypes'>[],
+  { subtypes, inSystem }: FormContext,
 ): boolean {
   const baseType = (entity as { baseType?: BaseType }).baseType;
   if (condition === 'explorableType') {
     return baseType !== undefined && objectTypes[baseType].explorableAs !== null;
   }
   if (condition === 'regionType') return baseType !== undefined && isRegionType(baseType);
+  if (condition === 'systemChild') return inSystem;
   // A value the entity doesn't set falls back to its default, as the field itself shows it.
   const value = valueAt(entity, condition.path) ?? inheritedValue(entity, condition.path, subtypes);
+  if ('notIn' in condition) return !(typeof value === 'string' && condition.notIn.includes(value));
   return typeof value === 'string' && condition.in.includes(value);
 }

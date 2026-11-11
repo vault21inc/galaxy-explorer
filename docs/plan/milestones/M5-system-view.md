@@ -125,10 +125,22 @@
   - Moving a star with the move tool moves every object that orbits it, by the same offset, in the same batch ("Moved Alpha Centauri B and 2 orbiting objects").
 
 **Done when:**
-- [ ] E2E: inside a system, adding a star, three planets and a belt works; moving a planet moves its orbit ring; undo restores it.
-- [ ] E2E, a binary: add stars A and B either side of the center, a planet around both and a planet with Orbits set to B. The second planet's ring centers on B; moving B moves that planet and its ring, as one undo step.
-- [ ] Integration: `orbitCenterId` must name a star with the same parent (422 otherwise), and deleting the star clears it.
-- [ ] Code review confirms no `if (level === 'system')` inside `src/editor/`.
+- [x] E2E: inside a system, adding a star, three planets and a belt works; moving a planet moves its orbit ring; undo restores it.
+- [x] E2E, a binary: add stars A and B either side of the center, a planet around both and a planet with Orbits set to B. The second planet's ring centers on B; moving B moves that planet and its ring, as one undo step.
+- [x] Integration: `orbitCenterId` must name a star with the same parent (422 otherwise), and deleting the star clears it.
+- [x] Code review confirms no `if (level === 'system')` inside `src/editor/`.
+
+**As built:**
+- **The editor reads its view, not the galaxy.** The levels registry (`levels/registry.ts`) gives each editable view a `LevelEdit`: the Add menu's heading, the parent of new objects, the work-plane limit, the default grid, the duplicate offset, the placement ghost's size clamp, whether groups, routes and Map settings belong there, and what an empty view says. `levels/use-edit-view.ts` gives the tools the view on top of the stack with its payload and objects. `objectsIn` and `withObject` read and extend either payload shape (`objects` or `children`).
+- **Shared tools and panels.** Placement and the move tool are mounted together as `EditTools` in both levels. The page's panels (outliner, toolbar, editor actions, History, info panel, Map settings where allowed) are `pages/view-panels.tsx`, used over the galaxy and over a system. `src/editor/` has no level checks.
+- **Groups and routes stay in the galaxy view.** In a system the Group, Route and Map buttons are shown disabled with a reason, the context menu leaves them out, and ⌘/Ctrl + G does nothing.
+- **Grid sizes** are per view: 10 ly in the galaxy, 0.5 su in a system. The toolbar's Grid field edits the current view's.
+- **`orbitCenterId`.** Migration `0004_orbit-center` adds the column, a check against orbiting itself, an index, and a composite foreign key with `on delete set null (orbit_center_id)`, so deleting the star clears only that column. It's in `CLONE_SPEC`'s remap.
+- **The rules** (422 on `/orbitCenterId`): the object must orbit a star, in the same system, and not itself. Also, a star that others orbit can't stop being a star.
+- **Payloads.** `ViewObject` carries `orbitCenterId` in every view payload.
+- **The form.** The object form gains **Orbits**, a select of the sibling stars (the new `siblings` option source, "The system's center" as its empty choice), and **Orbit ring** (`appearance.showOrbit`). Both show only for an object in a system (the new `systemChild` condition), and Orbits not for stars (the new `{ path, notIn }` condition). The explorable switch already showed for planets and moons. Entering an explorable planet opens the orbit placeholder.
+- **Orbiting objects move with their star.** A move carries every object orbiting a moved star, in the same preview and the same batch: "Moved B and 1 orbiting object". Orbit rings center on the star, following it during a drag.
+- **Test hook:** `orbitRing(id)`.
 
 ### M5-T5 Resource lifecycle and performance gate
 

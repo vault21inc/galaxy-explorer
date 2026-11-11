@@ -36,7 +36,10 @@ export function ObjectContextMenu({
   onRemove,
   onDuplicate,
   onDelete,
+  groupsAndRoutes = true,
 }: {
+  /** Groups and routes belong to this view (levels/registry.ts); in a system they're left out. */
+  groupsAndRoutes?: boolean;
   selectedCount: number;
   groups: readonly ViewGroup[];
   groupTypes: readonly ViewGroupType[];
@@ -102,50 +105,54 @@ export function ObjectContextMenu({
         >
           Rename
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onSelect={() => {
-            // The dialog takes focus, which the closing menu would take back.
-            afterClose.current = onGroup;
-          }}
-        >
-          Group…
-          <DropdownMenuShortcut>{primary}G</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger disabled={byType.length === 0}>
-            Add to group
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="max-h-80 min-w-44 overflow-y-auto">
-            {byType.map(({ type, groups: ofType }) => (
-              <div key={type.id} role="group" aria-label={type.name}>
-                <DropdownMenuLabel className="text-xs text-muted-foreground">
-                  {type.name}
-                </DropdownMenuLabel>
-                {ofType.map((group) => (
-                  <DropdownMenuItem
-                    key={group.id}
-                    onSelect={() => {
-                      onAddTo(group);
-                    }}
-                  >
-                    {group.namePlain}
-                  </DropdownMenuItem>
+        {groupsAndRoutes && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={() => {
+                // The dialog takes focus, which the closing menu would take back.
+                afterClose.current = onGroup;
+              }}
+            >
+              Group…
+              <DropdownMenuShortcut>{primary}G</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger disabled={byType.length === 0}>
+                Add to group
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="max-h-80 min-w-44 overflow-y-auto">
+                {byType.map(({ type, groups: ofType }) => (
+                  <div key={type.id} role="group" aria-label={type.name}>
+                    <DropdownMenuLabel className="text-xs text-muted-foreground">
+                      {type.name}
+                    </DropdownMenuLabel>
+                    {ofType.map((group) => (
+                      <DropdownMenuItem
+                        key={group.id}
+                        onSelect={() => {
+                          onAddTo(group);
+                        }}
+                      >
+                        {group.namePlain}
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
                 ))}
-              </div>
-            ))}
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-        <DropdownMenuItem disabled={!canRemove} onSelect={onRemove}>
-          {removeLabel}
-          <DropdownMenuShortcut>
-            {shift}
-            {primary}G
-          </DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuItem disabled={!canRoute} onSelect={onCreateRoute}>
-          Create route
-        </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuItem disabled={!canRemove} onSelect={onRemove}>
+              {removeLabel}
+              <DropdownMenuShortcut>
+                {shift}
+                {primary}G
+              </DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={!canRoute} onSelect={onCreateRoute}>
+              Create route
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onDuplicate}>
           Duplicate

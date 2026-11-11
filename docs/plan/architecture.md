@@ -160,7 +160,7 @@ Each resource also lists its settings-page `columns`, as form field definitions 
 
 | Registry | File | Maps |
 |---|---|---|
-| Levels | `src/levels/registry.ts` | view level → lazy-loaded React component, and a placeholder notice for a view not built yet (the orbit view until M6); camera limits live with each view's camera setup (`render/galaxy/galaxy-camera.ts`, `render/system/system-camera.ts`), and enter/exit distances arrive in M5-T2 |
+| Levels | `src/levels/registry.ts` | view level → lazy-loaded React component, a placeholder notice for a view not built yet (the orbit view until M6), and how the view is edited (`LevelEdit`, M5-T4): where new objects go, the work-plane limit, grid, duplicate offset, which tools belong there. Camera limits live with each view's camera setup (`render/galaxy/galaxy-camera.ts`, `render/system/system-camera.ts`); enter and exit distances in `render/tuning.ts` |
 | Renderers | `src/render/registry.ts` | (view level, base type) → renderer component; this is the O3 extension point for stations, ships and models |
 | Input bindings | `src/input/bindings.ts` | (gesture, modifiers, mode, target) → action ([ux.md §3](ux.md#3-input-bindings)); each action → its one-line description, from which the `?` shortcut help is generated (M4-T9, D-30) |
 | Panel sections | `src/panels/sections.ts` | entity kind → ordered panel sections (details, facts, images, links, relations, members, location, history) |

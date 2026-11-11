@@ -170,7 +170,13 @@ export async function newObject(
   db: Database,
   mapId: string,
   baseType: BaseType,
-  extra: { parentId?: string | null; name?: string; explorable?: boolean; subtypeId?: string } = {},
+  extra: {
+    parentId?: string | null;
+    orbitCenterId?: string | null;
+    name?: string;
+    explorable?: boolean;
+    subtypeId?: string;
+  } = {},
 ): Promise<string> {
   const { name, ...fields } = extra;
   const read = await inBatch(db, (tx) =>

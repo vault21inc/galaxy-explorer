@@ -4,11 +4,13 @@ import { deleteDescription, deleteRequest } from '../src/editor/actions/delete.t
 import {
   copyName,
   duplicateOperations,
-  DUPLICATE_OFFSET,
   type DuplicableObject,
 } from '../src/editor/actions/duplicate.ts';
 import { describeImpact, summarizeImpact } from '../src/editor/actions/impact.ts';
 import { resolveEditKey } from '../src/input/bindings.ts';
+
+/** The galaxy view's offset for copies (levels/registry.ts). */
+const DUPLICATE_OFFSET = 20;
 
 /** The pure parts of the selection commands (M3-T5): keys, delete, duplicate. */
 
@@ -159,7 +161,7 @@ describe('duplicate (ux.md §5)', () => {
   } as unknown as EntityReadOf<'celestial_object'> & DuplicableObject;
 
   it('creates a copy to the right with " copy" after the name, then its facts', () => {
-    const [create, facts, ...rest] = duplicateOperations([object], ID);
+    const [create, facts, ...rest] = duplicateOperations([object], ID, DUPLICATE_OFFSET);
     expect(rest).toEqual([]);
     expect(create).toEqual({
       op: 'create',
@@ -196,7 +198,11 @@ describe('duplicate (ux.md §5)', () => {
   });
 
   it('points each copy’s facts at that copy', () => {
-    const operations = duplicateOperations([object, { ...object, facts: [] }, object], ID);
+    const operations = duplicateOperations(
+      [object, { ...object, facts: [] }, object],
+      ID,
+      DUPLICATE_OFFSET,
+    );
     expect(
       operations.map((operation) => ('id' in operation ? operation.id : operation.op)),
     ).toEqual(['create', '$op:0', 'create', 'create', '$op:3']);

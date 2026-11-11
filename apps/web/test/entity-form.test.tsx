@@ -80,7 +80,9 @@ function ruledOut(field: FormFieldDef, baseType: keyof typeof objectTypes | unde
     (condition) =>
       (condition === 'explorableType' &&
         (!baseType || objectTypes[baseType].explorableAs === null)) ||
-      (condition === 'regionType' && (!baseType || !isRegionType(baseType))),
+      (condition === 'regionType' && (!baseType || !isRegionType(baseType))) ||
+      // The fixture sits at the top level, not in a system (M5-T4).
+      condition === 'systemChild',
   );
 }
 

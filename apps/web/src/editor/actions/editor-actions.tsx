@@ -7,7 +7,9 @@ import { GroupDialog } from '@/panels/group-dialog/group-dialog.tsx';
 import { useContextMenu } from '@/state/context-menu.ts';
 import { useGroupDialog } from '@/state/group-dialog.ts';
 import { useLayers } from '@/state/layers.ts';
+import { levels } from '@/levels/registry.ts';
 import { useEditor } from '@/state/editor.ts';
+import { topView, useNavigation } from '@/state/navigation.ts';
 import { useSelection } from '@/state/selection.ts';
 import { useUndoRedo } from '../use-undo.ts';
 import { DeleteDialog } from './delete-dialog.tsx';
@@ -45,8 +47,11 @@ export function EditorActions({
 }) {
   const editing = useEditor((state) => state.editing);
   const selectedIds = useSelection((state) => state.selectedIds);
+  // What this view's editing allows (levels/registry.ts): groups and routes only in the galaxy.
+  const edit = levels[useNavigation(topView)?.level ?? 'galaxy'].edit;
+  const groupsAndRoutes = edit?.groupsAndRoutes ?? false;
   const remove = useDeleteObjects();
-  const duplicate = useDuplicateObjects(mapId);
+  const duplicate = useDuplicateObjects(mapId, edit?.duplicateOffset ?? 1);
   const history = useUndoRedo();
   const groupActions = useGroupActions(groups, groupTypes);
   const createRoute = useCreateRoute(mapId, objects);
@@ -86,9 +91,10 @@ export function EditorActions({
         ]);
         return;
       case 'group':
-        if (selected().length > 0) useGroupDialog.getState().show();
+        if (groupsAndRoutes && selected().length > 0) useGroupDialog.getState().show();
         return;
       case 'ungroup':
+        if (!groupsAndRoutes) return;
         groupActions.removeFromLayer(selectedObjectIds()).catch(() => undefined);
         return;
       case 'undo':
@@ -153,6 +159,7 @@ export function EditorActions({
       )}
       {editing && (
         <ObjectContextMenu
+          groupsAndRoutes={groupsAndRoutes}
           selectedCount={selectedIds.length}
           groups={groups}
           groupTypes={groupTypes}

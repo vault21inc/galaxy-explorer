@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 import { useViewPayload } from '@/api/hooks.ts';
 import { useReadOptions } from '@/api/read-options.ts';
-import { MoveTool } from '@/editor/move-tool.tsx';
-import { Placement } from '@/editor/placement.tsx';
+import { EditTools } from '@/editor/edit-tools.tsx';
 import { resolveGalaxySettings } from '@ge/domain';
 import { useViewCamera } from '@/render/camera/use-view-camera.ts';
 import { galaxyCamera } from '@/render/galaxy/galaxy-camera.ts';
@@ -94,10 +93,9 @@ export default function GalaxyLevel({ subjectId }: { subjectId: string }) {
         <renderer.component key={renderer.name} objects={objects} />
       ))}
       <SelectionRings />
-      {editing && <RegionHandles mapId={subjectId} objects={view.data.objects} />}
+      {editing && <RegionHandles objects={view.data.objects} />}
       {editing && <RouteTool mapId={subjectId} objects={view.data.objects} />}
-      <Placement mapId={subjectId} />
-      <MoveTool mapId={subjectId} />
+      <EditTools />
     </>
   );
 }

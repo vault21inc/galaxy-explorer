@@ -28,7 +28,7 @@ export type ViewResolution =
   | { kind: 'elsewhere'; mapId: string };
 
 /** What resolving needs to know about an object. */
-interface ObjectFacts {
+export interface ObjectFacts {
   mapId: string;
   baseType: BaseType;
   explorable: boolean;
@@ -73,7 +73,7 @@ export async function resolveView(
 }
 
 /** The object as some cached view payload already describes it, without a request. */
-function cachedFacts(client: QueryClient, objectId: string): ObjectFacts | undefined {
+export function cachedFacts(client: QueryClient, objectId: string): ObjectFacts | undefined {
   for (const [, data] of client.getQueriesData<GalaxyView | SystemView>({ queryKey: ['view'] })) {
     if (!data) continue;
     if ('objects' in data) {

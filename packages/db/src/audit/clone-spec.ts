@@ -19,7 +19,12 @@ export interface CloneSpecEntry {
 
 export const CLONE_SPEC: readonly CloneSpecEntry[] = [
   { table: 'entities', freshIds: [], remap: ['id'], select: 'map_id' },
-  { table: 'celestial_objects', freshIds: [], remap: ['entity_id', 'parent_id'], select: 'map_id' },
+  {
+    table: 'celestial_objects',
+    freshIds: [],
+    remap: ['entity_id', 'parent_id', 'orbit_center_id'],
+    select: 'map_id',
+  },
   {
     table: 'object_groups',
     freshIds: [],

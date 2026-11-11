@@ -55,6 +55,7 @@ describe('schemasFor (entity kinds)', () => {
       createdAt: NOW,
       updatedAt: NOW,
       parentId: null,
+      orbitCenterId: null,
       baseType: 'system',
       subtypeId: null,
       explorable: true,

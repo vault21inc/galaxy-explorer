@@ -2,7 +2,8 @@ import { HIDE_SPOILERS, SHOW_SPOILERS } from '@ge/domain';
 import { describe, expect, it } from 'vitest';
 import { buildBeltRocks } from '../src/render/belts/belt-rocks.ts';
 import { hexToLinear } from '../src/render/color.ts';
-import { orbitRings, writeOrbitRings } from '../src/render/orbits/orbit-shapes.ts';
+import { orbitRings, starCenters, writeOrbitRings } from '../src/render/orbits/orbit-shapes.ts';
+import { moveDescription, withOrbiters } from '../src/editor/orbiters.ts';
 import {
   BELT_HALF_WIDTH_SIZES,
   BELT_ROCKS,
@@ -69,7 +70,7 @@ describe('orbit rings', () => {
     expect(rings.map((ring) => ring.id)).toEqual(['a']);
     const positions = new Float32Array(ORBIT_RING_SEGMENTS * 6);
     const colors = new Float32Array(ORBIT_RING_SEGMENTS * 6);
-    writeOrbitRings(rings, positions, colors, new Set(), null);
+    writeOrbitRings(rings, new Map(), positions, colors, new Set(), null);
     for (let i = 0; i < positions.length; i += 3) {
       expect(Math.hypot(positions[i] ?? 0, positions[i + 2] ?? 0)).toBeCloseTo(5);
     }
@@ -80,7 +81,7 @@ describe('orbit rings', () => {
     const rings = orbitRings([planet('a', [3, 0, 4])], SHOW_SPOILERS);
     const positions = new Float32Array(ORBIT_RING_SEGMENTS * 6);
     const colors = new Float32Array(ORBIT_RING_SEGMENTS * 6);
-    writeOrbitRings(rings, positions, colors, new Set(['a']), {
+    writeOrbitRings(rings, new Map(), positions, colors, new Set(['a']), {
       ids: new Set(['a']),
       delta: [3, 0, 4],
     });
@@ -88,5 +89,58 @@ describe('orbit rings', () => {
     expect([...colors.slice(0, 3)]).toEqual(
       hexToLinear(ORBIT_RING_SELECTED_COLOR).map(Math.fround),
     );
+  });
+});
+
+describe('binary stars (D-29, M5-T4)', () => {
+  const object = (
+    id: string,
+    baseType: 'star' | 'planet',
+    x: number,
+    orbitCenterId: string | null,
+  ) =>
+    viewObject(id, baseType, {
+      position: [x, 0, 0],
+      size: 0.25,
+      orbitCenterId,
+      appearance: { color: '#7fa7ff', showOrbit: baseType === 'planet' },
+    } as never);
+  const binary = [
+    object('a', 'star', -2, null),
+    object('b', 'star', 2, null),
+    object('p', 'planet', 6, null),
+    object('q', 'planet', 3.2, 'b'),
+  ];
+
+  it('rings a planet around the star it orbits, following the star in a drag', () => {
+    const rings = orbitRings(binary, SHOW_SPOILERS);
+    expect(rings.map((ring) => [ring.id, ring.centerId])).toEqual([
+      ['p', null],
+      ['q', 'b'],
+    ]);
+    const positions = new Float32Array(2 * ORBIT_RING_SEGMENTS * 6);
+    const colors = new Float32Array(2 * ORBIT_RING_SEGMENTS * 6);
+    const centers = starCenters(binary);
+    const shapes = writeOrbitRings(rings, centers, positions, colors, new Set(), null);
+    expect(shapes.get('q')).toEqual({ center: [2, 0, 0], radius: expect.closeTo(1.2, 6) });
+    const dragged = writeOrbitRings(rings, centers, positions, colors, new Set(), {
+      ids: new Set(['b', 'q']),
+      delta: [0, 0, 3],
+    });
+    expect(dragged.get('q')).toEqual({ center: [2, 0, 3], radius: expect.closeTo(1.2, 6) });
+    expect(dragged.get('p')?.radius).toBeCloseTo(6);
+  });
+
+  it('carries a star’s orbiting objects along when it moves, and says so', () => {
+    expect(withOrbiters(['b'], binary)).toEqual(['b', 'q']);
+    expect(withOrbiters(['a'], binary)).toEqual(['a']);
+    // Already selected: not counted twice.
+    expect(withOrbiters(['b', 'q'], binary)).toEqual(['b', 'q']);
+    const named = binary.map((item) => ({ ...item, namePlain: item.id.toUpperCase() }));
+    expect(moveDescription(['b'], ['b', 'q'], named)).toBe('Moved B and 1 orbiting object');
+    expect(moveDescription(['a', 'b'], ['a', 'b', 'q'], named)).toBe(
+      'Moved 2 objects and 1 orbiting object',
+    );
+    expect(moveDescription(['p'], ['p'], named)).toBe('Moved 1 object');
   });
 });

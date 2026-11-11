@@ -6,6 +6,12 @@ import { errorMessage } from '@/app/route-states.tsx';
 import { setMovePreview } from '@/render/scene-index.ts';
 import { useToasts } from '@/state/toasts.ts';
 
+/** What a drag saves: the moves, and how the change reads in History and undo. */
+export interface MoveBatch {
+  moves: readonly Move[];
+  description: string;
+}
+
 export interface Move {
   id: string;
   /** The version the editor read: a stale one fails the whole batch (architecture.md §5). */
@@ -15,19 +21,19 @@ export interface Move {
 
 /**
  * Saves a move (M3-T3): every moved object in one `POST /batch`, so the whole drag is one
- * change and one undo step ("Moved 3 objects"). The preview stays on screen until the views
+ * change and one undo step ("Moved 3 objects", or "Moved Alpha Centauri B and 2 orbiting
+ * objects", move-description.ts). The preview stays on screen until the views
  * have refetched, so nothing jumps; a failure ends the preview, which puts everything back,
  * and shows a toast.
  */
 export function useSaveMove() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (moves: readonly Move[]) =>
+    mutationFn: ({ moves, description }: MoveBatch) =>
       unwrap(
         api.POST('/api/v1/batch', {
           body: {
-            description:
-              moves.length === 1 ? 'Moved 1 object' : `Moved ${moves.length.toString()} objects`,
+            description,
             operations: moves.map((move) => ({
               op: 'update' as const,
               kind: 'celestial_object' as const,

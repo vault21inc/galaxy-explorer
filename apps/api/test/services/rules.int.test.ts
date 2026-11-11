@@ -64,6 +64,62 @@ const cases: RuleCase[] = [
     message: /another map/,
   },
   {
+    rule: 'an object orbits a star in its own system (D-29)',
+    allowed: async (db, w) => {
+      const system = await newObject(db, w.mapId, 'system');
+      const star = await newObject(db, w.mapId, 'star', { parentId: system });
+      return newObject(db, w.mapId, 'planet', { parentId: system, orbitCenterId: star });
+    },
+    rejected: async (db, w) => {
+      const elsewhere = await newObject(db, w.mapId, 'system');
+      const star = await newObject(db, w.mapId, 'star', { parentId: elsewhere });
+      const system = await newObject(db, w.mapId, 'system');
+      return newObject(db, w.mapId, 'planet', { parentId: system, orbitCenterId: star });
+    },
+    path: '/orbitCenterId',
+    message: /same system/,
+  },
+  {
+    rule: 'only a star can be orbited',
+    allowed: async (db, w) => {
+      const system = await newObject(db, w.mapId, 'system');
+      return newObject(db, w.mapId, 'planet', { parentId: system, orbitCenterId: null });
+    },
+    rejected: async (db, w) => {
+      const system = await newObject(db, w.mapId, 'system');
+      const planet = await newObject(db, w.mapId, 'planet', { parentId: system });
+      return newObject(db, w.mapId, 'station', { parentId: system, orbitCenterId: planet });
+    },
+    path: '/orbitCenterId',
+    message: /only orbit a star/,
+  },
+  {
+    rule: 'a star that others orbit stays a star',
+    allowed: async (db, w) => {
+      const system = await newObject(db, w.mapId, 'system');
+      const star = await newObject(db, w.mapId, 'star', { parentId: system });
+      return inBatch(db, async (tx) =>
+        updateEntity(tx, 'celestial_object', star, {
+          version: await version(db, star),
+          baseType: 'black_hole',
+        }),
+      );
+    },
+    rejected: async (db, w) => {
+      const system = await newObject(db, w.mapId, 'system');
+      const star = await newObject(db, w.mapId, 'star', { parentId: system });
+      await newObject(db, w.mapId, 'planet', { parentId: system, orbitCenterId: star });
+      return inBatch(db, async (tx) =>
+        updateEntity(tx, 'celestial_object', star, {
+          version: await version(db, star),
+          baseType: 'black_hole',
+        }),
+      );
+    },
+    path: '/baseType',
+    message: /stay a star/,
+  },
+  {
     rule: 'children stay allowed when the base type changes',
     allowed: async (db, w) => {
       const id = await newObject(db, w.mapId, 'planet');

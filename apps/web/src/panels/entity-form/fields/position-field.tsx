@@ -31,7 +31,10 @@ export function PositionField({ field, record, revision }: FieldProps) {
     if (raw.trim() === '' || !Number.isFinite(value) || value === position[axis]) return;
     const next: [number, number, number] = [...position];
     next[axis] = value;
-    save.mutate([{ id: record.id, version, position: next }]);
+    save.mutate({
+      moves: [{ id: record.id, version, position: next }],
+      description: 'Moved 1 object',
+    });
   };
 
   return (

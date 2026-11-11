@@ -48,6 +48,7 @@ const objectColumns = {
   baseType: celestialObjects.baseType,
   subtypeId: celestialObjects.subtypeId,
   parentId: celestialObjects.parentId,
+  orbitCenterId: celestialObjects.orbitCenterId,
   explorable: celestialObjects.explorable,
   x: celestialObjects.x,
   y: celestialObjects.y,
@@ -95,6 +96,7 @@ function toViewObject(
     version: row.version,
     explorable: row.explorable,
     position: [row.x, row.y, row.z],
+    orbitCenterId: row.orbitCenterId as ViewObject['orbitCenterId'],
     appearance,
     size,
   };

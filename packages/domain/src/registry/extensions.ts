@@ -14,6 +14,11 @@ import { BASE_TYPES } from './object-types.ts';
 export const celestialObjectExtension = z.object({
   /** Null puts the object at the top level, in the galaxy view. */
   parentId: Uuid.nullable().optional(),
+  /**
+   * The star this object orbits, a sibling in the same system (D-29); null orbits the system's
+   * center. Its orbit ring centers on that star, and moving the star moves it too.
+   */
+  orbitCenterId: Uuid.nullable().optional(),
   baseType: z.enum(BASE_TYPES),
   subtypeId: Uuid.nullable().optional(),
   /** Opens its own view; allowed only when the base type has one. */

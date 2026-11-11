@@ -196,6 +196,14 @@ export const entityKinds = defineEntityKinds({
           hint: 'Opens a view of its own.',
           showWhen: 'explorableType',
         },
+        {
+          path: 'orbitCenterId',
+          widget: 'select',
+          label: 'Orbits',
+          hint: 'One of its system’s stars, or the center (D-29).',
+          options: { from: 'siblings', baseType: 'star', noneLabel: 'The system’s center' },
+          showWhen: ['systemChild', { path: 'baseType', notIn: ['star'] }],
+        },
         { widget: 'position', label: 'Position' },
       ],
       appearance: [
@@ -206,6 +214,13 @@ export const entityKinds = defineEntityKinds({
           widget: 'number',
           label: 'Label priority',
           hint: 'Higher labels stay visible when labels collide.',
+        },
+        {
+          path: 'appearance.showOrbit',
+          widget: 'switch',
+          label: 'Orbit ring',
+          hint: 'Its orbit, drawn in the system view.',
+          showWhen: 'systemChild',
         },
         ...REGION_FIELDS,
       ],

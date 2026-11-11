@@ -11,6 +11,8 @@ export interface ObjectState {
   id?: string;
   baseType: BaseType;
   parentId: string | null;
+  /** The star it orbits (D-29), or null for the system's center. */
+  orbitCenterId: string | null;
   subtypeId: string | null;
   explorable: boolean;
 }
@@ -21,6 +23,8 @@ export interface ObjectState {
  * - the parent is on the same map, and an object can't end up inside itself;
  * - children stay allowed when an object's base type changes;
  * - `explorable` only for types that open a view;
+ * - the star it orbits (`orbitCenterId`, D-29) is a star in the same system, not itself, and a
+ *   star that others orbit stays a star;
  * - the subtype belongs to this universe and refines this base type.
  */
 export async function checkObject(ex: Executor, scope: Scope, object: ObjectState): Promise<void> {
@@ -64,6 +68,39 @@ export async function checkObject(ex: Executor, scope: Scope, object: ObjectStat
     if (blocked) {
       throw new RuleViolation(
         `This object contains a ${blocked.baseType.replace('_', ' ')}, which can't be inside a ${object.baseType.replace('_', ' ')}.`,
+        '/baseType',
+      );
+    }
+  }
+
+  if (object.orbitCenterId !== null) {
+    if (object.orbitCenterId === object.id) {
+      throw new RuleViolation("An object can't orbit itself.", '/orbitCenterId');
+    }
+    const center = await requireReferencedObject(ex, object.orbitCenterId, scope, '/orbitCenterId');
+    if (center.baseType !== 'star') {
+      throw new RuleViolation(
+        `${center.namePlain} is a ${center.baseType.replace('_', ' ')}; an object can only orbit a star.`,
+        '/orbitCenterId',
+      );
+    }
+    if (object.parentId === null || center.parentId !== object.parentId) {
+      throw new RuleViolation(
+        `${center.namePlain} isn't in the same system; an object can only orbit a star beside it.`,
+        '/orbitCenterId',
+      );
+    }
+  }
+
+  if (object.id !== undefined && object.baseType !== 'star') {
+    const [orbiting] = await ex
+      .select({ id: celestialObjects.entityId })
+      .from(celestialObjects)
+      .where(eq(celestialObjects.orbitCenterId, object.id))
+      .limit(1);
+    if (orbiting) {
+      throw new RuleViolation(
+        'Other objects orbit this star, so it has to stay a star; give them another center first.',
         '/baseType',
       );
     }

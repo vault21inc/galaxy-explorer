@@ -123,6 +123,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "namePlain": "Aster",
         "nameRedacted": "Aster",
         "nameSpoiler": false,
+        "orbitCenterId": null,
         "planetCount": 2,
         "position": [
           8200,
@@ -155,6 +156,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "namePlain": "Brennan",
         "nameRedacted": "Brennan",
         "nameSpoiler": false,
+        "orbitCenterId": null,
         "planetCount": 1,
         "position": [
           -12400,
@@ -187,6 +189,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "namePlain": "Corvid",
         "nameRedacted": "Corvid",
         "nameSpoiler": false,
+        "orbitCenterId": null,
         "planetCount": 1,
         "position": [
           21500,
@@ -219,6 +222,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "namePlain": "Dalmatia",
         "nameRedacted": "Dalmatia",
         "nameSpoiler": false,
+        "orbitCenterId": null,
         "planetCount": 1,
         "position": [
           -3000,
@@ -251,6 +255,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "namePlain": "Erebus",
         "nameRedacted": "▇▇▇▇▇▇",
         "nameSpoiler": false,
+        "orbitCenterId": null,
         "planetCount": 1,
         "position": [
           15500,
@@ -283,6 +288,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "namePlain": "Fenwick",
         "nameRedacted": "Fenwick",
         "nameSpoiler": false,
+        "orbitCenterId": null,
         "planetCount": 0,
         "position": [
           -24000,
@@ -320,6 +326,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "namePlain": "Wanderer",
         "nameRedacted": "Wanderer",
         "nameSpoiler": false,
+        "orbitCenterId": null,
         "planetCount": 0,
         "position": [
           -7000,
@@ -356,6 +363,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "namePlain": "Veil Nebula",
         "nameRedacted": "Veil Nebula",
         "nameSpoiler": false,
+        "orbitCenterId": null,
         "planetCount": 0,
         "position": [
           2000,
@@ -392,6 +400,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "namePlain": "The Maw",
         "nameRedacted": "▇▇▇▇▇▇▇▇▇",
         "nameSpoiler": true,
+        "orbitCenterId": null,
         "planetCount": 0,
         "position": [
           18000,
@@ -459,6 +468,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "namePlain": "Primus Minor",
         "nameRedacted": "Primus Minor",
         "nameSpoiler": false,
+        "orbitCenterId": null,
         "position": [
           3.2,
           0,
@@ -528,6 +538,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
       "namePlain": "Primus",
       "nameRedacted": "Primus",
       "nameSpoiler": false,
+      "orbitCenterId": null,
       "parentId": "<id 2>",
       "position": [
         4.5,
@@ -558,6 +569,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "namePlain": "Aster",
         "nameRedacted": "Aster",
         "nameSpoiler": false,
+        "orbitCenterId": null,
         "position": [
           0,
           0,
@@ -585,6 +597,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "namePlain": "Aster I",
         "nameRedacted": "Aster I",
         "nameSpoiler": false,
+        "orbitCenterId": null,
         "position": [
           1.2,
           0,
@@ -612,6 +625,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "namePlain": "Primus",
         "nameRedacted": "Primus",
         "nameSpoiler": false,
+        "orbitCenterId": null,
         "position": [
           4.5,
           0,
@@ -633,6 +647,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
         "namePlain": "Aster Belt",
         "nameRedacted": "Aster Belt",
         "nameSpoiler": false,
+        "orbitCenterId": null,
         "position": [
           6.5,
           0,
@@ -663,6 +678,7 @@ exports[`view payloads > match the snapshot for the demo seed (galaxy, system an
       "namePlain": "Aster",
       "nameRedacted": "Aster",
       "nameSpoiler": false,
+      "orbitCenterId": null,
       "parentId": null,
       "position": [
         8200,

@@ -42,18 +42,29 @@ export type FormOptions =
    * The map's groups that this group may sit in: those of its type's parent type, except
    * itself and its own descendants (M4-T4).
    */
-  | { from: 'parentGroups' };
+  | { from: 'parentGroups' }
+  /**
+   * The objects of a base type beside this one, in the same parent, such as the stars a planet
+   * may orbit (M5-T4, D-29). `noneLabel` names the empty choice ("The system's center").
+   */
+  | { from: 'siblings'; baseType: string; noneLabel: string };
 
 /**
  * When a field shows:
  * - `explorableType`: only for base types that open a view of their own
  *   (`objectTypes[baseType].explorableAs`);
  * - `regionType`: only for base types drawn as a region (nebulae and anomalies, M4-T6);
+ * - `systemChild`: only for an object inside a system (orbits, M5-T4);
  * - `{ path, in }`: only while the field at `path`, or its inherited default, is one of these
- *   values, such as the storm fields while `appearance.region.shape` is `storm`.
+ *   values, such as the storm fields while `appearance.region.shape` is `storm`;
+ * - `{ path, notIn }`: only while it's none of them.
  */
 export type FormCondition =
-  'explorableType' | 'regionType' | { path: string; in: readonly string[] };
+  | 'explorableType'
+  | 'regionType'
+  | 'systemChild'
+  | { path: string; in: readonly string[] }
+  | { path: string; notIn: readonly string[] };
 
 interface FieldBase {
   label: string;

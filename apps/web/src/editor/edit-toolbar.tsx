@@ -10,7 +10,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import { objectTypes } from '@ge/domain';
+import { levels } from '@/levels/registry.ts';
 import { useEditor } from '@/state/editor.ts';
+import { topView, useNavigation } from '@/state/navigation.ts';
 import { useGroupDialog } from '@/state/group-dialog.ts';
 import { useRouteDraft } from '@/state/route-draft.ts';
 import { useSelection } from '@/state/selection.ts';
@@ -48,21 +50,30 @@ export function EditToolbar() {
   const placing = useEditor((state) => state.placing);
   const routing = useEditor((state) => state.routing);
   const stops = useRouteDraft((state) => state.waypoints.length);
-  const gridSize = useEditor((state) => state.gridSize);
+  // The view being edited: its grid, and which tools belong in it (levels/registry.ts).
+  const level = useNavigation(topView)?.level ?? 'galaxy';
+  const edit = levels[level].edit;
+  const gridSize = useEditor((state) => state.gridSizes[level] ?? edit?.gridSize ?? 1);
   const setGridSize = useEditor((state) => state.setGridSize);
   const history = useUndoRedo();
   const leftPanel = useSidePanel((state) => state.left);
   const hasSelection = useSelection((state) => state.selectedIds.length > 0);
   if (!editing) return null;
 
+  /** Groups and routes are galaxy-view tools (M4): elsewhere they're shown, disabled. */
+  const elsewhere = { disabled: true, why: 'Groups and routes are drawn in the galaxy view' };
   /** What the working tools do; the others are placeholders until their task. */
-  const behaviour = (label: string) => {
+  const behaviour = (
+    label: string,
+  ): { onClick?: () => void; disabled?: boolean; pressed?: boolean; why?: string } => {
     switch (label) {
       case 'Group':
         // The dialog groups the selected objects (M4-T2).
+        if (!edit?.groupsAndRoutes) return elsewhere;
         return { onClick: useGroupDialog.getState().show, disabled: !hasSelection };
       case 'Route':
         // Click objects in order (M4-T7); the tool's keys are in its status line.
+        if (!edit?.groupsAndRoutes) return elsewhere;
         return {
           onClick: () => {
             const editor = useEditor.getState();
@@ -83,6 +94,8 @@ export function EditToolbar() {
           pressed: leftPanel === 'history',
         };
       case 'Map':
+        if (!edit?.mapSettings)
+          return { disabled: true, why: 'Map settings are in the galaxy view' };
         return {
           onClick: () => {
             useSidePanel.getState().toggle('map-settings');
@@ -100,7 +113,7 @@ export function EditToolbar() {
       className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-lg border bg-card p-1"
     >
       {TOOLS.map(({ label, icon: Icon, arrives, active, keys }) => {
-        const { onClick, disabled = false, pressed } = behaviour(label);
+        const { onClick, disabled = false, pressed, why } = behaviour(label);
         const on = (active === true && !placing && !routing) || pressed === true;
         return (
           <span key={label} className="contents">
@@ -110,7 +123,8 @@ export function EditToolbar() {
               aria-pressed={active || pressed !== undefined ? on : undefined}
               disabled={arrives !== undefined || disabled}
               title={
-                arrives ? `${label}: arrives in ${arrives}` : keys ? `${label} (${keys})` : label
+                why ??
+                (arrives ? `${label}: arrives in ${arrives}` : keys ? `${label} (${keys})` : label)
               }
               className="gap-1.5"
               onClick={onClick}
@@ -132,10 +146,12 @@ export function EditToolbar() {
           min={0}
           step="any"
           aria-label="Grid size"
+          // Keyed by the view, so entering another view shows its own grid.
+          key={level}
           defaultValue={gridSize}
           className="w-16 rounded-md border border-input bg-transparent px-1.5 py-0.5 text-foreground"
           onChange={(event) => {
-            setGridSize(Number(event.currentTarget.value));
+            setGridSize(level, Number(event.currentTarget.value));
           }}
         />
       </label>

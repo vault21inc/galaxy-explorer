@@ -9,14 +9,18 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx';
+import { levels } from '@/levels/registry.ts';
 import { useEditor } from '@/state/editor.ts';
+import { topView, useNavigation } from '@/state/navigation.ts';
 import { placeableTypes } from './placeable-types.ts';
 
 /**
- * Add ▾ (ux.md §5): the base types allowed in the galaxy view, then a click on the plane
- * places one. N opens it from the keyboard. Subtypes join in M7.
+ * Add ▾ (ux.md §5): the base types allowed in the view being edited (the galaxy, or a system:
+ * stars, planets, belts…), then a click on the plane places one. N opens it from the keyboard.
+ * Subtypes join in M7.
  */
 export function AddMenu() {
+  const level = useNavigation(topView)?.level ?? 'galaxy';
   const open = useEditor((state) => state.addMenuOpen);
   const setOpen = useEditor((state) => state.setAddMenuOpen);
   // A type was chosen: the menu mustn't take focus back when it finishes closing.
@@ -43,9 +47,9 @@ export function AddMenu() {
         }}
       >
         <DropdownMenuLabel className="text-xs text-muted-foreground label-caps">
-          Add to the galaxy
+          {levels[level].edit?.addLabel ?? 'Add'}
         </DropdownMenuLabel>
-        {placeableTypes('galaxy').map((type) => (
+        {placeableTypes(level).map((type) => (
           <DropdownMenuItem
             key={type}
             onSelect={() => {

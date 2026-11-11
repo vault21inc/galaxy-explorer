@@ -15,8 +15,9 @@ const NONE = '';
 
 /**
  * A choice from fixed values (status), from a universe setting (subtypes, group types, event
- * categories), or of a parent group (M4-T4), saved as soon as it changes. Nullable fields offer
- * "None".
+ * categories), of a parent group (M4-T4), or of a sibling such as the star a planet orbits
+ * (M5-T4), saved as soon as it changes. Nullable fields offer "None", or the source's own name
+ * for it.
  */
 export function SelectField({
   field,
@@ -36,7 +37,14 @@ export function SelectField({
   const items = useConfigList(resource ?? 'object_subtypes', resource ? universeId : undefined);
   // Parent groups come from the galaxy view already loaded for the group's map.
   const mapId = options.from === 'parentGroups' ? (record.mapId as string | undefined) : undefined;
-  const view = useViewPayload('galaxy', mapId, useReadOptions());
+  const readOptions = useReadOptions();
+  const view = useViewPayload('galaxy', mapId, readOptions);
+  // Siblings come from the parent system's view, which is open while its children are edited.
+  const parentId =
+    options.from === 'siblings'
+      ? ((record.parentId as string | null | undefined) ?? undefined)
+      : undefined;
+  const parentView = useViewPayload('system', parentId, readOptions);
   const schema = fieldSchemaIn(recordSchema, field.path);
   const nullable = schema ? unwrapField(schema).nullable : false;
   const saved = valueAt(record, field.path);
@@ -45,6 +53,10 @@ export function SelectField({
   let choices: { value: string; label: string }[];
   if (options.from === 'values') {
     choices = options.values.map((value) => ({ value, label: options.labels?.[value] ?? value }));
+  } else if (options.from === 'siblings') {
+    choices = (parentView.data?.children ?? [])
+      .filter((child) => child.baseType === options.baseType && child.id !== record.id)
+      .map((child) => ({ value: child.id, label: child.namePlain }));
   } else if (options.from === 'parentGroups') {
     const groups = view.data?.groups ?? [];
     const below = descendantsOf(record.id, groups);
@@ -82,7 +94,9 @@ export function SelectField({
           });
         }}
       >
-        {(nullable || saved == null) && <option value={NONE}>None</option>}
+        {(nullable || saved == null) && (
+          <option value={NONE}>{options.from === 'siblings' ? options.noneLabel : 'None'}</option>
+        )}
         {choices.map((choice) => (
           <option key={choice.value} value={choice.value}>
             {choice.label}

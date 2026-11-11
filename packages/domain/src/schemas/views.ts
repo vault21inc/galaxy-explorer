@@ -38,6 +38,11 @@ export const ViewObject = z.object({
   version: z.int().positive(),
   explorable: z.boolean(),
   position: Position,
+  /**
+   * The star it orbits, a sibling in the same system (D-29), or null for the system's center
+   * (and for anything not in a system). Its orbit ring centers there.
+   */
+  orbitCenterId: Uuid.nullable(),
   /** Resolved: type defaults ← subtype defaults ← the object's overrides (data-model §6). */
   appearance: Appearance,
   /** Displayed size in this view's unit, or null where the type isn't drawn as a body. */

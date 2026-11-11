@@ -2523,6 +2523,18 @@
             "minItems": 3,
             "maxItems": 3
           },
+          "orbitCenterId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "appearance": {
             "$ref": "#/components/schemas/AppearanceInput"
           },
@@ -2545,6 +2557,7 @@
           "version",
           "explorable",
           "position",
+          "orbitCenterId",
           "appearance",
           "size"
         ]
@@ -3021,6 +3034,18 @@
             "minItems": 3,
             "maxItems": 3
           },
+          "orbitCenterId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "appearance": {
             "$ref": "#/components/schemas/AppearanceInput"
           },
@@ -3088,6 +3113,7 @@
           "version",
           "explorable",
           "position",
+          "orbitCenterId",
           "appearance",
           "size",
           "planetCount",
@@ -3277,6 +3303,18 @@
                 "minItems": 3,
                 "maxItems": 3
               },
+              "orbitCenterId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "appearance": {
                 "$ref": "#/components/schemas/AppearanceInput"
               },
@@ -3311,6 +3349,7 @@
               "version",
               "explorable",
               "position",
+              "orbitCenterId",
               "appearance",
               "size",
               "parentId"
@@ -3489,6 +3528,18 @@
                 "minItems": 3,
                 "maxItems": 3
               },
+              "orbitCenterId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "appearance": {
                 "$ref": "#/components/schemas/AppearanceInput"
               },
@@ -3523,6 +3574,7 @@
               "version",
               "explorable",
               "position",
+              "orbitCenterId",
               "appearance",
               "size",
               "parentId"
@@ -3598,6 +3650,18 @@
             ]
           },
           "parentId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "orbitCenterId": {
             "anyOf": [
               {
                 "type": "string",
@@ -3707,6 +3771,18 @@
             ]
           },
           "parentId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "orbitCenterId": {
             "anyOf": [
               {
                 "type": "string",
@@ -3831,6 +3907,18 @@
               }
             ]
           },
+          "orbitCenterId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "baseType": {
             "type": "string",
             "enum": [
@@ -3931,6 +4019,7 @@
           "status",
           "externalKey",
           "parentId",
+          "orbitCenterId",
           "baseType",
           "subtypeId",
           "explorable",
@@ -6124,6 +6213,18 @@
               }
             ]
           },
+          "orbitCenterId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "baseType": {
             "type": "string",
             "enum": [
@@ -6417,6 +6518,7 @@
           "status",
           "externalKey",
           "parentId",
+          "orbitCenterId",
           "baseType",
           "subtypeId",
           "explorable",
@@ -10598,6 +10700,18 @@
             "minItems": 3,
             "maxItems": 3
           },
+          "orbitCenterId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "appearance": {
             "$ref": "#/components/schemas/Appearance"
           },
@@ -10620,6 +10734,7 @@
           "version",
           "explorable",
           "position",
+          "orbitCenterId",
           "appearance",
           "size"
         ],
@@ -11104,6 +11219,18 @@
             "minItems": 3,
             "maxItems": 3
           },
+          "orbitCenterId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "appearance": {
             "$ref": "#/components/schemas/Appearance"
           },
@@ -11172,6 +11299,7 @@
           "version",
           "explorable",
           "position",
+          "orbitCenterId",
           "appearance",
           "size",
           "planetCount",
@@ -11365,6 +11493,18 @@
                 "minItems": 3,
                 "maxItems": 3
               },
+              "orbitCenterId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "appearance": {
                 "$ref": "#/components/schemas/Appearance"
               },
@@ -11399,6 +11539,7 @@
               "version",
               "explorable",
               "position",
+              "orbitCenterId",
               "appearance",
               "size",
               "parentId"
@@ -11581,6 +11722,18 @@
                 "minItems": 3,
                 "maxItems": 3
               },
+              "orbitCenterId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "appearance": {
                 "$ref": "#/components/schemas/Appearance"
               },
@@ -11615,6 +11768,7 @@
               "version",
               "explorable",
               "position",
+              "orbitCenterId",
               "appearance",
               "size",
               "parentId"
@@ -11692,6 +11846,18 @@
             ]
           },
           "parentId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "orbitCenterId": {
             "anyOf": [
               {
                 "type": "string",
@@ -11801,6 +11967,18 @@
             ]
           },
           "parentId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "orbitCenterId": {
             "anyOf": [
               {
                 "type": "string",
@@ -11925,6 +12103,18 @@
               }
             ]
           },
+          "orbitCenterId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "baseType": {
             "type": "string",
             "enum": [
@@ -12025,6 +12215,7 @@
           "status",
           "externalKey",
           "parentId",
+          "orbitCenterId",
           "baseType",
           "subtypeId",
           "explorable",
@@ -14231,6 +14422,18 @@
               }
             ]
           },
+          "orbitCenterId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "baseType": {
             "type": "string",
             "enum": [
@@ -14524,6 +14727,7 @@
           "status",
           "externalKey",
           "parentId",
+          "orbitCenterId",
           "baseType",
           "subtypeId",
           "explorable",
@@ -17411,6 +17615,27 @@
             "name": "parentId",
             "required": false,
             "description": "Only entities with this parentId; \"null\" for none."
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "null"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              ]
+            },
+            "in": "query",
+            "name": "orbitCenterId",
+            "required": false,
+            "description": "Only entities with this orbitCenterId; \"null\" for none."
           },
           {
             "schema": {

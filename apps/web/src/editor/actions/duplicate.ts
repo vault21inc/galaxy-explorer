@@ -1,8 +1,5 @@
 import { schemasFor, type BatchOperation, type EntityReadOf, type RichText } from '@ge/domain';
 
-/** Copies land this far along +x, in the view's unit (ux.md §5). */
-export const DUPLICATE_OFFSET = 20;
-
 /** An object as read with its facts (`include=facts`). */
 export type DuplicableObject = EntityReadOf<'celestial_object'> & {
   facts?: readonly {
@@ -36,18 +33,20 @@ export function copyName(name: RichText): RichText {
 /**
  * The batch operations that duplicate objects (ux.md §5): each copy is a create with the
  * original's fields and appearance, a new name and an offset position, followed by its facts.
- * Relations and group memberships aren't copied. `$op:N` points the facts at the copy.
+ * Relations and group memberships aren't copied. `$op:N` points the facts at the copy. Copies
+ * land `offset` along +x, in the view's unit (levels/registry.ts `duplicateOffset`).
  */
 export function duplicateOperations(
   objects: readonly DuplicableObject[],
   mapId: string,
+  offset: number,
 ): BatchOperation[] {
   const operations: BatchOperation[] = [];
   for (const object of objects) {
     const data: Record<string, unknown> = {};
     for (const field of COPIED_FIELDS) data[field] = (object as Record<string, unknown>)[field];
     data.name = copyName(object.name);
-    data.x = object.x + DUPLICATE_OFFSET;
+    data.x = object.x + offset;
     const createIndex = operations.length;
     operations.push({ op: 'create', kind: 'celestial_object', mapId, data });
     const facts = (object.facts ?? []).map(({ fieldDefinitionId, value, isSpoiler, sortKey }) => ({

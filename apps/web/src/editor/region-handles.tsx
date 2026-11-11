@@ -16,7 +16,7 @@ import { useRegionPreview } from '@/state/region-preview.ts';
 import { useSelection } from '@/state/selection.ts';
 import { addRiftPoint, moveRiftPoint, removeRiftPoint } from './rift-points.ts';
 import { useSaveRegion } from './use-save-region.ts';
-import { useWorkPlaneLimit } from './use-work-plane-limit.ts';
+import { useEditView } from '@/levels/use-edit-view.ts';
 import { toNdc, workPlanePoint } from './work-plane.ts';
 
 /** A path as the schema stores it: plain [x, z] pairs. */
@@ -41,13 +41,7 @@ const HANDLE_CLASS =
  * pointer and keyboard focus like any control. A drag previews the new shape
  * (`useRegionPreview`); releasing saves it as one batch.
  */
-export function RegionHandles({
-  mapId,
-  objects,
-}: {
-  mapId: string;
-  objects: readonly ViewObject[];
-}) {
+export function RegionHandles({ objects }: { objects: readonly ViewObject[] }) {
   const selectedIds = useSelection((state) => state.selectedIds);
   const preview = useRegionPreview((state) => state.preview);
   const [onlyId] = selectedIds;
@@ -64,20 +58,14 @@ export function RegionHandles({
           },
         }
       : saved;
-  return <Handles mapId={mapId} saved={saved} object={object} />;
+  return <Handles saved={saved} object={object} />;
 }
 
-function Handles({
-  mapId,
-  saved,
-  object,
-}: {
-  mapId: string;
-  saved: ViewObject;
-  object: ViewObject;
-}) {
+function Handles({ saved, object }: { saved: ViewObject; object: ViewObject }) {
   const get = useThree((state) => state.get);
-  const limit = useWorkPlaneLimit(mapId);
+  // How far a handle may reach (work-plane.ts), as for every other drag in this view.
+  const view = useEditView();
+  const limit = view?.payload ? view.edit.workPlaneLimit(view.payload) : 0;
   const save = useSaveRegion();
   const selectedPoint = useRegionEdit((state) => state.selectedPoint);
   const adding = useRegionEdit((state) => state.addingPointsTo === object.id);

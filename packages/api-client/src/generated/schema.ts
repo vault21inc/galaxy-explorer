@@ -1968,6 +1968,7 @@ export interface components {
                 number,
                 number
             ];
+            orbitCenterId: string | null;
             appearance: components["schemas"]["AppearanceInput"];
             size: number | null;
         };
@@ -2071,6 +2072,7 @@ export interface components {
                 number,
                 number
             ];
+            orbitCenterId: string | null;
             appearance: components["schemas"]["AppearanceInput"];
             size: number | null;
             planetCount: number;
@@ -2126,6 +2128,7 @@ export interface components {
                     number,
                     number
                 ];
+                orbitCenterId: string | null;
                 appearance: components["schemas"]["AppearanceInput"];
                 size: number | null;
                 parentId: string | null;
@@ -2170,6 +2173,7 @@ export interface components {
                     number,
                     number
                 ];
+                orbitCenterId: string | null;
                 appearance: components["schemas"]["AppearanceInput"];
                 size: number | null;
                 parentId: string | null;
@@ -2186,6 +2190,7 @@ export interface components {
             status?: "draft" | "published";
             externalKey?: string | null;
             parentId?: string | null;
+            orbitCenterId?: string | null;
             /** @enum {string} */
             baseType: "system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker";
             subtypeId?: string | null;
@@ -2204,6 +2209,7 @@ export interface components {
             status?: "draft" | "published";
             externalKey?: string | null;
             parentId?: string | null;
+            orbitCenterId?: string | null;
             /** @enum {string} */
             baseType?: "system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker";
             subtypeId?: string | null;
@@ -2223,6 +2229,7 @@ export interface components {
             status: "draft" | "published";
             externalKey: string | null;
             parentId: string | null;
+            orbitCenterId: string | null;
             /** @enum {string} */
             baseType: "system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker";
             subtypeId: string | null;
@@ -2638,6 +2645,7 @@ export interface components {
             status: "draft" | "published";
             externalKey: string | null;
             parentId: string | null;
+            orbitCenterId: string | null;
             /** @enum {string} */
             baseType: "system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker";
             subtypeId: string | null;
@@ -3624,6 +3632,7 @@ export interface components {
                 number,
                 number
             ];
+            orbitCenterId: string | null;
             appearance: components["schemas"]["Appearance"];
             size: number | null;
         };
@@ -3727,6 +3736,7 @@ export interface components {
                 number,
                 number
             ];
+            orbitCenterId: string | null;
             appearance: components["schemas"]["Appearance"];
             size: number | null;
             planetCount: number;
@@ -3782,6 +3792,7 @@ export interface components {
                     number,
                     number
                 ];
+                orbitCenterId: string | null;
                 appearance: components["schemas"]["Appearance"];
                 size: number | null;
                 parentId: string | null;
@@ -3826,6 +3837,7 @@ export interface components {
                     number,
                     number
                 ];
+                orbitCenterId: string | null;
                 appearance: components["schemas"]["Appearance"];
                 size: number | null;
                 parentId: string | null;
@@ -3842,6 +3854,7 @@ export interface components {
             status?: "draft" | "published";
             externalKey?: string | null;
             parentId?: string | null;
+            orbitCenterId?: string | null;
             /** @enum {string} */
             baseType: "system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker";
             subtypeId?: string | null;
@@ -3860,6 +3873,7 @@ export interface components {
             status?: "draft" | "published";
             externalKey?: string | null;
             parentId?: string | null;
+            orbitCenterId?: string | null;
             /** @enum {string} */
             baseType?: "system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker";
             subtypeId?: string | null;
@@ -3879,6 +3893,7 @@ export interface components {
             status: "draft" | "published";
             externalKey: string | null;
             parentId: string | null;
+            orbitCenterId: string | null;
             /** @enum {string} */
             baseType: "system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker";
             subtypeId: string | null;
@@ -4294,6 +4309,7 @@ export interface components {
             status: "draft" | "published";
             externalKey: string | null;
             parentId: string | null;
+            orbitCenterId: string | null;
             /** @enum {string} */
             baseType: "system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker";
             subtypeId: string | null;
@@ -5463,6 +5479,8 @@ export interface operations {
                 q?: string;
                 /** @description Only entities with this parentId; "null" for none. */
                 parentId?: "null" | string;
+                /** @description Only entities with this orbitCenterId; "null" for none. */
+                orbitCenterId?: "null" | string;
                 /** @description Only entities with this baseType. */
                 baseType?: "system" | "star" | "planet" | "moon" | "asteroid_belt" | "station" | "nebula" | "anomaly" | "black_hole" | "marker";
                 /** @description Only entities with this subtypeId; "null" for none. */

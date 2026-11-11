@@ -6,14 +6,13 @@ import { isClick } from '@/input/click.ts';
 import { clampedRadiusPx } from '@/render/bodies/body-scale.ts';
 import { worldPerPxAt1 } from '@/render/screen-scale.ts';
 import { renderers } from '@/render/registry.ts';
-import { GALAXY_BODY_MAX_PX, GALAXY_BODY_MIN_PX } from '@/render/tuning.ts';
+import type { EditView } from '@/levels/use-edit-view.ts';
 import { useEditor } from '@/state/editor.ts';
 import { optimisticObject, useCreateObject } from './use-create-object.ts';
+import { toNdc, workPlanePoint } from './work-plane.ts';
 
 /** Renderers that can draw a ghost of their own look (D-28); others get a plain sphere. */
 const GHOST_RENDERERS = new Set(['system-glyphs', 'black-holes', 'icon-sprites']);
-import { useWorkPlaneLimit } from './use-work-plane-limit.ts';
-import { toNdc, workPlanePoint } from './work-plane.ts';
 
 /** Where the ghost is now, for the test hooks; null while it isn't shown. */
 let ghostAt: { baseType: string; position: [number, number, number] } | null = null;
@@ -27,16 +26,18 @@ const scratch = new Vector3();
 /**
  * Placing a new object (M3-T2, ux.md §5): a see-through ghost of the chosen type follows the
  * pointer on the work plane (y = 0); a click creates the object there; Esc or a right-click
- * cancels. Lives inside the galaxy view while a type is being placed.
+ * cancels. Lives inside the view being edited (galaxy or system) while a type is being placed;
+ * the new object goes where the levels registry says (in the system, or at the top level).
  */
-export function Placement({ mapId }: { mapId: string }) {
+export function Placement({ view }: { view: EditView }) {
   const placing = useEditor((state) => state.placing);
   const get = useThree((state) => state.get);
   const invalidate = useThree((state) => state.invalidate);
-  const create = useCreateObject(mapId);
+  const create = useCreateObject(view);
   const ghost = useRef<Object3D>(null);
+  const { level, edit } = view;
   // How far a placement may reach (work-plane.ts); past it the ghost hides.
-  const limit = useWorkPlaneLimit(mapId);
+  const limit = view.payload ? edit.workPlaneLimit(view.payload) : 0;
   const limitRef = useRef(limit);
   useEffect(() => {
     limitRef.current = limit;
@@ -100,18 +101,18 @@ export function Placement({ mapId }: { mapId: string }) {
 
   // A type with its own look (D-28) is drawn by its renderer, at the origin of the ghost's
   // group, which follows the pointer; that renderer clamps its own size.
-  const renderer = placing ? renderers.galaxy?.[placing] : undefined;
+  const renderer = placing ? renderers[level]?.[placing] : undefined;
   const glyph = renderer && GHOST_RENDERERS.has(renderer.name) ? renderer : undefined;
   const ghostObjects = useMemo(
-    () => (placing ? [optimisticObject({ baseType: placing, position: [0, 0, 0] })] : []),
-    [placing],
+    () => (placing ? [optimisticObject({ baseType: placing, position: [0, 0, 0] }, level)] : []),
+    [placing, level],
   );
 
   // A sphere ghost keeps the size a body of its type would have, clamped like InstancedBodies.
   useFrame(({ camera, size }) => {
     const mesh = ghost.current;
     if (!mesh?.visible || !placing || glyph) return;
-    const radius = resolveAppearance({ baseType: placing, view: 'galaxy' }).size ?? 1_000;
+    const radius = resolveAppearance({ baseType: placing, view: level }).size ?? 1;
     scratch.copy(mesh.position).applyMatrix4(camera.matrixWorldInverse);
     const perPx = worldPerPxAt1(camera, size.height);
     const depth = -scratch.z;
@@ -119,8 +120,8 @@ export function Placement({ mapId }: { mapId: string }) {
       radius,
       depth,
       perPx,
-      GALAXY_BODY_MIN_PX / 2,
-      GALAXY_BODY_MAX_PX / 2,
+      edit.ghostClampPx.min,
+      edit.ghostClampPx.max,
     );
     mesh.scale.setScalar(radiusPx * perPx * Math.max(depth, 1e-3));
   });

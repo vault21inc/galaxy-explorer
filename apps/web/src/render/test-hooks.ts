@@ -9,6 +9,7 @@ import { hoverStore } from '@/state/hover.ts';
 import { useSelection } from '@/state/selection.ts';
 import { useNavigation } from '@/state/navigation.ts';
 import { viewNavigation } from '@/state/view-navigator.ts';
+import { orbitRingOf } from './orbits/orbit-rings.tsx';
 import { currentLights } from './stars/system-lights.ts';
 import { transitionsStarted, viewSettled } from './transition/transition-controller.ts';
 import { flyTo } from './camera/fly-to.ts';
@@ -110,6 +111,11 @@ export interface GeTestHooks {
    * positions and linear colors. Empty when no star lights it.
    */
   systemLights(): { position: [number, number, number]; color: [number, number, number] }[];
+  /**
+   * A body's orbit ring as drawn (M5-T4): its center (the system's, or its star's, D-29) and
+   * radius, following a drag; null when it has none.
+   */
+  orbitRing(id: string): { center: [number, number, number]; radius: number } | null;
   /** Flies the camera to an object, as a double-click does; resolves when it has settled. */
   flyTo(id: string): Promise<void>;
   /** Where a page point meets the work plane (y = 0), as placing an object computes it. */
@@ -232,6 +238,10 @@ export function installTestHooks(): void {
     },
     transitioning: () => !viewSettled(),
     transitions: () => transitionsStarted(),
+    orbitRing: (id) => {
+      const ring = orbitRingOf(id);
+      return ring ? { center: [...ring.center], radius: ring.radius } : null;
+    },
     systemLights: () =>
       currentLights().map(({ position: [x, y, z], color: [r, g, b] }) => ({
         position: [x, y, z],

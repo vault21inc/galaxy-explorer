@@ -1,4 +1,4 @@
-import type { BaseType } from '@ge/domain';
+import type { BaseType, ViewLevel } from '@ge/domain';
 import { create } from 'zustand';
 
 interface EditorState {
@@ -17,9 +17,12 @@ interface EditorState {
   addMenuOpen: boolean;
   /** An object just created, whose name field should take focus once its panel shows. */
   focusNameOf: string | null;
-  /** Shift-dragging snaps positions to multiples of this, in the view's unit (ux.md §5). */
-  gridSize: number;
-  setGridSize: (size: number) => void;
+  /**
+   * Shift-dragging snaps positions to multiples of this, in each view's unit (ux.md §5): the
+   * reader's own spacing per view; a view without one uses its default (levels/registry.ts).
+   */
+  gridSizes: Partial<Record<ViewLevel, number>>;
+  setGridSize: (level: ViewLevel, size: number) => void;
   setEditing: (editing: boolean) => void;
   toggle: () => void;
   setAvailable: (available: boolean) => void;
@@ -31,9 +34,6 @@ interface EditorState {
   setFocusNameOf: (id: string | null) => void;
 }
 
-/** The snapping grid's default spacing: 10 units of the view (ux.md §5). */
-export const DEFAULT_GRID_SIZE = 10;
-
 /** Leaving edit mode ends whatever the editor was in the middle of. */
 const IDLE = { editing: false, placing: null, routing: false, addMenuOpen: false } as const;
 
@@ -42,9 +42,10 @@ export const useEditor = create<EditorState>()((set, get) => ({
   ...IDLE,
   available: false,
   focusNameOf: null,
-  gridSize: DEFAULT_GRID_SIZE,
-  setGridSize: (size) => {
-    if (Number.isFinite(size) && size > 0) set({ gridSize: size });
+  gridSizes: {},
+  setGridSize: (level, size) => {
+    if (Number.isFinite(size) && size > 0)
+      set({ gridSizes: { ...get().gridSizes, [level]: size } });
   },
   setEditing: (editing) => {
     set(editing && get().available ? { editing: true } : IDLE);

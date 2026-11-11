@@ -1,12 +1,9 @@
 import { TransformControls } from '@react-three/drei';
-import type { GalaxyView } from '@ge/domain';
+import type { ViewLevel, ViewPayload } from '@ge/domain';
 import { useThree } from '@react-three/fiber';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef } from 'react';
 import { Vector2, type Group } from 'three';
-import { useViewPayload } from '@/api/hooks.ts';
-import { queryKeys } from '@/api/keys.ts';
-import { useReadOptions } from '@/api/read-options.ts';
 import { resolveBinding } from '@/input/bindings.ts';
 import { isClick } from '@/input/click.ts';
 import { detectPlatform } from '@/input/platform.ts';
@@ -18,12 +15,14 @@ import {
   savedObject,
   setMovePreview,
 } from '@/render/scene-index.ts';
+import { objectsIn } from '@/levels/registry.ts';
+import { gridSizeIn, type EditView } from '@/levels/use-edit-view.ts';
 import { useEditor } from '@/state/editor.ts';
 import { useSelection } from '@/state/selection.ts';
 import { gizmoBusy, setGizmo } from './gizmo-state.ts';
+import { moveDescription, withOrbiters } from './orbiters.ts';
 import { moveDelta } from './snap.ts';
 import { useSaveMove, type Move } from './use-save-move.ts';
-import { useWorkPlaneLimit } from './use-work-plane-limit.ts';
 import { toNdc, workPlanePoint } from './work-plane.ts';
 
 /** The gizmo's size relative to its default, chosen to sit comfortably next to a body. */
@@ -39,15 +38,21 @@ const ndc = new Vector2();
  * - **Height:** a gizmo with only its vertical arrow, at the selection's center
  *   (drei `<TransformControls>`).
  *
+ * A star carries the objects that orbit it (D-29), in the same preview and the same batch.
+ *
  * During a drag only the move preview changes (scene-index.ts); releasing saves one batch.
+ * It works in any view the levels registry lets the editor into (M5-T4).
  */
-export function MoveTool({ mapId }: { mapId: string }) {
+export function MoveTool({ view }: { view: EditView }) {
+  const { level, viewKey } = view;
   // How far a drag may reach (work-plane.ts), current for the listeners below.
-  const limit = useWorkPlaneLimit(mapId);
+  const limit = view.payload ? view.edit.workPlaneLimit(view.payload) : 0;
   const limitRef = useRef(limit);
+  const levelRef = useRef(level);
   useEffect(() => {
     limitRef.current = limit;
-  }, [limit]);
+    levelRef.current = level;
+  }, [limit, level]);
   const editing = useEditor((state) => state.editing);
   // Placing an object or drawing a route (M4-T7) owns the canvas: no drags, no gizmo.
   const placing = useEditor((state) => state.placing !== null || state.routing);
@@ -55,19 +60,25 @@ export function MoveTool({ mapId }: { mapId: string }) {
   const get = useThree((state) => state.get);
   const invalidate = useThree((state) => state.invalidate);
   const queryClient = useQueryClient();
-  const readOptions = useReadOptions();
-  const viewKey = queryKeys.view('galaxy', mapId, readOptions);
   // Only objects move: a selected group or route (M4-T7) has no position of its own.
-  const view = useViewPayload('galaxy', mapId, readOptions);
+  const { objects } = view;
   const selectedIds = useMemo(() => {
-    const objectIds = new Set<string>(view.data?.objects.map((object) => object.id));
+    const objectIds = new Set<string>(objects.map((object) => object.id));
     return selection.filter((id) => objectIds.has(id));
-  }, [selection, view.data]);
+  }, [selection, objects]);
   const save = useSaveMove();
+
+  /** The objects in the payload the view shows now (writes need their versions). */
+  const current = () => {
+    const payload = queryClient.getQueryData<ViewPayload<ViewLevel>>(viewKey);
+    return payload ? objectsIn(payload) : [];
+  };
+  /** What a move of these objects carries: their orbiting objects too (D-29). */
+  const carried = (ids: readonly string[]) => withOrbiters(ids, current());
 
   // Writes need each object's version, from the payload the view shows.
   const movesFor = (ids: readonly string[], delta: readonly [number, number, number]): Move[] => {
-    const objects = queryClient.getQueryData<GalaxyView>(viewKey)?.objects ?? [];
+    const objects = current();
     return ids.flatMap((id) => {
       const object = objects.find((item) => item.id === id);
       const saved = savedObject(id);
@@ -86,8 +97,17 @@ export function MoveTool({ mapId }: { mapId: string }) {
       setMovePreview(null);
       return;
     }
-    save.mutate(moves);
+    const selected = useSelection.getState().selectedIds.filter((id) => preview.ids.has(id));
+    save.mutate({
+      moves,
+      description: moveDescription(selected, [...preview.ids], current()),
+    });
   };
+  // The listeners below read these through refs, current at call time.
+  const carriedRef = useRef(carried);
+  useEffect(() => {
+    carriedRef.current = carried;
+  });
   // The pointer and gizmo handlers outlive renders; they call the latest `commit` through this.
   const commitRef = useRef(commit);
   useEffect(() => {
@@ -146,7 +166,7 @@ export function MoveTool({ mapId }: { mapId: string }) {
         // The drag starts: an unselected object becomes the selection first.
         const selection = useSelection.getState();
         if (!selection.selectedIds.includes(drag.grabbedId)) selection.select([drag.grabbedId]);
-        drag.ids = useSelection.getState().selectedIds;
+        drag.ids = carriedRef.current(useSelection.getState().selectedIds);
       }
       // Past the limit, the preview stays where it last was.
       const to = workPlanePoint(
@@ -157,7 +177,7 @@ export function MoveTool({ mapId }: { mapId: string }) {
       );
       const grabbed = savedObject(drag.grabbedId);
       if (!to || !grabbed) return;
-      const gridSize = event.shiftKey ? useEditor.getState().gridSize : null;
+      const gridSize = event.shiftKey ? gridSizeIn(levelRef.current) : null;
       setMovePreview({
         ids: new Set(drag.ids),
         delta: moveDelta(grabbed.center, drag.from, to, gridSize),
@@ -240,13 +260,16 @@ export function MoveTool({ mapId }: { mapId: string }) {
         showX={false}
         showZ={false}
         onMouseDown={() => {
-          gizmoDrag.current = { startY: anchor.current?.position.y ?? 0, ids: selectedIds };
+          gizmoDrag.current = {
+            startY: anchor.current?.position.y ?? 0,
+            ids: carriedRef.current(selectedIds),
+          };
         }}
         onObjectChange={() => {
           const drag = gizmoDrag.current;
           const group = anchor.current;
           if (!drag || !group) return;
-          const gridSize = shiftHeld.current ? useEditor.getState().gridSize : null;
+          const gridSize = shiftHeld.current ? gridSizeIn(level) : null;
           const [, dy] = moveDelta(
             [0, drag.startY, 0],
             [0, drag.startY, 0],
