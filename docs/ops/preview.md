@@ -134,7 +134,17 @@ It:
 - backs up what's on the server;
 - **replaces** the server's content with yours, then restarts the API.
 
-Run it again whenever you want the preview to catch up with your local work. Anything edited on the server since is replaced, but stays in that backup.
+Run it again whenever you want the preview to catch up with your local work. Anything edited on the server since is replaced, but stays in that backup. Afterwards the copy is migrated to the server's version of the app, in case your local database was a migration behind.
+
+## Demo content
+
+Testers can explore the demo universe (`apps/api/src/seeds/demo.ts`) instead of your own work. This resets the preview to a fresh database with only the demo seeded:
+
+```bash
+ssh deploy@203.0.113.5 sudo bash /srv/galaxy-explorer/app/scripts/ops/preview-seed.sh
+```
+
+The demo is Example Universe: two maps, systems with stars, planets, moons, a belt and a station, regions, groups and a route, plus spoilers and a draft. What was there before is backed up first; to bring your own work back, copy it up again (step 6). The demo's two images are placeholders without files, so they show as missing.
 
 ## Inviting testers
 

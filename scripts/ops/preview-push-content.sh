@@ -4,8 +4,8 @@
 #
 #   bash scripts/ops/preview-push-content.sh deploy@your-server
 #
-# Deploy the same version of the app first, so the database schema matches. The server's
-# current content is backed up before it's replaced.
+# The server's current content is backed up before it's replaced, and the copy is migrated
+# to the server's version of the app afterwards.
 set -euo pipefail
 
 HOST="${1:?Usage: preview-push-content.sh admin@server}"
@@ -39,6 +39,8 @@ trap 'systemctl start galaxy-explorer-api' EXIT
 # point at themselves, such as celestial_objects.)
 compose exec -T db sh -c 'dropdb -U ge --force ge && createdb -U ge ge' < /dev/null
 compose exec -T db pg_restore -U ge -d ge --no-owner --exit-on-error < /tmp/ge.dump
+# The dump may come from a database a migration behind the code here: catch it up.
+sudo -u ge -H bash -c "cd '$ROOT_DIR/app/packages/db' && node --env-file='$ROOT_DIR/preview.env' src/cli.ts migrate"
 rm -rf "$ROOT_DIR/media"
 tar -C "$ROOT_DIR" -xzf /tmp/media.tgz
 chown -R ge:ge "$ROOT_DIR/media"
