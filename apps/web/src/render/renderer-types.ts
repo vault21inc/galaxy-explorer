@@ -8,4 +8,9 @@ export interface RendererProps {
    * and kept out of the scene index (no picking, labels or rings for it).
    */
   ghost?: boolean;
+  /**
+   * Where the view's stars are, by id, for objects that orbit one star of a binary
+   * (`orbitCenterId`, D-29): an asteroid belt circles its star, not the system's center.
+   */
+  orbitCenters?: ReadonlyMap<string, readonly [number, number, number]>;
 }

@@ -64,10 +64,13 @@ const FRAGMENT_SHADER = /* glsl */ `
   }
 `;
 
-export function AsteroidBelts({ objects }: RendererProps) {
+export function AsteroidBelts({ objects, orbitCenters }: RendererProps) {
   const invalidate = useThree((state) => state.invalidate);
   const policy = useSpoilerPolicy();
-  const rocks = useMemo(() => buildBeltRocks(objects, policy, ASTEROID_BELTS), [objects, policy]);
+  const rocks = useMemo(
+    () => buildBeltRocks(objects, policy, ASTEROID_BELTS, orbitCenters),
+    [objects, policy, orbitCenters],
+  );
 
   const geometry = useMemo(() => {
     const rock = new IcosahedronGeometry(1, 0);

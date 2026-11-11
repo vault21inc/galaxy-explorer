@@ -17,8 +17,9 @@ import {
 /**
  * The rocks of every asteroid belt in the view (rendering.md §7), pure so it's unit-tested.
  *
- * A belt is a band around the system's center, through the belt object's position: its middle
- * radius is that position's distance from the center axis. Each rock is placed by seeded random
+ * A belt is a band around what it orbits, through the belt object's position: the system's
+ * center, or the star named by its `orbitCenterId` (D-29), as its orbit ring is (orbit-shapes.ts).
+ * Its middle radius is the position's distance from that center in the system's plane. Each rock is placed by seeded random
  * numbers (the seed comes from the belt's id), so a belt looks the same on every load:
  * - its angle around the band is uniform;
  * - its offset across the band and its height are bell-shaped (Gaussian), thinning toward the
@@ -46,6 +47,8 @@ export function buildBeltRocks(
   belts: readonly ViewObject[],
   policy: SpoilerPolicy,
   renderer: string,
+  /** The view's stars by id (orbit-shapes.ts `starCenters`); a missing one means the center. */
+  centers: ReadonlyMap<string, readonly [number, number, number]> = new Map(),
 ): BeltRocks {
   const perBelt = Math.min(BELT_ROCKS, BELT_MAX_ROCKS);
   const count = belts.length * perBelt;
@@ -64,7 +67,10 @@ export function buildBeltRocks(
     const base = hexToLinear(color);
     const size = belt.size ?? 1;
     const [x, y, z] = belt.position;
-    const radius = Math.hypot(x, z);
+    const [cx, , cz] = (belt.orbitCenterId === null
+      ? undefined
+      : centers.get(belt.orbitCenterId)) ?? [0, 0, 0];
+    const radius = Math.hypot(x - cx, z - cz);
     const halfWidth = size * BELT_HALF_WIDTH_SIZES;
     const halfThickness = size * BELT_HALF_THICKNESS_SIZES;
     const random = seededRandom(seedOf(belt.id));
@@ -77,9 +83,9 @@ export function buildBeltRocks(
       const across = radius + gaussian(random) * halfWidth * 0.5;
       rocks.centers.set(
         [
-          across * Math.cos(angle),
+          cx + across * Math.cos(angle),
           y + gaussian(random) * halfThickness * 0.5,
-          across * Math.sin(angle),
+          cz + across * Math.sin(angle),
         ],
         rock * 3,
       );
@@ -112,7 +118,7 @@ export function buildBeltRocks(
       // Picked anywhere along the band, like a rift (rendering.md §10).
       curve: Array.from({ length: BELT_PICK_POINTS + 1 }, (_, p) => {
         const angle = (p / BELT_PICK_POINTS) * 2 * Math.PI;
-        return [radius * Math.cos(angle), y, radius * Math.sin(angle)] as const;
+        return [cx + radius * Math.cos(angle), y, cz + radius * Math.sin(angle)] as const;
       }),
     });
   });

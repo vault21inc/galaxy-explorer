@@ -43,6 +43,29 @@ describe('asteroid belts', () => {
     for (const [x, , z] of drawn?.curve ?? []) expect(Math.hypot(x, z)).toBeCloseTo(10);
   });
 
+  it('circles the star it orbits, as its orbit ring does (D-29)', () => {
+    const around = viewObject('belt-3', 'asteroid_belt', {
+      position: [7, 0, -10],
+      size: 1,
+      orbitCenterId: 'star-b',
+      appearance: { color: '#a39380' },
+    } as never);
+    const centers = new Map([['star-b', [4, 0, -6] as const]]);
+    const rocks = buildBeltRocks([around], SHOW_SPOILERS, 'asteroid-belts', centers);
+    // The band runs 5 su from the star (a 3-4-5 triangle), not 12.2 from the system's center.
+    const distances = Array.from({ length: rocks.count }, (_, i) =>
+      Math.hypot((rocks.centers[i * 3] ?? 0) - 4, (rocks.centers[i * 3 + 2] ?? 0) + 6),
+    );
+    const mean = distances.reduce((sum, d) => sum + d, 0) / distances.length;
+    expect(mean).toBeCloseTo(5, 1);
+    for (const [x, , z] of rocks.drawn[0]?.curve ?? [])
+      expect(Math.hypot(x - 4, z + 6)).toBeCloseTo(5);
+    // A star that isn't in the view: around the system's center, as the ring falls back too.
+    const lost = buildBeltRocks([around], SHOW_SPOILERS, 'asteroid-belts');
+    for (const [x, , z] of lost.drawn[0]?.curve ?? [])
+      expect(Math.hypot(x, z)).toBeCloseTo(Math.hypot(7, 10));
+  });
+
   it('keeps a hidden spoiler belt’s color to itself', () => {
     const secret = viewObject('belt-2', 'asteroid_belt', {
       position: [3, 0, 0],

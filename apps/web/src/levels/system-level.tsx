@@ -6,6 +6,7 @@ import { useViewCamera } from '@/render/camera/use-view-camera.ts';
 import { SelectionRings } from '@/render/picking/selection-rings.tsx';
 import { partitionByRenderer } from '@/render/registry.ts';
 import { OrbitRings } from '@/render/orbits/orbit-rings.tsx';
+import { starCenters } from '@/render/orbits/orbit-shapes.ts';
 import { GalaxyBand } from '@/render/system/galaxy-band.tsx';
 import { placeSatellites } from '@/render/system/satellites.ts';
 import { systemCamera } from '@/render/system/system-camera.ts';
@@ -30,6 +31,8 @@ export default function SystemLevel({ subjectId }: { subjectId: string }) {
         : [],
     [view.data],
   );
+  // Where the stars are, for what orbits one of them (D-29), as the orbit rings have it.
+  const centers = useMemo(() => starCenters(view.data?.children ?? []), [view.data]);
   useViewCamera(view.data ? systemCamera(subjectId, view.data.children) : null);
   if (!view.data) return null;
   return (
@@ -37,7 +40,7 @@ export default function SystemLevel({ subjectId }: { subjectId: string }) {
       <GalaxyBand />
       <OrbitRings objects={view.data.children} />
       {partitions.map(({ renderer, objects }) => (
-        <renderer.component key={renderer.name} objects={objects} />
+        <renderer.component key={renderer.name} objects={objects} orbitCenters={centers} />
       ))}
       <SelectionRings />
       {/* Placing and moving, the same tools as the galaxy view's (M5-T4). */}
