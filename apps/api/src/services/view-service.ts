@@ -8,6 +8,7 @@ import {
   type Appearance,
   type BaseType,
   type GalaxyObject,
+  type EventListItem,
   type GalaxyView,
   type OrbitView,
   type SubjectViewBase,
@@ -487,6 +488,12 @@ export function excludeViewSpoilers<T extends object>(view: T): T {
   }
   if (Array.isArray(result.pins)) {
     result.pins = (result.pins as OrbitView['pins']).filter((pin) => !pin.locationSpoiler);
+  }
+  // The events list (M6-T7): a spoiler location says nothing of where it is.
+  if (Array.isArray(result.events)) {
+    result.events = (result.events as EventListItem[]).map((event) =>
+      event.location?.isSpoiler ? { ...event, location: { ...event.location, path: [] } } : event,
+    );
   }
   if (Array.isArray(result.markers)) {
     result.markers = (result.markers as GalaxyView['markers']).filter(

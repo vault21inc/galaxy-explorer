@@ -64,6 +64,7 @@ export function openApiComponents(): Record<string, z.ZodType> {
     ViewGroupType: views.ViewGroupType,
     ViewPin: views.ViewPin,
     ViewMarker: views.ViewMarker,
+    EventList: views.EventList,
     GalaxyView: views.GalaxyView,
     GalaxyObject: views.GalaxyObject,
     SystemStar: views.SystemStar,

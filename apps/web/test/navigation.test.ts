@@ -240,6 +240,22 @@ describe('resolving a view URL', () => {
     });
   });
 
+  it('reads only view payloads from the cache, not the events list beside them (M6-T7)', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    // Cached under `view` too, so it's refreshed with them, but it's no payload; cached first,
+    // so it's met before the galaxy view that knows the object.
+    client.setQueryData(queryKeys.eventList('map-1'), { map: { id: 'map-1' }, events: [] });
+    client.setQueryData(queryKeys.view('galaxy', 'map-1'), {
+      map: { id: 'map-1' },
+      objects: [object('veil', 'nebula', false)],
+    });
+    expect(await resolveView(client, 'map-1', 'veil', {})).toEqual({
+      kind: 'select',
+      parentId: null,
+      objectId: 'veil',
+    });
+  });
+
   it('points to the right map for an object on another', async () => {
     expect(await resolveView(cachedClient(), 'map-2', 'aster', {})).toEqual({
       kind: 'elsewhere',

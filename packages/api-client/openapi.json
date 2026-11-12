@@ -2986,6 +2986,177 @@
           "position"
         ]
       },
+      "EventListInput": {
+        "type": "object",
+        "properties": {
+          "map": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "universeId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              }
+            },
+            "required": [
+              "id",
+              "universeId"
+            ]
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "version": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "namePlain": {
+                  "type": "string"
+                },
+                "nameSpoiler": {
+                  "type": "boolean"
+                },
+                "nameRedacted": {
+                  "type": "string"
+                },
+                "isSpoiler": {
+                  "type": "boolean"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "draft",
+                    "published"
+                  ]
+                },
+                "categoryId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "dateText": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "dateSort": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "location": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "surface",
+                            "object",
+                            "space",
+                            "place"
+                          ]
+                        },
+                        "isSpoiler": {
+                          "type": "boolean"
+                        },
+                        "path": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "celestial_object",
+                                  "place"
+                                ]
+                              },
+                              "namePlain": {
+                                "type": "string"
+                              },
+                              "nameSpoiler": {
+                                "type": "boolean"
+                              },
+                              "nameRedacted": {
+                                "type": "string"
+                              },
+                              "isSpoiler": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "kind",
+                              "namePlain",
+                              "nameSpoiler",
+                              "nameRedacted",
+                              "isSpoiler"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "mode",
+                        "isSpoiler",
+                        "path"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "version",
+                "namePlain",
+                "nameSpoiler",
+                "nameRedacted",
+                "isSpoiler",
+                "status",
+                "categoryId",
+                "dateText",
+                "dateSort",
+                "location"
+              ]
+            }
+          }
+        },
+        "required": [
+          "map",
+          "events"
+        ]
+      },
       "GalaxyViewInput": {
         "type": "object",
         "properties": {
@@ -11815,6 +11986,182 @@
           "mode",
           "objectId",
           "position"
+        ],
+        "additionalProperties": false
+      },
+      "EventList": {
+        "type": "object",
+        "properties": {
+          "map": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "universeId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              }
+            },
+            "required": [
+              "id",
+              "universeId"
+            ],
+            "additionalProperties": false
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "version": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "namePlain": {
+                  "type": "string"
+                },
+                "nameSpoiler": {
+                  "type": "boolean"
+                },
+                "nameRedacted": {
+                  "type": "string"
+                },
+                "isSpoiler": {
+                  "type": "boolean"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "draft",
+                    "published"
+                  ]
+                },
+                "categoryId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "dateText": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "dateSort": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "location": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "surface",
+                            "object",
+                            "space",
+                            "place"
+                          ]
+                        },
+                        "isSpoiler": {
+                          "type": "boolean"
+                        },
+                        "path": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "celestial_object",
+                                  "place"
+                                ]
+                              },
+                              "namePlain": {
+                                "type": "string"
+                              },
+                              "nameSpoiler": {
+                                "type": "boolean"
+                              },
+                              "nameRedacted": {
+                                "type": "string"
+                              },
+                              "isSpoiler": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "kind",
+                              "namePlain",
+                              "nameSpoiler",
+                              "nameRedacted",
+                              "isSpoiler"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "mode",
+                        "isSpoiler",
+                        "path"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "version",
+                "namePlain",
+                "nameSpoiler",
+                "nameRedacted",
+                "isSpoiler",
+                "status",
+                "categoryId",
+                "dateText",
+                "dateSort",
+                "location"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "map",
+          "events"
         ],
         "additionalProperties": false
       },
@@ -27922,6 +28269,116 @@
                         "rowsChanged"
                       ],
                       "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/maps/{mapId}/event-list": {
+      "get": {
+        "operationId": "views.events",
+        "summary": "A map's events, in date order, with where each is",
+        "tags": [
+          "views"
+        ],
+        "description": "Every event of the map the reader may see, sorted by `dateSort`, then `dateText`, then name (undated last), each with its category and its location as a path of names, outermost first (\"Gudrun › Gudrun I › Hive Primus\"). The path is empty in deep space; `location` is null for an event that is nowhere yet. Names come with `nameRedacted`; under `spoilers=exclude` a spoiler location keeps its mode but loses its path.",
+        "parameters": [
+          {
+            "schema": {
+              "default": "include",
+              "type": "string",
+              "enum": [
+                "include",
+                "exclude"
+              ]
+            },
+            "in": "query",
+            "name": "spoilers",
+            "required": false,
+            "description": "`exclude` blacks out everything flagged as a potential spoiler before it leaves the server."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "in": "query",
+            "name": "includeDrafts",
+            "required": false,
+            "description": "Editors only: include unpublished drafts."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "mapId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/EventList"
                     }
                   },
                   "required": [

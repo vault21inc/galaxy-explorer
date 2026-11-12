@@ -3,6 +3,7 @@ import { useUniverses } from '@/api/containers.ts';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu.tsx';
 import { containerName } from '@/lib/container-name.ts';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
+import { EventsPopover } from '@/panels/events-list/events-popover.tsx';
 import { LayersPopover } from '@/panels/layers/layers-popover.tsx';
 import { ShortcutHelp } from '@/panels/shortcut-help/shortcut-help.tsx';
 import { Breadcrumbs } from './breadcrumbs.tsx';
@@ -14,7 +15,7 @@ import { useUniverseRoute } from './use-universe-route.ts';
 
 /**
  * The top bar (ux.md §1): the app's name, the universe and map switchers, the breadcrumbs and
- * the edit toggle (on a map), the spoiler toggle, the shortcut help (M4-T9) and the settings. M7
+ * the edit toggle, the events list (M6-T7) and the layers (on a map), the spoiler toggle, the shortcut help (M4-T9) and the settings. M7
  * adds search.
  */
 export function TopBar() {
@@ -33,6 +34,7 @@ export function TopBar() {
       {universeSlug !== undefined && <UniverseControls universeSlug={universeSlug} />}
       <div className="ml-auto flex items-center gap-1">
         {mapSlug !== undefined && <EditToggle />}
+        {mapSlug !== undefined && <EventsPopover />}
         {mapSlug !== undefined && <LayersPopover />}
         <SpoilerToggle />
         <ShortcutHelp />

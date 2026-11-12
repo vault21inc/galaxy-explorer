@@ -247,6 +247,48 @@ export const OrbitView = SubjectViewBase.extend({
 });
 export type OrbitView = z.infer<typeof OrbitView>;
 
+/** One step of an event's location path: an object (outermost first), or the place it's at. */
+export const LocationStep = z.object({
+  id: Uuid,
+  kind: z.enum(['celestial_object', 'place']),
+  ...Named,
+});
+export type LocationStep = z.infer<typeof LocationStep>;
+
+/**
+ * One event in a map's events list (M6-T7, ux.md §1): its date, category and where it is as a
+ * path ("Gudrun › Gudrun I › Hive Primus"). The path is empty for deep space; `location` is
+ * null for an event that's nowhere yet. A spoiler location's path isn't sent under
+ * `spoilers=exclude`.
+ */
+export const EventListItem = z.object({
+  id: Uuid,
+  version: z.int().positive(),
+  ...Named,
+  status: z.enum(['draft', 'published']),
+  categoryId: Uuid.nullable(),
+  dateText: z.string().nullable(),
+  dateSort: z.number().nullable(),
+  location: z
+    .object({
+      mode: z.enum(LOCATION_MODES),
+      isSpoiler: z.boolean(),
+      path: z.array(LocationStep),
+    })
+    .nullable(),
+});
+export type EventListItem = z.infer<typeof EventListItem>;
+
+/**
+ * A map's events, in date order: by `dateSort`, then `dateText`, then name, undated last
+ * (M6-T7). The map's universe is there for its event categories.
+ */
+export const EventList = z.object({
+  map: z.object({ id: Uuid, universeId: Uuid }),
+  events: z.array(EventListItem),
+});
+export type EventList = z.infer<typeof EventList>;
+
 /**
  * Each view level's payload schema, so clients derive the payload type from the level
  * (`ViewPayload<'system'>`) instead of naming it. `satisfies` makes a missing level a type error.

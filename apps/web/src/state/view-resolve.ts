@@ -1,5 +1,6 @@
 import {
   objectTypes,
+  viewLevels,
   type BaseType,
   type GalaxyView,
   type SystemView,
@@ -74,8 +75,12 @@ export async function resolveView(
 
 /** The object as some cached view payload already describes it, without a request. */
 export function cachedFacts(client: QueryClient, objectId: string): ObjectFacts | undefined {
-  for (const [, data] of client.getQueriesData<GalaxyView | SystemView>({ queryKey: ['view'] })) {
-    if (!data) continue;
+  for (const [key, data] of client.getQueriesData<GalaxyView | SystemView>({
+    queryKey: ['view'],
+  })) {
+    // Only view payloads: other queries live under `view` to be refreshed with them (the
+    // events list, keys.ts), and have none of a payload's fields.
+    if (!data || !(String(key[1]) in viewLevels)) continue;
     if ('objects' in data) {
       const found = data.objects.find((object) => object.id === objectId);
       if (found) return { mapId: data.map.id, ...pick(found), parentId: null };

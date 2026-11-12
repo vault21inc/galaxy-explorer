@@ -101,6 +101,15 @@ export function viewRequest(
   return { template: `/api/v1/objects/{id}/views/${level}`, path: { id: subjectId }, query };
 }
 
+/** A map's events list (M6-T7). */
+export function eventListRequest(mapId: string, options: ReadOptions = {}): RequestSpec {
+  return {
+    template: '/api/v1/maps/{mapId}/event-list',
+    path: { mapId },
+    query: definedOnly(options),
+  };
+}
+
 function definedOnly(options: object): Query {
   return Object.fromEntries(
     Object.entries(options as Record<string, Query[string] | undefined>).filter(

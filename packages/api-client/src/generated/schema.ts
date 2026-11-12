@@ -1314,6 +1314,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maps/{mapId}/event-list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A map's events, in date order, with where each is
+         * @description Every event of the map the reader may see, sorted by `dateSort`, then `dateText`, then name (undated last), each with its category and its location as a path of names, outermost first ("Gudrun › Gudrun I › Hive Primus"). The path is empty in deep space; `location` is null for an event that is nowhere yet. Names come with `nameRedacted`; under `spoilers=exclude` a spoiler location keeps its mode but loses its path.
+         */
+        get: operations["views.events"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maps/{mapId}/views/galaxy": {
         parameters: {
             query?: never;
@@ -2095,6 +2115,43 @@ export interface components {
                 number,
                 number
             ] | null;
+        };
+        EventListInput: {
+            map: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                universeId: string;
+            };
+            events: {
+                /** Format: uuid */
+                id: string;
+                version: number;
+                namePlain: string;
+                nameSpoiler: boolean;
+                nameRedacted: string;
+                isSpoiler: boolean;
+                /** @enum {string} */
+                status: "draft" | "published";
+                categoryId: string | null;
+                dateText: string | null;
+                dateSort: number | null;
+                location: {
+                    /** @enum {string} */
+                    mode: "surface" | "object" | "space" | "place";
+                    isSpoiler: boolean;
+                    path: {
+                        /** Format: uuid */
+                        id: string;
+                        /** @enum {string} */
+                        kind: "celestial_object" | "place";
+                        namePlain: string;
+                        nameSpoiler: boolean;
+                        nameRedacted: string;
+                        isSpoiler: boolean;
+                    }[];
+                } | null;
+            }[];
         };
         GalaxyViewInput: {
             map: {
@@ -3887,6 +3944,43 @@ export interface components {
                 number,
                 number
             ] | null;
+        };
+        EventList: {
+            map: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                universeId: string;
+            };
+            events: {
+                /** Format: uuid */
+                id: string;
+                version: number;
+                namePlain: string;
+                nameSpoiler: boolean;
+                nameRedacted: string;
+                isSpoiler: boolean;
+                /** @enum {string} */
+                status: "draft" | "published";
+                categoryId: string | null;
+                dateText: string | null;
+                dateSort: number | null;
+                location: {
+                    /** @enum {string} */
+                    mode: "surface" | "object" | "space" | "place";
+                    isSpoiler: boolean;
+                    path: {
+                        /** Format: uuid */
+                        id: string;
+                        /** @enum {string} */
+                        kind: "celestial_object" | "place";
+                        namePlain: string;
+                        nameSpoiler: boolean;
+                        nameRedacted: string;
+                        isSpoiler: boolean;
+                    }[];
+                } | null;
+            }[];
         };
         GalaxyView: {
             map: {
@@ -11262,6 +11356,71 @@ export interface operations {
                             revertsBatchId: string;
                             rowsChanged: number;
                         };
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "views.events": {
+        parameters: {
+            query?: {
+                /** @description `exclude` blacks out everything flagged as a potential spoiler before it leaves the server. */
+                spoilers?: "include" | "exclude";
+                /** @description Editors only: include unpublished drafts. */
+                includeDrafts?: "true" | "false";
+            };
+            header?: never;
+            path: {
+                mapId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["EventList"];
                     };
                 };
             };

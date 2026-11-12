@@ -4,6 +4,7 @@ import type {
   EntityInclude,
   EntityKind,
   EntityReadOf,
+  EventList,
   ViewLevel,
   ViewPayload,
 } from '@ge/domain';
@@ -14,6 +15,7 @@ import {
   configListRequest,
   entityListRequest,
   entityRequest,
+  eventListRequest,
   viewRequest,
   type EntityOptions,
   type EntityScope,
@@ -88,6 +90,19 @@ export function useViewPayload<L extends ViewLevel>(
     // payload must never stand in.
     placeholderData: (previous, previousQuery) =>
       previousQuery?.queryKey[2] === subjectId ? previous : undefined,
+  });
+}
+
+/** A map's events, in date order, with where each is (M6-T7). */
+export function useEventList(mapId: string | undefined, options: ReadOptions = {}) {
+  return useQuery({
+    queryKey: queryKeys.eventList(mapId ?? '', options),
+    queryFn:
+      mapId === undefined
+        ? skipToken
+        : ({ signal }) => fetchData<EventList>(eventListRequest(mapId, options), signal),
+    // As the views: it changes only when the owner edits, which refreshes it.
+    staleTime: Infinity,
   });
 }
 

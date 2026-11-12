@@ -1,5 +1,5 @@
 import type { Database } from '@ge/db';
-import { GalaxyView, OrbitView, SystemView } from '@ge/domain';
+import { EventList, GalaxyView, OrbitView, SystemView } from '@ge/domain';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { actorOf } from '../http/batch.ts';
@@ -10,6 +10,7 @@ import {
   orbitView,
   systemView,
 } from '../services/view-service.ts';
+import { eventList } from '../services/event-list.ts';
 import { visibleTo } from '../services/visibility.ts';
 
 /**
@@ -25,6 +26,27 @@ export const viewRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, { db
     visibleTo(actorOf(request), { includeDrafts });
   const spoilersApplied = <T extends object>(view: T, spoilers: 'include' | 'exclude') =>
     spoilers === 'exclude' ? excludeViewSpoilers(view) : view;
+
+  app.get(
+    '/maps/:mapId/event-list',
+    {
+      schema: {
+        tags: ['views'],
+        summary: "A map's events, in date order, with where each is",
+        description:
+          'Every event of the map the reader may see, sorted by `dateSort`, then `dateText`, then name (undated last), each with its category and its location as a path of names, outermost first ("Gudrun › Gudrun I › Hive Primus"). The path is empty in deep space; `location` is null for an event that is nowhere yet. Names come with `nameRedacted`; under `spoilers=exclude` a spoiler location keeps its mode but loses its path.',
+        operationId: 'views.events',
+        params: z.object({ mapId: z.uuid() }),
+        querystring: readQuery,
+        response: { 200: envelope(EventList), ...problemResponses },
+      },
+    },
+    async (request) => {
+      const { spoilers, includeDrafts } = request.query;
+      const list = await eventList(db, request.params.mapId, viewerOf(request, includeDrafts));
+      return { data: spoilersApplied(list, spoilers) };
+    },
+  );
 
   app.get(
     '/maps/:mapId/views/galaxy',

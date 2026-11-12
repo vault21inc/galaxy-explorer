@@ -13,6 +13,12 @@ export const queryKeys = {
     [kind, 'list', scope, filters] as const,
   view: (level: ViewLevel, subjectId: string, options: ReadOptions = {}) =>
     ['view', level, subjectId, options] as const,
+  /**
+   * A map's events list (M6-T7). Under `view`: the writes that change it (an event's date or
+   * location, an object's name) all refresh the views.
+   */
+  eventList: (mapId: string, options: ReadOptions = {}) =>
+    ['view', 'events', mapId, options] as const,
   configList: (resource: ConfigResource, universeId: string) =>
     [resource, 'list', { universeId }] as const,
   /** A universe's image library (M3-T7). */

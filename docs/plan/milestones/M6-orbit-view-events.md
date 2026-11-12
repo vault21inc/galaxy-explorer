@@ -230,7 +230,18 @@
 - Clicking an item navigates through the views and selects the event. Unplaced events show "No location" and open the panel.
 
 **Done when:**
-- [ ] E2E: the demo events are listed in date order; filtering by category works; clicking a surface event lands in its orbit view with the pin selected.
+- [x] E2E: the demo events are listed in date order; filtering by category works; clicking a surface event lands in its orbit view with the pin selected.
+
+**As built:**
+- **The API** gives the list in one request, `GET /maps/{mapId}/event-list` (`EventList`, services/event-list.ts). It's sorted by `dateSort`, then `dateText`, then name, undated last at each step. Each event comes with its category and its location as a path of names, outermost first ("Aster › Primus › Hive Spire"). The path is built from a few batched reads: the events, the places they're at, then objects and their ancestors a level at a time. An event at a spoiler place counts as a spoiler location. Under `spoilers=exclude` a spoiler location keeps its mode but loses its path.
+- **The panel** (`panels/events-list/`) is a top-bar **Events** popover on map pages, beside Layers, loaded when first opened. Each row shows its category icon in the category's color, its name, its date, and where it is ("Deep space", "No location"). It filters by category (or "No category") and by text. Spoilers (`event-rows.ts`, unit-tested):
+  - a hidden event is a redaction bar with a grey "?" and no date;
+  - a hidden location is a redaction bar;
+  - each path step follows its own flags;
+  - the filters match only what's shown.
+- **Choosing an event** goes to its view with it selected (M6-T6's `goToLocated`). One that's nowhere yet opens its panel in the galaxy view: the info panel now knows events by the map's list.
+- **Caching:** the list is cached under `['view', 'events', …]`, so the writes that refresh views refresh it. The view resolver's cache scan now reads only view payloads. Before this fix, the list in the cache broke going to an event ("Couldn't open this view"), which the dev app showed.
+- **Tests:** `apps/web/e2e/events-list.spec.ts` (the "Done when" checks on the demo seed), `apps/web/test/event-rows.test.ts`, a resolver case in `apps/web/test/navigation.test.ts`, and an event-list case in `apps/api/test/views.int.test.ts`.
 
 ### M6-T8 Proof-of-concept acceptance
 

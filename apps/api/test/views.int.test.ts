@@ -418,6 +418,56 @@ describe('view payloads', () => {
       ]);
     }));
 
+  it('event list: date order, location paths, and spoiler locations (M6-T7)', () =>
+    run(async (api) => {
+      const f = await buildFixture(api);
+      const event = (name: string, extra: object = {}) => ({
+        op: 'create',
+        kind: 'event',
+        mapId: f.mapId,
+        data: { name: rt.plain(name), ...extra },
+      });
+      await api.expect(200, 'POST', '/batch', {
+        description: 'More events',
+        operations: [
+          event('First contact', { dateSort: 100, dateText: '100.M41' }), // 0
+          {
+            op: 'setLocation',
+            id: '$op:0',
+            data: { mode: 'space', objectId: null, x: 0, y: 0, z: 0 },
+          },
+          event('Undated, unplaced'), // 2
+          event('At the vault', { dateSort: 300 }), // 3
+          { op: 'setLocation', id: '$op:3', data: { mode: 'place', placeId: f.ids[17] } },
+        ],
+      });
+      const list = (await api.expect(200, 'GET', `/maps/${f.mapId}/event-list`)).body.data;
+      expect(list.map.universeId).toBe(f.universeId);
+      const names = list.events.map((e: any) => e.namePlain);
+      // dateSort first, then dateText, then name; undated last.
+      expect(names).toEqual([
+        'First contact',
+        'At the vault',
+        'Siege of Hive Primus',
+        'Orbital duel',
+        'Undated, unplaced',
+      ]);
+      const byName = Object.fromEntries(list.events.map((e: any) => [e.namePlain, e]));
+      const path = (name: string) => byName[name].location?.path.map((step: any) => step.namePlain);
+      expect(byName['First contact'].location).toMatchObject({ mode: 'space', path: [] });
+      expect(path('Siege of Hive Primus')).toEqual(['Gudrun', 'Gudrun I', 'Hive Primus']);
+      expect(path('Orbital duel')).toEqual(['Gudrun', 'Gudrun I']);
+      expect(byName['Undated, unplaced'].location).toBeNull();
+      // An event at a spoiler place is a spoiler location too, and loses its path when excluded.
+      expect(byName['At the vault'].location).toMatchObject({ isSpoiler: true });
+      expect(path('At the vault')).toEqual(['Gudrun', 'Gudrun I', 'Hidden Vault']);
+      const hidden = (await api.expect(200, 'GET', `/maps/${f.mapId}/event-list?spoilers=exclude`))
+        .body.data;
+      const vault = hidden.events.find((e: any) => e.id === byName['At the vault'].id);
+      expect(vault.location).toEqual({ mode: 'place', isSpoiler: true, path: [] });
+      expect(JSON.stringify(hidden)).not.toContain('Orbital duel');
+    }));
+
   it('spoilers=exclude: redacted names, no spoiler memberships, no spoiler-located pins', () =>
     run(async (api) => {
       const f = await buildFixture(api);
