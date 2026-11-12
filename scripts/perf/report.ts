@@ -187,6 +187,34 @@ function systemChecks(): Check[] {
       pass: all((r) => transitions(r).every((ms) => ms <= BUDGETS.transitionMs)),
     },
     {
+      metric: `Orbit view (an ocean planet with clouds, a moon and ${String(runs[0]?.system?.orbit.pins ?? 0)} pins), orbit and zoom: median / p95 frame`,
+      budget: `≤ ${fmt(BUDGETS.interactionMedianMs)} (60 fps) / ≤ ${fmt(BUDGETS.interactionP95Ms)}`,
+      values: each((r) => stats(sys(r).orbit.interaction)),
+      pass: all(
+        (r) =>
+          sys(r).orbit.interaction.medianMs <= BUDGETS.interactionMedianMs + timerSlackMs(r) &&
+          sys(r).orbit.interaction.p95Ms <= BUDGETS.interactionP95Ms,
+      ),
+    },
+    {
+      metric: 'Orbit view draw calls, the most in any phase',
+      budget: `≤ ${BUDGETS.orbitDrawCalls.toString()}`,
+      values: each((r) => sys(r).orbit.maxDrawCalls.toString()),
+      pass: all((r) => sys(r).orbit.maxDrawCalls <= BUDGETS.orbitDrawCalls),
+    },
+    {
+      metric: 'Orbit view transitions, system → orbit (first, with loading; then cached) / back',
+      budget: `≤ ${fmt(BUDGETS.transitionMs)} with data cached`,
+      values: each((r) => {
+        const { enterMs, exitMs } = sys(r).orbit.transitions;
+        return `${enterMs.map((ms) => ms.toFixed(0)).join(', ')} / ${exitMs.map((ms) => ms.toFixed(0)).join(', ')} ms`;
+      }),
+      pass: all((r) => {
+        const { enterMs, exitMs } = sys(r).orbit.transitions;
+        return [...warm(enterMs), ...exitMs].every((ms) => ms <= BUDGETS.transitionMs);
+      }),
+    },
+    {
       metric: 'Planet surface bake at 2,048 × 1,024: ocean / gas giant / city',
       budget: `≤ ${fmt(BUDGETS.planetBakeMs)} each`,
       values: each((r) =>
@@ -284,7 +312,7 @@ Written by \`pnpm perf\` (scripts/perf/) against the budgets in [rendering.md §
 ${checks.map((check) => row([check.metric, check.budget, ...check.values, check.pass ? 'pass' : '**miss**'])).join('\n')}
 ${row([jsCheck.metric, jsCheck.budget, ...results.map((_, i) => (i === 0 ? (jsCheck.values[0] ?? '') : 'same build')), jsCheck.pass ? 'pass' : '**miss**'])}
 
-${editing ? 'The system view and transitions are measured in view-mode runs.' : 'The orbit view joins the memory check through 20 galaxy → system → orbit round trips; its frame times join the path in M6-T8.'}
+${editing ? 'The system view and transitions are measured in view-mode runs.' : 'The orbit view (M6-T8): from inside the busy system, 3 timed entries and exits of its explorable planet (ocean, clouds, a moon, places with events at them), then orbit (3 left-drags) and zoom (24 wheel steps) around the globe; it also joins the memory check through 20 galaxy → system → orbit round trips.'}
 
 ## Phases
 

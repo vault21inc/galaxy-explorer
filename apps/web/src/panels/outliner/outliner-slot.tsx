@@ -1,12 +1,6 @@
-import {
-  toPlainText,
-  type ViewGroup,
-  type ViewGroupType,
-  type ViewObject,
-  type ViewRoute,
-} from '@ge/domain';
+import { type ViewGroup, type ViewGroupType, type ViewObject, type ViewRoute } from '@ge/domain';
 import { List } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useEntityList } from '@/api/hooks.ts';
 import { Button } from '@/components/ui/button.tsx';
 import { useEditor } from '@/state/editor.ts';
@@ -17,21 +11,25 @@ import type { Person } from './outliner-tree.ts';
 /** Enough for any universe's cast; the API pages beyond this. */
 const PEOPLE_LIMIT = 1_000;
 
-/** The universe's characters, named as the outliner names view items. */
+/**
+ * The universe's characters, named as the outliner names view items. The naming (people-names.ts)
+ * is imported when there are characters to name: it parses rich text, whose parsers stay out of
+ * the first visit's JavaScript.
+ */
 export function usePeople(universeId: string): readonly Person[] {
   const list = useEntityList('character', { universeId }, { limit: PEOPLE_LIMIT }).data?.data;
-  return useMemo(
-    () =>
-      (list ?? []).map((character) => ({
-        id: character.id,
-        namePlain: character.namePlain,
-        nameRedacted: toPlainText(character.name, { redactSpoilers: true }),
-        isSpoiler: character.isSpoiler,
-        nameSpoiler: character.name.spoiler,
-        status: character.status,
-      })),
-    [list],
-  );
+  const [people, setPeople] = useState<readonly Person[]>([]);
+  useEffect(() => {
+    if (!list) return;
+    let live = true;
+    void import('./people-names.ts').then(({ peopleOf }) => {
+      if (live) setPeople(peopleOf(list));
+    });
+    return () => {
+      live = false;
+    };
+  }, [list]);
+  return people;
 }
 
 /**

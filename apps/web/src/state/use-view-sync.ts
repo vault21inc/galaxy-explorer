@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { CancelledError, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { ApiError } from '@ge/api-client';
@@ -167,6 +167,13 @@ export function useViewSync({
       },
       (error: unknown) => {
         if (!live) return;
+        // A write's refresh cancels in-flight view reads (api/refresh.ts), this one included
+        // when it lands mid-resolve, as saving a field while leaving edit mode does. Nothing
+        // failed: resolve again, against the fresh data.
+        if (error instanceof CancelledError) {
+          retry();
+          return;
+        }
         const missing = error instanceof ApiError && error.status === 404;
         setFailure({
           key,

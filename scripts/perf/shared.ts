@@ -10,6 +10,7 @@ export const BUDGETS = {
   interactionP95Ms: 25,
   galaxyDrawCalls: 50,
   systemDrawCalls: 80,
+  orbitDrawCalls: 40,
   /** Entering or leaving a view, from the request to the faded-in new view, data cached. */
   transitionMs: 700,
   /** Geometries and textures after 20 view round trips, against before: within 5 %. */
@@ -65,6 +66,14 @@ export interface SystemResult {
   roundTrips: { count: number; before: RenderInfo; after: RenderInfo };
   /** Galaxy → system → orbit round trips (M6-T3): the orbit view's leak check. */
   orbitRoundTrips: { count: number; before: RenderInfo; after: RenderInfo };
+  /** The orbit view (M6-T8): its entries and exits from the system, then orbit and zoom. */
+  orbit: {
+    interaction: FrameStats;
+    maxDrawCalls: number;
+    transitions: { enterMs: number[]; exitMs: number[] };
+    /** Pins drawn on the globe. */
+    pins: number;
+  };
 }
 
 /** One browser's run, written by path.spec.ts and read by report.ts. */

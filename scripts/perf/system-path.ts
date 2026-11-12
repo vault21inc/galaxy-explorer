@@ -20,6 +20,9 @@ const TIMED_TRIPS = 3;
 
 /** The planet entered for the orbit round trips: one of the 12, explorable, with a moon. */
 const ORBIT_PLANET = 3;
+/** Places and events on that planet's globe, so the orbit view draws pins (M6-T8). */
+const PERF_PLACES = 4;
+const EVENTS_PER_PLACE = 3;
 
 /**
  * Makes the stress map's first system a busy one, through the API before the page loads: M5-T3's
@@ -48,7 +51,8 @@ export async function prepareSystem(
     mapId: map.id,
     data: { name: plain(name), baseType, parentId: system.id, ...extra },
   });
-  const operations = [
+  // Loosely typed: the batch takes many shapes of operation (the API checks each).
+  const operations: object[] = [
     {
       op: 'update',
       kind: 'celestial_object',
@@ -91,6 +95,36 @@ export async function prepareSystem(
       inside(`Station ${(i + 1).toString()}`, 'station', { x: 2 + i, z: 1.5 }),
     ),
   ];
+  // Places spread over the planet's near side, each with events at it (pins fanned out).
+  const planetRef = `$op:${(2 + ORBIT_PLANET).toString()}`;
+  for (let p = 0; p < PERF_PLACES; p++) {
+    const placeRef = `$op:${operations.length.toString()}`;
+    operations.push(
+      {
+        op: 'create',
+        kind: 'place',
+        mapId: map.id,
+        data: { name: plain(`Perf Place ${(p + 1).toString()}`) },
+      },
+      {
+        op: 'setLocation',
+        id: placeRef,
+        data: { mode: 'surface', objectId: planetRef, latDeg: -30 + p * 20, lonDeg: -40 + p * 25 },
+      },
+    );
+    for (let e = 0; e < EVENTS_PER_PLACE; e++) {
+      const eventRef = `$op:${operations.length.toString()}`;
+      operations.push(
+        {
+          op: 'create',
+          kind: 'event',
+          mapId: map.id,
+          data: { name: plain(`Perf Event ${(p + 1).toString()}.${(e + 1).toString()}`) },
+        },
+        { op: 'setLocation', id: eventRef, data: { mode: 'place', placeId: placeRef } },
+      );
+    }
+  }
   const response = await request.post('/api/v1/batch', {
     data: { description: 'Perf system', operations },
   });
@@ -171,6 +205,46 @@ export async function systemPhases(context: SystemContext): Promise<SystemResult
   });
   await tally();
   const interaction = await hooks<FrameStats>(page, `h.frameStats(${interactionStart.toString()})`);
+
+  // The orbit view (M6-T8), from inside the system: timed entries and exits, then orbiting the
+  // globe and zooming in and out, with its pins shown.
+  const orbitEnterMs: number[] = [];
+  const orbitExitMs: number[] = [];
+  let orbitDrawCalls = 0;
+  const orbitTally = async () => {
+    orbitDrawCalls = Math.max(orbitDrawCalls, (await renderInfo()).calls);
+  };
+  for (let trip = 0; trip < TIMED_TRIPS; trip++) {
+    orbitEnterMs.push(await timed(page, `h.enter(${JSON.stringify(planetId)})`));
+    expect(await hooks<string>(page, 'h.level().level')).toBe('orbit');
+    await waitForIdle();
+    await orbitTally();
+    orbitExitMs.push(await timed(page, 'h.exit()'));
+    expect(await hooks<string>(page, 'h.level().level')).toBe('system');
+    await waitForIdle();
+  }
+  await hooks(page, `h.enter(${JSON.stringify(planetId)})`);
+  await waitForIdle();
+  // The pins drawn: each of the planet's places and events that the globe shows.
+  const pins = await hooks<number>(
+    page,
+    `(await (await fetch('/api/v1/objects/${planetId}/views/orbit')).json()).data.pins.filter((pin) => h.pin(pin.id) !== null).length`,
+  );
+  const orbitStart = await hooks<number>(page, 'performance.now()');
+  await phase('orbit view orbit', async () => {
+    for (let i = 0; i < 3; i++) {
+      await drag({ x: center.x - 300, y: center.y }, { x: 600, y: i === 1 ? -120 : 80 });
+    }
+  });
+  await orbitTally();
+  await phase('orbit view zoom', async () => {
+    await wheel(center, -100, 12);
+    await wheel(center, 100, 12);
+  });
+  await orbitTally();
+  const orbitInteraction = await hooks<FrameStats>(page, `h.frameStats(${orbitStart.toString()})`);
+  await hooks(page, 'h.exit()');
+  await waitForIdle();
   await hooks(page, 'h.exit()');
   await waitForIdle();
 
@@ -215,5 +289,11 @@ export async function systemPhases(context: SystemContext): Promise<SystemResult
     transitions: { enterMs, exitMs },
     roundTrips: { count: ROUND_TRIPS, before, after },
     orbitRoundTrips: { count: ROUND_TRIPS, before: orbitBefore, after: orbitAfter },
+    orbit: {
+      interaction: orbitInteraction,
+      maxDrawCalls: orbitDrawCalls,
+      transitions: { enterMs: orbitEnterMs, exitMs: orbitExitMs },
+      pins,
+    },
   };
 }

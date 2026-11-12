@@ -258,9 +258,36 @@
 - Fix every failure. Tag `v0.1.0-poc`.
 
 **Done when:**
-- [ ] The golden path passes in CI (Chromium) and locally (WebKit).
-- [ ] The performance report meets every row of rendering.md §2, and is committed.
+- [x] The golden path passes in CI (Chromium) and locally (WebKit).
+- [x] The performance report meets every row of rendering.md §2, and is committed.
 - [ ] The owner signs off on the demo.
+
+**As built:**
+- **The golden path** (`apps/web/e2e/golden-path.spec.ts`) does everything through the UI, from the new-universe form on:
+  - the settings page (a Sub-sector group type and a Battle category);
+  - a system made explorable and entered by double-clicking;
+  - a star, and a planet set to the City (hive) preset, made explorable and entered;
+  - an event on the globe at a faced spot (stored within 0.5°), with the category, a date, a person created from the picker, and `||the traitor Vos||` in its description;
+  - view mode, where the spoiler is blacked out until spoilers are shown;
+  - the Galaxy breadcrumb, then ⌘/Ctrl + G to group the system as "Helican";
+  - three undos, which take back the group, the description and the person, and three redos.
+
+  It takes about 20 s in each browser, and it passes with CI's SwiftShader flags too.
+- **Fixed on the way:**
+  - **Leaving edit mode could show "Couldn't open this view".** Leaving edit mode re-reads the view without drafts, while the field being left (the description) saves, and the save's refresh cancels in-flight view reads. The view sync took the cancelled read for a failure; now it resolves again (`use-view-sync.ts`).
+  - **The initial JavaScript had grown from 481 kB to 540 kB.** M6-T6's People list had pulled the rich-text parsers into the first download. Their naming is now imported on demand (`outliner/people-names.ts`), back to 483.5 kB.
+- **`pnpm perf` covers the orbit view.** The busy system's explorable planet gets 4 places with 3 events each (16 pins). From inside the system, the path makes 3 timed entries and exits, then orbits and zooms around the globe. The report gains three rows: orbit-view frame times, draw calls (budget 40) and transitions.
+- **The report** ([docs/perf/2026-11-12-M6.md](../../perf/2026-11-12-M6.md)), Chrome / WebKit, meets every row:
+  - galaxy view: 4.2 / 5.1 ms and 17 / 19 ms, 14 draw calls;
+  - system view: 4.2 / 4.7 ms and 17 / 20 ms, 9 draw calls;
+  - orbit view: 4.2 / 4.7 ms and 17 / 20 ms, 9 draw calls;
+  - cached transitions: 619–652 ms;
+  - GPU memory: level over both kinds of round trip;
+  - idle: 0 frames everywhere.
+
+  One earlier run had missed idle once (2 frames after the galaxy view's pan, in Chrome), which didn't recur.
+- **Decisions:** D-33 records where GPU timing is checked (the reference Mac) and what CI checks instead.
+- **Not done here:** the `v0.1.0-poc` tag waits for the owner's sign-off on the demo.
 
 ---
 
