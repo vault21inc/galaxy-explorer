@@ -29,7 +29,9 @@ export type FormWidget =
   /** A planet's palette: 2–6 colors, previewed live while picked (M6-T2). */
   | 'palette'
   /** An icon from the bundled sets, searched and picked (an event category's, M6-T4). */
-  | 'icon';
+  | 'icon'
+  /** A short list of words, typed comma-separated (a field definition's wiki aliases, M7-T1). */
+  | 'list';
 
 /** Where a select's choices come from. */
 export type FormOptions =

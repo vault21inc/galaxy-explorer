@@ -1,13 +1,29 @@
 import { spoilerKeys, toPlainText } from '@ge/domain';
 import { Redactable } from '@/richtext/redactable.tsx';
+import { useEditor } from '@/state/editor.ts';
+import { FactsEditor } from '../facts/facts-editor.tsx';
 import { RichTextView } from '@/richtext/rich-text-view.tsx';
 import type { PanelEntity, SectionProps } from '../types.ts';
 import { SectionHeading } from './section-heading.tsx';
 
 type Fact = NonNullable<PanelEntity['facts']>[number];
 
-/** Facts (U2): each field definition's label and this entity's value, in definition order. */
-export function FactsSection({ entity, fieldDefinitions }: SectionProps) {
+/**
+ * Facts (U2): each field definition's label and this entity's value, in definition order, each
+ * row blacked out while it's a hidden spoiler; facts without a value aren't shown. In edit mode,
+ * the editor for every definition that applies (facts/facts-editor.tsx, M7-T1).
+ */
+export function FactsSection(props: SectionProps) {
+  const { entity, fieldDefinitions } = props;
+  const editing = useEditor((state) => state.editing);
+  if (editing) {
+    return (
+      <section aria-label="Facts">
+        <SectionHeading>Facts</SectionHeading>
+        <FactsEditor {...props} />
+      </section>
+    );
+  }
   const facts = entity.facts ?? [];
   if (facts.length === 0) return null;
   const definitions = new Map<string, (typeof fieldDefinitions)[number]>(
@@ -19,7 +35,7 @@ export function FactsSection({ entity, fieldDefinitions }: SectionProps) {
       (b.sortKey ?? definitions.get(b.fieldDefinitionId)?.sortKey ?? 0),
   );
   return (
-    <section>
+    <section aria-label="Facts">
       <SectionHeading>Facts</SectionHeading>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
         {sorted.map((fact) => {

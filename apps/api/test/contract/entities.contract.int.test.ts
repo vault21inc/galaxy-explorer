@@ -1,9 +1,9 @@
 import { revertBatch } from '@ge/db';
 import { withTestDb } from '@ge/db/testing';
-import { ENTITY_KINDS, entityKinds, rt, type EntityKind } from '@ge/domain';
+import { ENTITY_KINDS, rt } from '@ge/domain';
 import { describe, expect, it } from 'vitest';
 import { filterQuery } from '../../src/routes/entity-schemas.ts';
-import { apiOn, bodyFrom, newWorld, UUID, type Api } from './harness.ts';
+import { apiOn, created, UUID, type Api } from './harness.ts';
 
 /**
  * The generic contract suite (M1-T6): the same steps for every entity kind in the registry,
@@ -11,23 +11,6 @@ import { apiOn, bodyFrom, newWorld, UUID, type Api } from './harness.ts';
  */
 
 const actor = { type: 'local' as const, label: 'contract test' };
-
-/** Sets up a world and creates one entity of the kind from its registry example. */
-async function created(api: Api, kind: EntityKind, overrides: Record<string, unknown> = {}) {
-  const def = entityKinds[kind];
-  const world = await newWorld(api);
-  const scope = def.scope === 'map' ? `/maps/${world.mapId}` : `/universes/${world.universeId}`;
-  const body = { ...(await bodyFrom(api, world, def.example)), ...overrides };
-  const response = await api.expect(201, 'POST', `${scope}/${def.plural}`, body);
-  return {
-    world,
-    scope,
-    body,
-    response,
-    entity: response.body.data as Record<string, any>,
-    plural: def.plural,
-  };
-}
 
 const run = (
   fn: (api: Api, db: Parameters<Parameters<typeof withTestDb>[0]>[0]) => Promise<void>,

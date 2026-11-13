@@ -26,8 +26,23 @@
 - The info panel shows a facts table, blacked out per row when hidden. Empty facts are not shown.
 
 **Done when:**
-- [ ] Contract tests for the facts aspect pass.
-- [ ] E2E: define "Population" (number, unit "billion"), set it on a planet, and see it in view mode; a spoiler fact is blacked out.
+- [x] Contract tests for the facts aspect pass.
+- [x] E2E: define "Population" (number, unit "billion"), set it on a planet, and see it in view mode; a spoiler fact is blacked out.
+
+**As built:**
+- **Mostly already there:** the API (definitions as a settings resource, `/entities/{id}/facts`, the rules that a value's type matches its definition and that the field applies to the entity's kind, base type and subtype) and the reading panel's facts table were built in M1 and M2.
+- **Settings:** the Field definitions table gains the **Wiki aliases** column through a new `list` form widget (a comma-separated input, `fields/list-field.tsx`), so "Fill from wiki" (M7-T3) has its aliases.
+- **The form's Facts section** (`panels/facts/`) replaces the facts table in edit mode. It has a row for each definition that applies (`definitionsFor`: the kind's, narrowed by base type and subtype, in the definitions' order), with an input for the value type:
+  - a number, with its unit;
+  - one line of text, keeping its format;
+  - a date as the universe writes it, plus a sort key;
+  - a link and its text.
+
+  Once a row has a value, it gets a spoiler switch and a clear button. Each change saves at once (PUT or DELETE `/entities/{id}/facts/{fieldDefinitionId}`) as one history entry, such as "Edit Population of “Gudrun”". With no definitions for the kind, the section links to the universe settings.
+- **Tests:**
+  - `apps/api/test/contract/facts.contract.int.test.ts` runs the facts aspect for every kind with facts, derived from the registry: set, replace, list, read with `include=facts`, remove, the 422s (wrong value type, a field for another kind), spoilers=exclude and reverting batches. The contract suites now share `created` from the harness.
+  - `apps/web/e2e/facts.spec.ts` covers the "Done when" flow through the settings table and the form.
+  - `apps/web/test/facts-editor.test.ts` covers `definitionsFor` and `parseList`.
 
 ### M7-T2 Object subtypes
 

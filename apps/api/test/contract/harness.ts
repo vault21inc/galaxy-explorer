@@ -1,4 +1,4 @@
-import { EXAMPLE_ID, rt } from '@ge/domain';
+import { EXAMPLE_ID, entityKinds, rt, type EntityKind } from '@ge/domain';
 import { expect } from 'vitest';
 import type { Config } from '../../src/config.ts';
 import { buildServer, type ApiServer } from '../../src/server.ts';
@@ -113,3 +113,20 @@ export async function bodyFrom(
 }
 
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/** Sets up a world and creates one entity of the kind from its registry example. */
+export async function created(api: Api, kind: EntityKind, overrides: Record<string, unknown> = {}) {
+  const def = entityKinds[kind];
+  const world = await newWorld(api);
+  const scope = def.scope === 'map' ? `/maps/${world.mapId}` : `/universes/${world.universeId}`;
+  const body = { ...(await bodyFrom(api, world, def.example)), ...overrides };
+  const response = await api.expect(201, 'POST', `${scope}/${def.plural}`, body);
+  return {
+    world,
+    scope,
+    body,
+    response,
+    entity: response.body.data as Record<string, any>,
+    plural: def.plural,
+  };
+}

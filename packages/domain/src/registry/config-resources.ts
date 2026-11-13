@@ -173,7 +173,6 @@ export const configResources = defineConfigResources({
       unit: 'billion',
       appliesToKind: 'celestial_object',
     },
-    // Wiki aliases are edited with the import in M7.
     columns: [
       { path: 'label', widget: 'text', label: 'Label' },
       { path: 'key', widget: 'text', label: 'Key' },
@@ -207,6 +206,8 @@ export const configResources = defineConfigResources({
           matchOn: 'appliesToBaseType',
         },
       },
+      // The infobox parameters "Fill from wiki" (M7-T3) reads into this field.
+      { path: 'wikiAliases', widget: 'list', label: 'Wiki aliases' },
     ],
     defaults: { valueType: 'text', appliesToKind: 'celestial_object' },
   },
