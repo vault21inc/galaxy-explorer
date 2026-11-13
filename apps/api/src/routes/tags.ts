@@ -22,6 +22,11 @@ export function openApiTags(): { name: string; description: string }[] {
         'The bundled icon sets for event categories and pins: Lucide and game-icons.net (M6-T4).',
     },
     { name: 'links', description: 'Web links attached to an entity.' },
+    { name: 'citations', description: 'Where an entity’s filled-in content came from (M7-T3).' },
+    {
+      name: 'wiki',
+      description: 'Searching and reading configured wikis, for “Fill from wiki” (M7-T3).',
+    },
     { name: 'facts', description: "Values of the universe's custom fields, such as Population." },
     {
       name: 'relations',

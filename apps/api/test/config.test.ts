@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { ConfigError, loadConfig } from '../src/config.ts';
+import { ConfigError, DEFAULT_WIKI_SOURCES, loadConfig } from '../src/config.ts';
 
 const DATABASE_URL = 'postgres://ge:ge@127.0.0.1:5442/ge';
 
@@ -13,6 +13,9 @@ describe('loadConfig', () => {
       port: 3100,
       logLevel: 'info',
       previewRoles: false,
+      wikiUserAgent:
+        'GalaxyExplorer/0.1 (self-hosted; set GE_WIKI_USER_AGENT to add contact details)',
+      wikiSources: DEFAULT_WIKI_SOURCES,
       // Relative to the repository root, wherever the API is started from.
       mediaDir: fileURLToPath(new URL('../../../.data/media', import.meta.url)),
     });
@@ -21,6 +24,23 @@ describe('loadConfig', () => {
   it('turns on the preview roles only when asked', () => {
     expect(loadConfig({ DATABASE_URL, GE_PREVIEW_ROLES: 'on' }).previewRoles).toBe(true);
     expect(() => loadConfig({ DATABASE_URL, GE_PREVIEW_ROLES: 'yes' })).toThrow(ConfigError);
+  });
+
+  it('reads the wikis to fill from, and refuses a list that isn’t one (M7-T3)', () => {
+    const sources = [{ id: 'local', label: 'Local', apiUrl: 'http://127.0.0.1:3102/api.php' }];
+    expect(
+      loadConfig({ DATABASE_URL, GE_WIKI_SOURCES: JSON.stringify(sources) }).wikiSources,
+    ).toEqual(sources);
+    expect(loadConfig({ DATABASE_URL, GE_WIKI_SOURCES: ' ' }).wikiSources).toEqual(
+      DEFAULT_WIKI_SOURCES,
+    );
+    expect(() => loadConfig({ DATABASE_URL, GE_WIKI_SOURCES: '{nope' })).toThrow(ConfigError);
+    expect(() =>
+      loadConfig({
+        DATABASE_URL,
+        GE_WIKI_SOURCES: JSON.stringify([{ id: 'x', label: 'X', apiUrl: 'ftp://x' }]),
+      }),
+    ).toThrow(ConfigError);
   });
 
   it('keeps an absolute media directory as it is', () => {

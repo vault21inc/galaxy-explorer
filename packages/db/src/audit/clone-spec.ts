@@ -49,6 +49,7 @@ export const CLONE_SPEC: readonly CloneSpecEntry[] = [
   { table: 'entity_images', freshIds: [], remap: ['entity_id'], select: 'entity_in_map' },
   { table: 'entity_links', freshIds: ['id'], remap: ['entity_id'], select: 'entity_in_map' },
   { table: 'field_values', freshIds: [], remap: ['entity_id'], select: 'entity_in_map' },
+  { table: 'citations', freshIds: ['id'], remap: ['entity_id'], select: 'entity_in_map' },
   // A relation from a character (universe-scoped) to an event in the map is copied, pointing
   // at the new event; relations between two universe-scoped entities aren't.
   {

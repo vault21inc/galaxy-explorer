@@ -3,6 +3,7 @@ import { getTableConfig, type PgTable } from 'drizzle-orm/pg-core';
 import {
   assets,
   celestialObjects,
+  citations,
   entities,
   entityImages,
   entityLinks,
@@ -28,8 +29,7 @@ import {
  * Not audited: `change_batches` and `change_log` themselves, and the auth tables (M8).
  *
  * An introspection test fails if a table with `map_id` or a foreign key to `entities` is
- * missing here, or if a listed table lacks the trigger. Citations (M7) join when
- * their table is created.
+ * missing here, or if a listed table lacks the trigger.
  */
 export const AUDITED_TABLES: readonly PgTable[] = [
   universes,
@@ -46,6 +46,7 @@ export const AUDITED_TABLES: readonly PgTable[] = [
   entityLinks,
   entityImages,
   fieldValues,
+  citations,
   groupTypes,
   eventCategories,
   objectSubtypes,

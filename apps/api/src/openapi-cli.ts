@@ -22,6 +22,8 @@ const app = await buildServer({
   port: 0,
   logLevel: 'silent',
   previewRoles: false,
+  wikiUserAgent: 'GalaxyExplorer/openapi',
+  wikiSources: [],
 });
 await app.ready();
 await writeFile(output, `${JSON.stringify(app.swagger(), null, 2)}\n`);

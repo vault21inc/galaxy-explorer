@@ -56,6 +56,11 @@ export class RevertConflicts extends Error {
   }
 }
 
+/** Another service the API relies on (a wiki, M7-T3) failed or answered nonsense: 502. */
+export class UpstreamError extends Error {
+  override readonly name = 'UpstreamError';
+}
+
 /** The request is well-formed but asks for something that doesn't make sense: 400. */
 export class InvalidRequest extends Error {
   override readonly name = 'InvalidRequest';

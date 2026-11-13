@@ -8,6 +8,23 @@ const REPO_ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 /** Hosts that only this machine can reach. */
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);
 
+/** A wiki "Fill from wiki" may read (M7-T3): an id, a name, and its MediaWiki API's URL. */
+const WikiSourceConfig = z.object({
+  id: z.string().regex(/^[a-z0-9-]+$/),
+  label: z.string().min(1),
+  apiUrl: z.url({ protocol: /^https?$/ }),
+});
+export type WikiSourceConfig = z.infer<typeof WikiSourceConfig>;
+
+/** The wikis offered unless GE_WIKI_SOURCES says otherwise. */
+export const DEFAULT_WIKI_SOURCES: readonly WikiSourceConfig[] = [
+  {
+    id: 'warhammer40k',
+    label: 'Warhammer 40k Wiki',
+    apiUrl: 'https://warhammer40k.fandom.com/api.php',
+  },
+];
+
 /**
  * The API's environment variables (docs/plan/architecture.md §11), validated once at boot.
  * The output uses camelCase names so the rest of the code never touches `process.env`.
@@ -28,6 +45,33 @@ const configSchema = z
      * docs/ops/preview.md). Off on your own machine.
      */
     GE_PREVIEW_ROLES: z.enum(['on', 'off']).default('off'),
+    /**
+     * How the API introduces itself to wikis (M7-T3). Wikis ask for a name and a way to reach
+     * whoever runs the client; set it to include yours.
+     */
+    GE_WIKI_USER_AGENT: z
+      .string()
+      .min(1)
+      .default('GalaxyExplorer/0.1 (self-hosted; set GE_WIKI_USER_AGENT to add contact details)'),
+    /**
+     * The wikis "Fill from wiki" may read, as JSON: [{ "id", "label", "apiUrl" }]. Only these:
+     * the API never fetches a URL a request sends it. Tests point it at a local fixture server.
+     */
+    GE_WIKI_SOURCES: z
+      .string()
+      .optional()
+      .transform((text, context) => {
+        if (text === undefined || text.trim() === '') return DEFAULT_WIKI_SOURCES;
+        try {
+          return z.array(WikiSourceConfig).min(1).parse(JSON.parse(text));
+        } catch (error) {
+          context.addIssue({
+            code: 'custom',
+            message: `Not a list of wiki sources: ${String(error)}`,
+          });
+          return z.NEVER;
+        }
+      }),
   })
   // Without login, anyone who can reach the API can change everything, so it must stay local.
   .refine((env) => env.GE_AUTH_MODE !== 'none' || LOOPBACK_HOSTS.has(env.GE_HOST), {
@@ -41,6 +85,8 @@ const configSchema = z
     port: env.GE_PORT,
     logLevel: env.GE_LOG_LEVEL,
     previewRoles: env.GE_PREVIEW_ROLES === 'on',
+    wikiUserAgent: env.GE_WIKI_USER_AGENT,
+    wikiSources: env.GE_WIKI_SOURCES,
     mediaDir: isAbsolute(env.GE_MEDIA_DIR)
       ? env.GE_MEDIA_DIR
       : resolve(REPO_ROOT, env.GE_MEDIA_DIR),

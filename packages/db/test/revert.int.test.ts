@@ -134,6 +134,15 @@ const cases: Record<string, TableCase> = {
     row: (w) => ({ entityId: w.placeId, url: 'https://example.com' }),
     change: { label: 'Wiki' },
   },
+  citations: {
+    row: (w) => ({
+      entityId: w.systemId,
+      target: 'description',
+      sourceUrl: 'https://wiki.example/Gudrun',
+      retrievedAt: '2026-11-13T12:00:00.000Z',
+    }),
+    change: { license: 'CC-BY-SA', retrievedAt: '2026-11-14T12:00:00.000Z' },
+  },
   entity_images: {
     row: (w) => ({ entityId: w.placeId, assetId: w.assetId, role: 'cover' }),
     change: { caption: rt.plain('Ruins'), sortKey: 3 },

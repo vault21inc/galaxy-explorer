@@ -7,6 +7,8 @@ import {
   ImageWrite,
   LinkRead,
   LinkWrite,
+  CitationRead,
+  CitationWrite,
   RelationRead,
   RelationWrite,
 } from '@ge/domain';
@@ -14,11 +16,13 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { envelope, problemResponses } from '../http/schemas.ts';
 import {
+  addCitation,
   addLink,
   addRelation,
   attachImage,
   detachImage,
   removeFact,
+  removeCitation,
   removeLink,
   removeRelation,
   setFact,
@@ -30,6 +34,7 @@ import { requireOwner } from '../services/aspects/owner.ts';
 import {
   listFacts,
   listImages,
+  listCitations,
   listLinks,
   listRelations,
   withOtherEnds,
@@ -116,6 +121,66 @@ export const contentRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, {
     async (request, reply) => {
       await write(request, reply, request.params.entityId, 'Detach image', (tx) =>
         detachImage(tx, request.params),
+      );
+      return reply.code(204).send(null);
+    },
+  );
+
+  // ---- citations (M7-T3) ----
+  const citationParams = entityParams.extend({ citationId: z.uuid() });
+  app.get(
+    '/entities/:entityId/citations',
+    {
+      schema: {
+        tags: ['citations'],
+        summary: "List where an entity's content came from",
+        description: `${ASPECT_DOC} One citation per filled target (name, summary, description or field:<key>) and source page, with its licence and when it was read.`,
+        operationId: 'citations.list',
+        params: entityParams,
+        response: { 200: list(CitationRead), ...problemResponses },
+      },
+    },
+    async (request) => {
+      await requireOwner(db, request.params.entityId);
+      return { data: await listCitations(db, request.params.entityId) } as never;
+    },
+  );
+  app.post(
+    '/entities/:entityId/citations',
+    {
+      schema: {
+        tags: ['citations'],
+        summary: 'Cite a source',
+        description: `${ASPECT_DOC} Citing the same page for the same target again updates its title, licence and time. "Fill from wiki" adds these in the same batch as the content it fills.`,
+        operationId: 'citations.add',
+        params: entityParams,
+        body: CitationWrite,
+        response: { 201: envelope(CitationRead), ...problemResponses },
+      },
+    },
+    async (request, reply) => {
+      const data = await write(request, reply, request.params.entityId, 'Add citation', (tx) =>
+        addCitation(tx, request.params.entityId, request.body),
+      );
+      return reply.code(201).send({ data } as never);
+    },
+  );
+  app.delete(
+    '/entities/:entityId/citations/:citationId',
+    {
+      schema: {
+        tags: ['citations'],
+        summary: 'Remove a citation',
+        description: ASPECT_DOC,
+        operationId: 'citations.remove',
+        params: citationParams,
+        response: deleted,
+      },
+    },
+    async (request, reply) => {
+      const { entityId, citationId } = request.params;
+      await write(request, reply, entityId, 'Remove citation', (tx) =>
+        removeCitation(tx, entityId, citationId),
       );
       return reply.code(204).send(null);
     },

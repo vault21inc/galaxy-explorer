@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { Uuid } from '../ids.ts';
-import { HTTP_URL_PATTERN } from '../patterns.ts';
+import { CITATION_TARGET_PATTERN, HTTP_URL_PATTERN } from '../patterns.ts';
 import { ENTITY_KINDS } from '../registry/entity-kinds.ts';
 import { RELATION_TYPES } from '../registry/relation-types.ts';
 import { RICH_TEXT_POLICY } from '../richtext/policy.ts';
@@ -67,6 +67,32 @@ export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 const metadataText = (max: number) => z.string().trim().max(max).nullable().optional();
 
 /** What the author says about an image (A5): editable after upload. Empty text clears a field. */
+/**
+ * Where some of an entity's content came from (M7-T3, data-model §3.4): the page it was filled
+ * from, its title and licence, and when. One per target and source page; adding the same again
+ * updates its time.
+ */
+export const CitationWrite = z.strictObject({
+  target: z
+    .string()
+    .max(80)
+    .regex(new RegExp(CITATION_TARGET_PATTERN), 'Use name, summary, description or field:<key>.'),
+  sourceUrl: z.string().max(2_000).regex(new RegExp(HTTP_URL_PATTERN), 'Use an http or https URL.'),
+  sourceTitle: z.string().max(300).nullable().optional(),
+  /** As the source states it, such as "CC-BY-SA". */
+  license: z.string().max(100).nullable().optional(),
+  retrievedAt: z.iso.datetime({ offset: true }),
+});
+export const CitationRead = z.object({
+  id: Uuid,
+  entityId: Uuid,
+  target: z.string(),
+  sourceUrl: z.string(),
+  sourceTitle: z.string().nullable(),
+  license: z.string().nullable(),
+  retrievedAt: z.string(),
+});
+
 export const AssetMetadata = z.strictObject({
   /** Describes the image for screen readers. */
   altText: metadataText(1_000),
@@ -265,5 +291,6 @@ export const ENTITY_INCLUDES = [
   'location',
   'members',
   'waypoints',
+  'citations',
 ] as const;
 export type EntityInclude = (typeof ENTITY_INCLUDES)[number];

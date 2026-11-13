@@ -89,9 +89,49 @@
 - **Never copy images:** wiki artwork is mostly Games Workshop's and isn't covered by the text license. The dialog offers a link instead.
 
 **Done when:**
-- [ ] Unit tests on saved wikitext fixtures (Gudrun and Hubris; the two infobox templates noted in the planning research) extract the expected parameters.
-- [ ] An integration test with a mocked HTTP server checks the rate limit, the User-Agent and redirects.
-- [ ] E2E with fixtures: filling Gudrun sets population and sub-sector facts and a description, each with a citation, as one revertible batch.
+- [x] Unit tests on saved wikitext fixtures (Gudrun and Hubris; the two infobox templates noted in the planning research) extract the expected parameters.
+- [x] An integration test with a mocked HTTP server checks the rate limit, the User-Agent and redirects.
+- [x] E2E with fixtures: filling Gudrun sets population and sub-sector facts and a description, each with a citation, as one revertible batch.
+
+**As built:**
+- **Which wikis (D-35):** only those configured, `GE_WIKI_SOURCES` (JSON: id, label, API URL), with the Warhammer 40k Wiki as the default. The routes take a source **id**, never a URL, so the API can't be made to fetch an address a request names.
+- **The client** (`apps/api/src/wiki/media-wiki.ts`) is the planned `WikiSource`:
+  - one request a second per host, shared by every client of that host;
+  - 24 h of cached answers;
+  - `GE_WIKI_USER_AGENT` on every request;
+  - redirects followed (`redirects=1`, reported as `redirectedFrom`);
+  - a missing page answers 404, and a wiki that fails answers 502 (`UpstreamError`).
+- **No parser library (D-35):** `apps/api/src/wiki/wikitext.ts` reads what's needed:
+  - the top-level templates with named parameters, their values as plain text (`<br>` as a comma);
+  - the lead section as Markdown, with bold and italic kept and links as plain text;
+  - references, comments, files, categories, tables and nested templates left out.
+
+  The tests run it on the real Gudrun and Hubris pages (`apps/api/test/fixtures/wiki`).
+- **Routes:** `GET /wiki/sources`, `GET /wiki/search?source&q`, `GET /wiki/preview?source&title`. The preview returns the templates, the lead, the page's address and the wiki's licence from `meta=siteinfo`; the Warhammer 40k Wiki says "CC-BY-SA".
+- **Mapping** is pure, in `@ge/domain` (`wiki/mapping.ts`), so the dialog redoes it as soon as an alias is added:
+  - names compare loosely (`sub-sector`, `subsector` and `Sub-sector` are one name);
+  - a field's key and label count as aliases too, so Population needs none;
+  - each field is filled once;
+  - filler such as "Unknown" fills nothing;
+  - numbers are read with separators and scale words, and converted to the field's unit ("5,000,000,000" in a field of billions is 5).
+- **Citations:**
+  - the table, with its migration (0005), audit trigger and `CLONE_SPEC` entry;
+  - routes: GET and POST `/entities/{id}/citations`, and DELETE for one;
+  - `include=citations`, and an `addCitation` batch operation;
+  - one citation per target and page: citing again updates its time.
+
+  The panel shows "Text from Gudrun (CC-BY-SA)" under a cited description and a fact, and a **Sources** section lists the pages. The site-wide Attributions page is still M8-T9's.
+- **The dialog** (`apps/web/src/panels/wiki-fill/`), from "Fill from wiki…" in the edit-mode panel:
+  1. search, starting from the entry's name, and choose a page;
+  2. see what each field says now and what the wiki says, with a tick each: an empty description and changed facts start ticked. Pick another info box if there are several; turn leftover parameters into a field's alias ("Use segmentum for…");
+  3. apply as one batch, "Filled Gudrun from warhammer40k.fandom.com". It sets the description and the facts (keeping each fact's spoiler flag) and adds a citation per filled target. One undo takes it all back.
+
+  Images are never offered; the dialog links to the page instead.
+- **Tests:**
+  - `apps/api/test/wiki/wikitext.test.ts` covers the two fixtures and edge cases;
+  - `apps/api/test/wiki/wiki.int.test.ts` runs against the fixture wiki server (`test/fixtures/wiki/server.ts`): the User-Agent, a second between requests, the cache, redirects, the routes, and a fill batch that reverts as one;
+  - `packages/domain/test/wiki-mapping.test.ts` and `apps/web/test/fill-plan.test.ts` cover the mapping and the dialog's logic;
+  - `apps/web/e2e/wiki-fill.spec.ts` covers the "Done when" flow. The e2e run starts the fixture wiki on port 3102 and points its API there.
 
 ### M7-T4 Import and export
 

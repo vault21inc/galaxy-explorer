@@ -1013,6 +1013,99 @@
         ],
         "additionalProperties": false
       },
+      "CitationReadInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "target": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "sourceTitle": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "license": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "retrievedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "entityId",
+          "target",
+          "sourceUrl",
+          "sourceTitle",
+          "license",
+          "retrievedAt"
+        ]
+      },
+      "CitationWriteInput": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "maxLength": 80,
+            "pattern": "^(name|summary|description|field:[a-z][a-z0-9_]*)$"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "maxLength": 2000,
+            "pattern": "^https?:\\/\\/"
+          },
+          "sourceTitle": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "license": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "retrievedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          }
+        },
+        "required": [
+          "target",
+          "sourceUrl",
+          "retrievedAt"
+        ],
+        "additionalProperties": false
+      },
       "FactReadInput": {
         "type": "object",
         "properties": {
@@ -2413,6 +2506,42 @@
               "op": {
                 "type": "string",
                 "const": "addRelation"
+              },
+              "id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^\\$op:(\\d+)$"
+                  }
+                ],
+                "description": "An id, or \"$op:N\" for the entity created by operation N of this request."
+              },
+              "data": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              }
+            },
+            "required": [
+              "op",
+              "id",
+              "data"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "type": "string",
+                "const": "addCitation"
               },
               "id": {
                 "anyOf": [
@@ -7216,6 +7345,33 @@
               ]
             }
           },
+          "citations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CitationReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -7558,6 +7714,33 @@
               ]
             }
           },
+          "citations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CitationReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -7874,6 +8057,33 @@
               ]
             }
           },
+          "citations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CitationReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -8163,6 +8373,33 @@
               "anyOf": [
                 {
                   "$ref": "#/components/schemas/LinkReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CitationReadInput"
                 },
                 {
                   "type": "object",
@@ -8522,6 +8759,33 @@
               ]
             }
           },
+          "citations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CitationReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -8811,6 +9075,33 @@
               "anyOf": [
                 {
                   "$ref": "#/components/schemas/LinkReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CitationReadInput"
                 },
                 {
                   "type": "object",
@@ -9998,6 +10289,100 @@
         },
         "required": [
           "url"
+        ],
+        "additionalProperties": false
+      },
+      "CitationRead": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "target": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "sourceTitle": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "license": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "retrievedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "entityId",
+          "target",
+          "sourceUrl",
+          "sourceTitle",
+          "license",
+          "retrievedAt"
+        ],
+        "additionalProperties": false
+      },
+      "CitationWrite": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "maxLength": 80,
+            "pattern": "^(name|summary|description|field:[a-z][a-z0-9_]*)$"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "maxLength": 2000,
+            "pattern": "^https?:\\/\\/"
+          },
+          "sourceTitle": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "license": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "retrievedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          }
+        },
+        "required": [
+          "target",
+          "sourceUrl",
+          "retrievedAt"
         ],
         "additionalProperties": false
       },
@@ -11409,6 +11794,42 @@
               "op": {
                 "type": "string",
                 "const": "addRelation"
+              },
+              "id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^\\$op:(\\d+)$"
+                  }
+                ],
+                "description": "An id, or \"$op:N\" for the entity created by operation N of this request."
+              },
+              "data": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              }
+            },
+            "required": [
+              "op",
+              "id",
+              "data"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "type": "string",
+                "const": "addCitation"
               },
               "id": {
                 "anyOf": [
@@ -16259,6 +16680,33 @@
               ]
             }
           },
+          "citations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CitationRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -16602,6 +17050,33 @@
               ]
             }
           },
+          "citations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CitationRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -16919,6 +17394,33 @@
               ]
             }
           },
+          "citations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CitationRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -17209,6 +17711,33 @@
               "anyOf": [
                 {
                   "$ref": "#/components/schemas/LinkRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CitationRead"
                 },
                 {
                   "type": "object",
@@ -17569,6 +18098,33 @@
               ]
             }
           },
+          "citations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CitationRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -17859,6 +18415,33 @@
               "anyOf": [
                 {
                   "$ref": "#/components/schemas/LinkRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CitationRead"
                 },
                 {
                   "type": "object",
@@ -19682,12 +20265,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members|waypoints)(,(facts|images|links|relations|location|members|waypoints))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations)(,(facts|images|links|relations|location|members|waypoints|citations))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations."
           },
           {
             "schema": {
@@ -20398,12 +20981,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members|waypoints)(,(facts|images|links|relations|location|members|waypoints))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations)(,(facts|images|links|relations|location|members|waypoints|citations))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations."
           },
           {
             "schema": {
@@ -21082,12 +21665,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members|waypoints)(,(facts|images|links|relations|location|members|waypoints))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations)(,(facts|images|links|relations|location|members|waypoints|citations))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations."
           },
           {
             "schema": {
@@ -21766,12 +22349,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members|waypoints)(,(facts|images|links|relations|location|members|waypoints))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations)(,(facts|images|links|relations|location|members|waypoints|citations))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations."
           },
           {
             "schema": {
@@ -22471,12 +23054,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members|waypoints)(,(facts|images|links|relations|location|members|waypoints))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations)(,(facts|images|links|relations|location|members|waypoints|citations))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations."
           },
           {
             "schema": {
@@ -23155,12 +23738,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members|waypoints)(,(facts|images|links|relations|location|members|waypoints))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations)(,(facts|images|links|relations|location|members|waypoints|citations))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations."
           },
           {
             "schema": {
@@ -25591,6 +26174,260 @@
             },
             "in": "path",
             "name": "role",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/{entityId}/citations": {
+      "get": {
+        "operationId": "citations.list",
+        "summary": "List where an entity's content came from",
+        "tags": [
+          "citations"
+        ],
+        "description": "Aspects are details any entity can have. Each change is one batch, returned in X-GE-Batch-Id. Aspect rows have no version: the last write wins. They come back with their spoiler flags; for a redacted view, read the entity with `include` and `spoilers=exclude`. One citation per filled target (name, summary, description or field:<key>) and source page, with its licence and when it was read.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "entityId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CitationRead"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "citations.add",
+        "summary": "Cite a source",
+        "tags": [
+          "citations"
+        ],
+        "description": "Aspects are details any entity can have. Each change is one batch, returned in X-GE-Batch-Id. Aspect rows have no version: the last write wins. They come back with their spoiler flags; for a redacted view, read the entity with `include` and `spoilers=exclude`. Citing the same page for the same target again updates its title, licence and time. \"Fill from wiki\" adds these in the same batch as the content it fills.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CitationWriteInput"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "entityId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CitationRead"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/{entityId}/citations/{citationId}": {
+      "delete": {
+        "operationId": "citations.remove",
+        "summary": "Remove a citation",
+        "tags": [
+          "citations"
+        ],
+        "description": "Aspects are details any entity can have. Each change is one batch, returned in X-GE-Batch-Id. Aspect rows have no version: the last write wins. They come back with their spoiler flags; for a redacted view, read the entity with `include` and `spoilers=exclude`.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "entityId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "citationId",
             "required": true
           }
         ],
@@ -29397,6 +30234,381 @@
           }
         }
       }
+    },
+    "/api/v1/wiki/sources": {
+      "get": {
+        "operationId": "wiki.sources",
+        "summary": "The wikis this installation can fill from",
+        "tags": [
+          "wiki"
+        ],
+        "description": "For \"Fill from wiki\" (M7-T3): the wikis this installation is configured to read (GE_WIKI_SOURCES), searched and previewed through their MediaWiki API, one request a second per wiki, with answers kept for a day. Nothing here writes: the dialog applies what the owner picks as one batch, with citations.",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "siteUrl": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "label",
+                          "siteUrl"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/wiki/search": {
+      "get": {
+        "operationId": "wiki.search",
+        "summary": "Search a wiki",
+        "tags": [
+          "wiki"
+        ],
+        "description": "For \"Fill from wiki\" (M7-T3): the wikis this installation is configured to read (GE_WIKI_SOURCES), searched and previewed through their MediaWiki API, one request a second per wiki, with answers kept for a day. Nothing here writes: the dialog applies what the owner picks as one batch, with citations. Returns up to 10 pages, best first, each with a plain-text snippet.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "in": "query",
+            "name": "source",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "in": "query",
+            "name": "q",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "title": {
+                            "type": "string"
+                          },
+                          "snippet": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "title",
+                          "snippet"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/wiki/preview": {
+      "get": {
+        "operationId": "wiki.preview",
+        "summary": "Read a wiki page for filling",
+        "tags": [
+          "wiki"
+        ],
+        "description": "For \"Fill from wiki\" (M7-T3): the wikis this installation is configured to read (GE_WIKI_SOURCES), searched and previewed through their MediaWiki API, one request a second per wiki, with answers kept for a day. Nothing here writes: the dialog applies what the owner picks as one batch, with citations. Follows redirects. Returns the page's templates with named parameters (the first is usually its info box) as plain text, its lead section as Markdown with links as text, its address, and the wiki's text licence. Images are never offered: wiki artwork usually isn't covered by the text licence.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "in": "query",
+            "name": "source",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
+            "in": "query",
+            "name": "title",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "source": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "redirectedFrom": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "url": {
+                          "type": "string"
+                        },
+                        "license": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "licenseUrl": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "retrievedAt": {
+                          "type": "string"
+                        },
+                        "templates": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "params": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "text": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "name",
+                                    "text"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "params"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "lead": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "source",
+                        "title",
+                        "redirectedFrom",
+                        "url",
+                        "license",
+                        "licenseUrl",
+                        "retrievedAt",
+                        "templates",
+                        "lead"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "tags": [
@@ -29467,6 +30679,14 @@
     {
       "name": "links",
       "description": "Web links attached to an entity."
+    },
+    {
+      "name": "citations",
+      "description": "Where an entity’s filled-in content came from (M7-T3)."
+    },
+    {
+      "name": "wiki",
+      "description": "Searching and reading configured wikis, for “Fill from wiki” (M7-T3)."
     },
     {
       "name": "facts",

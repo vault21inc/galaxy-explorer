@@ -14,6 +14,8 @@ export {
   ImageWrite,
   LinkRead,
   LinkWrite,
+  CitationRead,
+  CitationWrite,
   LocationRead,
   LocationWrite,
   MemberRead,

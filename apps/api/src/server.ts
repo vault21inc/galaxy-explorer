@@ -20,6 +20,7 @@ import { guardPreviewRoles } from './http/preview-roles.ts';
 import { handleError, handleNotFound, problemSchema } from './http/problems.ts';
 import { assetRoutes, mediaRoutes } from './routes/assets.ts';
 import { iconRoutes } from './routes/icons.ts';
+import { wikiRoutes } from './routes/wiki.ts';
 import { batchRoutes } from './routes/batch.ts';
 import { configRoutes } from './routes/config.ts';
 import { containerRoutes } from './routes/containers.ts';
@@ -112,6 +113,10 @@ export async function buildServer(config: Config) {
       await v1.register(viewRoutes, { db });
       await v1.register(assetRoutes, { db, store });
       await v1.register(iconRoutes);
+      await v1.register(wikiRoutes, {
+        sources: config.wikiSources,
+        userAgent: config.wikiUserAgent,
+      });
     },
     { prefix: '/api/v1' },
   );

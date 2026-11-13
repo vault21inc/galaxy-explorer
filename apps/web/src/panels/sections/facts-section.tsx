@@ -1,6 +1,7 @@
 import { spoilerKeys, toPlainText } from '@ge/domain';
 import { Redactable } from '@/richtext/redactable.tsx';
 import { useEditor } from '@/state/editor.ts';
+import { CitationNote, citationsFor } from '../citations/citation-note.tsx';
 import { FactsEditor } from '../facts/facts-editor.tsx';
 import { RichTextView } from '@/richtext/rich-text-view.tsx';
 import type { PanelEntity, SectionProps } from '../types.ts';
@@ -48,6 +49,12 @@ export function FactsSection(props: SectionProps) {
                 <Redactable flagged={fact.isSpoiler} revealKey={key} hiddenText={factText(fact)}>
                   <FactValue fact={fact} unit={definition?.unit ?? null} revealKey={key} />
                 </Redactable>
+                {definition && (
+                  <CitationNote
+                    citations={citationsFor(entity, `field:${definition.key}`)}
+                    what="From"
+                  />
+                )}
               </dd>
             </div>
           );

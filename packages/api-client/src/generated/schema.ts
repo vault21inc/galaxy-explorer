@@ -1004,6 +1004,50 @@ export interface paths {
         patch: operations["images.update"];
         trace?: never;
     };
+    "/api/v1/entities/{entityId}/citations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List where an entity's content came from
+         * @description Aspects are details any entity can have. Each change is one batch, returned in X-GE-Batch-Id. Aspect rows have no version: the last write wins. They come back with their spoiler flags; for a redacted view, read the entity with `include` and `spoilers=exclude`. One citation per filled target (name, summary, description or field:<key>) and source page, with its licence and when it was read.
+         */
+        get: operations["citations.list"];
+        put?: never;
+        /**
+         * Cite a source
+         * @description Aspects are details any entity can have. Each change is one batch, returned in X-GE-Batch-Id. Aspect rows have no version: the last write wins. They come back with their spoiler flags; for a redacted view, read the entity with `include` and `spoilers=exclude`. Citing the same page for the same target again updates its title, licence and time. "Fill from wiki" adds these in the same batch as the content it fills.
+         */
+        post: operations["citations.add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entities/{entityId}/citations/{citationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a citation
+         * @description Aspects are details any entity can have. Each change is one batch, returned in X-GE-Batch-Id. Aspect rows have no version: the last write wins. They come back with their spoiler flags; for a redacted view, read the entity with `include` and `spoilers=exclude`.
+         */
+        delete: operations["citations.remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/entities/{entityId}/links": {
         parameters: {
             query?: never;
@@ -1484,6 +1528,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/wiki/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The wikis this installation can fill from
+         * @description For "Fill from wiki" (M7-T3): the wikis this installation is configured to read (GE_WIKI_SOURCES), searched and previewed through their MediaWiki API, one request a second per wiki, with answers kept for a day. Nothing here writes: the dialog applies what the owner picks as one batch, with citations.
+         */
+        get: operations["wiki.sources"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wiki/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search a wiki
+         * @description For "Fill from wiki" (M7-T3): the wikis this installation is configured to read (GE_WIKI_SOURCES), searched and previewed through their MediaWiki API, one request a second per wiki, with answers kept for a day. Nothing here writes: the dialog applies what the owner picks as one batch, with citations. Returns up to 10 pages, best first, each with a plain-text snippet.
+         */
+        get: operations["wiki.search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wiki/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read a wiki page for filling
+         * @description For "Fill from wiki" (M7-T3): the wikis this installation is configured to read (GE_WIKI_SOURCES), searched and previewed through their MediaWiki API, one request a second per wiki, with answers kept for a day. Nothing here writes: the dialog applies what the owner picks as one batch, with citations. Follows redirects. Returns the page's templates with named parameters (the first is usually its info box) as plain text, its lead section as Markdown with links as text, its address, and the wiki's text licence. Images are never offered: wiki artwork usually isn't covered by the text licence.
+         */
+        get: operations["wiki.preview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1720,6 +1824,25 @@ export interface components {
             label?: string | null;
             isSpoiler?: boolean;
             sortKey?: number;
+        };
+        CitationReadInput: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            entityId: string;
+            target: string;
+            sourceUrl: string;
+            sourceTitle: string | null;
+            license: string | null;
+            retrievedAt: string;
+        };
+        CitationWriteInput: {
+            target: string;
+            sourceUrl: string;
+            sourceTitle?: string | null;
+            license?: string | null;
+            /** Format: date-time */
+            retrievedAt: string;
         };
         FactReadInput: {
             /** Format: uuid */
@@ -2001,6 +2124,14 @@ export interface components {
         } | {
             /** @constant */
             op: "addRelation";
+            /** @description An id, or "$op:N" for the entity created by operation N of this request. */
+            id: string;
+            data: {
+                [key: string]: unknown;
+            };
+        } | {
+            /** @constant */
+            op: "addCitation";
             /** @description An id, or "$op:N" for the entity created by operation N of this request. */
             id: string;
             data: {
@@ -2915,6 +3046,13 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            citations?: (components["schemas"]["CitationReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
             relations?: (components["schemas"]["RelationReadInput"] | ({
                 /** @constant */
                 redacted: true;
@@ -2987,6 +3125,13 @@ export interface components {
                 [key: string]: unknown;
             }))[];
             links?: (components["schemas"]["LinkReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            citations?: (components["schemas"]["CitationReadInput"] | ({
                 /** @constant */
                 redacted: true;
                 isSpoiler: boolean;
@@ -3067,6 +3212,13 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            citations?: (components["schemas"]["CitationReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
             relations?: (components["schemas"]["RelationReadInput"] | ({
                 /** @constant */
                 redacted: true;
@@ -3134,6 +3286,13 @@ export interface components {
                 [key: string]: unknown;
             }))[];
             links?: (components["schemas"]["LinkReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            citations?: (components["schemas"]["CitationReadInput"] | ({
                 /** @constant */
                 redacted: true;
                 isSpoiler: boolean;
@@ -3216,6 +3375,13 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            citations?: (components["schemas"]["CitationReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
             relations?: (components["schemas"]["RelationReadInput"] | ({
                 /** @constant */
                 redacted: true;
@@ -3282,6 +3448,13 @@ export interface components {
                 [key: string]: unknown;
             }))[];
             links?: (components["schemas"]["LinkReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            citations?: (components["schemas"]["CitationReadInput"] | ({
                 /** @constant */
                 redacted: true;
                 isSpoiler: boolean;
@@ -3549,6 +3722,25 @@ export interface components {
             label?: string | null;
             isSpoiler?: boolean;
             sortKey?: number;
+        };
+        CitationRead: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            entityId: string;
+            target: string;
+            sourceUrl: string;
+            sourceTitle: string | null;
+            license: string | null;
+            retrievedAt: string;
+        };
+        CitationWrite: {
+            target: string;
+            sourceUrl: string;
+            sourceTitle?: string | null;
+            license?: string | null;
+            /** Format: date-time */
+            retrievedAt: string;
         };
         FactRead: {
             /** Format: uuid */
@@ -3830,6 +4022,14 @@ export interface components {
         } | {
             /** @constant */
             op: "addRelation";
+            /** @description An id, or "$op:N" for the entity created by operation N of this request. */
+            id: string;
+            data: {
+                [key: string]: unknown;
+            };
+        } | {
+            /** @constant */
+            op: "addCitation";
             /** @description An id, or "$op:N" for the entity created by operation N of this request. */
             id: string;
             data: {
@@ -4744,6 +4944,13 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            citations?: (components["schemas"]["CitationRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
             relations?: (components["schemas"]["RelationRead"] | ({
                 /** @constant */
                 redacted: true;
@@ -4816,6 +5023,13 @@ export interface components {
                 [key: string]: unknown;
             }))[];
             links?: (components["schemas"]["LinkRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            citations?: (components["schemas"]["CitationRead"] | ({
                 /** @constant */
                 redacted: true;
                 isSpoiler: boolean;
@@ -4896,6 +5110,13 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            citations?: (components["schemas"]["CitationRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
             relations?: (components["schemas"]["RelationRead"] | ({
                 /** @constant */
                 redacted: true;
@@ -4963,6 +5184,13 @@ export interface components {
                 [key: string]: unknown;
             }))[];
             links?: (components["schemas"]["LinkRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            citations?: (components["schemas"]["CitationRead"] | ({
                 /** @constant */
                 redacted: true;
                 isSpoiler: boolean;
@@ -5045,6 +5273,13 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            citations?: (components["schemas"]["CitationRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
             relations?: (components["schemas"]["RelationRead"] | ({
                 /** @constant */
                 redacted: true;
@@ -5111,6 +5346,13 @@ export interface components {
                 [key: string]: unknown;
             }))[];
             links?: (components["schemas"]["LinkRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            citations?: (components["schemas"]["CitationRead"] | ({
                 /** @constant */
                 redacted: true;
                 isSpoiler: boolean;
@@ -6083,7 +6325,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations. */
                 include?: string;
             };
             header?: never;
@@ -6495,7 +6737,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations. */
                 include?: string;
             };
             header?: never;
@@ -6903,7 +7145,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations. */
                 include?: string;
             };
             header?: never;
@@ -7311,7 +7553,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations. */
                 include?: string;
             };
             header?: never;
@@ -7721,7 +7963,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations. */
                 include?: string;
             };
             header?: never;
@@ -8129,7 +8371,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations. */
                 include?: string;
             };
             header?: never;
@@ -9773,6 +10015,187 @@ export interface operations {
                         data: components["schemas"]["ImageRead"];
                     };
                 };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "citations.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entityId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CitationRead"][];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "citations.add": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entityId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CitationWriteInput"];
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CitationRead"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "citations.remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entityId: string;
+                citationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description The request is invalid. */
             400: {
@@ -12009,6 +12432,209 @@ export interface operations {
                             width: number;
                             height: number;
                         }[];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "wiki.sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            label: string;
+                            siteUrl: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "wiki.search": {
+        parameters: {
+            query: {
+                source: string;
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            title: string;
+                            snippet: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "wiki.preview": {
+        parameters: {
+            query: {
+                source: string;
+                title: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            source: string;
+                            title: string;
+                            redirectedFrom: string | null;
+                            url: string;
+                            license: string | null;
+                            licenseUrl: string | null;
+                            retrievedAt: string;
+                            templates: {
+                                name: string;
+                                params: {
+                                    name: string;
+                                    text: string;
+                                }[];
+                            }[];
+                            lead: string;
+                        };
                     };
                 };
             };

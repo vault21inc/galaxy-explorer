@@ -1,4 +1,5 @@
 import {
+  CITATION_TARGET_PATTERN,
   HTTP_URL_PATTERN,
   IMAGE_ROLES,
   RELATION_TYPES,
@@ -22,8 +23,8 @@ import {
 import { idColumn, isSpoilerColumn, matches, oneOf } from './helpers.ts';
 
 /**
- * Aspects: images, links, facts and relations, shared by every entity kind (data-model §3.4).
- * `citations` arrives in M7.
+ * Aspects: images, links, facts, relations and citations, shared by every entity kind
+ * (data-model §3.4).
  */
 
 /** Two entities related to each other, such as a character involved in an event. */
@@ -99,4 +100,28 @@ export const fieldValues = pgTable(
     sortKey: numeric({ mode: 'number' }),
   },
   (t) => [primaryKey({ name: 'field_values_pk', columns: [t.entityId, t.fieldDefinitionId] })],
+);
+
+/**
+ * Where an entity's filled-in content came from (M7-T3): the page, its title and licence, and
+ * when it was read. `target` is `name`, `summary`, `description` or `field:<key>`.
+ */
+export const citations = pgTable(
+  'citations',
+  {
+    id: idColumn(),
+    entityId: uuid().notNull(),
+    target: text().notNull(),
+    sourceUrl: text().notNull(),
+    sourceTitle: text(),
+    /** As the source states it, such as "CC-BY-SA". */
+    license: text(),
+    retrievedAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
+  },
+  (t) => [
+    unique('citations_target_source_uq').on(t.entityId, t.target, t.sourceUrl),
+    check('citations_target_format', matches(t.target, CITATION_TARGET_PATTERN)),
+    check('citations_source_url_format', matches(t.sourceUrl, HTTP_URL_PATTERN)),
+    index('citations_entity_idx').on(t.entityId),
+  ],
 );

@@ -1,7 +1,7 @@
 import { schema, type Executor } from '@ge/db';
 import { entityKinds, OPERATION_REFERENCE, type BatchOperation, type EntityKind } from '@ge/domain';
 import { eq, sql } from 'drizzle-orm';
-import { addLink, addRelation, setFact } from './aspects/content.ts';
+import { addCitation, addLink, addRelation, setFact } from './aspects/content.ts';
 import { addMembers, removeMembers, setLocation } from './aspects/placement.ts';
 import { setWaypoints } from './aspects/waypoints.ts';
 import {
@@ -200,6 +200,10 @@ async function runOne(tx: Executor, operation: BatchOperation): Promise<RunResul
     case 'addLink': {
       const link = await addLink(tx, operation.id, operation.data as never);
       return { op: 'addLink', id: link?.id ?? null, data: link };
+    }
+    case 'addCitation': {
+      const citation = await addCitation(tx, operation.id, operation.data as never);
+      return { op: 'addCitation', id: citation?.id ?? null, data: citation };
     }
     case 'addRelation': {
       const relation = await addRelation(tx, operation.id, operation.data as never);

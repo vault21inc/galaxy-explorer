@@ -15,6 +15,8 @@ try {
 // database on the test server, which they reset at the start of every run.
 const API_PORT = '3101';
 const WEB_PORT = '4173';
+/** A stand-in wiki for "Fill from wiki" (M7-T3), answering from saved pages. */
+const WIKI_PORT = '3102';
 const testServerUrl = process.env.TEST_DATABASE_URL;
 if (!testServerUrl) {
   throw new Error('TEST_DATABASE_URL is not set. Copy .env.example to .env and run `pnpm db:up`.');
@@ -77,9 +79,24 @@ export default defineConfig({
         GE_LOG_LEVEL: 'warn',
         // Its own media, apart from development's uploads.
         GE_MEDIA_DIR: './.data/e2e-media',
+        // The fixture wiki below, never the real one.
+        GE_WIKI_SOURCES: JSON.stringify([
+          {
+            id: 'warhammer40k',
+            label: 'Warhammer 40k Wiki',
+            apiUrl: `http://127.0.0.1:${WIKI_PORT}/api.php`,
+          },
+        ]),
       },
       reuseExistingServer: false,
       timeout: 60_000,
+    },
+    {
+      // The fixture wiki (apps/api/test/fixtures/wiki), for "Fill from wiki".
+      command: `node ../api/test/fixtures/wiki/serve.ts ${WIKI_PORT}`,
+      url: `http://127.0.0.1:${WIKI_PORT}/api.php?action=query&meta=siteinfo`,
+      reuseExistingServer: false,
+      timeout: 30_000,
     },
     {
       // A production build with the test hooks, served by `vite preview`, which proxies /api

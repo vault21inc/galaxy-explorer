@@ -12,6 +12,7 @@ import {
   getLocation,
   listFacts,
   listImages,
+  listCitations,
   listLinks,
   listMembers,
   listRelations,
@@ -155,6 +156,7 @@ async function loadAspects(
   if (want.has('facts')) result.facts = await listFacts(ex, id);
   if (want.has('images')) result.images = await listImages(ex, id);
   if (want.has('links')) result.links = await listLinks(ex, id);
+  if (want.has('citations')) result.citations = await listCitations(ex, id);
   if (want.has('relations')) result.relations = await listRelations(ex, id, viewer);
   if (want.has('location')) result.location = await getLocation(ex, id);
   if (want.has('members') && entityKinds[kind].aspects.members)

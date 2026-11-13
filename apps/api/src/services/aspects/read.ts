@@ -6,6 +6,7 @@ import { entityVisible, type Viewer } from '../visibility.ts';
 /** The aspect lists, as the API returns them (the Read schemas in @ge/domain). */
 
 const {
+  citations,
   entities,
   entityImages,
   entityLinks,
@@ -60,6 +61,15 @@ export function listLinks(ex: Executor, entityId: string) {
     .from(entityLinks)
     .where(eq(entityLinks.entityId, entityId))
     .orderBy(asc(entityLinks.sortKey));
+}
+
+/** Where the entity's filled-in content came from (M7-T3), by target. */
+export function listCitations(ex: Executor, entityId: string) {
+  return ex
+    .select()
+    .from(citations)
+    .where(eq(citations.entityId, entityId))
+    .orderBy(asc(citations.target), asc(citations.sourceUrl));
 }
 
 /** Relations from or to the entity: a character's events, an event's people. */

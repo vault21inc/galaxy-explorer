@@ -1,5 +1,5 @@
 import { schema, type Executor } from '@ge/db';
-import { FactWrite, ImageWrite, LinkWrite, RelationWrite } from '@ge/domain';
+import { CitationWrite, FactWrite, ImageWrite, LinkWrite, RelationWrite } from '@ge/domain';
 import { and, eq } from 'drizzle-orm';
 import type { z } from 'zod';
 import { NotFound } from '../errors.ts';
@@ -13,7 +13,7 @@ import { requireOwner } from './owner.ts';
  * They have no version; the last write wins (architecture.md §4).
  */
 
-const { entityImages, entityLinks, entityRelations, fieldValues } = schema;
+const { citations, entityImages, entityLinks, entityRelations, fieldValues } = schema;
 
 // ---- images -----------------------------------------------------------------------------------
 
@@ -90,6 +90,42 @@ export async function updateLink(
 export async function removeLink(tx: Executor, linkId: string) {
   const rows = await tx.delete(entityLinks).where(eq(entityLinks.id, linkId)).returning();
   if (rows.length === 0) throw new NotFound('link', linkId);
+}
+
+// ---- citations --------------------------------------------------------------------------------
+
+/**
+ * Records where some of an entity's content came from (M7-T3). One per target and source page:
+ * citing the same page for the same target again updates its title, licence and time.
+ */
+export async function addCitation(
+  tx: Executor,
+  entityId: string,
+  input: z.input<typeof CitationWrite>,
+) {
+  const citation = CitationWrite.parse(input);
+  await requireOwner(tx, entityId);
+  const [row] = await tx
+    .insert(citations)
+    .values({ ...citation, entityId })
+    .onConflictDoUpdate({
+      target: [citations.entityId, citations.target, citations.sourceUrl],
+      set: {
+        sourceTitle: citation.sourceTitle ?? null,
+        license: citation.license ?? null,
+        retrievedAt: citation.retrievedAt,
+      },
+    })
+    .returning();
+  return row;
+}
+
+export async function removeCitation(tx: Executor, entityId: string, citationId: string) {
+  const rows = await tx
+    .delete(citations)
+    .where(and(eq(citations.id, citationId), eq(citations.entityId, entityId)))
+    .returning();
+  if (rows.length === 0) throw new NotFound('citation', citationId);
 }
 
 // ---- facts ------------------------------------------------------------------------------------

@@ -221,7 +221,8 @@ PATCH /api/v1/objects/{id}  { version: 7, name: {...}, x: 120.5 }
 | Batch | `POST /batch` with `{ description, dryRun?, operations: [{ op, kind, id?, version?, data? }] }`: all operations in one transaction and one change batch. `dryRun: true` validates and returns the would-be results, then rolls back. |
 | History | `GET /universes/{universeId}/history`, `GET /history/{batchId}`, `POST /history/{batchId}/revert` |
 | Assets | `GET/POST /universes/{universeId}/assets` (POST is multipart), `GET/PATCH/DELETE /assets/{assetId}`; files are served under `/media/…` |
-| Later | search, import/export, wiki (M7); `POST /practice-universe`, the editor tour's demo copy (M8-T10) |
+| Wiki (M7-T3) | `GET /wiki/sources`, `GET /wiki/search?source&q`, `GET /wiki/preview?source&title`: reads only; the dialog applies its choices through `POST /batch` |
+| Later | search, import/export (M7); `POST /practice-universe`, the editor tour's demo copy (M8-T10) |
 | Accounts (M8, D-34) | `POST /auth/login`, `POST /auth/logout`, `GET/PATCH /auth/me`, `GET/DELETE /auth/sessions`; `GET /auth/links/{token}` and `POST /auth/links/{token}/start`, `/finish` (accepting an invite or a reset); `GET/POST /auth/tokens`, `DELETE /auth/tokens/{tokenId}` |
 | Sharing (M8) | on a universe: `visibility` in `PATCH /universes/{universeId}` (owner); `POST /universes/{universeId}/share-key` (a new link); `POST /universes/unlock` (a slug and its share key for a read cookie); `GET /universes/by-slug/{slug}`; `GET /universes/{universeId}/members`, `PUT/DELETE /universes/{universeId}/members/{username}`; `POST /universes/{universeId}/transfer` |
 | Admin (M8) | `GET /admin/users`, `PATCH/DELETE /admin/users/{userId}`, `POST /admin/invites`, `POST /admin/users/{userId}/reset-link`, `GET /admin/universes`, `PATCH/DELETE /admin/universes/{universeId}` (transfer, takedown, delete), `GET /admin/events` |
@@ -326,7 +327,8 @@ All configuration comes from environment variables, validated by a Zod schema at
 | `GE_PUBLIC_URL` | api, web build | `http://localhost:5173` |
 | `VITE_TEST_HOOKS` | web build | unset; `1` exposes `window.__GE_TEST__` in a production build, for e2e tests (development builds always have it) |
 | `GE_SESSION_SECRET` | api (M8) | 32+ random bytes |
-| `GE_WIKI_USER_AGENT` | api (M7) | `GalaxyExplorer/0.1 (contact: …)` |
+| `GE_WIKI_USER_AGENT` | api (M7) | `GalaxyExplorer/0.1 (contact: …)`; wikis ask for a way to reach whoever runs the client |
+| `GE_WIKI_SOURCES` | api (M7) | the wikis "Fill from wiki" may read, as JSON `[{ "id", "label", "apiUrl" }]`; default: the Warhammer 40k Wiki (D-35) |
 | `GE_API_URL`, `GE_API_TOKEN` | mcp (M7) | `http://127.0.0.1:3100/api/v1` |
 
 `.env.example` documents every variable. Real `.env` files are git-ignored.

@@ -10,6 +10,8 @@ import { MembersSection } from './sections/members-section.tsx';
 import { NestingSection } from './sections/nesting-section.tsx';
 import { typedRelationSections } from './relations/relation-sections.ts';
 import { RelationsSection } from './sections/relations-section.tsx';
+import { SourcesSection } from './citations/sources-section.tsx';
+import { WikiFillSection } from './wiki-fill/wiki-fill-section.tsx';
 import { textSection } from './sections/text-section.tsx';
 import { WaypointsSection } from './sections/waypoints-section.tsx';
 import type { SectionProps } from './types.ts';
@@ -36,6 +38,8 @@ const always = () => true;
 
 export const PANEL_SECTIONS: readonly SectionDef[] = [
   { id: 'form', component: EntityForm, appliesTo: always, mode: 'edit' },
+  // Filling the description and facts from a wiki page (M7-T3).
+  { id: 'wiki-fill', component: WikiFillSection, appliesTo: always, mode: 'edit' },
   { id: 'header', component: HeaderSection, appliesTo: always, mode: 'view' },
   {
     id: 'summary',
@@ -91,6 +95,9 @@ export const PANEL_SECTIONS: readonly SectionDef[] = [
     include: 'relations',
     appliesTo: (kind) => kind.aspects.relations,
   },
+  // Where filled-in content came from (M7-T3); loading them also gives the notes under each
+  // cited text and fact.
+  { id: 'sources', component: SourcesSection, include: 'citations', appliesTo: always },
 ];
 
 /** A kind's sections, all of them or only those for reading or editing. */

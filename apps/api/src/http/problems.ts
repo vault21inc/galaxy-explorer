@@ -13,6 +13,7 @@ import {
   NotFound,
   RevertConflicts,
   RuleViolation,
+  UpstreamError,
   VersionConflict,
 } from '../services/errors.ts';
 
@@ -116,6 +117,7 @@ export function problemForDomainError(error: unknown): Problem | undefined {
     );
   }
   if (error instanceof InvalidRequest) return problem(400, error.message);
+  if (error instanceof UpstreamError) return problem(502, error.message);
   // An upload that isn't an image we take: unsupported media type.
   if (error instanceof UnsupportedImage) return problem(415, error.message);
   if (error instanceof NotFound || error instanceof BatchNotFoundError)

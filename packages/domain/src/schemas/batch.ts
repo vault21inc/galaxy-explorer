@@ -62,6 +62,8 @@ export const BatchOperation = z.discriminatedUnion('op', [
   z.strictObject({ op: z.literal('setFacts'), id: Ref, data: z.array(Data).min(1).max(100) }),
   z.strictObject({ op: z.literal('addLink'), id: Ref, data: Data }),
   z.strictObject({ op: z.literal('addRelation'), id: Ref, data: Data }),
+  /** Where filled-in content came from (M7-T3): the same body as POST /entities/{id}/citations. */
+  z.strictObject({ op: z.literal('addCitation'), id: Ref, data: Data }),
 ]);
 export type BatchOperation = z.infer<typeof BatchOperation>;
 
