@@ -25,19 +25,32 @@ beforeEach(() => {
 
 describe('the MediaWiki client', () => {
   it('names itself, waits a second between requests to a host, and caches answers', async () => {
-    const source = new MediaWikiSource(wiki.apiUrl, { userAgent: USER_AGENT });
+    // The limit is on when the client sends, so time the sends rather than the server's
+    // arrivals: a slow machine's first connection can arrive late and shrink the gap there.
+    const sentAtMs: number[] = [];
+    const source = new MediaWikiSource(wiki.apiUrl, {
+      userAgent: USER_AGENT,
+      fetch: (input, init) => {
+        sentAtMs.push(performance.now());
+        return fetch(input, init);
+      },
+    });
     await source.page('Gudrun');
     await source.page('Hubris');
     await source.page('Gudrun'); // from the cache: no third request
     expect(wiki.requests).toHaveLength(2);
+    expect(sentAtMs).toHaveLength(2);
     expect(wiki.requests.map((request) => request.headers['user-agent'])).toEqual([
       USER_AGENT,
       USER_AGENT,
     ]);
-    const [first, second] = wiki.requests;
     // At least a second apart, give or take the timer's granularity.
-    expect((second?.at ?? 0) - (first?.at ?? 0)).toBeGreaterThanOrEqual(990);
-    expect(first?.query).toMatchObject({ format: 'json', formatversion: '2', redirects: '1' });
+    expect((sentAtMs[1] ?? 0) - (sentAtMs[0] ?? 0)).toBeGreaterThanOrEqual(990);
+    expect(wiki.requests[0]?.query).toMatchObject({
+      format: 'json',
+      formatversion: '2',
+      redirects: '1',
+    });
   });
 
   it('follows redirects, and says when a page is missing', async () => {
