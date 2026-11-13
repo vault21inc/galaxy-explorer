@@ -2,13 +2,7 @@ import {
   entityKinds,
   fieldPaths,
   formGroups,
-  isPlanetType,
-  isRegionType,
-  objectTypes,
   schemasFor,
-  type BaseType,
-  type ConfigReadOf,
-  type FormCondition,
   type FormFieldDef,
   type RichText,
   toPlainText,
@@ -20,8 +14,7 @@ import type { SectionProps } from '../types.ts';
 import { KindLine } from '../sections/kind-line.tsx';
 import { SectionHeading } from '../sections/section-heading.tsx';
 import { ConflictDialog } from './conflict-dialog.tsx';
-import { valueAt } from './field-path.ts';
-import { inheritedValue } from './inherited.ts';
+import { shows, type FormContext } from './form-conditions.ts';
 import { useEntitySave } from './use-entity-save.ts';
 import { widgetFor } from './widgets.ts';
 
@@ -95,40 +88,4 @@ function withUniverseHint(
   if (field.hintFrom !== 'dateFormatNotes' || !universe?.dateFormatNotes) return field;
   const notes = toPlainText(universe.dateFormatNotes).trim();
   return notes ? { ...field, hint: notes } : field;
-}
-
-/** What field conditions need beyond the entity itself. */
-interface FormContext {
-  subtypes: readonly ConfigReadOf<'object_subtypes'>[];
-  /** The object's parent is a system. */
-  inSystem: boolean;
-}
-
-/** Whether a field's `showWhen` conditions all hold (entity-forms.ts). */
-function shows(field: FormFieldDef, entity: SectionProps['entity'], context: FormContext): boolean {
-  const { showWhen } = field;
-  if (showWhen === undefined) return true;
-  const conditions: readonly FormCondition[] =
-    typeof showWhen === 'string' || !('length' in showWhen) ? [showWhen] : showWhen;
-  return conditions.every((condition) => holds(condition, entity, context));
-}
-
-function holds(
-  condition: FormCondition,
-  entity: SectionProps['entity'],
-  { subtypes, inSystem }: FormContext,
-): boolean {
-  const baseType = (entity as { baseType?: BaseType }).baseType;
-  if (condition === 'explorableType') {
-    return baseType !== undefined && objectTypes[baseType].explorableAs !== null;
-  }
-  if (condition === 'regionType') return baseType !== undefined && isRegionType(baseType);
-  if (condition === 'systemChild') return inSystem;
-  if (condition === 'planetType') return baseType !== undefined && isPlanetType(baseType);
-  // A value the entity doesn't set falls back to its default, as the field itself shows it.
-  const value = valueAt(entity, condition.path) ?? inheritedValue(entity, condition.path, subtypes);
-  const matches = (values: readonly (string | boolean)[]) =>
-    (typeof value === 'string' || typeof value === 'boolean') && values.includes(value);
-  if ('notIn' in condition) return !matches(condition.notIn);
-  return matches(condition.in);
 }

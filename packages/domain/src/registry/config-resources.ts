@@ -146,7 +146,6 @@ export const configResources = defineConfigResources({
       'A universe-specific refinement of an object base type, such as Hive World (a planet) or Webway Gate (an anomaly) (U2). ' +
       "`defaultAppearance` sits between the base type's defaults and each object's overrides.",
     example: { baseType: 'planet', name: 'Hive World', icon: 'building-2' },
-    // The description and default appearance are edited with the subtype itself in M7.
     columns: [
       { path: 'name', widget: 'text', label: 'Name' },
       {
@@ -155,7 +154,9 @@ export const configResources = defineConfigResources({
         label: 'Base type',
         options: { from: 'values', values: BASE_TYPES, labels: BASE_TYPE_LABELS },
       },
-      { path: 'icon', widget: 'text', label: 'Icon' },
+      { path: 'icon', widget: 'icon', label: 'Icon' },
+      // The description and default look, in a dialog (M7-T2).
+      { path: 'defaultAppearance', widget: 'defaultLook', label: 'Look' },
     ],
     defaults: { baseType: 'planet' },
   },

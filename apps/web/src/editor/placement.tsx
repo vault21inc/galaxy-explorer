@@ -7,6 +7,7 @@ import { clampedRadiusPx } from '@/render/bodies/body-scale.ts';
 import { worldPerPxAt1 } from '@/render/screen-scale.ts';
 import { renderers } from '@/render/registry.ts';
 import type { EditView } from '@/levels/use-edit-view.ts';
+import { useConfigList } from '@/api/hooks.ts';
 import { useEditor } from '@/state/editor.ts';
 import { optimisticObject, useCreateObject } from './use-create-object.ts';
 import { toNdc, workPlanePoint } from './work-plane.ts';
@@ -31,6 +32,15 @@ const scratch = new Vector3();
  */
 export function Placement({ view }: { view: EditView }) {
   const placing = useEditor((state) => state.placing);
+  const placingSubtypeId = useEditor((state) => state.placingSubtypeId);
+  // The chosen subtype (M7-T2): its defaults shape the ghost and the new object.
+  const universeId = view.payload?.map.universeId;
+  const subtypes = useConfigList('object_subtypes', universeId).data;
+  const subtype = subtypes?.find((item) => item.id === placingSubtypeId) ?? null;
+  const subtypeRef = useRef(subtype);
+  useEffect(() => {
+    subtypeRef.current = subtype;
+  }, [subtype]);
   const get = useThree((state) => state.get);
   const invalidate = useThree((state) => state.invalidate);
   const create = useCreateObject(view);
@@ -80,7 +90,7 @@ export function Placement({ view }: { view: EditView }) {
       const at = pointAt(event);
       if (!at) return;
       useEditor.getState().cancelPlacing();
-      create.mutate({ baseType: placing, position: at });
+      create.mutate({ baseType: placing, subtype: subtypeRef.current, position: at });
     };
 
     canvas.addEventListener('pointermove', onPointerMove);
@@ -104,15 +114,21 @@ export function Placement({ view }: { view: EditView }) {
   const renderer = placing ? renderers[level]?.[placing] : undefined;
   const glyph = renderer && GHOST_RENDERERS.has(renderer.name) ? renderer : undefined;
   const ghostObjects = useMemo(
-    () => (placing ? [optimisticObject({ baseType: placing, position: [0, 0, 0] }, level)] : []),
-    [placing, level],
+    () =>
+      placing ? [optimisticObject({ baseType: placing, subtype, position: [0, 0, 0] }, level)] : [],
+    [placing, subtype, level],
   );
 
   // A sphere ghost keeps the size a body of its type would have, clamped like InstancedBodies.
   useFrame(({ camera, size }) => {
     const mesh = ghost.current;
     if (!mesh?.visible || !placing || glyph) return;
-    const radius = resolveAppearance({ baseType: placing, view: level }).size ?? 1;
+    const radius =
+      resolveAppearance({
+        baseType: placing,
+        subtypeDefaults: subtypeRef.current?.defaultAppearance ?? null,
+        view: level,
+      }).size ?? 1;
     scratch.copy(mesh.position).applyMatrix4(camera.matrixWorldInverse);
     const perPx = worldPerPxAt1(camera, size.height);
     const depth = -scratch.z;

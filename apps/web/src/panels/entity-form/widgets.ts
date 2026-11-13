@@ -2,6 +2,7 @@ import type { FormFieldDef, FormWidget } from '@ge/domain';
 import type { ComponentType } from 'react';
 import type { FieldProps } from './field-props.ts';
 import { ColorField } from './fields/color-field.tsx';
+import { DefaultLookField } from './fields/default-look-field.tsx';
 import { IconField } from './fields/icon-field.tsx';
 import { ImageRoleField } from './fields/image-role-field.tsx';
 import { ListField } from './fields/list-field.tsx';
@@ -44,6 +45,7 @@ const widgets: { [W in FormWidget]: ComponentType<FieldProps<DefOf<W>>> } = {
   palette: PaletteField,
   icon: IconField,
   list: ListField,
+  defaultLook: DefaultLookField,
 };
 
 /** The component for a field. Each gets only fields of its own widget, which TypeScript can't follow through the lookup, hence the one cast. */

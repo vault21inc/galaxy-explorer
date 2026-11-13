@@ -11,6 +11,8 @@ interface EditorState {
   available: boolean;
   /** Placing a new object: its base type, while the ghost follows the pointer (M3-T2). */
   placing: BaseType | null;
+  /** And its subtype, when one was chosen (Add ▸ Planet ▸ Hive World, M7-T2). */
+  placingSubtypeId: string | null;
   /**
    * Placing a new place or event (M6-T5): a click on the globe (orbit view) or the plane
    * (galaxy and system views) puts it there.
@@ -36,7 +38,7 @@ interface EditorState {
   setEditing: (editing: boolean) => void;
   toggle: () => void;
   setAvailable: (available: boolean) => void;
-  startPlacing: (baseType: BaseType) => void;
+  startPlacing: (baseType: BaseType, subtypeId?: string | null) => void;
   startPlacingLocated: (kind: LocatedKind) => void;
   startPickingLocation: (target: NonNullable<EditorState['pickingLocation']>) => void;
   cancelPlacing: () => void;
@@ -50,6 +52,7 @@ interface EditorState {
 const IDLE = {
   editing: false,
   placing: null,
+  placingSubtypeId: null,
   placingLocated: null,
   pickingLocation: null,
   routing: false,
@@ -79,10 +82,11 @@ export const useEditor = create<EditorState>()((set, get) => ({
     // Leaving a page that offers editing also leaves edit mode.
     set(available ? { available } : { available, ...IDLE });
   },
-  startPlacing: (baseType) => {
+  startPlacing: (baseType, subtypeId = null) => {
     if (get().editing) {
       set({
         placing: baseType,
+        placingSubtypeId: subtypeId,
         placingLocated: null,
         pickingLocation: null,
         routing: false,
@@ -96,6 +100,7 @@ export const useEditor = create<EditorState>()((set, get) => ({
         placingLocated: kind,
         pickingLocation: null,
         placing: null,
+        placingSubtypeId: null,
         routing: false,
         addMenuOpen: false,
       });
@@ -107,19 +112,21 @@ export const useEditor = create<EditorState>()((set, get) => ({
         pickingLocation: target,
         placingLocated: null,
         placing: null,
+        placingSubtypeId: null,
         routing: false,
         addMenuOpen: false,
       });
     }
   },
   cancelPlacing: () => {
-    set({ placing: null, placingLocated: null, pickingLocation: null });
+    set({ placing: null, placingSubtypeId: null, placingLocated: null, pickingLocation: null });
   },
   startRouting: () => {
     if (get().editing) {
       set({
         routing: true,
         placing: null,
+        placingSubtypeId: null,
         placingLocated: null,
         pickingLocation: null,
         addMenuOpen: false,

@@ -32,6 +32,7 @@ const WIDGET_SCHEMA: Partial<Record<FormWidget, (schema: z.ZodType) => boolean>>
   rimGaps: (schema) => schema instanceof z.ZodArray,
   riftPath: (schema) => schema instanceof z.ZodArray,
   list: (schema) => schema instanceof z.ZodArray,
+  defaultLook: (schema) => schema instanceof z.ZodObject,
 };
 
 describe.each(ENTITY_KINDS)('the %s form', (kind) => {

@@ -31,7 +31,12 @@ export type FormWidget =
   /** An icon from the bundled sets, searched and picked (an event category's, M6-T4). */
   | 'icon'
   /** A short list of words, typed comma-separated (a field definition's wiki aliases, M7-T1). */
-  | 'list';
+  | 'list'
+  /**
+   * A subtype's description and default appearance, edited in a dialog with the object form's
+   * appearance fields (M7-T2).
+   */
+  | 'defaultLook';
 
 /** Where a select's choices come from. */
 export type FormOptions =

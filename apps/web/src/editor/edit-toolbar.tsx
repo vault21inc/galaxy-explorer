@@ -10,7 +10,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import { objectTypes } from '@ge/domain';
+import { useConfigList } from '@/api/hooks.ts';
 import { levels } from '@/levels/registry.ts';
+import { useEditView } from '@/levels/use-edit-view.ts';
 import { useEditor } from '@/state/editor.ts';
 import { topView, useNavigation } from '@/state/navigation.ts';
 import { useGroupDialog } from '@/state/group-dialog.ts';
@@ -48,7 +50,12 @@ const TOOLS: readonly Tool[] = [
 export function EditToolbar() {
   const editing = useEditor((state) => state.editing);
   const placing = useEditor((state) => state.placing);
+  const placingSubtypeId = useEditor((state) => state.placingSubtypeId);
   const placingLocated = useEditor((state) => state.placingLocated);
+  const universeId = useEditView()?.payload?.map.universeId;
+  const placingSubtype = useConfigList('object_subtypes', universeId).data?.find(
+    (subtype) => subtype.id === placingSubtypeId,
+  );
   const routing = useEditor((state) => state.routing);
   const stops = useRouteDraft((state) => state.waypoints.length);
   // The view being edited: its grid, and which tools belong in it (levels/registry.ts).
@@ -167,7 +174,8 @@ export function EditToolbar() {
       )}
       {placing && (
         <p role="status" className="px-2 text-xs text-muted-foreground">
-          Click to place a {objectTypes[placing].label.toLowerCase()} · Esc cancels
+          Click to place a {placingSubtype?.name ?? objectTypes[placing].label.toLowerCase()} · Esc
+          cancels
         </p>
       )}
       {placingLocated && (

@@ -3,6 +3,7 @@ import {
   resolveAppearance,
   rt,
   type BaseType,
+  type ConfigReadOf,
   type GalaxyObject,
   type ViewLevel,
   type ViewPayload,
@@ -20,10 +21,23 @@ import { useSelection } from '@/state/selection.ts';
 import { useToasts } from '@/state/toasts.ts';
 import { defaultName } from './placeable-types.ts';
 
+/** What a new object needs of its subtype: its id, its name and its default look (M7-T2). */
+export type NewObjectSubtype = Pick<
+  ConfigReadOf<'object_subtypes'>,
+  'id' | 'name' | 'defaultAppearance'
+>;
+
 interface NewObject {
   baseType: BaseType;
+  /** Add ▸ Planet ▸ Hive World: the subtype it's made as, whose defaults it starts with. */
+  subtype?: NewObjectSubtype | null;
   /** On the work plane, in the view's unit. */
   position: [number, number, number];
+}
+
+/** "New Hive World", or "New planet" without a subtype. */
+function nameFor(baseType: BaseType, subtype: NewObjectSubtype | null | undefined): string {
+  return subtype ? `New ${subtype.name}` : defaultName(baseType);
 }
 
 let pendingId = 0;
@@ -40,13 +54,14 @@ export function useCreateObject(view: EditView) {
   const parentId = view.edit.parentOf(view.subjectId);
 
   return useMutation({
-    mutationFn: ({ baseType, position }: NewObject) =>
+    mutationFn: ({ baseType, subtype, position }: NewObject) =>
       sendWrite<EntityRead<'celestial_object'>>(
         'POST',
         entityCreateRequest('celestial_object', { mapId }),
         {
-          name: rt.plain(defaultName(baseType)),
+          name: rt.plain(nameFor(baseType, subtype)),
           baseType,
+          ...(subtype ? { subtypeId: subtype.id } : {}),
           parentId,
           x: position[0],
           y: position[1],
@@ -54,7 +69,7 @@ export function useCreateObject(view: EditView) {
           // Systems open a system view, planets an orbit view; other types open none.
           explorable: objectTypes[baseType].explorableAs !== null,
         },
-        `Add ${objectTypes[baseType].label.toLowerCase()}`,
+        `Add ${subtype ? subtype.name : objectTypes[baseType].label.toLowerCase()}`,
       ),
     onMutate: async (input) => {
       // Stop an in-flight refetch from overwriting the optimistic entry.
@@ -82,15 +97,19 @@ export function useCreateObject(view: EditView) {
  * placement ghost). It has a galaxy object's extra fields, which other views ignore.
  */
 export function optimisticObject(
-  { baseType, position }: NewObject,
+  { baseType, subtype, position }: NewObject,
   level: ViewLevel,
 ): GalaxyObject {
-  const { appearance, size } = resolveAppearance({ baseType, view: level });
-  const name = defaultName(baseType);
+  const { appearance, size } = resolveAppearance({
+    baseType,
+    subtypeDefaults: subtype?.defaultAppearance ?? null,
+    view: level,
+  });
+  const name = nameFor(baseType, subtype);
   return {
     id: `pending-${(pendingId++).toString()}`,
     baseType,
-    subtypeId: null,
+    subtypeId: subtype?.id ?? null,
     namePlain: name,
     nameSpoiler: false,
     nameRedacted: name,

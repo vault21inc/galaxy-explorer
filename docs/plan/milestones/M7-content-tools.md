@@ -51,7 +51,24 @@
 - The info panel header shows the subtype. Field definitions can apply to a single subtype.
 
 **Done when:**
-- [ ] E2E: creating a "Hive World" gives the city preset by default; changing the subtype's default color recolors every Hive World that hasn't overridden it.
+- [x] E2E: creating a "Hive World" gives the city preset by default; changing the subtype's default color recolors every Hive World that hasn't overridden it.
+
+**As built:**
+- **Already there:** subtypes as a settings resource; `subtypeId` on objects; subtype defaults between the base type's and the object's in `resolveAppearance`, on the server and in the browser; the subtype in the panel header ("Planet · Hive World"); field definitions for one subtype (M7-T1).
+- **The settings table:**
+  - the Icon column uses the icon picker (M6-T4);
+  - a new **Look** column shows a summary of the default look (the preset and color) on a button. It opens a dialog with the subtype's **description** and its **default look**.
+- **The default look reuses the object form's appearance fields** from the entity-kinds registry, less the per-object ones (the uploaded surface and the seed), through a new `defaultLook` form widget (`fields/default-look-field.tsx`). The fields are given a stand-in object of the subtype's base type whose `appearance` is the subtype's `defaultAppearance`, so:
+  - the right fields show (a planet's preset and palette, a nebula's region);
+  - the dimmed defaults are the base type's and the preset's;
+  - each change is written back as `defaultAppearance`.
+
+  No widget knows about subtypes. The form's show-conditions moved to `form-conditions.ts` to be shared.
+- **The Add menu:** a base type with subtypes opens a submenu (Planet ▸ Planet, Hive World, Forge World), in the settings' order. The chosen subtype goes through the editor state (`placingSubtypeId`) to the placement:
+  - the ghost and the optimistic object start with its defaults;
+  - the object is created with its `subtypeId`, named "New Hive World";
+  - the toolbar says "Click to place a Hive World".
+- **Tests:** `apps/web/e2e/subtypes.spec.ts` (the "Done when" flow: a subtype made in settings, its look set in the dialog, two Hive Worlds placed from Add, one with its own color, then the subtype's color changed); the widget's schema check in `packages/domain/test/entity-forms.test.ts`.
 
 ### M7-T3 Fill from wiki
 
