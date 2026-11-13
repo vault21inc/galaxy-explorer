@@ -6,13 +6,14 @@ import { useUniverseRoute } from '@/app/use-universe-route.ts';
 import { useCanEdit } from '@/editor/use-can-edit.ts';
 import { containerName } from '@/lib/container-name.ts';
 import { ConfigTable } from '@/panels/config-table/config-table.tsx';
+import { ImportExportSection } from '@/panels/import-export/import-export-section.tsx';
 import { UniverseDetails } from '@/panels/universe-details/universe-details.tsx';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
 
 /**
  * `/u/:universeSlug/settings` (M4-T1): the universe's details, then one table per config
  * resource in the registry (group types, event categories, object subtypes, field
- * definitions). It floats over the canvas like the other pages, and its controls keep the
+ * definitions), then import and export (M7-T4). It floats over the canvas like the other pages, and its controls keep the
  * arrow keys to themselves (`data-keys="own"`), so reordering a row doesn't pan the camera.
  */
 export function UniverseSettingsPage() {
@@ -48,6 +49,7 @@ export function UniverseSettingsPage() {
       {CONFIG_RESOURCES.map((resource) => (
         <ConfigTable key={resource} resource={resource} universeId={universe.id} />
       ))}
+      <ImportExportSection universeId={universe.id} />
     </main>
   );
 }

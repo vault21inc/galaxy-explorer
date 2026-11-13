@@ -1,5 +1,6 @@
 export {
   CONFIG_RESOURCES,
+  configReferencesOf,
   configResources,
   defineConfigResources,
   eventCategorySchema,
@@ -23,6 +24,7 @@ export {
   ENTITY_KINDS,
   EXAMPLE_ID,
   entityKinds,
+  referencesOf,
   type EntityKind,
   type EntityKindDef,
 } from './entity-kinds.ts';
@@ -56,6 +58,13 @@ export {
   type RelationType,
   type RelationTypeDef,
 } from './relation-types.ts';
+export {
+  refFieldOf,
+  SETTINGS_TARGETS,
+  type ReferenceTarget,
+  type References,
+  type SettingsTarget,
+} from './references.ts';
 export {
   defineViewLevels,
   VIEW_LEVELS,

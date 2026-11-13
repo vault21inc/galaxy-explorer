@@ -151,10 +151,39 @@
 - UI: Export and Import live in the universe settings, with the dry-run report shown before confirming.
 
 **Done when:**
-- [ ] Round trip: export the demo universe, import it into an empty install, export again. The two exports are identical apart from timestamps.
-- [ ] A merge import updates objects by key without duplicating them.
-- [ ] A dry run changes nothing.
-- [ ] Importing a 5,000-object CSV takes under 30 s.
+- [x] Round trip: export the demo universe, import it into an empty install, export again. The two exports are identical apart from timestamps.
+- [x] A merge import updates objects by key without duplicating them.
+- [x] A dry run changes nothing.
+- [x] Importing a 5,000-object CSV takes under 30 s.
+
+**As built:**
+- **No ids in the file (D-36).** A file full of UUIDs couldn't round-trip, since an import into another universe makes new ids, and it would be hard to read or write by hand. Records are the API's create bodies with each id field swapped for a reference (`parentId` is `parent`):
+  - an entry is referred to by its `externalKey`, or, without one, by a `ref` made from its name ("gudrun", then "gudrun-2");
+  - a settings row by its name (a field definition by its key);
+  - an asset by the SHA-256 of its upload, which also names its files: `assets/<sha256>/<variant>.webp`, the plan's `assets/<id>.<ext>` without the id.
+
+  Which fields are ids is declared in the registries (`references` on each entity kind and settings resource; a test checks every id field is listed), so the format, the export and the import follow them on their own. The config service's reference checks now read them too.
+- **The files:**
+  - `manifest.json`;
+  - `universe.json`: the universe's fields (not its slug), assets, one list per settings resource, the characters, and the relations between them;
+  - `maps/<slug>.json`: the map's fields, one list per kind, each entry with its facts, images, links, citations, location, members and waypoints, and the relations with an end in the map.
+
+  Nulls and empty lists are left out, and entries are ordered parents first. Exporting, importing into an empty universe and exporting again gives the same files apart from the export's time. The schemas are in `@ge/domain` (`export/`), published as JSON Schema at `GET /api/v1/export-schema.json`.
+- **Export:** `GET /universes/{id}/export` and `GET /maps/{id}/export`. A map export carries the universe's settings, assets and characters too. Drafts and spoilers are included, so on the private preview only the editor may export. An image file the media folder lacks (the demo seed's placeholders) is left out, and the import recreates the asset without it, noting so.
+- **Import** (`POST /universes/{id}/import?mode&dryRun&mapId`, multipart): the zip, or a CSV of objects (the plan's columns; `mapId` names its map).
+  - **Matching:** assets by hash, settings rows by name, maps by slug.
+  - **create:** what matches is used as it is; a map slug or entry key already used is a conflict.
+  - **merge:** matches are updated; entries are upserted by key, and those without a key are left out. For an entry it updates, each aspect the file lists replaces the entry's, and an aspect left out stays.
+  - **One batch,** through the entity, aspect, config and container services, so every rule applies. Each record runs in a savepoint: one the services refuse becomes a conflict in the report, and the import goes on to find the rest.
+  - **The report:** creates, updates, kept and left out per kind of record; conflicts and references to nothing (either blocks the import: a blocked real import writes nothing and answers 409 with the report); entries left out; notes. A dry run does everything and rolls back.
+  - **CSV:** an empty cell leaves a field as it is. `group_key` puts the object in that group, moving it out of another group of the same type.
+- **Settings page:** an "Import and export" section. It has export links (the universe, or a chosen map) and an import form: file, "Add as new" or "Update by key", the map for a CSV, then **Check** (the dry run's report) and **Import**, enabled once a check passes.
+- **Speed:** `pnpm perf` now times a 5,000-row CSV import (`scripts/perf/import.spec.ts`) against the 30 s budget, as D-33 keeps speed checks there. On the owner's Mac, beside the stress map: 14.7 s as new objects, 23.2 s as an update by key; a dry run costs about what the import does. An update reads each entry before and after writing it (the services' upsert), which is where its extra time goes; that is the place to look if bigger imports get slow.
+- **Dependency:** fflate 0.8.3 for the zips.
+- **Tests:**
+  - `packages/domain/test/export-format.test.ts`: references, the schemas and CSV parsing;
+  - `apps/api/test/exchange/exchange.int.test.ts`: the "Done when" items, entries without keys, image files, CSV, blocked imports, the preview's roles;
+  - `apps/web/e2e/import-export.spec.ts`: export from the settings page and import into another universe, and a CSV.
 
 ### M7-T5 Cloning a map
 

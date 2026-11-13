@@ -3,7 +3,15 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { cpus, release, totalmem } from 'node:os';
 import { resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
-import { BUDGETS, REPO_ROOT, RESULTS_DIR, type FrameStats, type PerfResult } from './shared.ts';
+import {
+  BUDGETS,
+  CSV_IMPORT_RESULT,
+  REPO_ROOT,
+  RESULTS_DIR,
+  type CsvImportResult,
+  type FrameStats,
+  type PerfResult,
+} from './shared.ts';
 
 /**
  * Turns `pnpm perf` results into a dated report in docs/perf/ (rendering.md §14), and fails
@@ -13,7 +21,7 @@ import { BUDGETS, REPO_ROOT, RESULTS_DIR, type FrameStats, type PerfResult } fro
 
 const label = process.env.PERF_LABEL ?? 'M2';
 const results: PerfResult[] = readdirSync(RESULTS_DIR)
-  .filter((name) => name.endsWith('.json'))
+  .filter((name) => name.endsWith('.json') && name !== CSV_IMPORT_RESULT)
   .sort()
   .map((name) => JSON.parse(readFileSync(resolve(RESULTS_DIR, name), 'utf8')) as PerfResult);
 if (results.length === 0) throw new Error(`No results in ${RESULTS_DIR}. Run \`pnpm perf\`.`);
@@ -278,6 +286,21 @@ const jsCheck: Check = {
   pass: js.kb <= BUDGETS.initialJsGzipKb && js.viewChunks.length > 0,
 };
 
+// The API's part: the same for every browser, so measured once (import.spec.ts, M7-T4).
+const csvImportPath = resolve(RESULTS_DIR, CSV_IMPORT_RESULT);
+const csvImport = existsSync(csvImportPath)
+  ? (JSON.parse(readFileSync(csvImportPath, 'utf8')) as CsvImportResult)
+  : null;
+const importCheck: Check | null = csvImport && {
+  metric: `CSV import of ${csvImport.objects.toLocaleString('en')} objects through the API: as new / as an update by key (M7-T4)`,
+  budget: `≤ ${(BUDGETS.csvImportMs / 1000).toFixed(0)} s each`,
+  values: [
+    `${(csvImport.createMs / 1000).toFixed(1)} s / ${(csvImport.mergeMs / 1000).toFixed(1)} s`,
+  ],
+  pass: csvImport.createMs <= BUDGETS.csvImportMs && csvImport.mergeMs <= BUDGETS.csvImportMs,
+};
+const onceChecks = [jsCheck, ...(importCheck ? [importCheck] : [])];
+
 // ---- the report -------------------------------------------------------------------------
 const date = new Date().toISOString().slice(0, 10);
 const editing = results.some((r) => r.mode === 'edit');
@@ -299,7 +322,7 @@ const phaseRows = results.flatMap((r) =>
     ]),
   ),
 );
-const failed = [...checks, jsCheck].filter((check) => !check.pass);
+const failed = [...checks, ...onceChecks].filter((check) => !check.pass);
 
 const markdown = `# Performance report: ${label}, ${date}
 
@@ -321,7 +344,7 @@ Written by \`pnpm perf\` (scripts/perf/) against the budgets in [rendering.md §
 | Metric | Budget | ${results.map((r) => r.project).join(' | ')} | Result |
 |---|---|${results.map(() => '---|').join('')}---|
 ${checks.map((check) => row([check.metric, check.budget, ...check.values, check.pass ? 'pass' : '**miss**'])).join('\n')}
-${row([jsCheck.metric, jsCheck.budget, ...results.map((_, i) => (i === 0 ? (jsCheck.values[0] ?? '') : 'same build')), jsCheck.pass ? 'pass' : '**miss**'])}
+${onceChecks.map((check) => row([check.metric, check.budget, ...results.map((_, i) => (i === 0 ? (check.values[0] ?? '') : 'the same')), check.pass ? 'pass' : '**miss**'])).join('\n')}
 
 ${editing ? 'The system view and transitions are measured in view-mode runs.' : 'The orbit view (M6-T8): from inside the busy system, 3 timed entries and exits of its explorable planet (ocean, clouds, a moon, places with events at them), then orbit (3 left-drags) and zoom (24 wheel steps) around the globe; it also joins the memory check through 20 galaxy → system → orbit round trips.'}
 
@@ -335,7 +358,7 @@ ${phaseRows.join('\n')}
 const path = resolve(REPO_ROOT, 'docs/perf', `${date}-${label}${editing ? '-edit' : ''}.md`);
 writeFileSync(path, markdown);
 console.log(`Wrote ${path}`);
-for (const check of [...checks, jsCheck]) {
+for (const check of [...checks, ...onceChecks]) {
   console.log(`${check.pass ? 'pass' : 'MISS'}  ${check.metric}: ${check.values.join(' | ')}`);
 }
 if (failed.length > 0) process.exitCode = 1;

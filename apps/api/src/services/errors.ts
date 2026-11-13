@@ -64,4 +64,25 @@ export class UpstreamError extends Error {
 /** The request is well-formed but asks for something that doesn't make sense: 400. */
 export class InvalidRequest extends Error {
   override readonly name = 'InvalidRequest';
+  /** Each thing wrong, where there are several: an import file's mistakes (M7-T4). */
+  readonly problems: { path: string; message: string }[] | undefined;
+
+  constructor(message: string, problems?: { path: string; message: string }[]) {
+    super(message);
+    this.problems = problems;
+  }
+}
+
+/**
+ * An import has conflicts or unresolved references, so nothing was written (M7-T4): 409, with
+ * the report that lists them.
+ */
+export class ImportBlocked extends Error {
+  override readonly name = 'ImportBlocked';
+  readonly report: unknown;
+
+  constructor(report: unknown) {
+    super('The import has conflicts or references to nothing, so nothing was imported.');
+    this.report = report;
+  }
 }

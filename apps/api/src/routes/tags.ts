@@ -34,6 +34,11 @@ export function openApiTags(): { name: string; description: string }[] {
     },
     { name: 'locations', description: 'Where a place or event is.' },
     { name: 'batch', description: 'Many operations in one transaction and one undo step.' },
+    {
+      name: 'exchange',
+      description:
+        'Import and export: a universe or map as a zip, and CSV import of objects (M7-T4).',
+    },
     { name: 'history', description: 'Every change, what it did, and undo and redo.' },
     { name: 'views', description: 'Render-ready payloads for the galaxy, system and orbit views.' },
   ];

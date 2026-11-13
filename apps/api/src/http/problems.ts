@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { BatchOperationError } from '../services/batch-service.ts';
 import { UnsupportedImage } from '../storage/image-pipeline.ts';
 import {
+  ImportBlocked,
   InvalidRequest,
   NotFound,
   RevertConflicts,
@@ -42,6 +43,8 @@ export const problemSchema = z.object({
       }),
     )
     .optional(),
+  /** On a 409 blocked import (M7-T4): the report listing what stopped it. */
+  report: z.unknown().optional(),
 });
 
 export type Problem = z.infer<typeof problemSchema>;
@@ -52,7 +55,7 @@ export function problem(
   status: number,
   detail?: string,
   errors?: Problem['errors'],
-  extra: Pick<Problem, 'current' | 'conflicts' | 'operationIndex'> = {},
+  extra: Pick<Problem, 'current' | 'conflicts' | 'operationIndex' | 'report'> = {},
 ): Problem {
   return {
     type: 'about:blank',
@@ -116,7 +119,10 @@ export function problemForDomainError(error: unknown): Problem | undefined {
       error.path ? [{ path: error.path, message: error.message }] : undefined,
     );
   }
-  if (error instanceof InvalidRequest) return problem(400, error.message);
+  if (error instanceof InvalidRequest) return problem(400, error.message, error.problems);
+  if (error instanceof ImportBlocked) {
+    return problem(409, error.message, undefined, { report: error.report });
+  }
   if (error instanceof UpstreamError) return problem(502, error.message);
   // An upload that isn't an image we take: unsupported media type.
   if (error instanceof UnsupportedImage) return problem(415, error.message);

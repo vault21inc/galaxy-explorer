@@ -9,6 +9,7 @@ import { FIELD_VALUE_TYPES } from '../schemas/field-value.ts';
 import type { FormFieldDef } from './entity-forms.ts';
 import { ENTITY_KINDS, entityKinds } from './entity-kinds.ts';
 import { BASE_TYPES, objectTypes } from './object-types.ts';
+import type { References } from './references.ts';
 
 /**
  * Universe-level settings tables with plain CRUD (architecture.md §3.4, data-model §3.5):
@@ -19,6 +20,14 @@ export interface ConfigResourceDef {
   plural: string;
   label: { one: string; many: string };
   schema: z.ZodObject;
+  /**
+   * The fields that identify a row within its universe, as its unique constraint does. Imports
+   * match rows by them (M7-T4), and the last one is what references to the row are written as:
+   * a group type is referred to by its name, a field definition by its key.
+   */
+  naturalKey: readonly string[];
+  /** Id fields pointing at other settings rows (references.ts). */
+  references?: References;
   /** For the API documentation, which LLM agents read. */
   description: string;
   /** A valid create body for the docs. A test checks it against the schema. */
@@ -105,6 +114,8 @@ export const fieldDefinitionSchema = z.object({
 export const configResources = defineConfigResources({
   group_types: {
     plural: 'group-types',
+    naturalKey: ['name'],
+    references: { parentGroupTypeId: 'group_types' },
     label: { one: 'Group type', many: 'Group types' },
     schema: groupTypeSchema,
     description:
@@ -126,6 +137,7 @@ export const configResources = defineConfigResources({
   },
   event_categories: {
     plural: 'event-categories',
+    naturalKey: ['name'],
     label: { one: 'Event category', many: 'Event categories' },
     schema: eventCategorySchema,
     description:
@@ -140,6 +152,7 @@ export const configResources = defineConfigResources({
   },
   object_subtypes: {
     plural: 'object-subtypes',
+    naturalKey: ['baseType', 'name'],
     label: { one: 'Object subtype', many: 'Object subtypes' },
     schema: objectSubtypeSchema,
     description:
@@ -162,6 +175,8 @@ export const configResources = defineConfigResources({
   },
   field_definitions: {
     plural: 'field-definitions',
+    naturalKey: ['key'],
+    references: { appliesToSubtypeId: 'object_subtypes' },
     label: { one: 'Field definition', many: 'Field definitions' },
     schema: fieldDefinitionSchema,
     description:
@@ -215,6 +230,12 @@ export const configResources = defineConfigResources({
 });
 
 export type ConfigResource = keyof typeof configResources;
+
+/** A settings resource's id fields and what they point at (M7-T4). */
+export function configReferencesOf(resource: ConfigResource): References {
+  const def: ConfigResourceDef = configResources[resource];
+  return def.references ?? {};
+}
 export const CONFIG_RESOURCES = Object.keys(configResources) as [
   ConfigResource,
   ...ConfigResource[],

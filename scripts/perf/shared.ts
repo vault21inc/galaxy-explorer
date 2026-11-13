@@ -24,7 +24,18 @@ export const BUDGETS = {
   planetBakeMs: 50,
   /** A look slider's input to the re-baked globe in the system view (M6-T2). */
   planetPreviewMs: 200,
+  /** Importing a 5,000-object CSV through the API, as new objects or as an update by key (M7-T4). */
+  csvImportMs: 30_000,
 } as const;
+
+/** The CSV import's timings (import.spec.ts), beside the browsers' results. */
+export const CSV_IMPORT_RESULT = 'csv-import.json';
+export interface CsvImportResult {
+  objects: number;
+  /** As new objects, and the same file again as an update by key. */
+  createMs: number;
+  mergeMs: number;
+}
 
 export interface FrameStats {
   count: number;

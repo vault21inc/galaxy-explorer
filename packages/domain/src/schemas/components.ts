@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import { ImportReport } from '../export/report.ts';
 import { configResources } from '../registry/config-resources.ts';
 import { configSchemasFor, schemasFor } from '../registry/derive-schemas.ts';
 import { entityKinds, type EntityKind } from '../registry/entity-kinds.ts';
@@ -42,6 +43,7 @@ export function openApiComponents(): Record<string, z.ZodType> {
     LinkRead: aspects.LinkRead,
     LinkWrite: aspects.LinkWrite,
     CitationRead: aspects.CitationRead,
+    ImportReport,
     CitationWrite: aspects.CitationWrite,
     FactRead: aspects.FactRead,
     FactWrite: aspects.FactWrite,

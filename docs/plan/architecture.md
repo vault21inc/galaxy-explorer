@@ -91,7 +91,7 @@ From this one definition the code derives:
 - TanStack Query hooks;
 - editor forms;
 - MCP tools;
-- import and export handlers;
+- import and export handlers (M7-T4): each kind's `references` names its id fields, which the export writes as readable references (D-36);
 - clone rules;
 - the generic contract test suite.
 
@@ -222,7 +222,8 @@ PATCH /api/v1/objects/{id}  { version: 7, name: {...}, x: 120.5 }
 | History | `GET /universes/{universeId}/history`, `GET /history/{batchId}`, `POST /history/{batchId}/revert` |
 | Assets | `GET/POST /universes/{universeId}/assets` (POST is multipart), `GET/PATCH/DELETE /assets/{assetId}`; files are served under `/media/…` |
 | Wiki (M7-T3) | `GET /wiki/sources`, `GET /wiki/search?source&q`, `GET /wiki/preview?source&title`: reads only; the dialog applies its choices through `POST /batch` |
-| Later | search, import/export (M7); `POST /practice-universe`, the editor tour's demo copy (M8-T10) |
+| Import and export (M7-T4) | `GET /universes/{universeId}/export`, `GET /maps/{mapId}/export` (a zip; editors only on the preview); `POST /universes/{universeId}/import?mode&dryRun&mapId` (mode `create` or `merge`; multipart: a zip or a CSV of objects; one batch; 409 with the report when blocked); `GET /export-schema.json` (D-36) |
+| Later | search (M7); `POST /practice-universe`, the editor tour's demo copy (M8-T10) |
 | Accounts (M8, D-34) | `POST /auth/login`, `POST /auth/logout`, `GET/PATCH /auth/me`, `GET/DELETE /auth/sessions`; `GET /auth/links/{token}` and `POST /auth/links/{token}/start`, `/finish` (accepting an invite or a reset); `GET/POST /auth/tokens`, `DELETE /auth/tokens/{tokenId}` |
 | Sharing (M8) | on a universe: `visibility` in `PATCH /universes/{universeId}` (owner); `POST /universes/{universeId}/share-key` (a new link); `POST /universes/unlock` (a slug and its share key for a read cookie); `GET /universes/by-slug/{slug}`; `GET /universes/{universeId}/members`, `PUT/DELETE /universes/{universeId}/members/{username}`; `POST /universes/{universeId}/transfer` |
 | Admin (M8) | `GET /admin/users`, `PATCH/DELETE /admin/users/{userId}`, `POST /admin/invites`, `POST /admin/users/{userId}/reset-link`, `GET /admin/universes`, `PATCH/DELETE /admin/universes/{universeId}` (transfer, takedown, delete), `GET /admin/events` |

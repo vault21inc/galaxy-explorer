@@ -1,4 +1,7 @@
 import { spawnSync } from 'node:child_process';
+import { rmSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { CSV_IMPORT_RESULT, RESULTS_DIR } from './shared.ts';
 
 /**
  * `pnpm perf [--edit]`: the scripted run, then the report (rendering.md §14).
@@ -18,6 +21,9 @@ const env = {
 const run = (command: string, args: string[]) =>
   spawnSync(command, args, { stdio: 'inherit', env, cwd: import.meta.dirname }).status ?? 1;
 
+// The browsers' results are rewritten every run; the import's is skipped in edit mode, so an
+// old one mustn't reach this run's report.
+rmSync(resolve(RESULTS_DIR, CSV_IMPORT_RESULT), { force: true });
 const tests = run('pnpm', ['exec', 'playwright', 'test', '-c', 'playwright.config.ts']);
 if (tests !== 0) process.exit(tests);
 process.exit(run('node', ['report.ts']));

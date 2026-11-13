@@ -1488,6 +1488,90 @@ export interface paths {
         patch: operations["assets.update"];
         trace?: never;
     };
+    "/api/v1/universes/{universeId}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export a universe as a zip
+         * @description A zip: manifest.json, universe.json (the universe’s fields, assets, settings rows and characters), maps/<slug>.json (each map’s entries with their facts, images, links, citations, locations, members and waypoints, and its relations) and assets/<sha256>/<variant>.webp. Records refer to each other by reference, never by id: an entry by its externalKey or ref, a settings row by its name (a field definition by its key), an asset by its sha256. Drafts and spoilers are included. JSON Schema: /api/v1/export-schema.json.
+         */
+        get: operations["universes.export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maps/{mapId}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export one map as a zip
+         * @description The map, with the universe’s settings rows, assets and characters it may use. A zip: manifest.json, universe.json (the universe’s fields, assets, settings rows and characters), maps/<slug>.json (each map’s entries with their facts, images, links, citations, locations, members and waypoints, and its relations) and assets/<sha256>/<variant>.webp. Records refer to each other by reference, never by id: an entry by its externalKey or ref, a settings row by its name (a field definition by its key), an asset by its sha256. Drafts and spoilers are included. JSON Schema: /api/v1/export-schema.json.
+         */
+        get: operations["maps.export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/universes/{universeId}/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import an export’s zip, or a CSV of objects
+         * @description Send `multipart/form-data` with one file in a field named `file`: an export's zip, or a CSV of objects with the columns name, base_type, x, y, z, parent_key, group_key, external_key (a CSV needs `mapId`). At most 200 MB.
+         *
+         *     `mode=create` adds everything as new entries; a key or map slug already used is a conflict. `mode=merge` updates entries by their externalKey and adds the rest, leaving out entries without a key. Settings rows, assets and maps are matched by name, hash and slug in both modes. For an entry a merge updates, each aspect the file lists (facts, images, links…) replaces the entry's; an aspect the file leaves out stays.
+         *
+         *     `dryRun=true` does everything, reports it and rolls back: use it first. A real import is one change batch (one undo). If the report has conflicts or unresolved references, nothing is written and the answer is 409 with `report`.
+         */
+        post: operations["universes.import"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/export-schema.json": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The export format, as JSON Schema
+         * @description The files of an export zip, for tools and LLM agents that write imports: manifest.json, universe.json and maps/<slug>.json.
+         */
+        get: operations["exchange.schema"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/icons/search": {
         parameters: {
             query?: never;
@@ -1835,6 +1919,37 @@ export interface components {
             sourceTitle: string | null;
             license: string | null;
             retrievedAt: string;
+        };
+        ImportReportInput: {
+            dryRun: boolean;
+            /** @enum {string} */
+            mode: "create" | "merge";
+            batchId: string | null;
+            counts: {
+                [key: string]: {
+                    create: number;
+                    update: number;
+                    keep: number;
+                    skip: number;
+                };
+            };
+            conflicts: {
+                where: string;
+                message: string;
+            }[];
+            unresolved: {
+                where: string;
+                message: string;
+            }[];
+            skipped: {
+                where: string;
+                message: string;
+            }[];
+            notes: {
+                where: string;
+                message: string;
+            }[];
+            blocked: boolean;
         };
         CitationWriteInput: {
             target: string;
@@ -2991,6 +3106,7 @@ export interface components {
                 entityId: string | null;
                 name: string | null;
             }[];
+            report?: unknown;
         };
         CelestialObjectDetailInput: {
             name: components["schemas"]["RichTextInput"];
@@ -3733,6 +3849,37 @@ export interface components {
             sourceTitle: string | null;
             license: string | null;
             retrievedAt: string;
+        };
+        ImportReport: {
+            dryRun: boolean;
+            /** @enum {string} */
+            mode: "create" | "merge";
+            batchId: string | null;
+            counts: {
+                [key: string]: {
+                    create: number;
+                    update: number;
+                    keep: number;
+                    skip: number;
+                };
+            };
+            conflicts: {
+                where: string;
+                message: string;
+            }[];
+            unresolved: {
+                where: string;
+                message: string;
+            }[];
+            skipped: {
+                where: string;
+                message: string;
+            }[];
+            notes: {
+                where: string;
+                message: string;
+            }[];
+            blocked: boolean;
         };
         CitationWrite: {
             target: string;
@@ -4889,6 +5036,7 @@ export interface components {
                 entityId: string | null;
                 name: string | null;
             }[];
+            report?: unknown;
         };
         CelestialObjectDetail: {
             name: components["schemas"]["RichText"];
@@ -12338,6 +12486,129 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Problem"];
                 };
+            };
+        };
+    };
+    "universes.export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                universeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "maps.export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mapId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "universes.import": {
+        parameters: {
+            query?: {
+                mode?: "create" | "merge";
+                dryRun?: "true" | "false";
+                /** @description For a CSV: the map its objects go on. */
+                mapId?: string;
+            };
+            header?: never;
+            path: {
+                universeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ImportReport"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "exchange.schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -8,6 +8,7 @@ import {
   routeExtension,
 } from './extensions.ts';
 import { PLANET_FIELDS } from './planet-form.ts';
+import type { References } from './references.ts';
 
 /**
  * Entity kinds (architecture.md §3.1): everything the author writes about. Routes, query
@@ -22,6 +23,11 @@ export interface EntityKindDef {
   label: { one: string; many: string };
   /** The extension table's fields, or null if the kind has none. */
   extension: z.ZodObject | null;
+  /**
+   * The extension's id fields and what each points at (references.ts). Import and export
+   * write them as references instead of ids (M7-T4); a test checks every id field is listed.
+   */
+  references?: References;
   /** Which shared aspects the kind supports (data-model §3.4). */
   aspects: {
     images: boolean;
@@ -180,6 +186,7 @@ export const entityKinds = defineEntityKinds({
     plural: 'objects',
     label: { one: 'Object', many: 'Objects' },
     extension: celestialObjectExtension,
+    references: { parentId: 'entity', orbitCenterId: 'entity', subtypeId: 'object_subtypes' },
     aspects: { ...allAspects, location: 'none' },
     contentFields: [],
     form: {
@@ -247,6 +254,7 @@ export const entityKinds = defineEntityKinds({
     plural: 'groups',
     label: { one: 'Group', many: 'Groups' },
     extension: groupExtension,
+    references: { groupTypeId: 'group_types', parentGroupId: 'entity' },
     aspects: { ...allAspects, location: 'none', members: true },
     contentFields: [],
     form: {
@@ -327,6 +335,7 @@ export const entityKinds = defineEntityKinds({
     plural: 'events',
     label: { one: 'Event', many: 'Events' },
     extension: eventExtension,
+    references: { categoryId: 'event_categories' },
     aspects: { ...allAspects, location: 'optional' },
     contentFields: ['dateText', 'dateSort'],
     form: {
@@ -377,6 +386,12 @@ export const entityKinds = defineEntityKinds({
 });
 
 export type EntityKind = keyof typeof entityKinds;
+
+/** A kind's id fields and what they point at (M7-T4); none for kinds without any. */
+export function referencesOf(kind: EntityKind): References {
+  const def: EntityKindDef = entityKinds[kind];
+  return def.references ?? {};
+}
 
 /** The kind names in registry order, as a tuple Zod can use. */
 export const ENTITY_KINDS = Object.keys(entityKinds) as [EntityKind, ...EntityKind[]];

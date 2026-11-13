@@ -1,0 +1,3 @@
+name,base_type,x,y,z,parent_key,group_key,external_key
+Hubris System,system,10,0,10,,,hubris-system
+Hubris,planet,3,0,0,hubris-system,,hubris

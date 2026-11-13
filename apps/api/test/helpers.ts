@@ -20,3 +20,16 @@ export function testConfig(overrides: Partial<Config> = {}): Config {
     ...overrides,
   };
 }
+
+/** A multipart body with one `file` field, as a browser's FormData sends it. */
+export function multipart(data: Buffer, filename: string, contentType: string) {
+  const boundary = `----ge${Math.random().toString(16).slice(2)}`;
+  const head = Buffer.from(
+    `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\nContent-Type: ${contentType}\r\n\r\n`,
+  );
+  const tail = Buffer.from(`\r\n--${boundary}--\r\n`);
+  return {
+    payload: Buffer.concat([head, data, tail]),
+    headers: { 'content-type': `multipart/form-data; boundary=${boundary}` },
+  };
+}

@@ -1,5 +1,5 @@
-import { CONFIG_TABLES, schema, type Executor } from '@ge/db';
-import { configSchemasFor, type ConfigResource } from '@ge/domain';
+import { CONFIG_TABLES, type Executor } from '@ge/db';
+import { configReferencesOf, configSchemasFor, type ConfigResource } from '@ge/domain';
 import { and, asc, eq, gt, max } from 'drizzle-orm';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import { NotFound, RuleViolation } from './errors.ts';
@@ -17,24 +17,21 @@ type Row = Record<string, unknown>;
 const tableOf = (resource: ConfigResource) => CONFIG_TABLES[resource] as unknown as ConfigTable;
 
 /**
- * Fields that point at another settings row, and which table it's in. They must name a row in
+ * Fields that point at another settings row (the registry's `references`) must name a row in
  * the same universe.
  */
-const REFERENCES: Record<string, PgTable & { id: PgColumn; universeId: PgColumn }> = {
-  parentGroupTypeId: schema.groupTypes,
-  appliesToSubtypeId: schema.objectSubtypes,
-};
-
 async function checkReferences(
   ex: Executor,
+  resource: ConfigResource,
   universeId: string,
   values: Row,
   selfId?: string,
 ): Promise<void> {
-  for (const [field, table] of Object.entries(REFERENCES)) {
+  for (const [field, target] of Object.entries(configReferencesOf(resource))) {
     const id = values[field];
-    if (typeof id !== 'string') continue;
-    if (field === 'parentGroupTypeId' && id === selfId) continue; // a type may nest in itself
+    if (typeof id !== 'string' || target === 'entity' || target === 'asset') continue;
+    if (target === resource && id === selfId) continue; // a group type may nest in itself
+    const table = CONFIG_TABLES[target] as unknown as PgTable & { id: PgColumn };
     const rows = (await ex.select().from(table).where(eq(table.id, id))) as {
       universeId: string;
     }[];
@@ -55,7 +52,7 @@ export async function createConfig(
   const schemas = configSchemasFor(resource);
   const values = sanitizeRichTextFields(schemas.create, schemas.create.parse(input) as Row);
   await requireUniverse(tx, universeId);
-  await checkReferences(tx, universeId, values);
+  await checkReferences(tx, resource, universeId, values);
   const table = tableOf(resource);
   // Without a sort key a new row goes last, so the settings tables can drag it between any
   // two others: rows that shared a key would have no key between them (M4-T1).
@@ -119,7 +116,7 @@ export async function updateConfig(
   const schemas = configSchemasFor(resource);
   const values = sanitizeRichTextFields(schemas.update, schemas.update.parse(input) as Row);
   const current = await getConfig(tx, resource, id);
-  await checkReferences(tx, current.universeId, values, id);
+  await checkReferences(tx, resource, current.universeId, values, id);
   if (
     resource === 'object_subtypes' &&
     'baseType' in values &&

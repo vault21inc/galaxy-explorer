@@ -29,7 +29,7 @@ const window = { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 };
 
 export default defineConfig({
   testDir: '.',
-  testMatch: 'path.spec.ts',
+  testMatch: ['path.spec.ts', 'import.spec.ts'],
   // One browser at a time, nothing else running: the numbers are the point.
   workers: 1,
   fullyParallel: false,

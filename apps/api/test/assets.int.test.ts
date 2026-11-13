@@ -7,6 +7,7 @@ import { fileTypeFromBuffer } from 'file-type';
 import sharp from 'sharp';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { apiOn, newWorld, type Api } from './contract/harness.ts';
+import { multipart } from './helpers.ts';
 
 /** Image uploads and the media route (M3-T7, architecture.md §8). */
 
@@ -27,19 +28,6 @@ const run = (fn: (api: Api, world: { universeId: string; mapId: string }) => Pro
       await api.close();
     }
   });
-
-/** A multipart body with one `file` field, as a browser's FormData sends it. */
-function multipart(data: Buffer, filename: string, contentType: string) {
-  const boundary = `----ge${Math.random().toString(16).slice(2)}`;
-  const head = Buffer.from(
-    `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\nContent-Type: ${contentType}\r\n\r\n`,
-  );
-  const tail = Buffer.from(`\r\n--${boundary}--\r\n`);
-  return {
-    payload: Buffer.concat([head, data, tail]),
-    headers: { 'content-type': `multipart/form-data; boundary=${boundary}` },
-  };
-}
 
 async function upload(
   api: Api,
