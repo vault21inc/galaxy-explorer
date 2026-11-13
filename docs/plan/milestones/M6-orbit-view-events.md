@@ -260,7 +260,7 @@
 **Done when:**
 - [x] The golden path passes in CI (Chromium) and locally (WebKit).
 - [x] The performance report meets every row of rendering.md §2, and is committed.
-- [ ] The owner signs off on the demo.
+- [x] The owner signs off on the demo (2026-11-12).
 
 **As built:**
 - **The golden path** (`apps/web/e2e/golden-path.spec.ts`) does everything through the UI, from the new-universe form on:
@@ -287,11 +287,11 @@
 
   One earlier run had missed idle once (2 frames after the galaxy view's pan, in Chrome), which didn't recur.
 - **Decisions:** D-33 records where GPU timing is checked (the reference Mac) and what CI checks instead.
-- **Not done here:** the `v0.1.0-poc` tag waits for the owner's sign-off on the demo.
+- **Tagged** `v0.1.0-poc` after the owner's sign-off (2026-11-12), on the commit that records it.
 
 ---
 
 ## Milestone acceptance
 
-- [ ] All tasks are checked off; CI is green; `v0.1.0-poc` is tagged.
-- [ ] The decision log records the icon set, plus anything tuned or changed.
+- [x] All tasks are checked off; CI is green; `v0.1.0-poc` is tagged.
+- [x] The decision log records the icon set, plus anything tuned or changed (D-32 the icon sets, D-33 where GPU timing is checked).

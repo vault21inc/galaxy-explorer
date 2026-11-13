@@ -126,7 +126,7 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 |---|---|---|
 | 3–6 reference screenshots in `docs/design/references/` (Sins of a Solar Empire, Mass Effect galaxy map, anything else) | M2-T3 | owner |
 | Adjusting the input bindings after trying them | end of M2 | owner + agent |
-| Icon set for categories and pins (Lucide or game-icons.net) | M6-T4 | owner |
+| Icon set for categories and pins (Lucide or game-icons.net): decided, both (D-32) | M6-T4 | owner |
 | License for the code, and a fan-site disclaimer text | before M8 | owner |
 | Domain name, DigitalOcean account and Spaces bucket | M8 | owner |
 
@@ -203,4 +203,5 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-11:** M6-T5 done: places and events are added by clicking the globe (or, for events, a point in the galaxy or system view), dragged along the globe with the events at a place following, edited in the panel's location editor (four modes and a spoiler flag), and deleted and undone like objects; events in space or at a system show as diamond markers in the galaxy and system views. The event form's date shows the universe's date format notes.
 - **2026-11-11:** M6-T6 done: characters get their UI. An event's People involved and a character's Involved in are edited with a search-or-create picker (role and spoiler flag per person); a character's events list in date order, and clicking one goes through the views to its pin or marker and selects it. The outliner lists the universe's People.
 - **2026-11-11:** M6-T7 done: the top bar's Events panel lists the map's events in date order, each with its category icon, date and where it is ("Aster › Primus › Hive Spire"), filtered by category and text, spoiler-aware; choosing one goes through the views to its pin or marker and selects it.
-- **2026-11-11:** M6-T8: the golden path passes in Chromium and WebKit (and with CI's software rendering), and `pnpm perf` now covers the orbit view: every row of rendering.md §2 is met ([report](../perf/2026-11-12-M6.md)). Fixed on the way: leaving edit mode mid-save could fail to reopen the view, and the rich-text parsers had crept into the first download (540 → 483.5 kB). D-33. The owner's sign-off and the `v0.1.0-poc` tag remain.
+- **2026-11-11:** M6-T8: the golden path passes in Chromium and WebKit (and with CI's software rendering), and `pnpm perf` now covers the orbit view: every row of rendering.md §2 is met ([report](../perf/2026-11-12-M6.md)). Fixed on the way: leaving edit mode mid-save could fail to reopen the view, and the rich-text parsers had crept into the first download (540 → 483.5 kB). D-33.
+- **2026-11-12:** M6 complete: the owner signed off on the demo, and `v0.1.0-poc` is tagged. The proof of concept (X1) is done; M7 (content tools and LLM access) is next.
