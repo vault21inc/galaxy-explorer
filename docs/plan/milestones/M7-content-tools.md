@@ -192,9 +192,29 @@
 - UI: "Clone map as…" in the map switcher, plus a **"Same object on other maps"** switcher in the info panel that follows `cloned_from_entity_id` in both directions and navigates to the counterpart.
 
 **Done when:**
-- [ ] Integration test: cloning the demo map copies every row of every table in `CLONE_SPEC`, with ids remapped, the map id changed, lineage set, assets shared and universe-scoped rows untouched.
-- [ ] Reverting the clone batch removes it completely.
-- [ ] E2E: clone, move a system in the clone, and switch between the two maps from the info panel.
+- [x] Integration test: cloning the demo map copies every row of every table in `CLONE_SPEC`, with ids remapped, the map id changed, lineage set, assets shared and universe-scoped rows untouched.
+- [x] Reverting the clone batch removes it completely.
+- [x] E2E: clone, move a system in the clone, and switch between the two maps from the info panel.
+
+**As built:**
+- **Two halves:**
+  - `cloneMapContent()` in `packages/db/src/clone/clone-map.ts` copies the content. It's generic: a temporary `clone_ids` table, then one `INSERT … SELECT` per `CLONE_SPEC` table, with the columns read from the live schema, so a new column is copied without a change.
+  - `cloneMap()` in the API (`services/clone-service.ts`) makes the new map row through the map service, which handles its rich-text name, then calls it. This differs from data-model §10's single function in `packages/db`, because the db package doesn't sanitize rich text.
+- **The new map** takes the original's description, galaxy settings, underlay, spoiler flag and status, and goes after it in the switcher unless the request gives `sortKey`. It records `cloned_from_map_id`. The batch is "Clone map “M41” as “M42”".
+- **What's copied:** every entity row and aspect row, with:
+  - ids remapped, and new ids made in the old ids' order, so the copies sort as their originals;
+  - `version` reset to 1;
+  - `cloned_from_entity_id` set;
+  - keys kept;
+  - images sharing their assets;
+  - a relation with a character copied, pointing at the copy of its map-side end.
+- **Lineage:** `include=counterparts` on any entity read lists the same entry on other maps. A recursive query climbs to the oldest original still there, then takes everything cloned from it at any depth: originals, other copies, and copies of copies. Drafts are hidden from readers.
+- **UI:**
+  - "Clone map as…" in the map switcher (editors) opens a dialog with the name and an address that follows it, then opens the copy.
+  - The panel's **On other maps** section lists the other maps the entry is on. Choosing one opens that map where the entry is shown, selected: an object in its parent's view, a place or event wherever it's located.
+- **Tests:**
+  - `apps/api/test/clone.int.test.ts` covers the "Done when" items: every spec table had rows to copy (a citation is added first), remapped ids, lineage one for one, shared assets, untouched characters, and a revert back to the same census. It also covers counterparts across two generations, and refusing a taken slug.
+  - `apps/web/e2e/clone-map.spec.ts` covers clone, move, and switching from the panel both ways.
 
 ### M7-T6 Search and command palette
 

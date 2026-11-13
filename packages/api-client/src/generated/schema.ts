@@ -100,6 +100,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maps/{mapId}/clone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Clone a map for another era
+         * @description Copies the map and everything on it (objects, groups, routes, places, events and their facts, images, links, citations, locations, members and waypoints, and relations, including those with characters) to a new map with this slug and name (U7, D-17). Each copy records the entity it came from (`clonedFromEntityId`; read the lineage with `include=counterparts`), keys are kept, images are shared, and characters stay as they are. One change batch: reverting it removes the copy.
+         */
+        post: operations["maps.clone"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maps/{mapId}": {
         parameters: {
             query?: never;
@@ -1920,6 +1940,22 @@ export interface components {
             license: string | null;
             retrievedAt: string;
         };
+        CounterpartInput: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
+            namePlain: string;
+            parentId: string | null;
+            map: {
+                /** Format: uuid */
+                id: string;
+                slug: string;
+                name: components["schemas"]["RichTextInput"];
+                namePlain: string;
+                isSpoiler: boolean;
+            };
+        };
         ImportReportInput: {
             dryRun: boolean;
             /** @enum {string} */
@@ -3169,6 +3205,13 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            counterparts?: (components["schemas"]["CounterpartInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
             relations?: (components["schemas"]["RelationReadInput"] | ({
                 /** @constant */
                 redacted: true;
@@ -3248,6 +3291,13 @@ export interface components {
                 [key: string]: unknown;
             }))[];
             citations?: (components["schemas"]["CitationReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            counterparts?: (components["schemas"]["CounterpartInput"] | ({
                 /** @constant */
                 redacted: true;
                 isSpoiler: boolean;
@@ -3335,6 +3385,13 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            counterparts?: (components["schemas"]["CounterpartInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
             relations?: (components["schemas"]["RelationReadInput"] | ({
                 /** @constant */
                 redacted: true;
@@ -3409,6 +3466,13 @@ export interface components {
                 [key: string]: unknown;
             }))[];
             citations?: (components["schemas"]["CitationReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            counterparts?: (components["schemas"]["CounterpartInput"] | ({
                 /** @constant */
                 redacted: true;
                 isSpoiler: boolean;
@@ -3498,6 +3562,13 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            counterparts?: (components["schemas"]["CounterpartInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
             relations?: (components["schemas"]["RelationReadInput"] | ({
                 /** @constant */
                 redacted: true;
@@ -3571,6 +3642,13 @@ export interface components {
                 [key: string]: unknown;
             }))[];
             citations?: (components["schemas"]["CitationReadInput"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            counterparts?: (components["schemas"]["CounterpartInput"] | ({
                 /** @constant */
                 redacted: true;
                 isSpoiler: boolean;
@@ -3849,6 +3927,22 @@ export interface components {
             sourceTitle: string | null;
             license: string | null;
             retrievedAt: string;
+        };
+        Counterpart: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
+            namePlain: string;
+            parentId: string | null;
+            map: {
+                /** Format: uuid */
+                id: string;
+                slug: string;
+                name: components["schemas"]["RichText"];
+                namePlain: string;
+                isSpoiler: boolean;
+            };
         };
         ImportReport: {
             dryRun: boolean;
@@ -5099,6 +5193,13 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            counterparts?: (components["schemas"]["Counterpart"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
             relations?: (components["schemas"]["RelationRead"] | ({
                 /** @constant */
                 redacted: true;
@@ -5178,6 +5279,13 @@ export interface components {
                 [key: string]: unknown;
             }))[];
             citations?: (components["schemas"]["CitationRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            counterparts?: (components["schemas"]["Counterpart"] | ({
                 /** @constant */
                 redacted: true;
                 isSpoiler: boolean;
@@ -5265,6 +5373,13 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            counterparts?: (components["schemas"]["Counterpart"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
             relations?: (components["schemas"]["RelationRead"] | ({
                 /** @constant */
                 redacted: true;
@@ -5339,6 +5454,13 @@ export interface components {
                 [key: string]: unknown;
             }))[];
             citations?: (components["schemas"]["CitationRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            counterparts?: (components["schemas"]["Counterpart"] | ({
                 /** @constant */
                 redacted: true;
                 isSpoiler: boolean;
@@ -5428,6 +5550,13 @@ export interface components {
             } & {
                 [key: string]: unknown;
             }))[];
+            counterparts?: (components["schemas"]["Counterpart"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
             relations?: (components["schemas"]["RelationRead"] | ({
                 /** @constant */
                 redacted: true;
@@ -5501,6 +5630,13 @@ export interface components {
                 [key: string]: unknown;
             }))[];
             citations?: (components["schemas"]["CitationRead"] | ({
+                /** @constant */
+                redacted: true;
+                isSpoiler: boolean;
+            } & {
+                [key: string]: unknown;
+            }))[];
+            counterparts?: (components["schemas"]["Counterpart"] | ({
                 /** @constant */
                 redacted: true;
                 isSpoiler: boolean;
@@ -6052,6 +6188,74 @@ export interface operations {
             };
         };
     };
+    "maps.clone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mapId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    slug: string;
+                    name: components["schemas"]["RichTextInput"];
+                    sortKey?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["MapRead"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
     "maps.get": {
         parameters: {
             query?: {
@@ -6473,7 +6677,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations, counterparts. */
                 include?: string;
             };
             header?: never;
@@ -6885,7 +7089,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations, counterparts. */
                 include?: string;
             };
             header?: never;
@@ -7293,7 +7497,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations, counterparts. */
                 include?: string;
             };
             header?: never;
@@ -7701,7 +7905,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations, counterparts. */
                 include?: string;
             };
             header?: never;
@@ -8111,7 +8315,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations, counterparts. */
                 include?: string;
             };
             header?: never;
@@ -8519,7 +8723,7 @@ export interface operations {
                 spoilers?: "include" | "exclude";
                 /** @description Editors only: include unpublished drafts. */
                 includeDrafts?: "true" | "false";
-                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations. */
+                /** @description Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations, counterparts. */
                 include?: string;
             };
             header?: never;

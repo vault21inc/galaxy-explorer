@@ -50,6 +50,11 @@ export const MapCreate = z.strictObject({
   status: z.enum(STATUSES).optional(),
 });
 export const MapUpdate = MapCreate.partial().extend({ version });
+/**
+ * `POST /maps/{id}/clone` (M7-T5): the copy's slug and name, and where it sorts (after the
+ * original when left out). Everything else is copied.
+ */
+export const MapClone = MapCreate.pick({ slug: true, name: true, sortKey: true });
 export const MapRead = z.object(MapCreate.shape).required().extend({
   id: Uuid,
   universeId: Uuid,

@@ -203,6 +203,7 @@ PATCH /api/v1/objects/{id}  { version: 7, name: {...}, x: 120.5 }
 - **Errors:** RFC 9457 `application/problem+json`, as `{ type, title, status, detail, errors?: [{ path, message }] }`. A 409 conflict includes the current version of the resource in `current`.
 - **Concurrency:** reads return `version`. `PATCH` and `DELETE` require `version` in the body; a mismatch returns 409.
 - **Batches:** every mutating request is one change batch. Clients may send `X-GE-Batch-Description` (for example "Moved 12 objects"), percent-encoded as UTF-8 (`encodeURIComponent`) because header values are limited to Latin-1; responses carry `X-GE-Batch-Id`.
+- **Includes:** an entity read takes `include=` with any of its aspects (facts, images, links, relations, location, members, waypoints, citations) and `counterparts`, the same entry on other maps through cloning (M7-T5).
 - **Query flags:** `spoilers=include|exclude` (default `include`; see §10), `includeDrafts=true` (only honored for editors).
 - **Idempotent imports:** entities can carry an `externalKey`, unique per map (per universe for universe-scoped kinds). `PUT /api/v1/maps/{mapId}/{plural}/by-key/{externalKey}` (or `/universes/{universeId}/{plural}/by-key/…`) upserts. LLM agents should use this.
 - **OpenAPI:** generated at `/api/openapi.json`; Swagger UI at `/api/docs`. Every route has a stable `operationId` (`objects.create`) and a description written for LLM readers.

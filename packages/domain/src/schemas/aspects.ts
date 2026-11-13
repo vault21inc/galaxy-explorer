@@ -292,5 +292,25 @@ export const ENTITY_INCLUDES = [
   'members',
   'waypoints',
   'citations',
+  'counterparts',
 ] as const;
+
+/**
+ * The same object on another map (M7-T5, D-17): an entity linked to this one through cloned
+ * maps, in either direction, with enough of its map to name it and go there.
+ */
+export const Counterpart = z.object({
+  id: Uuid,
+  kind: z.enum(ENTITY_KINDS),
+  namePlain: z.string(),
+  /** An object's parent, which says which view shows it; null otherwise. */
+  parentId: Uuid.nullable(),
+  map: z.object({
+    id: Uuid,
+    slug: z.string(),
+    name: RichText,
+    namePlain: z.string(),
+    isSpoiler: z.boolean(),
+  }),
+});
 export type EntityInclude = (typeof ENTITY_INCLUDES)[number];

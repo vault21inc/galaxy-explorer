@@ -43,6 +43,7 @@ export function openApiComponents(): Record<string, z.ZodType> {
     LinkRead: aspects.LinkRead,
     LinkWrite: aspects.LinkWrite,
     CitationRead: aspects.CitationRead,
+    Counterpart: aspects.Counterpart,
     ImportReport,
     CitationWrite: aspects.CitationWrite,
     FactRead: aspects.FactRead,

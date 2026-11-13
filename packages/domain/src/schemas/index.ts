@@ -15,6 +15,7 @@ export {
   LinkRead,
   LinkWrite,
   CitationRead,
+  Counterpart,
   CitationWrite,
   LocationRead,
   LocationWrite,
@@ -47,6 +48,7 @@ export { GalaxySettings, Underlay } from './map-settings.ts';
 export { GroupStyle, RouteStyle } from './styles.ts';
 export { UniverseSettings } from './universe-settings.ts';
 export {
+  MapClone,
   MapCreate,
   MapRead,
   MapUpdate,

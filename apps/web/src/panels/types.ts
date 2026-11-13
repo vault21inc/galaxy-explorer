@@ -11,6 +11,8 @@ export type PanelEntity = EntityReadOf<EntityKind> & {
   images?: components['schemas']['ImageRead'][];
   location?: components['schemas']['LocationRead'] | null;
   citations?: components['schemas']['CitationRead'][];
+  /** The same entity on other maps (M7-T5). */
+  counterparts?: components['schemas']['Counterpart'][];
 };
 
 /** What every panel section gets. */

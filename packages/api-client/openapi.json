@@ -1058,6 +1058,78 @@
           "retrievedAt"
         ]
       },
+      "CounterpartInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "celestial_object",
+              "group",
+              "route",
+              "place",
+              "event",
+              "character"
+            ]
+          },
+          "namePlain": {
+            "type": "string"
+          },
+          "parentId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "map": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "slug": {
+                "type": "string"
+              },
+              "name": {
+                "$ref": "#/components/schemas/RichTextInput"
+              },
+              "namePlain": {
+                "type": "string"
+              },
+              "isSpoiler": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "slug",
+              "name",
+              "namePlain",
+              "isSpoiler"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "namePlain",
+          "parentId",
+          "map"
+        ]
+      },
       "ImportReportInput": {
         "type": "object",
         "properties": {
@@ -7523,6 +7595,33 @@
               ]
             }
           },
+          "counterparts": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CounterpartInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -7892,6 +7991,33 @@
               ]
             }
           },
+          "counterparts": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CounterpartInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -8235,6 +8361,33 @@
               ]
             }
           },
+          "counterparts": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CounterpartInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -8551,6 +8704,33 @@
               "anyOf": [
                 {
                   "$ref": "#/components/schemas/CitationReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "counterparts": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CounterpartInput"
                 },
                 {
                   "type": "object",
@@ -8937,6 +9117,33 @@
               ]
             }
           },
+          "counterparts": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CounterpartInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -9253,6 +9460,33 @@
               "anyOf": [
                 {
                   "$ref": "#/components/schemas/CitationReadInput"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "counterparts": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CounterpartInput"
                 },
                 {
                   "type": "object",
@@ -10486,6 +10720,80 @@
           "sourceTitle",
           "license",
           "retrievedAt"
+        ],
+        "additionalProperties": false
+      },
+      "Counterpart": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "celestial_object",
+              "group",
+              "route",
+              "place",
+              "event",
+              "character"
+            ]
+          },
+          "namePlain": {
+            "type": "string"
+          },
+          "parentId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "map": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "slug": {
+                "type": "string"
+              },
+              "name": {
+                "$ref": "#/components/schemas/RichText"
+              },
+              "namePlain": {
+                "type": "string"
+              },
+              "isSpoiler": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "slug",
+              "name",
+              "namePlain",
+              "isSpoiler"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "namePlain",
+          "parentId",
+          "map"
         ],
         "additionalProperties": false
       },
@@ -17015,6 +17323,33 @@
               ]
             }
           },
+          "counterparts": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Counterpart"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -17385,6 +17720,33 @@
               ]
             }
           },
+          "counterparts": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Counterpart"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -17729,6 +18091,33 @@
               ]
             }
           },
+          "counterparts": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Counterpart"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -18046,6 +18435,33 @@
               "anyOf": [
                 {
                   "$ref": "#/components/schemas/CitationRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "counterparts": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Counterpart"
                 },
                 {
                   "type": "object",
@@ -18433,6 +18849,33 @@
               ]
             }
           },
+          "counterparts": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Counterpart"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
           "relations": {
             "type": "array",
             "items": {
@@ -18750,6 +19193,33 @@
               "anyOf": [
                 {
                   "$ref": "#/components/schemas/CitationRead"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redacted": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "isSpoiler": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "redacted",
+                    "isSpoiler"
+                  ],
+                  "additionalProperties": {}
+                }
+              ]
+            }
+          },
+          "counterparts": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Counterpart"
                 },
                 {
                   "type": "object",
@@ -19776,6 +20246,118 @@
         }
       }
     },
+    "/api/v1/maps/{mapId}/clone": {
+      "post": {
+        "operationId": "maps.clone",
+        "summary": "Clone a map for another era",
+        "tags": [
+          "maps"
+        ],
+        "description": "Copies the map and everything on it (objects, groups, routes, places, events and their facts, images, links, citations, locations, members and waypoints, and relations, including those with characters) to a new map with this slug and name (U7, D-17). Each copy records the entity it came from (`clonedFromEntityId`; read the lineage with `include=counterparts`), keys are kept, images are shared, and characters stay as they are. One change batch: reverting it removes the copy.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "slug": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                  },
+                  "name": {
+                    "$ref": "#/components/schemas/RichTextInput"
+                  },
+                  "sortKey": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "slug",
+                  "name"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "mapId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/MapRead"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/maps/{mapId}": {
       "get": {
         "operationId": "maps.get",
@@ -20573,12 +21155,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations)(,(facts|images|links|relations|location|members|waypoints|citations))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations|counterparts)(,(facts|images|links|relations|location|members|waypoints|citations|counterparts))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations, counterparts."
           },
           {
             "schema": {
@@ -21289,12 +21871,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations)(,(facts|images|links|relations|location|members|waypoints|citations))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations|counterparts)(,(facts|images|links|relations|location|members|waypoints|citations|counterparts))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations, counterparts."
           },
           {
             "schema": {
@@ -21973,12 +22555,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations)(,(facts|images|links|relations|location|members|waypoints|citations))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations|counterparts)(,(facts|images|links|relations|location|members|waypoints|citations|counterparts))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations, counterparts."
           },
           {
             "schema": {
@@ -22657,12 +23239,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations)(,(facts|images|links|relations|location|members|waypoints|citations))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations|counterparts)(,(facts|images|links|relations|location|members|waypoints|citations|counterparts))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations, counterparts."
           },
           {
             "schema": {
@@ -23362,12 +23944,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations)(,(facts|images|links|relations|location|members|waypoints|citations))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations|counterparts)(,(facts|images|links|relations|location|members|waypoints|citations|counterparts))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations, counterparts."
           },
           {
             "schema": {
@@ -24046,12 +24628,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations)(,(facts|images|links|relations|location|members|waypoints|citations))*$"
+              "pattern": "^(facts|images|links|relations|location|members|waypoints|citations|counterparts)(,(facts|images|links|relations|location|members|waypoints|citations|counterparts))*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations."
+            "description": "Comma-separated aspects to embed: facts, images, links, relations, location, members, waypoints, citations, counterparts."
           },
           {
             "schema": {

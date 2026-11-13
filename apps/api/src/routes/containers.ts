@@ -1,5 +1,6 @@
 import { schema, type Database } from '@ge/db';
 import {
+  MapClone,
   MapCreate,
   MapRead,
   MapUpdate,
@@ -9,11 +10,13 @@ import {
   redactMap,
   redactUniverse,
   HIDE_SPOILERS,
+  toPlainText,
 } from '@ge/domain';
 import { eq } from 'drizzle-orm';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { actorOf, inBatch } from '../http/batch.ts';
+import { cloneMap } from '../services/clone-service.ts';
 import {
   envelope,
   listQuery,
@@ -208,6 +211,36 @@ export const containerRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app,
       const { universeId } = request.params;
       const data = await inBatch(db, request, reply, 'Create map', { universeId }, (tx) =>
         createMap(tx, universeId, request.body),
+      );
+      return reply.code(201).send({ data });
+    },
+  );
+
+  app.post(
+    '/maps/:mapId/clone',
+    {
+      schema: {
+        ...mapTag,
+        summary: 'Clone a map for another era',
+        description:
+          'Copies the map and everything on it (objects, groups, routes, places, events and their facts, images, links, citations, locations, members and waypoints, and relations, including those with characters) to a new map with this slug and name (U7, D-17). ' +
+          'Each copy records the entity it came from (`clonedFromEntityId`; read the lineage with `include=counterparts`), keys are kept, images are shared, and characters stay as they are. One change batch: reverting it removes the copy.',
+        operationId: 'maps.clone',
+        params: mapParams,
+        body: MapClone,
+        response: { 201: envelope(MapRead), ...problemResponses },
+      },
+    },
+    async (request, reply) => {
+      const source = await getMap(db, request.params.mapId, { includeDrafts: true });
+      const description = `Clone map “${source.namePlain}” as “${toPlainText(request.body.name)}”`;
+      const data = await inBatch(
+        db,
+        request,
+        reply,
+        description.slice(0, 200),
+        { universeId: source.universeId },
+        async (tx) => (await cloneMap(tx, source.id, request.body)).map,
       );
       return reply.code(201).send({ data });
     },

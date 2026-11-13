@@ -696,7 +696,7 @@ Redo is the revert of a revert. The web app's undo stack and the history panel's
 
 ## 10. Cloning a map
 
-`cloneMap(srcMapId, { slug, name })` in `packages/db/src/clone/` runs as one batch ("Clone map M41 as M42"), so a clone can be reverted:
+`cloneMap(srcMapId, { slug, name, sortKey })` runs as one batch ("Clone map M41 as M42"), so a clone can be reverted. As built (M7-T5), step 1 is the API's `services/clone-service.ts` (the map service sanitizes the new name), and steps 2 and 3 are `cloneMapContent()` in `packages/db/src/clone/`:
 
 1. Insert the new `maps` row: copy settings, set `cloned_from_map_id = src`, and use the new slug and name.
 2. Create a temporary table `clone_ids(old_id uuid primary key, new_id uuid)` holding every entity id where `map_id = src`, each with a fresh `uuidv7()`.
@@ -708,7 +708,7 @@ Redo is the revert of a revert. The web app's undo stack and the history panel's
    - keep `external_key`, which is unique per map, so it can't collide.
 4. Assets aren't copied (both maps reference the same files). Universe-scoped rows aren't copied: characters, settings tables, and relations between two universe-scoped entities. A relation from a character to an event in the map is copied, pointing at the new event.
 
-`CLONE_SPEC` is a single constant that lists each table, its id columns and its columns to remap. A consistency test fails if a table with a `map_id` column or an `entities` foreign key is missing from it. The UI's "same object on other maps" switcher follows `cloned_from_entity_id` in both directions.
+`CLONE_SPEC` is a single constant that lists each table, its id columns and its columns to remap. A consistency test fails if a table with a `map_id` column or an `entities` foreign key is missing from it. The UI's "same object on other maps" switcher follows `cloned_from_entity_id` in both directions, read with `include=counterparts` (the whole lineage tree: up to the oldest original, then everything cloned from it).
 
 ## 11. Deleting things
 

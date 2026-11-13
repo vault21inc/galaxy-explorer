@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useUniverses } from '@/api/containers.ts';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu.tsx';
@@ -6,7 +7,9 @@ import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { EventsPopover } from '@/panels/events-list/events-popover.tsx';
 import { LayersPopover } from '@/panels/layers/layers-popover.tsx';
 import { ShortcutHelp } from '@/panels/shortcut-help/shortcut-help.tsx';
+import { useCanEdit } from '@/editor/use-can-edit.ts';
 import { Breadcrumbs } from './breadcrumbs.tsx';
+import { CloneMapDialog } from './clone-map-dialog.tsx';
 import { QualityPopover } from './quality-popover.tsx';
 import { EditToggle } from './edit-toggle.tsx';
 import { SpoilerToggle } from './spoiler-toggle.tsx';
@@ -50,6 +53,8 @@ function UniverseControls({ universeSlug }: { universeSlug: string }) {
   const keep = useKeptParams();
   const universes = useUniverses();
   const policy = useSpoilerPolicy();
+  const canEdit = useCanEdit();
+  const [cloning, setCloning] = useState(false);
   // Resolved without the map, so a mistyped map slug still shows the switchers to recover.
   const route = useUniverseRoute(universeSlug);
   if (route.status !== 'ready') return null;
@@ -87,6 +92,29 @@ function UniverseControls({ universeSlug }: { universeSlug: string }) {
             label: containerName(item, policy),
           }))}
           onSelect={(slug) => void navigate(`/u/${universeSlug}/${slug}${keep}`)}
+          footer={
+            canEdit && map ? (
+              // A copy of this map for another era (M7-T5).
+              <DropdownMenuItem
+                onSelect={() => {
+                  setCloning(true);
+                }}
+              >
+                Clone map as…
+              </DropdownMenuItem>
+            ) : undefined
+          }
+        />
+      )}
+      {map && (
+        <CloneMapDialog
+          open={cloning}
+          onClose={() => {
+            setCloning(false);
+          }}
+          universeId={route.universe.id}
+          universeSlug={universeSlug}
+          map={map}
         />
       )}
       {map && <Breadcrumbs universeSlug={universeSlug} mapSlug={map.slug} mapId={map.id} />}
