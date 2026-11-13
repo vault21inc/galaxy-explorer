@@ -39,23 +39,32 @@ export function visibleLabels(): readonly PlacedLabel[] {
 }
 
 const scratch = new Vector3();
+/** projectOne's answer, reused: it runs every frame, which mustn't allocate (rendering.md §2). */
+const projectedOne = { x: 0, y: 0, radiusPx: 0 };
 
-/** One object projected to the screen, for the few candidates of the hover mode. */
-function projectOne(state: RootState, object: DrawnObject, perPx: number) {
+/**
+ * One object projected to the screen at its own `center`: the hover mode's few candidates, and
+ * in every mode the objects picked along a curve. The result is overwritten by the next call.
+ */
+function projectOne(
+  state: RootState,
+  object: DrawnObject,
+  perPx: number,
+): Readonly<typeof projectedOne> | null {
   scratch.set(...object.center).project(state.camera);
   if (scratch.z < -1 || scratch.z > 1) return null;
-  const x = ((scratch.x + 1) / 2) * state.size.width + (object.offsetPx?.[0] ?? 0);
-  const y = ((1 - scratch.y) / 2) * state.size.height - (object.offsetPx?.[1] ?? 0);
+  projectedOne.x = ((scratch.x + 1) / 2) * state.size.width + (object.offsetPx?.[0] ?? 0);
+  projectedOne.y = ((1 - scratch.y) / 2) * state.size.height - (object.offsetPx?.[1] ?? 0);
   // Depth along the view direction, as the shaders compute it.
   scratch.set(...object.center).applyMatrix4(state.camera.matrixWorldInverse);
-  const radiusPx = clampedRadiusPx(
+  projectedOne.radiusPx = clampedRadiusPx(
     object.radius,
     -scratch.z,
     perPx,
     object.minRadiusPx,
     object.maxRadiusPx,
   );
-  return { x, y, radiusPx };
+  return projectedOne;
 }
 
 /**
@@ -167,14 +176,23 @@ function updateLabels(state: RootState): void {
   const selected = new Set(useSelection.getState().selectedIds);
   candidateCount = 0;
 
+  const perPx = worldPerPxAt1(state.camera, state.size.height);
   if (mode === 'all') {
-    // Every visible object: the picker has already projected them all for this camera.
+    // Every visible object: the picker has already projected them all for this camera. An object
+    // picked along a curve (an asteroid belt's band, a rift) is the exception: the picker's point
+    // for it is the middle of the curve's bounding box, which for a belt is the star it circles.
+    // Its label goes by its own point instead, where its selection ring is drawn, as in the
+    // hover mode below.
     projected(state).visit((object, x, y, radiusPx) => {
+      if (object.curve && !object.waypointIds) {
+        const at = projectOne(state, object, perPx);
+        if (at) addCandidate(object, at.x, at.y, at.radiusPx, selected, hoveredId);
+        return;
+      }
       addCandidate(object, x, y, radiusPx, selected, hoveredId);
     });
   } else {
     // Hover and selection only.
-    const perPx = worldPerPxAt1(state.camera, state.size.height);
     const ids = hoveredId === null ? selected : new Set([...selected, hoveredId]);
     for (const id of ids) {
       const object = drawnObject(id);

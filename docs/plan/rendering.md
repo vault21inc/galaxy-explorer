@@ -299,7 +299,7 @@ Procedural looks are generated once on the GPU and reused (D-10):
      - `groups`: adds group labels;
      - `all`: adds every visible object, and is also active while Space is held.
   2. **Priority:** selected > hovered > groups (larger groups first) > objects by `labelPriority`, then by on-screen size.
-  3. **Placement:** greedy, to the right of the body's on-screen radius plus 4 px. A label is skipped if its rectangle overlaps a placed one; a grid index makes this fast. Text widths are measured once per string with `CanvasRenderingContext2D.measureText` and cached.
+  3. **Placement:** greedy, to the right of the body's on-screen radius plus 4 px. A label is skipped if its rectangle overlaps a placed one; a grid index makes this fast. Text widths are measured once per string with `CanvasRenderingContext2D.measureText` and cached. An object picked along a curve (an asteroid belt's band, a rift) is labelled beside its own position, where its selection ring is drawn, not at the middle of the curve: for a belt, that middle is the star it circles.
 - Placement updates only `transform: translate3d(…)`. Text content changes only when a pooled element is reassigned.
 - The update runs after each rendered frame (R3F's `addAfterEffect`), when the camera matrices match the frame just drawn. In `all` mode it reuses the picker's projection. Candidates are ranked by one packed number and sorted as a typed array, to stay within 2 ms with 5,000 candidates (M2-T6).
 - Text comes from `labelText(item, spoilerPolicy)`. Hidden spoilers render as a redaction bar of similar length.

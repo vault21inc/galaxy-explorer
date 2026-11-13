@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { galaxyObjects } from './demo.ts';
+import { galaxyObjects, systemChildren } from './demo.ts';
 import { waitForFirstFrame, waitForIdle } from './test-hooks.ts';
 
 /** Set by GitHub Actions. The e2e tsconfig has no Node types, hence the narrow cast. */
@@ -155,5 +155,45 @@ test.describe('labels (rendering.md §11, ux.md §7)', () => {
     // (5 ms median, 13–25 ms p95 on the same code), so CI only logs the numbers.
     if (!isCI) expect(stats?.p95Ms).toBeLessThan(5);
     await page.keyboard.up(' ');
+  });
+
+  test('an asteroid belt’s label stands by its point on the band, not by its star', async ({
+    page,
+  }) => {
+    const top = await galaxyObjects(page.request, 'example-universe', 'main');
+    const aster = top.find((object) => object.namePlain === 'Aster')?.id ?? '';
+    const children = await systemChildren(page.request, aster);
+    const belt = children.find((child) => child.namePlain === 'Aster Belt')?.id ?? '';
+    const star = children.find((child) => child.baseType === 'star')?.id ?? '';
+    await page.goto(`/u/example-universe/main/view/${aster}`);
+    await waitForFirstFrame(page);
+    await expect
+      .poll(() => page.evaluate(() => window.__GE_TEST__?.level()?.level), { timeout: 20_000 })
+      .toBe('system');
+    await waitForIdle(page, 500);
+    await page.keyboard.press('l');
+    await page.keyboard.press('l'); // all
+    const where = (id: string) =>
+      page.evaluate((target) => window.__GE_TEST__?.screenPositionOf(target) ?? null, id);
+    const label = () =>
+      page.evaluate(
+        (id) => window.__GE_TEST__?.visibleLabels().find((item) => item.id === id) ?? null,
+        belt,
+      );
+    await expect.poll(label).not.toBeNull();
+    const box = await label();
+    const at = await where(belt);
+    const sun = await where(star);
+    if (!box || !at || !sun) throw new Error('The belt, its label or its star is off screen.');
+    // The distance from a point to the label's box, in CSS pixels (0 inside it).
+    const gap = (point: { x: number; y: number }) =>
+      Math.hypot(
+        Math.max(box.left - point.x, 0, point.x - (box.left + box.width)),
+        Math.max(box.top - point.y, 0, point.y - (box.top + box.height)),
+      );
+    // Beside the point where the belt is selected and ringed (its own position on the band)…
+    expect(gap(at)).toBeLessThan(40);
+    // …and not by the star at the middle of the ring, as when it took the band's middle.
+    expect(gap(sun)).toBeGreaterThan(gap(at));
   });
 });
