@@ -5,7 +5,9 @@ import type { AddressInfo } from 'node:net';
 /**
  * A stand-in MediaWiki API for tests (M7-T3), answering from the saved pages in this folder:
  * - `action=parse`: Gudrun and Hubris; "Gudrun (planet)" redirects to Gudrun; others are missing;
- * - `action=query&list=search`: the pages whose title contains the query;
+ * - `action=query&list=search`: the pages whose title contains the query, except one titled
+ *   exactly as the query, which Fandom's search leaves out too;
+ * - `action=query&titles=…`: whether each title is a page, following redirects as asked;
  * - `action=query&meta=siteinfo`: the real wiki's address, article path and licence.
  * It records every request (its time, query and headers), so tests can check the client's
  * manners. The e2e run starts it on its own port (serve.ts).
@@ -27,6 +29,19 @@ export interface WikiFixtureServer {
   apiUrl: string;
   requests: FixtureRequest[];
   close: () => Promise<void>;
+}
+
+/** MediaWiki titles ignore the case of their first letter: "cadia" is the page Cadia. */
+const asTitle = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+function lookUp(titles: string, followRedirects: boolean) {
+  return titles.split('|').map((asked) => {
+    const title = asTitle(asked);
+    const target = followRedirects ? (REDIRECTS[title] ?? title) : title;
+    return PAGES[target] === undefined
+      ? { ns: 0, title: target, missing: true }
+      : { pageid: Object.keys(PAGES).indexOf(target) + 1, ns: 0, title: target };
+  });
 }
 
 function answer(query: Record<string, string>): unknown {
@@ -59,11 +74,15 @@ function answer(query: Record<string, string>): unknown {
     };
   }
   if (query.action === 'query' && query.list === 'search') {
-    const needle = (query.srsearch ?? '').toLowerCase();
+    const asked = query.srsearch ?? '';
+    const needle = asked.toLowerCase();
     return {
       query: {
+        ...(query.titles === undefined
+          ? {}
+          : { pages: lookUp(query.titles, query.redirects === '1') }),
         search: Object.keys(PAGES)
-          .filter((title) => title.toLowerCase().includes(needle))
+          .filter((title) => title.toLowerCase().includes(needle) && title !== asTitle(asked))
           .map((title) => ({
             title,
             snippet: `<span class="searchmatch">${title}</span> is a world`,

@@ -86,6 +86,18 @@ describe('the wiki routes', () => {
       ]);
       const hits = (await api.expect(200, 'GET', '/wiki/search?source=w40k&q=gud')).body.data;
       expect(hits).toEqual([{ title: 'Gudrun', snippet: 'Gudrun is a world' }]);
+      // The wiki's search leaves out the page titled exactly as the query (as Fandom's does):
+      // it's found by its title, first, and also through a redirect.
+      for (const q of ['gudrun', 'Gudrun (planet)']) {
+        const exact = (
+          await api.expect(200, 'GET', `/wiki/search?source=w40k&q=${encodeURIComponent(q)}`)
+        ).body.data;
+        expect(exact[0], q).toEqual({ title: 'Gudrun', snippet: '' });
+        expect(
+          exact.filter((hit: { title: string }) => hit.title === 'Gudrun'),
+          q,
+        ).toHaveLength(1);
+      }
 
       const preview = (
         await api.expect(

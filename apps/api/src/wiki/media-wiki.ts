@@ -4,7 +4,7 @@ import { NotFound, UpstreamError } from '../services/errors.ts';
 /**
  * A wiki "Fill from wiki" reads (M7-T3), through the MediaWiki API (`api.php`), which Fandom
  * wikis and Wikipedia both serve:
- * - `search(q)`: `action=query&list=search`;
+ * - `search(q)`: `action=query&list=search`, and whether `q` is itself a page's title;
  * - `page(title)`: `action=parse&prop=wikitext`, following redirects;
  * - `site()`: the wiki's address for page links and its text licence (`meta=siteinfo`).
  *
@@ -38,6 +38,7 @@ export interface MediaWikiOptions {
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const SEARCH_LIMIT = 10;
 
 /** When each host may next be asked, shared by every source on it. */
 const nextRequestAt = new Map<string, number>();
@@ -75,18 +76,39 @@ export class MediaWikiSource {
   }
 
   async search(query: string): Promise<WikiSearchHit[]> {
-    const body = (await this.#get({
+    const asked = query.trim();
+    const search = {
       action: 'query',
       list: 'search',
-      srsearch: query,
-      srlimit: '10',
+      srsearch: asked,
+      srlimit: String(SEARCH_LIMIT),
       srprop: 'snippet',
-    })) as { query?: { search?: { title: string; snippet?: string }[] } };
-    return (body.query?.search ?? []).map((hit) => ({
-      title: hit.title,
-      // Search snippets mark the match with <span class="searchmatch">; plain text here.
-      snippet: (hit.snippet ?? '').replace(/<[^>]+>/g, '').replace(/&quot;/g, '"'),
-    }));
+    };
+    // Some wikis' search, Fandom's among them, leaves out the page titled exactly as the query
+    // (their search box would jump straight to it), so "Cadia" lists Cadian Sector but not
+    // Cadia. The same request therefore also asks whether the query is a page's title,
+    // following redirects, and that page leads the list. A `|` separates titles, so a query
+    // with one looks none up.
+    const body = (await this.#get(
+      asked.includes('|') ? search : { ...search, titles: asked, redirects: '1' },
+    )) as {
+      query?: {
+        search?: { title: string; snippet?: string }[];
+        pages?: { pageid?: number; ns?: number; title: string }[];
+      };
+    };
+    // A missing, invalid or special title comes back without a page id; only articles count.
+    const exact = (body.query?.pages ?? [])
+      .filter((page) => page.pageid !== undefined && page.ns === 0)
+      .map((page) => ({ title: page.title, snippet: '' }));
+    const found = (body.query?.search ?? [])
+      .filter((hit) => !exact.some((page) => page.title === hit.title))
+      .map((hit) => ({
+        title: hit.title,
+        // Search snippets mark the match with <span class="searchmatch">; plain text here.
+        snippet: (hit.snippet ?? '').replace(/<[^>]+>/g, '').replace(/&quot;/g, '"'),
+      }));
+    return [...exact, ...found].slice(0, SEARCH_LIMIT);
   }
 
   async page(title: string): Promise<WikiPage> {

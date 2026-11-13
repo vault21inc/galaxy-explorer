@@ -100,6 +100,7 @@
   - 24 h of cached answers;
   - `GE_WIKI_USER_AGENT` on every request;
   - redirects followed (`redirects=1`, reported as `redirectedFrom`);
+  - a search also asks, in the same request, whether the query is itself a page's title, and lists that page first: Fandom's search leaves out the page titled exactly as the query, so "Cadia" found Cadian Sector but not Cadia;
   - a missing page answers 404, and a wiki that fails answers 502 (`UpstreamError`).
 - **No parser library (D-35):** `apps/api/src/wiki/wikitext.ts` reads what's needed:
   - the top-level templates with named parameters, their values as plain text (`<br>` as a comma);
