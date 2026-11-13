@@ -28,6 +28,12 @@ export interface StressOptions {
   /** Routes through nearby systems (M4-T7). */
   routes: number;
   seed: number;
+  /**
+   * Systems open their system view (M5). `pnpm perf` turns this off: its galaxy phases measure
+   * the galaxy view, and a wheel that ends near any of 5,000 explorable systems can push into
+   * one (M5-T2); it makes its one busy system explorable itself.
+   */
+  explorable: boolean;
 }
 
 export const STRESS_DEFAULTS: StressOptions = {
@@ -35,6 +41,7 @@ export const STRESS_DEFAULTS: StressOptions = {
   groups: 300,
   routes: 50,
   seed: 40_000,
+  explorable: true,
 };
 
 /** How many systems a stress route passes through: 4, plus up to 4 more. */
@@ -99,7 +106,7 @@ const {
 } = schema;
 
 export async function seedStress(db: Database, options: Partial<StressOptions> = {}) {
-  const { objects, groups, routes, seed } = { ...STRESS_DEFAULTS, ...options };
+  const { objects, groups, routes, seed, explorable } = { ...STRESS_DEFAULTS, ...options };
   const description = `Seed: stress (${String(objects)} objects, ${String(groups)} groups, ${String(routes)} routes)`;
   const { result } = await withBatch(db, SEED_ACTOR, description, async (tx, batchId) => {
     const universe = await ensureUniverse(tx, {
@@ -145,7 +152,7 @@ export async function seedStress(db: Database, options: Partial<StressOptions> =
         entityId: objectIds.get(row.key) ?? '',
         mapId: map.id,
         baseType: row.baseType,
-        explorable: row.baseType === 'system',
+        explorable: explorable && row.baseType === 'system',
         x: row.position[0],
         y: row.position[1],
         z: row.position[2],

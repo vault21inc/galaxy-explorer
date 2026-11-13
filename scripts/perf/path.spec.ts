@@ -28,10 +28,13 @@ interface Hooks {
   visibleLabels(): unknown[];
   underlay(): unknown;
   selectedIds(): string[];
+  select(ids: string[]): void;
   hoveredId(): string | null;
   level(): { level: string; subjectId: string | null } | null;
   enter(id: string): Promise<void>;
   exit(): Promise<void>;
+  /** The texture layer and bake key of a planet drawn in the system view (M6-T2). */
+  planetSurface(id: string): { layer: number; key: string } | null;
 }
 declare global {
   interface Window {
@@ -273,6 +276,16 @@ test('the galaxy view stays within its budgets', async ({ page, browser }, testI
     page,
     `h.frameStats(${interactionStart.toString()})`,
   );
+  // The galaxy phases measure the galaxy view: a wheel that pushed past an explorable object's
+  // threshold (M5-T2) would have entered it, and every later galaxy row would be measuring that.
+  // The stress map is seeded `--closed` for this (playwright.config.ts); this says so if not.
+  const afterZoom = await evaluateHooks<{ level: string; subjectId: string | null } | null>(
+    page,
+    'h.level()',
+  );
+  expect
+    .soft(afterZoom?.level, `the zoom phase left the galaxy view: ${JSON.stringify(afterZoom)}`)
+    .toBe('galaxy');
   await phase(
     'labels',
     async () => {

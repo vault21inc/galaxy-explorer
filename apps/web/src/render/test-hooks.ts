@@ -93,6 +93,8 @@ export interface GeTestHooks {
   platform(): Platform;
   /** The selection, in order. */
   selectedIds(): string[];
+  /** Selects these, as a click or the outliner would (`pnpm perf`'s look preview, M6-T2). */
+  select(ids: string[]): void;
   /** The objects with a ring now: selected, hovered, or members of a selected group (M4-T4). */
   ringedIds(): string[];
   /** Where a world point is on the page, in CSS pixels, or null behind the camera (M4-T6). */
@@ -281,6 +283,9 @@ export function installTestHooks(): void {
     },
     platform: () => detectPlatform(),
     selectedIds: () => [...useSelection.getState().selectedIds],
+    select: (ids) => {
+      useSelection.getState().select(ids);
+    },
     ringedIds: () => [...ringedIds()],
     projectPoint: (point) => pageProjection(point),
     stormTexture: (id) => stormTextureOf(id),

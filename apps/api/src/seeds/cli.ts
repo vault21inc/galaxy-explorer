@@ -1,5 +1,6 @@
 /**
- * `pnpm db:seed demo` and `pnpm db:seed stress [--objects N] [--groups N] [--routes N] [--seed N]`
+ * `pnpm db:seed demo` and
+ * `pnpm db:seed stress [--objects N] [--groups N] [--routes N] [--seed N] [--closed]`
  * (M1-T11). Reads DATABASE_URL, which the package script loads from the repository's .env.
  */
 import { parseArgs } from 'node:util';
@@ -14,6 +15,8 @@ const { positionals, values } = parseArgs({
     groups: { type: 'string' },
     routes: { type: 'string' },
     seed: { type: 'string' },
+    /** Systems don't open a view: `pnpm perf`'s galaxy phases (stress.ts). */
+    closed: { type: 'boolean' },
   },
 });
 
@@ -21,7 +24,7 @@ const which = positionals[0];
 const url = process.env.DATABASE_URL;
 if (which !== 'demo' && which !== 'stress') {
   console.error(
-    'Usage: pnpm db:seed demo | pnpm db:seed stress [--objects 5000] [--groups 300] [--routes 50] [--seed 40000]',
+    'Usage: pnpm db:seed demo | pnpm db:seed stress [--objects 5000] [--groups 300] [--routes 50] [--seed 40000] [--closed]',
   );
   process.exit(1);
 }
@@ -47,6 +50,7 @@ try {
           groups: number(values.groups, STRESS_DEFAULTS.groups),
           routes: number(values.routes, STRESS_DEFAULTS.routes),
           seed: number(values.seed, STRESS_DEFAULTS.seed),
+          explorable: values.closed !== true,
         });
   console.log(
     `db:seed ${which}: done in ${((performance.now() - started) / 1000).toFixed(1)} s`,

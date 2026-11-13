@@ -34,7 +34,9 @@ export default defineConfig({
   workers: 1,
   fullyParallel: false,
   retries: 0,
-  timeout: 300_000,
+  // The path takes about 4 minutes per browser since M6-T8 added the orbit view and the look
+  // preview; 5 minutes left too little room.
+  timeout: 600_000,
   reporter: [['list']],
   use: {
     baseURL: `http://localhost:${WEB_PORT}`,
@@ -50,7 +52,9 @@ export default defineConfig({
     {
       command: [
         'pnpm --filter @ge/db db:reset',
-        'pnpm --filter @ge/api seed stress',
+        // `--closed`: no system opens a view but the busy one prepareSystem makes explorable,
+        // so the galaxy phases' wheel can't push into a system (stress.ts).
+        'pnpm --filter @ge/api seed stress --closed',
         'pnpm --filter @ge/api start',
       ].join(' && '),
       cwd: repoRoot,

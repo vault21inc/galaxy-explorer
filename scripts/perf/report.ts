@@ -228,6 +228,17 @@ function systemChecks(): Check[] {
       ),
     },
     {
+      metric: 'Planet look preview: a slider moved to the re-baked globe, 5 times (M6-T2)',
+      budget: `≤ ${fmt(BUDGETS.planetPreviewMs)} each`,
+      values: each((r) =>
+        sys(r)
+          .planetPreviewMs.map((ms) => ms.toFixed(0))
+          .join(', ')
+          .concat(' ms'),
+      ),
+      pass: all((r) => sys(r).planetPreviewMs.every((ms) => ms <= BUDGETS.planetPreviewMs)),
+    },
+    {
       metric: `GPU memory: geometries / textures before and after ${String(runs[0]?.system?.roundTrips.count ?? 20)} galaxy ↔ system round trips`,
       budget: `within ±${(BUDGETS.memoryDrift * 100).toFixed(0)} %`,
       values: each((r) => {

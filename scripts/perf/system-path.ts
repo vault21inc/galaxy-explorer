@@ -282,10 +282,13 @@ export async function systemPhases(context: SystemContext): Promise<SystemResult
     );
   }
 
+  const planetPreviewMs = await previewTimes(context);
+
   return {
     interaction,
     maxDrawCalls,
     planetBakeMs,
+    planetPreviewMs,
     transitions: { enterMs, exitMs },
     roundTrips: { count: ROUND_TRIPS, before, after },
     orbitRoundTrips: { count: ROUND_TRIPS, before: orbitBefore, after: orbitAfter },
@@ -296,4 +299,68 @@ export async function systemPhases(context: SystemContext): Promise<SystemResult
       pins,
     },
   };
+}
+
+/** The planet whose look is previewed: the ocean planet entered for the orbit view. */
+const PREVIEW_PLANET_NAME = `Perf ${(ORBIT_PLANET + 1).toString()}`;
+/** How long a preview is waited for, in ms, before it counts as missed. */
+const PREVIEW_WAIT_MS = 2_000;
+
+/** The sea levels the slider is set to, one preview each. */
+const PREVIEW_SEA_LEVELS = ['0.30', '0.45', '0.60', '0.75', '0.50'] as const;
+
+/**
+ * How long the look editor takes to show a change on the globe (M6-T2: "dragging a palette
+ * slider updates the globe within 200 ms"), measured here on the reference Mac rather than in
+ * e2e, where parallel tests made it measure the machine's load (D-33). In the busy system,
+ * the ocean planet is selected and edit mode turned on; then, five times, the Sea level slider
+ * gets a new value and an input event, as while its thumb is dragged, and the time is taken
+ * until the system view's texture stack holds the re-baked surface. Nothing is saved: a drag
+ * saves only when it's let go.
+ */
+async function previewTimes(context: SystemContext): Promise<number[]> {
+  const { page, systemId, planetId, waitForIdle } = context;
+  await hooks(page, `h.enter(${JSON.stringify(systemId)})`);
+  await waitForIdle();
+  // Selected by id: a click could land on the moon drawn beside the planet.
+  await hooks(page, `h.select([${JSON.stringify(planetId)}])`);
+  await page.keyboard.press('e');
+  const panel = page.getByRole('complementary', { name: 'Details' });
+  await panel.getByRole('form', { name: `Edit ${PREVIEW_PLANET_NAME}` }).waitFor();
+  const slider = panel.getByRole('slider', { name: 'Sea level' });
+  await slider.waitFor();
+  const times: number[] = [];
+  for (const value of PREVIEW_SEA_LEVELS) {
+    const elapsedMs = await slider.evaluate(
+      async (input: HTMLInputElement, [id, next, waitMs]) => {
+        const hooks = window.__GE_TEST__;
+        const before = hooks?.planetSurface(id)?.key;
+        // React skips events that change nothing by watching `input.value`, so the value
+        // goes through the prototype's setter, as the browser's own thumb does.
+        const setValue = Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          'value',
+        )?.set?.bind(input);
+        if (!setValue) return Number.POSITIVE_INFINITY;
+        const start = performance.now();
+        setValue(next);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        while (performance.now() - start < waitMs) {
+          if (hooks?.planetSurface(id)?.key !== before) return performance.now() - start;
+          await new Promise((resolve) => setTimeout(resolve, 2));
+        }
+        return Number.POSITIVE_INFINITY;
+      },
+      [planetId, value, PREVIEW_WAIT_MS] as const,
+    );
+    // No re-bake within the wait counts as the wait itself: a clear miss, and a number that
+    // survives the results' JSON (Infinity becomes null there).
+    times.push(Number.isFinite(elapsedMs) ? elapsedMs : PREVIEW_WAIT_MS);
+    await waitForIdle();
+  }
+  await page.keyboard.press('e');
+  await waitForIdle();
+  await hooks(page, 'h.exit()');
+  await waitForIdle();
+  return times;
 }

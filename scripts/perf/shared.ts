@@ -22,6 +22,8 @@ export const BUDGETS = {
   initialJsGzipKb: 600,
   /** Baking one planet surface at 2,048 × 1,024 on the GPU (rendering.md §9, M6-T2). */
   planetBakeMs: 50,
+  /** A look slider's input to the re-baked globe in the system view (M6-T2). */
+  planetPreviewMs: 200,
 } as const;
 
 export interface FrameStats {
@@ -61,6 +63,8 @@ export interface SystemResult {
   maxDrawCalls: number;
   /** One 2,048 × 1,024 planet bake per preset timed, in ms (M6-T2). */
   planetBakeMs: Record<string, number>;
+  /** A slider's input to the re-baked globe, each of five times, in ms (M6-T2, D-33). */
+  planetPreviewMs: number[];
   /** Each entry and exit, in order; the first entry also loads the view's code and data. */
   transitions: { enterMs: number[]; exitMs: number[] };
   roundTrips: { count: number; before: RenderInfo; after: RenderInfo };
