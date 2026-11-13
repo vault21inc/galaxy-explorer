@@ -19,10 +19,12 @@ universes ─┬─ maps ─┬─ entities (kind: celestial_object, group, rout
 
 Aspects shared by every entity: entity_images ──▶ assets, entity_links, field_values ──▶ field_definitions,
                                  relations (entity ──▶ entity), citations (M7)
-Auth (M8): users, sessions, api_tokens
+Accounts and access (M8, D-34): users ── sessions, api_tokens, account_links (invites and resets)
+                                universes.owner_id ──▶ users;  universe_members (editors and viewers) ──▶ users
+                                access_events (what admins and owners did)
 ```
 
-**Where each table arrives:** M1 creates everything above except `routes`/`route_waypoints` (M4), `citations` and search columns (M7), and auth (M8).
+**Where each table arrives:** M1 creates everything above except `routes`/`route_waypoints` (M4), `citations` and search columns (M7), and accounts and access (M8).
 
 ## 2. Conventions
 
@@ -49,6 +51,10 @@ create table universes (
   description        jsonb,                         -- RichText
   date_format_notes  jsonb,                         -- RichText: how dates are written here (E2)
   settings           jsonb not null default '{}',   -- UniverseSettings
+  -- From M8 (D-34, §8):
+  owner_id           uuid references users on delete restrict,  -- null: the installation's own; admins edit it
+  visibility         text not null default 'private' check (visibility in ('private', 'link', 'public')),
+  share_key          text unique,                   -- random; set while visibility = 'link', part of the share link
   ‹stamps›
 );
 
@@ -382,18 +388,62 @@ create table change_log (
 create index change_log_batch_idx on change_log (batch_id, id);
 ```
 
-### 3.8 Auth (M8)
+### 3.8 Accounts and access (M8, D-34)
 
 ```sql
 create table users (
-  id               uuid primary key default uuidv7(),
-  username         text not null unique,
-  password_hash    text not null,                      -- argon2id
-  totp_secret_enc  bytea,                              -- encrypted with a key derived from GE_SESSION_SECRET
-  totp_enabled     boolean not null default false,
-  created_at       timestamptz not null default now(),
-  last_login_at    timestamptz
+  id                 uuid primary key default uuidv7(),
+  username           text not null unique check (username ~ '^[a-z0-9][a-z0-9_-]{2,31}$'),
+  role               text not null default 'member' check (role in ('admin', 'member')),
+  password_hash      text not null,                    -- argon2id
+  totp_secret_enc    bytea not null,                   -- encrypted with a key derived from GE_SESSION_SECRET
+  media_quota_bytes  bigint not null default 2147483648,  -- 2 GiB across the universes it owns; admins change it
+  disabled_at        timestamptz,                      -- set: can't sign in, sessions and tokens stop
+  created_at         timestamptz not null default now(),
+  last_login_at      timestamptz
 );
+
+-- Single-use links an admin hands over: an invite makes an account; a reset sets a new password
+-- and new two-factor codes for an existing one.
+create table account_links (
+  id          uuid primary key default uuidv7(),
+  token_hash  bytea not null unique,                   -- sha256 of the link's token; the link is shown once
+  purpose     text not null check (purpose in ('invite', 'reset')),
+  role        text check (role in ('admin', 'member')),-- invite: the new account's role
+  user_id     uuid references users on delete cascade, -- reset: whose
+  created_by  uuid references users on delete set null,
+  created_at  timestamptz not null default now(),
+  expires_at  timestamptz not null,                    -- invites 7 days, resets 24 hours
+  used_at     timestamptz,
+  check ((purpose = 'invite') = (role is not null)),
+  check ((purpose = 'reset') = (user_id is not null))
+);
+
+-- Who a universe is shared with. Its owner is universes.owner_id, not a row here.
+create table universe_members (
+  universe_id  uuid not null references universes on delete cascade,
+  user_id      uuid not null references users on delete cascade,
+  role         text not null check (role in ('editor', 'viewer')),
+  added_by     uuid references users on delete set null,
+  created_at   timestamptz not null default now(),
+  primary key (universe_id, user_id)
+);
+create index universe_members_user_idx on universe_members (user_id);
+
+-- Account and access changes, by admins and owners: the admin screens' own history. Content
+-- history stays in change_batches.
+create table access_events (
+  id           uuid primary key default uuidv7(),
+  actor_id     uuid references users on delete set null,
+  actor_label  text not null,                          -- the username at the time, or 'cli'
+  action       text not null,                          -- 'invite.create', 'user.disable', 'user.reset', 'universe.transfer',
+                                                       -- 'universe.visibility', 'universe.takedown', 'member.add', 'member.remove', …
+  user_id      uuid references users on delete set null,      -- the account it concerns, if any
+  universe_id  uuid references universes on delete set null,  -- the universe it concerns, if any
+  detail       jsonb not null default '{}',            -- such as { "from": "private", "to": "public" }
+  created_at   timestamptz not null default now()
+);
+create index access_events_created_idx on access_events (created_at desc);
 
 create table sessions (
   id_hash     bytea primary key,                       -- sha256 of the cookie value; the raw value is never stored
@@ -405,15 +455,20 @@ create table sessions (
 
 create table api_tokens (
   id            uuid primary key default uuidv7(),
+  user_id       uuid not null references users on delete cascade,  -- the account it acts for (D-34)
   name          text not null,                         -- 'claude-code on laptop'
   token_hash    bytea not null unique,                 -- sha256 of the token; shown once at creation
-  scopes        text[] not null check (scopes <@ array['read', 'write', 'admin']),
-  universe_id   uuid references universes on delete cascade,   -- null = all universes
+  scopes        text[] not null check (scopes <@ array['read', 'write']),
+  universe_id   uuid references universes on delete cascade,   -- null = every universe the account can reach
   created_at    timestamptz not null default now(),
   last_used_at  timestamptz,
   revoked_at    timestamptz
 );
 ```
+
+- **The migration** gives existing universes `visibility = 'public'` and no owner, so an installation that had no accounts behaves as before; new universes start `private` and belong to the account that made them.
+- **A token** can do what its account can at the moment of each request, no more: narrowed by its scopes and, if set, to one universe. There is no admin scope: account and admin actions need a session.
+- **Media quota:** the sum of `assets.byte_size` over the universes an account owns. An upload that would pass it is refused with a 413 that says how much is used. Uploads by an editor count against the universe's owner.
 
 ## 4. Documents stored as jsonb
 
@@ -566,6 +621,20 @@ When redaction removes content (`spoilers=exclude`), a hidden text keeps its sha
 - `GE_AUTH_MODE=none` treats every request as an editor.
 - Edits go live immediately in the proof of concept (A3), so new rows default to `published`. The draft workflow (publish buttons, a "drafts only" filter) arrives with the public site.
 
+**From M8, who may reach a universe (D-34).** One function in the API's service layer, `universeAccess(viewer, universe)`, answers for every route:
+
+| Access | Who has it | What it allows |
+|---|---|---|
+| `none` | everyone else | Nothing: every route answers 404, as if the universe didn't exist. |
+| `read` | anyone, for a `public` universe; anyone holding the share key, for a `link` one; its viewers | Published content. Never drafts. |
+| `edit` | its editors | All content, drafts included: entities, maps, the settings tables, uploads, History and revert. |
+| `own` | its owner; an admin, for an unowned universe; everyone with `GE_AUTH_MODE=none` | Also its address, visibility, share link, members, transfer and deletion. |
+
+- **Drafts and access combine:** the draft rules above apply to anyone with only `read`; `includeDrafts=true` is honored from `edit` up.
+- **Admins get no access from being admins,** except to unowned universes. The admin routes (transfer, takedown, delete) work on a universe without reading its content.
+- **Lists show only what the requester can read:** `GET /universes` returns public universes, plus the requester's own and those shared with them. A `link` universe is never listed for someone who only has its key.
+- **Media follow their universe:** a file under `u/{universeId}/…` is served only to someone with at least `read` there (architecture §8).
+
 ## 9. History: batches, audit trigger, revert
 
 **Audit trigger.** One generic function is attached `after insert or update or delete … for each row` to every content table:
@@ -601,7 +670,7 @@ create trigger ge_audit after insert or update or delete on celestial_objects
   for each row execute function ge_audit('entity_id');
 ```
 
-The trigger is not attached to `change_batches`, `change_log`, `users`, `sessions` or `api_tokens`. A consistency test lists every table and fails if a content table lacks the trigger.
+The trigger is not attached to `change_batches`, `change_log`, or the account tables (`users`, `sessions`, `api_tokens`, `account_links`, `universe_members`, `access_events`): who may reach a universe isn't content, and isn't undone with it. A consistency test lists every table and fails if a content table lacks the trigger.
 
 **Batches.** `withBatch(actor, description, fn)` in `packages/db`:
 
@@ -647,7 +716,8 @@ Deletes are hard deletes: the change log keeps everything needed to revert them.
 
 | Deleting | Effect |
 |---|---|
-| Universe | Cascades to everything in it. The UI requires typing the universe's name. |
+| Universe | Cascades to everything in it. The UI requires typing the universe's name. From M8, only its owner or an admin may, with a current two-factor code. |
+| Account (M8) | Blocked while it owns universes: transfer or delete them first. Removes its sessions, tokens and memberships; history keeps its name (`actor_label`). Disabling an account is the usual way to stop it. |
 | Map | Cascades to all map-scoped entities. |
 | Object | Cascades to child objects, its group memberships and route waypoints, and **locations** pointing at it. Places and events located there survive but become unplaced; they're listed under "Unplaced" in the outliner. The database cascade removes child `celestial_objects` rows only, so the entity service deletes the whole subtree's `entities` rows in one statement. |
 | Group | Removes its memberships; child groups lose their parent. |

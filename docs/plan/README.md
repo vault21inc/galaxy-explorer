@@ -53,13 +53,14 @@ It runs locally first, then on one DigitalOcean droplet.
 
 **After the proof of concept:**
 - **M7, content tools:** custom facts and subtypes, fill from wiki, import and export, map cloning for other eras, search, the MCP server.
-- **M8, going public:** owner login with two-factor codes, API tokens, security hardening, droplet deployment, backups, moving local content over.
+- **M8, going public:** accounts by invitation with two-factor codes, universes that are private until shared or published, admin screens for accounts (D-34), API tokens, security hardening, droplet deployment, backups, moving local content over.
 
 **Not planned (non-goals):**
 - street-level or surface exploration below orbit;
 - physically accurate orbits or a simulation clock;
-- reader accounts or reading-progress tracking;
-- several people editing at the same time;
+- open sign-up, or reading-progress tracking (accounts are by invitation, D-34);
+- live co-editing: several editors of one universe save one at a time;
+- permissions per map or per object (a universe is the unit of privacy);
 - editing on touch devices;
 - book or "content pack" features.
 
@@ -82,7 +83,10 @@ Each of these can be revisited later, and the registries leave room for them.
 | Aspects | images, links, facts, relations and location, which work the same for every entity kind. |
 | Fact | a value of a universe-defined field (Population: 5 billion). |
 | Spoiler / redaction | content flagged as a potential spoiler / how it looks when hidden (blacked out). |
-| Draft | unpublished content, hidden from the public by the server. |
+| Draft | unpublished content, hidden by the server from everyone who can't edit the universe. |
+| Account / admin | from M8: someone invited to sign in, who can create universes / an account that also manages accounts (D-34). |
+| Owner / editor / viewer (of a universe) | from M8: the account a universe belongs to / an account it's shared with that may change it / one that may only read it. In these documents "the owner" alone still means the project's owner, who is also the first admin. |
+| Visibility | from M8: whether a universe is **private** (owner and members), **link-only** (anyone with its share link) or **public** (listed for everyone). |
 | Batch | one user action or API request, as recorded in history. Reverting a batch is how undo works. |
 | Appearance | how an object looks: color, size per view, planet preset and effects. Stored as sparse overrides on type and subtype defaults. |
 | Bake | rendering a procedural texture once, to reuse every frame. |
@@ -100,7 +104,7 @@ Each of these can be revisited later, and the registries leave room for them.
 | [M5](milestones/M5-system-view.md) | System view | navigation and transitions, zoom thresholds, system rendering, editing in systems, leak test | M3 |
 | [M6](milestones/M6-orbit-view-events.md) | Orbit view and events | geo math, planet baking, globes, pins, places, events, characters, events list; **proof of concept complete** | M5 (M4 recommended) |
 | [M7](milestones/M7-content-tools.md) | Content tools and LLM access | facts, subtypes, fill from wiki, import/export, map cloning, search, MCP server, LLM guide | M6 (T7–T8: M1 only) |
-| [M8](milestones/M8-go-public.md) | Going public | login with two-factor codes, tokens, hardening, containers, droplet, deploy, backups, content migration, guided tours | M6, M7-T4 |
+| [M8](milestones/M8-go-public.md) | Going public | accounts by invitation with two-factor codes, private universes and sharing, admin screens, tokens, hardening, containers, droplet, deploy, backups, content migration, guided tours | M6, M7-T4 |
 
 ```
 M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ───────────────┐
@@ -129,6 +133,7 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 | Icon set for categories and pins (Lucide or game-icons.net): decided, both (D-32) | M6-T4 | owner |
 | License for the code, and a fan-site disclaimer text | before M8 | owner |
 | Domain name, DigitalOcean account and Spaces bucket | M8 | owner |
+| The privacy note for account holders, and the default media quota per account (2 GiB planned) | M8-T9, M8-T11 | owner |
 
 ## Status
 
@@ -207,3 +212,4 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-12:** M6 complete: the owner signed off on the demo, and `v0.1.0-poc` is tagged. The proof of concept (X1) is done; M7 (content tools and LLM access) is next.
 - **2026-11-13:** Fix after the owner's report: with every label shown, an asteroid belt's label stood by its star, at the middle of its band. It now stands beside the belt's own point on the band, where it's selected.
 - **2026-11-13:** M7 started. M7-T1 done: custom fields (facts) are defined in the settings table (now with wiki aliases), edited in the entity form with an input per value type and a spoiler flag, and shown in the panel; the facts aspect has a contract test for every kind.
+- **2026-11-13:** D-34: accounts, private universes and sharing, planned into M8 after the owner's questions. Accounts are by invitation; each universe has an owner and is private, link-only or public; owners share with editors and viewers; admins manage accounts from an admin screen. M8-T1 becomes accounts and login, and M8-T11 to M8-T13 are new. Nothing is built yet.

@@ -221,7 +221,10 @@ PATCH /api/v1/objects/{id}  { version: 7, name: {...}, x: 120.5 }
 | Batch | `POST /batch` with `{ description, dryRun?, operations: [{ op, kind, id?, version?, data? }] }`: all operations in one transaction and one change batch. `dryRun: true` validates and returns the would-be results, then rolls back. |
 | History | `GET /universes/{universeId}/history`, `GET /history/{batchId}`, `POST /history/{batchId}/revert` |
 | Assets | `GET/POST /universes/{universeId}/assets` (POST is multipart), `GET/PATCH/DELETE /assets/{assetId}`; files are served under `/media/…` |
-| Later | search, import/export, wiki (M7); auth, tokens (M8); `POST /practice-universe`, the editor tour's demo copy (M8-T10) |
+| Later | search, import/export, wiki (M7); `POST /practice-universe`, the editor tour's demo copy (M8-T10) |
+| Accounts (M8, D-34) | `POST /auth/login`, `POST /auth/logout`, `GET/PATCH /auth/me`, `GET/DELETE /auth/sessions`; `GET /auth/links/{token}` and `POST /auth/links/{token}/start`, `/finish` (accepting an invite or a reset); `GET/POST /auth/tokens`, `DELETE /auth/tokens/{tokenId}` |
+| Sharing (M8) | on a universe: `visibility` in `PATCH /universes/{universeId}` (owner); `POST /universes/{universeId}/share-key` (a new link); `POST /universes/unlock` (a slug and its share key for a read cookie); `GET /universes/by-slug/{slug}`; `GET /universes/{universeId}/members`, `PUT/DELETE /universes/{universeId}/members/{username}`; `POST /universes/{universeId}/transfer` |
+| Admin (M8) | `GET /admin/users`, `PATCH/DELETE /admin/users/{userId}`, `POST /admin/invites`, `POST /admin/users/{userId}/reset-link`, `GET /admin/universes`, `PATCH/DELETE /admin/universes/{universeId}` (transfer, takedown, delete), `GET /admin/events` |
 
 ## 6. View payloads
 
@@ -254,9 +257,17 @@ The system and orbit payloads have the same shape: the subject, its direct child
 | `GE_AUTH_MODE` | Used for | Behavior |
 |---|---|---|
 | `none` (default in development) | local proof of concept | Every request acts as actor `{ type: 'local', label: 'local' }` with full rights. The API **binds to 127.0.0.1 only**, and Docker publishes Postgres on 127.0.0.1 only. |
-| `required` (production, M8) | public site | Anonymous visitors can read published content only. Writes need an owner session (cookie) or an API token with the `write` scope. |
+| `required` (production, M8) | public site | Requests act as an account (a session cookie, or an API token acting for its account), or as an anonymous visitor. What each may do in a universe comes from one check, `universeAccess` (D-34, data-model §8). |
 
 **The private preview (D-31)** runs `none` behind a password-protected proxy with `GE_PREVIEW_ROLES=on`: only requests the proxy marks `X-GE-Role: editor` may write or read drafts. `/api/health` reports `canEdit` for the request, and the web app offers edit mode only when it's true ([docs/ops/preview.md](../ops/preview.md)).
+
+**Accounts and access in `required` mode (M8, D-34):**
+- **The viewer of a request** is resolved once, in a Fastify hook: the account behind the session cookie or token (with its site role), the share keys the browser has unlocked, or nobody. Services receive it as today's `Viewer`, which grows from "may see drafts" to "who is asking".
+- **Every service call that touches a universe asks `universeAccess(viewer, universe)`** for `none`, `read`, `edit` or `own`. Entities, maps and assets reach their universe through their own rows, never through ids the client sent. `none` is a 404 on every route; a 403 means the requester can read the universe but may not do that.
+- **A contract test walks the OpenAPI document,** so no route can be missed: for every route with a universe, map, entity or asset in its path, a stranger and an anonymous visitor get 404 on a private universe, a viewer reads and gets 403 on writes, and an editor writes but can't change who has access.
+- **Account, sharing and admin routes** need a session; a token never reaches them. Destructive ones (deleting or transferring a universe, disabling an account, issuing a reset link) also ask for a current two-factor code.
+- **The web app learns what it may do from the universe itself:** `UniverseRead` carries the requester's `access`, with the universe's `visibility` and its owner's username. Edit mode is offered from `edit` up, and the sharing controls at `own`. `/api/health`'s `canEdit` (D-31) goes away with the preview.
+- **`GE_AUTH_MODE=none`** has no accounts: the local actor has `own` on everything, and the account routes answer 404.
 
 ## 8. Media and uploads
 
@@ -268,6 +279,7 @@ The system and orbit payloads have the same shape: the subject, its direct child
   4. Write the variants: `thumb` (256 px), `display` (1,600 px) and, for surface textures, `texture` (2:1, power-of-two width, at most 4,096 × 2,048).
   5. Deduplicate by the SHA-256 of the original.
 - Keys: `u/{universeId}/{assetId}/{variant}.webp`. The API's `/media/*` serves only keys of that shape (development and tests).
+- **Private universes' files are private too (M8, D-34):** a file is served only to a request with at least `read` on its universe, else 404. In production Caddy still serves the files, after asking the API (`forward_auth` to `GET /api/v1/media-access`, which reads the universe from the key and the viewer from the cookies). Files of a `public` universe are cached publicly; the others are sent `Cache-Control: private`. Uploads need `edit`, and count against the owner's media quota.
 - An entity's images carry their asset (`ImageRead.asset`: URLs, size, alt text, credit), so readers draw the gallery from one response.
 - Every asset carries `altText`, `credit`, `sourceUrl` and `license` (A5). The UI shows the credit wherever the image appears.
 
@@ -291,11 +303,13 @@ The system and orbit payloads have the same shape: the subject, its direct child
 | | Drafts (`status = 'draft'`) | Spoilers (`is_spoiler` / `spoiler` flags) |
 |---|---|---|
 | Are they secret? | Yes: unpublished work | No: readers may choose to see them |
-| Where filtered | **Server**. Anonymous requests never receive drafts, nor descendants of draft objects or maps, nor a universe whose maps are all drafts (M8-T10). | **Client**, by default. The API returns content with its flags, and the UI blacks it out (instant toggle, no refetch). |
+| Where filtered | **Server**. Requests without `edit` access (M8; locally, none) never receive drafts, nor descendants of draft objects or maps. | **Client**, by default. The API returns content with its flags, and the UI blacks it out (instant toggle, no refetch). |
 | Server option | `includeDrafts=true` for editors | `spoilers=exclude` makes the server apply the same `redactEntity()` from `@ge/domain` (used by search snippets, SEO pages and cautious API clients) |
 | Edit mode | drafts shown with a "Draft" badge | everything shown, with spoiler content marked |
 
 One redaction implementation (`packages/domain/src/spoilers/`) serves the page text (`<Redactable>`), the 3D labels (`labelText()`), view payloads and server-side exclusion.
+
+**From M8 there is a third layer above both: who may reach the universe at all** (D-34, data-model §8). A universe is private, link-only or public, and a request has `none`, `read`, `edit` or `own` access to it. Drafts are then "content that needs `edit`", and spoilers work as before for whoever can read.
 
 ## 11. Configuration
 
@@ -343,7 +357,7 @@ CI runs everything except `pnpm perf`. CI has no real GPU, so performance is mea
 ```
 Internet ──443──▶ Caddy (auto HTTPS, security headers)
                    ├── /            → web build (static SPA, hashed assets, long cache)
-                   ├── /media/*     → media volume (read-only)
+                   ├── /media/*     → media volume (read-only), after forward_auth to the API (§8)
                    └── /api/*       → api:3000 (Fastify) ──▶ postgres:5432 (volume: pgdata)
                                            └── writes media volume
 backup (cron container): nightly pg_dump + media archive ──▶ DigitalOcean Spaces (30-day retention)

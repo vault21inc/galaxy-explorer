@@ -32,6 +32,7 @@ To change a decision, edit its entry, keep the old text on a `Superseded:` line,
   - Groups can nest.
   - An object can belong to one group of each group type. Separate layers, such as administrative and political, can therefore overlap.
 - **T6 Who edits.** Lean: only the owner. Login with a password and two-factor codes comes before going public; roles come later. The local proof of concept has no login. See D-15.
+  - Changed 2026-11-13 (D-34): the public site has invited accounts, each building its own universes, private until shared or published. Locally there is still no login.
 
 ### Universe and data model
 
@@ -184,6 +185,7 @@ To change a decision, edit its entry, keep the old text on a `Superseded:` line,
   - Locally: `GE_AUTH_MODE=none`, with the API bound to 127.0.0.1.
   - In production: one owner account with an argon2id-hashed password, TOTP two-factor codes and a session cookie.
   - LLM agents use scoped API tokens.
+  - Changed 2026-11-13 (D-34): production has several accounts, by invitation, each signing in the same way (argon2id, TOTP, a session cookie); a token acts for the account that made it.
 - **D-16 Media.**
   - Uploaded files live on a local disk volume behind a `BlobStore` interface; S3 or DigitalOcean Spaces can come later.
   - sharp re-encodes every upload, which strips metadata, and generates size variants.
@@ -259,6 +261,7 @@ To change a decision, edit its entry, keep the old text on a `Superseded:` line,
   - **Guided tours (M8-T10):** two short tours, built last, once the views and tools they show have settled. Written earlier, they would be rewritten every milestone.
     - **The reader tour** runs on the map being viewed and changes nothing: moving around, selecting and the panel, labels, spoilers, the List, groups and layers, entering a system and a planet, the events list and search.
     - **The editor tour**, for the owner, runs in a **practice universe**: the demo universe's content (the demo seed, run into a new universe), whose maps are drafts so readers never see it. It covers edit mode and the toolbar; adding, moving and editing an object; box-select and grouping; undo and History; the settings page and map settings; regions and routes; and editing inside a system and on a globe. At the end it offers to delete the practice universe.
+      - Changed 2026-11-13 (D-34): the editor tour is for any signed-in account, and its practice universe is private to that account, not hidden by draft maps.
   - **Tours are data:** a tour registry lists each tour's steps. A step names its target (a control marked `data-tour`, or an object found through the scene index), its text, and what completes it: Next, or doing the thing itself, such as pressing L. A step whose feature or target is missing (no explorable system on this map, or search before M7-T6) is skipped, so a tour never points at nothing.
   - **Offered, never forced:** a dismissible "Take the tour" prompt on a reader's first visit and on the owner's first time in edit mode, remembered per browser. Both tours stay in the Help menu. Steps are non-modal popovers that keyboard and screen-reader users can follow. Highlights are DOM drawn over the canvas, so tours add no draw calls, and nothing renders while a step waits.
   - From M8-T10 on, a task that adds or changes a user-facing feature adds or updates its tour step, as part of AGENTS.md's definition of done.
@@ -277,3 +280,23 @@ To change a decision, edit its entry, keep the old text on a `Superseded:` line,
   - **CI checks behaviour:** what's drawn, where, and what happens on a click, through `window.__GE_TEST__`. Tests heavy on the GPU get more time there (`test.slow()`). The one that measured speed (ambient motion's frames a second) keeps its upper bound everywhere, but its lower bound applies only with a GPU (`metadata.softwareRendering` in playwright.config.js).
   - **`pnpm perf` checks speed and memory** on the reference Mac, against every row of rendering.md §2. That includes the leak tests (20 galaxy ↔ system and 20 galaxy → system → orbit round trips), which moved out of CI, and since M6-T8 the orbit view's frame times, draw calls and transitions. Each milestone's report is committed in `docs/perf/`.
   - **Not even locally in e2e:** the full local e2e run has four workers in two browsers, so a speed check there measures the machine's load too. M6-T2's "a slider updates the globe within 200 ms" failed that way (257 ms beside other tests, 7 ms alone) and moved to `pnpm perf` on 2026-11-13. The e2e test still checks that the preview happens.
+- **D-34 Accounts, private universes and sharing** (2026-11-13, the owner's questions about an admin interface for users and maps private to a user; the four calls below are the owner's).
+  - It replaces "only the owner edits" (T6) and "one owner account" (D-15) for the public site, and two non-goals: "reader accounts" and "several people editing".
+  - **Accounts are by invitation.** An admin makes a single-use invite link and passes it on. The person chooses a username and a password and sets up two-factor codes. There is no open sign-up and no mail server: a forgotten password or a lost authenticator is fixed with a reset link from an admin.
+  - **Two site roles:** `admin`, who manages accounts and the installation, and `member`. Every account can create universes, so every account has two-factor codes. The first admin is made on the server's command line.
+  - **A universe belongs to one account, its owner,** and is one of:
+    - **private:** only the owner and the accounts it's shared with;
+    - **link-only:** anyone with its share link can read it, and it isn't listed or indexed;
+    - **public:** listed on the home page and readable by everyone.
+
+    New universes start private. Maps and entities keep `draft` and `published`: drafts are for those who can edit the universe.
+  - **Why universes and not maps:** a universe's characters, settings tables, images and history already belong to it, so one check per universe covers everything inside. A private map in a shared universe would share all of those with people who can't see the map. A map can still be kept back as a draft.
+  - **Sharing:** the owner adds other accounts by username, as **editors** (change content, see drafts, use History) or **viewers** (read a private universe). Only the owner changes the universe's address, visibility and members, transfers it or deletes it.
+  - **No live co-editing:** editors save one at a time, as today, with versions and the conflict dialog. The non-goal "several people editing at the same time" narrows to that.
+  - **Admins manage accounts, not content.** The admin screens list accounts and universes (owner, visibility, size). An admin can invite, disable an account, issue a reset link, set a media quota, transfer or delete a universe, and make a universe private (a takedown). They don't open other accounts' private universes. Each of these actions is recorded (`access_events`). Whoever runs the server can still read its database; the app just doesn't make it casual.
+  - **Hidden means "not found":** a universe someone can't read answers 404 on every route, its media files included, never 403. A 403 is for someone who can read it but not do that.
+  - **Addresses stay global:** a universe is still `/u/{slug}`, first come, first served, not `/u/{account}/{slug}`. Existing links keep working, at the cost that a taken slug reveals that some universe has that address.
+  - **Unowned universes** (`owner_id` null) are the installation's own: admins edit them. Local development (`GE_AUTH_MODE=none`) stays as it is: no accounts, everything editable.
+  - **Tokens act for an account.** An API token belongs to the account that made it and can do no more than that account, narrowed to `read` or `write` and optionally to one universe. Account and admin actions always need a signed-in session.
+  - **Built in M8,** before anything is public, so login is written once and ownership is in the database before content moves to production: M8-T1 becomes accounts and login, and M8-T11 to M8-T13 add ownership and access checks, sharing, and the account and admin screens.
+  - **Not included:** open sign-up, email, sign-in through other services, recovery codes, teams or organizations, permissions per map or per object, comments, reading progress, billing.

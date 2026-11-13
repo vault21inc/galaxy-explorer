@@ -23,8 +23,9 @@ What the app looks like and how it responds to the mouse, trackpad, touch and ke
   - breadcrumbs (the subject's ancestors, each clickable);
   - search / command palette (M7);
   - the spoiler toggle;
-  - the edit toggle, owner only;
-  - Help: the keyboard shortcuts (M4-T9), and from M8-T10 the guided tours (§12).
+  - the edit toggle, for those who may edit this universe (locally, everyone; from M8, its owner and editors, §13);
+  - Help: the keyboard shortcuts (M4-T9), and from M8-T10 the guided tours (§12);
+  - from M8, the account menu (§13), or "Sign in".
 - **Right panel:** about 380 px wide, collapsible. It shows the selection's details, or for several selected items, a summary with bulk actions. On screens narrower than 768 px it becomes a bottom sheet.
 - **Left outliner:** a tree of the current view's contents, grouped by group. It's always available in edit mode, and in view mode through a "List" button. It is also the accessible alternative to the canvas (§10). The History and Map settings panels open in its place, one at a time; closing them brings the outliner back.
 - **Bottom toolbar:** edit mode only.
@@ -34,7 +35,7 @@ What the app looks like and how it responds to the mouse, trackpad, touch and ke
 
 | | View mode | Edit mode |
 |---|---|---|
-| Who | everyone (public) | the owner (no login locally; login in production, M8) |
+| Who | everyone who can read the universe | locally, everyone (no login); from M8, the universe's owner and editors (§13) |
 | Toggle | — | ✎ button or `E` |
 | Plain left-drag on empty space | rotates the camera | draws a selection box |
 | Left-drag on a selected object | rotates the camera | moves the object |
@@ -226,7 +227,47 @@ D-30 has the reasoning.
   - Edit-mode commands appear only for someone who may edit, and the current mode's section comes first.
 - **Guided tours (M8-T10):** two short tours, each a few steps that point at the real controls.
   - **Reader tour:** moving around, selecting, labels, spoilers, the List, groups and layers, entering a system and a planet, events and search. It runs on the map being viewed and changes nothing.
-  - **Editor tour** (owner): adding, moving and editing objects, grouping, undo and History, settings, regions and routes, and editing in a system and on a globe. It runs in a practice universe of demo content that readers never see, and offers to delete it at the end.
-  - **Offered, never forced:** a dismissible prompt on a reader's first visit and on the owner's first time in edit mode, remembered per browser. Both tours stay in the Help menu.
+  - **Editor tour** (anyone signed in): adding, moving and editing objects, grouping, undo and History, settings, regions and routes, and editing in a system and on a globe. It runs in a practice universe of demo content, private to the account taking it (§13), and offers to delete it at the end.
+  - **Offered, never forced:** a dismissible prompt on a reader's first visit and on an account's first time in edit mode, remembered per browser. Both tours stay in the Help menu.
   - **A step** is a non-modal popover beside its target, labelled with its number ("Tour, step 3 of 10"), with Back, Next and End; Esc ends the tour. Some steps wait for you to do the thing, such as pressing L. A step whose feature or target is missing is skipped.
   - **Accessible:** the popover takes focus and reads as text, every step's action has a keyboard path (often the List), and the highlight is visual only. With `prefers-reduced-motion`, nothing animates.
+
+## 13. Accounts, sharing and admin (M8)
+
+D-34 has the reasoning; data-model §8 has the access rule. None of this exists locally, where there is no login.
+
+- **Signing in:** `/login` asks for the username, the password and a two-factor code. A wrong try says only that it didn't work. "Forgot your password or lost your codes? Ask an admin for a reset link."
+- **An invite or reset link** (`/link/{token}`) opens a short form:
+  1. Choose a username (an invite) and a password, with its rules shown as they're met.
+  2. Scan the QR code with an authenticator app (the secret is also shown as text), then type one code to prove it works.
+
+  Only then is the account made, or changed, and the link used up. An expired or used link says so and what to do.
+- **The account menu,** at the top bar's right end, shows the username and opens: Account, Admin (admins only) and Sign out. Signed out, it's a "Sign in" link.
+- **The home page:**
+  - signed out: the public universes;
+  - signed in: **Your universes**, then **Shared with you** (each with the role), then the public ones.
+
+  Each card shows a small badge for Private or Link-only, and "by {owner}" for universes that aren't yours. "New universe" needs an account, and the new universe starts private.
+- **Account page** (`/account`):
+  - **Password:** change it, with the current one and a code.
+  - **Signed-in devices:** each session with its browser and last use, and "Sign out" for each or for all others.
+  - **API tokens** (M8-T2): create one (name, read or write, optionally one universe), shown once; list with last use; revoke.
+  - **Storage:** how much of the media quota is used, by universe.
+- **Sharing a universe:** a **Sharing** section on its settings page, shown to its owner.
+  - **Who can see it:** three choices, each with one line saying what it means: Private, Anyone with the link, Public. Making it public asks to confirm, and says how many drafts stay hidden.
+  - **The link** (when link-only): the address with its key, a Copy button, and "Make a new link", which stops the old one working.
+  - **People:** a list of accounts with their role (Editor or Viewer) and a remove button; "Add" takes an exact username. A name that doesn't exist says so; nothing suggests or lists other accounts.
+  - **Transfer** to another account, and **Delete**, each behind a confirmation that asks for the universe's name and a current two-factor code.
+- **What the others see:**
+  - an **editor** gets edit mode and everything in it; the Sharing section is read-only for them, with "Leave this universe";
+  - a **viewer** reads, with no edit toggle and no drafts;
+  - anyone else gets the ordinary "not found" page, with "Sign in" if they aren't signed in. It never says that something private is there.
+- **A shared link** (`/u/{slug}?k={key}`) opens the universe for anyone. The key stays in the address while they move around, so the address bar can be passed on.
+- **Who did what:** History shows each change's account (or "token: name, for account"), as it showed "local" before.
+- **Admin screens** (`/admin`), for admins:
+  - **Accounts:** a table of username, role, last sign-in, universes owned, storage used of quota, and status. Actions: Invite (member or admin; shows the link once, to copy), Reset link, Disable or Enable, Change role, Set quota, Delete (only once it owns nothing).
+  - **Universes:** a table of name, owner, visibility, objects, storage and last change. Actions: Transfer, Make private, Delete. It doesn't open a universe the admin couldn't open anyway.
+  - **Log:** the account and access changes, newest first: who, what, to whom or what, when.
+
+  Disabling, deleting, transferring, a role change and a reset link each ask for a current two-factor code.
+- **Accessible like the rest** (§10): these are ordinary pages and tables with labelled controls, keyboard paths and focus kept on dialogs; the QR code has the secret as text beside it.
