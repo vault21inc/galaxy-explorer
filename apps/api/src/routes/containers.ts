@@ -46,6 +46,10 @@ import { NotFound } from '../services/errors.ts';
 import { problem } from '../http/problems.ts';
 import { viewerFor } from '../services/visibility.ts';
 import { routeAccess } from '../http/access-guard.ts';
+import type { AuthContext } from '../auth/context.ts';
+import { requireFreshTotp, requireSession } from '../auth/requester.ts';
+import { recordAccessEvent } from '../services/access-events.ts';
+import { setVisibility } from '../services/sharing-service.ts';
 
 /** Universes and maps: the containers everything else lives in (data-model §3.1). */
 
@@ -59,7 +63,10 @@ const UNIVERSE_DOC =
 const MAP_DOC =
   'One galaxy at one point in time (U7); cloning a map makes another era. Map-scoped entities (objects, groups, places, events) belong to one map. `isSpoiler` hides the whole map from readers who hide spoilers.';
 
-export const containerRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, { db }, done) => {
+export const containerRoutes: FastifyPluginCallbackZod<{
+  db: Database;
+  auth: AuthContext | null;
+}> = (app, { db, auth }, done) => {
   /** Universes as this requester sees them, spoilers redacted if asked. */
   const reads = async (
     ex: Executor,
@@ -132,6 +139,8 @@ export const containerRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app,
           .type('application/problem+json')
           .send(problem(404, `No universe at /u/${slug}.`));
       }
+      // Private and link-only universes are kept out of search engines (M8-T12).
+      if (data.visibility !== 'public') void reply.header('x-robots-tag', 'noindex');
       return { data };
     },
   );
@@ -194,7 +203,7 @@ export const containerRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app,
       schema: {
         ...universeTag,
         summary: 'Update a universe',
-        description: `${UNIVERSE_DOC} Its owner alone changes its address (\`slug\`) and \`visibility\`: \`private\`, \`link\` (anyone with the share link) or \`public\`.`,
+        description: `${UNIVERSE_DOC} Its owner alone changes its address (\`slug\`) and \`visibility\`: \`private\`, \`link\` (anyone with the share link, \`/u/{slug}?k={shareKey}\`) or \`public\`. A visibility isn't content: it isn't in History and can't be reverted, and it's recorded in the access log instead (M8-T12).`,
         operationId: 'universes.update',
         ...routeAccess({ scope: 'universe', ownFields: ['slug', 'visibility'] }),
         params: universeParams,
@@ -204,9 +213,21 @@ export const containerRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app,
     },
     async (request, reply) => {
       const { universeId } = request.params;
-      const data = await inBatch(db, request, reply, 'Edit universe', { universeId }, async (tx) =>
-        one(await reads(tx, request, [await updateUniverse(tx, universeId, request.body)])),
-      );
+      const { visibility, version: _version, ...content } = request.body;
+      // Who may see it is changed in a browser, never with an API token (M8-T2).
+      if (visibility !== undefined) await requireSession(auth)(request);
+      const apply = async (tx: Executor) => {
+        await updateUniverse(tx, universeId, request.body);
+        if (visibility !== undefined) {
+          await setVisibility(tx, request.requester, universeId, visibility);
+        }
+        return one(await reads(tx, request, [await getUniverse(tx, universeId)]));
+      };
+      // Only a visibility: nothing for History to show or undo (D-41), so no change batch.
+      const data =
+        visibility !== undefined && Object.keys(content).length === 0
+          ? await db.transaction(apply)
+          : await inBatch(db, request, reply, 'Edit universe', { universeId }, apply);
       return { data };
     },
   );
@@ -217,18 +238,27 @@ export const containerRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app,
       schema: {
         ...universeTag,
         summary: 'Delete a universe and everything in it',
-        description: `${UNIVERSE_DOC} Only its owner may.`,
+        description: `${UNIVERSE_DOC} Only its owner may, signed in, with a current two-factor code in \`X-GE-TOTP\` (M8-T12). It can't be undone.`,
         operationId: 'universes.delete',
         ...routeAccess({ scope: 'universe', level: 'own' }),
         params: universeParams,
         body: versionBody,
         response: { 204: z.null(), ...problemResponses },
       },
+      preHandler: [requireSession(auth), requireFreshTotp(auth)],
     },
     async (request, reply) => {
-      await inBatch(db, request, reply, 'Delete universe', {}, (tx) =>
-        deleteUniverse(tx, request.params.universeId, request.body.version),
-      );
+      const { universeId } = request.params;
+      await inBatch(db, request, reply, 'Delete universe', {}, async (tx) => {
+        const universe = await getUniverse(tx, universeId);
+        // Recorded first: the row keeps the names once the universe's id is gone.
+        await recordAccessEvent(tx, request.requester, {
+          action: 'universe.delete',
+          universeId,
+          detail: { slug: universe.slug, name: universe.namePlain },
+        });
+        await deleteUniverse(tx, universeId, request.body.version);
+      });
       return reply.code(204).send(null);
     },
   );

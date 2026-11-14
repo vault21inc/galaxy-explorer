@@ -4,8 +4,13 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { actorOf } from '../http/batch.ts';
 import { envelope, listQuery, page, problemResponses } from '../http/schemas.ts';
-import { RevertConflicts } from '../services/errors.ts';
-import { findRevertConflicts, getBatchDetail, listHistory } from '../services/history-service.ts';
+import { RevertConflicts, RuleViolation } from '../services/errors.ts';
+import {
+  findRevertConflicts,
+  getBatchDetail,
+  listHistory,
+  makesOrDeletesUniverse,
+} from '../services/history-service.ts';
 import { routeAccess } from '../http/access-guard.ts';
 
 /** History: list batches, see what one changed, and revert it (data-model §9). */
@@ -122,7 +127,7 @@ export const historyRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, {
       schema: {
         tags: ['history'],
         summary: 'Revert a change (undo), or revert a revert (redo)',
-        description: `${HISTORY_DOC} If anything the batch touched has changed since, nothing is reverted and the 409 response lists the conflicting entities in \`conflicts\`.`,
+        description: `${HISTORY_DOC} If anything the batch touched has changed since, nothing is reverted and the 409 response lists the conflicting entities in \`conflicts\`. With accounts, a batch that made or deleted a universe can't be reverted (422); who can see a universe isn't in History at all.`,
         operationId: 'history.revert',
         params: batchParams,
         response: {
@@ -133,6 +138,12 @@ export const historyRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, {
     },
     async (request, reply) => {
       const { batchId } = request.params;
+      // With accounts, a universe is deleted only from its settings, with its name and a code.
+      if (request.requester.kind !== 'local' && (await makesOrDeletesUniverse(db, batchId))) {
+        throw new RuleViolation(
+          'Making or deleting a universe can’t be undone from History. To remove it, delete it from its settings page.',
+        );
+      }
       try {
         const reverted = await revertBatch(db, batchId, actorOf(request));
         void reply.header('x-ge-batch-id', reverted.batchId);

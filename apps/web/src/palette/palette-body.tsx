@@ -1,6 +1,6 @@
 import { entityKinds } from '@ge/domain';
 import { useEffect, useId, useState, type KeyboardEvent } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import { useSearch, type SearchResult } from '@/api/search.ts';
 import { useUniverseRoute } from '@/app/use-universe-route.ts';
 import { useCanEdit } from '@/editor/use-can-edit.ts';
@@ -11,6 +11,7 @@ import { showEntity } from '@/state/show-entity.ts';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { hasViewNavigator, viewPath } from '@/state/view-navigator.ts';
 import { commandMatches, paletteCommands, type PaletteCommand } from './palette-commands.ts';
+import { KEPT_PARAMS, keptSearch } from '@/lib/kept-params.ts';
 
 /** How long typing pauses before the words are searched. */
 const SEARCH_DELAY_MS = 150;
@@ -26,6 +27,7 @@ type Item =
 export function PaletteBody({ onDone }: { onDone: () => void }) {
   const listId = useId();
   const navigate = useNavigate();
+  const location = useLocation();
   const { universeSlug, mapSlug } = useParams();
   const route = useUniverseRoute(universeSlug ?? '');
   const ready = universeSlug !== undefined && route.status === 'ready' ? route : null;
@@ -57,7 +59,11 @@ export function PaletteBody({ onDone }: { onDone: () => void }) {
     canEdit,
     editing,
     showAll: policy.showAll,
-    navigate: (path) => void navigate(path),
+    // A share link's key stays in the address within its universe (M8-T12), as between views.
+    navigate: (path) => {
+      const within = universeSlug !== undefined && path.startsWith(`/u/${universeSlug}/`);
+      void navigate(`${path}${keptSearch(location.search, {}, within ? KEPT_PARAMS : ['perf'])}`);
+    },
   }).filter((command) => commandMatches(command.label, query));
   const results = query.trim() === '' ? [] : (search.data ?? []);
   const items: Item[] = [
@@ -82,7 +88,9 @@ export function PaletteBody({ onDone }: { onDone: () => void }) {
     const map = ready?.maps.find((item2) => item2.id === result.mapId) ?? ready?.maps[0];
     if (!universeSlug || !map) return;
     const subject = result.kind === 'celestial_object' ? result.parentId : null;
-    void navigate(`${viewPath(universeSlug, map.slug, subject)}?select=${result.id}`);
+    void navigate(
+      `${viewPath(universeSlug, map.slug, subject)}${keptSearch(location.search, { select: result.id })}`,
+    );
   };
 
   const onKeyDown = (event: KeyboardEvent) => {

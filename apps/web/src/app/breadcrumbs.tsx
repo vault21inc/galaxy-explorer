@@ -6,6 +6,7 @@ import { labelText, type Nameable } from '@/render/labels/label-text.ts';
 import { useNavigation } from '@/state/navigation.ts';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { viewNavigation, viewPath } from '@/state/view-navigator.ts';
+import { keptSearch } from '@/lib/kept-params.ts';
 
 interface BreadcrumbsProps {
   universeSlug: string;
@@ -36,8 +37,7 @@ export function Breadcrumbs({ universeSlug, mapSlug, mapId }: BreadcrumbsProps) 
   if (view.data) {
     for (const item of [...view.data.ancestors, view.data.subject]) names.set(item.id, item);
   }
-  const perf = searchParams.get('perf');
-  const kept = perf === null ? '' : `?perf=${encodeURIComponent(perf)}`;
+  const kept = keptSearch(searchParams.toString());
   const crumbs = entries.length > 0 ? entries : [{ level: 'galaxy', subjectId: mapId }];
 
   return (

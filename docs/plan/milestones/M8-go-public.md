@@ -168,8 +168,36 @@
 - **The Sharing section** of the universe's settings page (ux.md §13): Who can see it, the link with Copy and "Make a new link", People, Transfer and Delete. Editors see it read-only, with "Leave this universe".
 
 **Done when:**
-- [ ] Integration tests: adding, changing and removing members; a member leaving; only the owner managing; an unknown username; the unlock cookie reading a link-only universe and failing after the key is replaced; transfer with and without room in the quota; each change's `access_events` row.
-- [ ] E2E, with separate browser contexts: the owner adds a viewer and an editor; the viewer reads but has no edit toggle and sees no drafts; the editor edits, and History shows their name; a signed-out browser opens the share link, keeps the key while entering a system, and gets "not found" once the link is replaced.
+- [x] Integration tests: adding, changing and removing members; a member leaving; only the owner managing; an unknown username; the unlock cookie reading a link-only universe and failing after the key is replaced; transfer with and without room in the quota; each change's `access_events` row.
+- [x] E2E, with separate browser contexts: the owner adds a viewer and an editor; the viewer reads but has no edit toggle and sees no drafts; the editor edits, and History shows their name; a signed-out browser opens the share link, keeps the key while entering a system, and gets "not found" once the link is replaced.
+
+**As built:**
+- **Where:** the routes are `routes/sharing.ts` and the universe's `PATCH` and `DELETE` in `routes/containers.ts`; the work is `services/sharing-service.ts`, and the log `services/access-events.ts`. The web app's section is `pages/universe-settings/` (`sharing-section.tsx` and one file per part), with its hooks in `api/sharing.ts`.
+- **Who may reach a universe isn't content (D-41).** Found while building this: universes are audited, so an editor could have reverted, through History, the batch that made a universe private, or the one that handed it over, or the one that created it (which deletes it). Now:
+  - migration 0009 leaves `owner_id`, `visibility` and `share_key` out of History: an update that changes only those isn't logged and needs no change batch, a revert compares rows without them, and a row written back keeps their current values;
+  - changing only the visibility makes no batch and doesn't bump the version;
+  - with accounts, History refuses to revert a batch that made or deleted a universe (422): it's deleted only from its settings, with its name and a code.
+- **Routes:**
+  - `GET /universes/{universeId}/members` needs `edit`, since editors see the section read-only; `PUT` and `DELETE …/members/{username}` need `own`.
+  - **Leaving is its own route,** `DELETE /universes/{universeId}/membership`, at `read`, rather than `DELETE …/members/{yourself}`. The contract suite gives each route one level, and "the owner, or yourself" isn't one. The owner can't leave (422).
+  - `POST …/share-key` (own), `POST …/transfer` (own, with `X-GE-TOTP`), and `POST /universes/unlock` (open).
+  - `GET /universes/{universeId}/drafts` (edit) is new: it counts draft maps and entries, for "Make it public?".
+  - These routes need a signed-in session (`requireSession`), as does a `PATCH` that changes the visibility. M8-T2's tokens won't reach them.
+  - Removing someone who isn't a member is a 404 that says so. Adding the owner as a member, or transferring to the owner, is a 422.
+- **The share link:**
+  - `UniverseRead` gains `shareKey`, sent only to the owner, and `role`, the requester's membership.
+  - Unlocking sets `ge_share_{universeId}` (`HttpOnly`, `SameSite=Lax`, 30 days). The requester hook reads every such cookie, and `universeAccess` compares each with the current key.
+  - The web app unlocks when the address has `k`, and falls back to the address lookup if the key is old.
+  - `k` is kept with `perf` by one helper (`lib/kept-params.ts`): between views, maps, the palette's commands and the `/u/{slug}` redirect. It's dropped when going to another universe.
+- **`noindex`:** the access guard, `by-slug`, `unlock` and the media files send `X-Robots-Tag: noindex` for private and link-only universes. The page also gets a `<meta name="robots">` while one is on screen, because crawlers judge the HTML.
+- **Transfer:** the new owner's quota must fit the universe's images. The previous owner becomes an editor (for an unowned universe, the admin who handed it over does), and the new owner's membership goes.
+- **Deleting a universe** needs a fresh code, and is logged with its slug and name, which stay after its id becomes null. Locally there's no code, and the Sharing section offers only Delete, which the settings page had no button for before.
+- **Viewers** don't see the settings page: it says whose the universe is, with "Leave this universe".
+- **Tests:**
+  - **Integration:** `apps/api/test/sharing.int.test.ts` (9 tests), covering each item above. It also checks that an editor can't revert a universe's creation, that undoing an edit after a visibility change keeps the visibility, the `noindex` headers, and the drafts count.
+  - **The contract suite** knows `{username}`, and data-model §8's rule for the new routes. It shares the universe again after every write, since an allowed request may remove a member.
+  - **E2E:** `e2e/sharing.spec.ts`, and Delete in `universe-settings.spec.ts` (no accounts). Delete and Transfer aren't run end to end with accounts: the test's sign-in already used the next 30-second step's code, so a fresh one would mean waiting up to 30 seconds. The integration tests cover both.
+  - **Unit:** `test/kept-params.test.ts`.
 
 ### M8-T13 Account page and admin screens
 

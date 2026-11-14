@@ -24,6 +24,25 @@ export class NotFound extends Error {
   }
 }
 
+/**
+ * No account has this username (M8-T12): a 404 that says so. Sharing takes exact usernames
+ * only, and nothing lists or suggests accounts (ux.md §13).
+ */
+export class NoSuchAccount extends NotFound {
+  constructor(username: string) {
+    super('account', username);
+    this.message = `No account is called “${username}”. Check the spelling: it must be exact.`;
+  }
+}
+
+/** The account isn't one this universe is shared with (M8-T12): 404. */
+export class NotAMember extends NotFound {
+  constructor(username: string) {
+    super('member', username);
+    this.message = `This universe isn’t shared with ${username}.`;
+  }
+}
+
 /** The client edited an old version: 409, with the current record so it can merge. */
 export class VersionConflict extends Error {
   override readonly name = 'VersionConflict';

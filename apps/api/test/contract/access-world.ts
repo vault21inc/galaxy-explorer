@@ -1,5 +1,6 @@
 import { schema, withBatch, type Database } from '@ge/db';
 import { rt } from '@ge/domain';
+import { sql } from 'drizzle-orm';
 import type { ApiServer } from '../../src/server.ts';
 import { codeFor, makeAccount, ORIGIN, sessionOf, signIn } from '../auth/auth-world.ts';
 
@@ -39,6 +40,13 @@ export interface RowSet {
 
 export interface AccessWorld {
   universeId: string;
+  /** The username a `{username}` in a path stands for: the viewer, a member (M8-T12). */
+  memberUsername: string;
+  /**
+   * Shares the universe with the editor and the viewer again, as they were. Allowed requests may
+   * remove a member or leave (M8-T12); the suite calls this after every write.
+   */
+  restoreMembers: () => Promise<void>;
   /** Each role's `cookie` header (none for anonymous). */
   headers: Record<Role, Record<string, string>>;
   /** The rows each role's requests name: the editor's own set, the owner's for everyone else. */
@@ -227,14 +235,25 @@ export async function buildAccessWorld(db: Database, app: ApiServer): Promise<Ac
 
   const universe = await call('POST', '/universes', { slug: 'private', name: rt.plain('Private') });
   const universeId = universe.data.id as string;
-  await db.insert(schema.universeMembers).values([
-    { universeId, userId: accounts.editor.id, role: 'editor', addedBy: accounts.owner.id },
-    { universeId, userId: accounts.viewer.id, role: 'viewer', addedBy: accounts.owner.id },
-  ]);
+  const restoreMembers = async () => {
+    await db
+      .insert(schema.universeMembers)
+      .values([
+        { universeId, userId: accounts.editor.id, role: 'editor', addedBy: accounts.owner.id },
+        { universeId, userId: accounts.viewer.id, role: 'viewer', addedBy: accounts.owner.id },
+      ])
+      .onConflictDoUpdate({
+        target: [schema.universeMembers.universeId, schema.universeMembers.userId],
+        set: { role: sql`excluded.role` },
+      });
+  };
+  await restoreMembers();
   const ownerRows = await rowSet(db, call, universeId, 'owner');
   const editorRows = await rowSet(db, call, universeId, 'editor');
   return {
     universeId,
+    memberUsername: accounts.viewer.username,
+    restoreMembers,
     headers,
     rows: {
       anonymous: ownerRows,

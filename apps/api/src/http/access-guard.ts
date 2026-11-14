@@ -1,7 +1,7 @@
 import type { Database } from '@ge/db';
 import type { UniverseAccess } from '@ge/domain';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { accessTo, atLeast } from '../services/access.ts';
+import { accessFactsOf, atLeast, universeAccess } from '../services/access.ts';
 import { problem } from './problems.ts';
 import { namesUniverse, routeUniverse } from './route-universe.ts';
 
@@ -103,16 +103,23 @@ export function registerAccessGuard(app: FastifyInstance, db: Database): void {
     if (!found.found) return refuse(reply, 404, `No ${found.what} with id ${found.id}.`);
 
     let level: UniverseAccess;
+    let listed = true;
     if (found.universeId === null) {
       // A change batch that recorded no universe: only on your own machine, where all is yours.
       level =
         request.requester.kind === 'local' ? (request.requester.mayEdit ? 'own' : 'read') : 'none';
     } else {
-      level =
-        (await accessTo(db, request.requester, [found.universeId])).get(found.universeId) ?? 'none';
+      const facts = (await accessFactsOf(db, request.requester, [found.universeId])).get(
+        found.universeId,
+      );
+      level = facts ? universeAccess(request.requester, facts) : 'none';
+      listed = facts?.visibility === 'public';
     }
     // Hidden reads exactly like missing: nothing says that something is there.
     if (level === 'none') return refuse(reply, 404, `No ${found.what} with id ${found.id}.`);
+    // Private and link-only universes are kept out of search engines (M8-T12). Only now, after
+    // the 404: a hidden universe's answer must carry nothing a missing one's doesn't.
+    if (!listed) void reply.header('x-robots-tag', 'noindex');
 
     const body = request.body as Record<string, unknown> | undefined;
     const touchesOwnFields = access.ownFields?.some((field) => body?.[field] !== undefined);

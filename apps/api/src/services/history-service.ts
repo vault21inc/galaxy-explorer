@@ -169,3 +169,23 @@ export async function findRevertConflicts(
     };
   });
 }
+
+/**
+ * Whether a batch made or deleted a universe row (M8-T12). Reverting one would delete a
+ * universe, or bring a deleted one back, outside the owner's confirmation with its name and a
+ * two-factor code, so with accounts History refuses it (D-41).
+ */
+export async function makesOrDeletesUniverse(ex: Executor, batchId: string): Promise<boolean> {
+  const [row] = await ex
+    .select({ id: changeLog.id })
+    .from(changeLog)
+    .where(
+      and(
+        eq(changeLog.batchId, batchId),
+        eq(changeLog.tableName, 'universes'),
+        inArray(changeLog.op, ['INSERT', 'DELETE']),
+      ),
+    )
+    .limit(1);
+  return row !== undefined;
+}

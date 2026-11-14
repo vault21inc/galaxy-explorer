@@ -40,11 +40,34 @@ declare module 'fastify' {
   }
 }
 
-/** No share links unlocked: M8-T12 reads them from the browser's cookies. */
+/** No share links unlocked. */
 const NO_SHARE_KEYS: ReadonlyMap<string, string> = new Map();
 const ANONYMOUS: Requester = { kind: 'anonymous', shareKeys: NO_SHARE_KEYS };
 
 export const SESSION_COOKIE = 'ge_session';
+
+/**
+ * Share links (M8-T12): opening one (`POST /universes/unlock`) sets a cookie named for the
+ * universe, `ge_share_{universeId}`, holding the link's key. Every request carries the keys
+ * this browser has unlocked, and `universeAccess` compares each with its universe's current
+ * key, so a replaced link stops working for everyone at once.
+ */
+const SHARE_COOKIE_PREFIX = 'ge_share_';
+export const shareCookieName = (universeId: string) => `${SHARE_COOKIE_PREFIX}${universeId}`;
+/** How long a browser remembers a share link it opened; opening it again renews it. */
+export const SHARE_COOKIE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/** The share keys in a request's cookies, by universe id. */
+function shareKeysOf(cookies: Record<string, string | undefined>): ReadonlyMap<string, string> {
+  const keys = new Map<string, string>();
+  for (const [name, value] of Object.entries(cookies)) {
+    if (!name.startsWith(SHARE_COOKIE_PREFIX) || !value) continue;
+    const universeId = name.slice(SHARE_COOKIE_PREFIX.length);
+    if (UUID.test(universeId)) keys.set(universeId, value);
+  }
+  return keys.size === 0 ? NO_SHARE_KEYS : keys;
+}
 /** The header a request carries a current two-factor code in, for `requireFreshTotp`. */
 export const FRESH_TOTP_HEADER = 'x-ge-totp';
 
@@ -123,9 +146,10 @@ export function registerRequester(
     const { account } = request;
     request.actor = account ? { type: 'user', id: account.id, label: account.username } : null;
     request.canEdit = account !== null;
+    const shareKeys = shareKeysOf(request.cookies);
     request.requester = account
-      ? { kind: 'account', account, shareKeys: NO_SHARE_KEYS }
-      : { kind: 'anonymous', shareKeys: NO_SHARE_KEYS };
+      ? { kind: 'account', account, shareKeys }
+      : { kind: 'anonymous', shareKeys };
 
     // CSRF: browsers always send `Origin` with a write. One from another site is refused here,
     // and `SameSite=Lax` already keeps the cookie off most of them.
@@ -138,6 +162,21 @@ export function registerRequester(
       return refuse(reply, 401, 'Sign in to see drafts.');
     }
   });
+}
+
+/**
+ * A route guard for account, sharing and admin actions (architecture.md §7): they need someone
+ * signed in, in a browser. An API token (M8-T2) acts for its account in content, never here.
+ * With no accounts there's nobody to ask for, and nothing is checked.
+ */
+export function requireSession(auth: AuthContext | null) {
+  // A promise, without awaiting anything, so Fastify treats it as a finished hook.
+  return (request: FastifyRequest): Promise<void> => {
+    if (auth && (!request.account || !request.sessionId)) {
+      return Promise.reject(new NotSignedIn('Sign in to change who can see this universe.'));
+    }
+    return Promise.resolve();
+  };
 }
 
 /**

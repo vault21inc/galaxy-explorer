@@ -175,17 +175,21 @@ function universeOfKey(key: string): string | null {
  * `read` on its universe. Files of public universes may be cached by anyone; the others only
  * by the browser that asked (`Cache-Control: private`). Null: a 404.
  */
-async function mediaCacheControl(
+async function mediaHeaders(
   db: Database,
   request: FastifyRequest,
   key: string,
-): Promise<string | null> {
+): Promise<Record<string, string> | null> {
   const universeId = universeOfKey(key);
   if (!universeId) return null;
   const facts = (await accessFactsOf(db, request.requester, [universeId])).get(universeId);
   if (!facts || universeAccess(request.requester, facts) === 'none') return null;
-  // Files never change once written: a new upload is a new key.
-  return `${facts.visibility === 'public' ? 'public' : 'private'}, max-age=31536000, immutable`;
+  if (facts.visibility === 'public') {
+    // Files never change once written: a new upload is a new key.
+    return { 'cache-control': 'public, max-age=31536000, immutable' };
+  }
+  // Kept out of shared caches and search engines, like the universe (M8-T12).
+  return { 'cache-control': 'private, max-age=31536000, immutable', 'x-robots-tag': 'noindex' };
 }
 
 /**
@@ -205,7 +209,7 @@ export const mediaAccessRoutes: FastifyPluginCallbackZod<{ db: Database }> = (
         tags: ['assets'],
         summary: 'May this browser see a media file?',
         description:
-          'For the proxy in front of /media (Caddy’s forward_auth): reads the file’s path from `X-Forwarded-Uri`, such as `/media/u/{universeId}/{assetId}/display.webp`, and answers 204 with the `Cache-Control` to send if the requester can read its universe, else 404.',
+          'For the proxy in front of /media (Caddy’s forward_auth): reads the file’s path from `X-Forwarded-Uri`, such as `/media/u/{universeId}/{assetId}/display.webp`, and answers 204 with the `Cache-Control` (and, for a universe that isn’t public, `X-Robots-Tag`) to send if the requester can read its universe, else 404.',
         operationId: 'media.access',
         // It checks the file's universe itself, from the forwarded path.
         ...routeAccess({ scope: 'open' }),
@@ -216,11 +220,11 @@ export const mediaAccessRoutes: FastifyPluginCallbackZod<{ db: Database }> = (
       const uri = request.headers['x-forwarded-uri'];
       const path = typeof uri === 'string' ? (uri.split('?')[0] ?? '') : '';
       const key = path.startsWith('/media/') ? path.slice('/media/'.length) : '';
-      const cacheControl = await mediaCacheControl(db, request, key);
-      if (!cacheControl) {
+      const headers = await mediaHeaders(db, request, key);
+      if (!headers) {
         return reply.code(404).type('application/problem+json').send(problem(404, 'Not found.'));
       }
-      return reply.header('cache-control', cacheControl).code(204).send(null);
+      return reply.headers(headers).code(204).send(null);
     },
   );
   done();
@@ -239,15 +243,15 @@ export const mediaRoutes: FastifyPluginCallbackZod<{ db: Database; store: LocalB
 ) => {
   app.get('/media/*', { schema: { hide: true } }, async (request, reply) => {
     const key = (request.params as { '*': string })['*'];
-    const cacheControl = await mediaCacheControl(db, request, key);
-    const data = cacheControl ? await store.get(key) : null;
-    if (!cacheControl || !data) {
+    const headers = await mediaHeaders(db, request, key);
+    const data = headers ? await store.get(key) : null;
+    if (!headers || !data) {
       reply.callNotFound();
       return reply;
     }
     return reply
       .type('image/webp')
-      .header('cache-control', cacheControl)
+      .headers(headers)
       .header('x-content-type-options', 'nosniff')
       .send(data);
   });

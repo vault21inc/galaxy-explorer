@@ -260,9 +260,10 @@ D-34 has the reasoning; data-model §8 has the access rule. None of this exists 
   - **The link** (when link-only): the address with its key, a Copy button, and "Make a new link", which stops the old one working.
   - **People:** a list of accounts with their role (Editor or Viewer) and a remove button; "Add" takes an exact username. A name that doesn't exist says so; nothing suggests or lists other accounts.
   - **Transfer** to another account, and **Delete**, each behind a confirmation that asks for the universe's name and a current two-factor code.
+  - **On your own machine** (no accounts) the section offers only Delete, asking for the name alone (M8-T12).
 - **What the others see:**
   - an **editor** gets edit mode and everything in it; the Sharing section is read-only for them, with "Leave this universe";
-  - a **viewer** reads, with no edit toggle and no drafts;
+  - a **viewer** reads, with no edit toggle and no drafts; the settings page tells them whose the universe is, with "Leave this universe" (M8-T12);
   - anyone else gets the ordinary "not found" page, with "Sign in" if they aren't signed in. It never says that something private is there.
 - **A shared link** (`/u/{slug}?k={key}`) opens the universe for anyone. The key stays in the address while they move around, so the address bar can be passed on.
 - **Who did what:** History shows each change's account (or "token: name, for account"), as it showed "local" before.

@@ -470,6 +470,7 @@ create table api_tokens (
 ```
 
 - **The migration** gives existing universes `visibility = 'public'` and no owner, so an installation that had no accounts behaves as before; new universes start `private` and belong to the account that made them.
+- **As built in M8-T12:** `access_events` has an index on `universe_id` too, and its actions are `ACCESS_EVENT_ACTIONS` in `@ge/domain` (no check constraint, since M8-T13 adds more). A deleted universe's events keep its slug and name in `detail`.
 - **As built in M8-T1:** `sessions` has an `id` and `last_seen_at`, and `users` has `totp_last_step`. The link steps keep nothing in `account_links` between them: `start` returns the chosen username, the password's hash and the new two-factor secret sealed by the API, and `finish` opens them (M8-T1's as-built notes).
 - **A token** can do what its account can at the moment of each request, no more: narrowed by its scopes and, if set, to one universe. There is no admin scope: account and admin actions need a session.
 - **Media quota:** the sum of `assets.byte_size` over the universes an account owns. An upload that would pass it is refused with a 413 that says how much is used. Uploads by an editor count against the universe's owner.
@@ -639,6 +640,7 @@ When redaction removes content (`spoilers=exclude`), a hidden text keeps its sha
 - **Lists show only what the requester can read:** `GET /universes` returns public universes, plus the requester's own and those shared with them. A `link` universe is never listed for someone who only has its key.
 - **Media follow their universe:** a file under `u/{universeId}/…` is served only to someone with at least `read` there (architecture §8).
 - **As built (M8-T11, D-40):** the API checks this in one hook in front of every route, from the rows the path names; the batch endpoint checks each operation's rows. The access contract suite tries every route in the OpenAPI document as each kind of requester.
+- **Sharing (M8-T12):** the members list and the drafts count need `edit`, since editors see the Sharing section read-only. Leaving (`DELETE …/membership`) needs only `read`, so a viewer can leave too. The owner's share key is in `UniverseRead.shareKey`, null for everyone else. Who may reach a universe isn't in History (D-41, §9).
 
 ## 9. History: batches, audit trigger, revert
 
@@ -676,6 +678,8 @@ create trigger ge_audit after insert or update or delete on celestial_objects
 ```
 
 The trigger is not attached to `change_batches`, `change_log`, or the account tables (`users`, `sessions`, `api_tokens`, `account_links`, `universe_members`, `access_events`): who may reach a universe isn't content, and isn't undone with it. A consistency test lists every table and fails if a content table lacks the trigger.
+
+**Columns History ignores (D-37, D-41):** an update that changes only an entity's search columns, or a universe's `owner_id`, `visibility` and `share_key`, isn't logged and needs no batch. A revert compares rows without them, and a row it writes back keeps their current values. So sharing a universe or making it public is never undone by a revert, and doesn't stop an earlier edit from being undone (M8-T12). With accounts, the API also refuses to revert a batch that made or deleted a universe.
 
 **Batches.** `withBatch(actor, description, fn)` in `packages/db`:
 

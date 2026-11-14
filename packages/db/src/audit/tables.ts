@@ -1,6 +1,7 @@
 import { toSnakeCase } from 'drizzle-orm/casing';
 import { getTableConfig, type PgTable } from 'drizzle-orm/pg-core';
 import {
+  accessEvents,
   accountLinks,
   assets,
   celestialObjects,
@@ -40,7 +41,13 @@ import {
  * Signing in, sessions, links and sharing are never undone through History, and password hashes
  * stay out of `change_log`.
  */
-export const ACCOUNT_TABLES: readonly PgTable[] = [users, sessions, accountLinks, universeMembers];
+export const ACCOUNT_TABLES: readonly PgTable[] = [
+  users,
+  sessions,
+  accountLinks,
+  universeMembers,
+  accessEvents,
+];
 
 export const AUDITED_TABLES: readonly PgTable[] = [
   universes,

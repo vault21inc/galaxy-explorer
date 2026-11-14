@@ -1,6 +1,7 @@
 import { ApiError, unwrap, type components } from '@ge/api-client';
 import { rt } from '@ge/domain';
 import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router';
 import { api } from './client.ts';
 import { queryKeys } from './keys.ts';
 
@@ -27,25 +28,45 @@ export function useUniverses() {
   });
 }
 
+/** A 404 as null: no universe there, or none this reader may see, which the API answers alike. */
+async function orNull<T>(request: Promise<T>): Promise<T | null> {
+  try {
+    return await request;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
+}
+
 /**
  * The universe at `/u/{slug}` (M8-T11), for anyone who can read it, listed or not: null when
- * there's none, or none this reader may see, which the API answers alike.
+ * there's none, or none this reader may see.
+ *
+ * A share link is `/u/{slug}?k={key}` (M8-T12). With a key in the address, the universe is
+ * unlocked first: the API remembers the key in a cookie, which every later request (and image)
+ * carries. A key that no longer works isn't an error: the reader may still see the universe
+ * another way (it's public, or shared with them), so it's looked up as usual.
  */
 export function useUniverseBySlug(slug: string | undefined) {
+  const [searchParams] = useSearchParams();
+  const key = searchParams.get('k');
   return useQuery({
-    queryKey: ['universe', 'by-slug', slug ?? ''],
+    queryKey: ['universe', 'by-slug', slug ?? '', key ?? ''],
     queryFn:
       slug === undefined
         ? skipToken
         : async ({ signal }) => {
-            try {
-              return await unwrap(
-                api.GET('/api/v1/universes/by-slug/{slug}', { params: { path: { slug } }, signal }),
+            if (key) {
+              const unlocked = await orNull(
+                unwrap(api.POST('/api/v1/universes/unlock', { body: { slug, key }, signal })),
               );
-            } catch (error) {
-              if (error instanceof ApiError && error.status === 404) return null;
-              throw error;
+              if (unlocked) return unlocked;
             }
+            return orNull(
+              unwrap(
+                api.GET('/api/v1/universes/by-slug/{slug}', { params: { path: { slug } }, signal }),
+              ),
+            );
           },
   });
 }

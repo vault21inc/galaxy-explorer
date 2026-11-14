@@ -73,6 +73,8 @@ export const WITHIN_PARENT: ReadonlySet<string> = new Set([
   'citationId',
   'externalKey',
   'role',
+  // A member of the path's universe, by username (M8-T12).
+  'username',
 ]);
 
 /** Every parameter the access check knows: the contract suite fails on any other. */

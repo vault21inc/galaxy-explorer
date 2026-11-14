@@ -4,6 +4,7 @@ import {
   bigint,
   check,
   index,
+  jsonb,
   pgTable,
   primaryKey,
   text,
@@ -127,5 +128,35 @@ export const universeMembers = pgTable(
     primaryKey({ name: 'universe_members_pk', columns: [t.universeId, t.userId] }),
     index('universe_members_user_idx').on(t.userId),
     check('universe_members_role_check', oneOf(t.role, MEMBER_ROLES)),
+  ],
+);
+
+/**
+ * Account and access changes, by owners and admins (M8-T12, T13): who shared a universe with
+ * whom, made it public, replaced its link, transferred or deleted it. The admin screens' log.
+ * Content changes stay in `change_batches`, and none of this can be undone through History.
+ *
+ * The rows outlive what they're about: deleting an account or a universe sets its id to null,
+ * so `actor_label` and `detail` keep the names as they were.
+ */
+export const accessEvents = pgTable(
+  'access_events',
+  {
+    id: idColumn(),
+    actorId: uuid(),
+    /** The actor's username at the time, or 'local' on your own machine, or 'cli'. */
+    actorLabel: text().notNull(),
+    /** `ACCESS_EVENT_ACTIONS` in @ge/domain, such as 'member.add'. */
+    action: text().notNull(),
+    /** The account it concerns, if any: the member added, the new owner. */
+    userId: uuid(),
+    universeId: uuid(),
+    /** What changed, such as `{ "from": "private", "to": "public" }`, with names, not only ids. */
+    detail: jsonb().notNull().default({}),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('access_events_created_idx').on(t.createdAt.desc()),
+    index('access_events_universe_idx').on(t.universeId),
   ],
 );

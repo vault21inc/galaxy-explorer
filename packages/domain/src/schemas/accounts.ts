@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { USERNAME_PATTERN } from '../patterns.ts';
+import { MemberRole } from './containers.ts';
 
 /**
  * Accounts and signing in (M8-T1, D-34, data-model §3.8), as the API accepts and returns them.
@@ -108,3 +109,45 @@ export const AccountLinkFinish = z.strictObject({
   setup: z.string().min(1).max(4096),
   totp: TotpCode,
 });
+
+// ---- sharing a universe (M8-T12, ux.md §13) -------------------------------------------------
+
+/** An account a universe is shared with (`GET /universes/{universeId}/members`). */
+export const UniverseMemberRead = z.object({
+  username: Username,
+  role: MemberRole,
+  /** Who shared it with them, if that account still exists. */
+  addedBy: Username.nullable(),
+  createdAt: timestamp,
+});
+
+/** Sharing a universe with an account, or changing its role (`PUT …/members/{username}`). */
+export const UniverseMemberWrite = z.strictObject({ role: MemberRole });
+
+/**
+ * Opening a share link (`POST /universes/unlock`): the universe's address and the link's key,
+ * which a visitor holding only the link has, rather than the universe's id.
+ */
+export const UniverseUnlock = z.strictObject({
+  slug: z.string().min(1).max(100),
+  key: z.string().min(1).max(100),
+});
+
+/** Handing a universe to another account (`POST /universes/{universeId}/transfer`). */
+export const UniverseTransfer = z.strictObject({ username: Username });
+
+/**
+ * What `access_events` records (M8-T12, data-model §3.8): account and access changes, the
+ * admin screens' log. M8-T13 adds the admin actions.
+ */
+export const ACCESS_EVENT_ACTIONS = [
+  'member.add',
+  'member.role',
+  'member.remove',
+  'member.leave',
+  'universe.visibility',
+  'universe.link',
+  'universe.transfer',
+  'universe.delete',
+] as const;
+export type AccessEventAction = (typeof ACCESS_EVENT_ACTIONS)[number];

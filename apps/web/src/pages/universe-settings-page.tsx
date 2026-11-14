@@ -9,11 +9,14 @@ import { ConfigTable } from '@/panels/config-table/config-table.tsx';
 import { ImportExportSection } from '@/panels/import-export/import-export-section.tsx';
 import { UniverseDetails } from '@/panels/universe-details/universe-details.tsx';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
+import { LeaveUniverse } from './universe-settings/leave-universe.tsx';
+import { SharingSection } from './universe-settings/sharing-section.tsx';
 
 /**
- * `/u/:universeSlug/settings` (M4-T1): the universe's details, then one table per config
- * resource in the registry (group types, event categories, object subtypes, field
- * definitions), then import and export (M7-T4). It floats over the canvas like the other pages, and its controls keep the
+ * `/u/:universeSlug/settings` (M4-T1): the universe's details, who it's shared with (M8-T12),
+ * then one table per config resource in the registry (group types, event categories, object
+ * subtypes, field definitions), then import and export (M7-T4). For its owner and editors; a
+ * viewer is told whose it is, and may leave it. It floats over the canvas like the other pages, and its controls keep the
  * arrow keys to themselves (`data-keys="own"`), so reordering a row doesn't pan the camera.
  */
 export function UniverseSettingsPage() {
@@ -23,9 +26,19 @@ export function UniverseSettingsPage() {
   const policy = useSpoilerPolicy();
   if (route.status !== 'ready') return <RouteStates route={route} />;
   if (!canEdit) {
+    const { universe } = route;
     return (
-      <StatusPanel tone="empty" title="Settings are for the owner">
-        Sign in as the owner to change this universe’s settings.
+      <StatusPanel tone="empty" title="Settings are for its owner and editors">
+        <p>
+          {universe.role === 'viewer'
+            ? `${universe.owner ?? 'Its owner'} shared this universe with you to read.`
+            : 'Sign in as its owner or an editor to change this universe’s settings.'}
+        </p>
+        {universe.role === 'viewer' && (
+          <div className="mt-3 flex">
+            <LeaveUniverse universe={universe} />
+          </div>
+        )}
       </StatusPanel>
     );
   }
@@ -46,6 +59,7 @@ export function UniverseSettingsPage() {
         </h2>
         <UniverseDetails universe={universe} />
       </section>
+      <SharingSection universe={universe} />
       {CONFIG_RESOURCES.map((resource) => (
         <ConfigTable key={resource} resource={resource} universeId={universe.id} />
       ))}

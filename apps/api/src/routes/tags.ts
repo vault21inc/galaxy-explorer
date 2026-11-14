@@ -11,6 +11,11 @@ export function openApiTags(): { name: string; description: string }[] {
     },
     { name: 'universes', description: 'Fictional settings; everything else lives inside one.' },
     { name: 'maps', description: 'One galaxy at one point in time.' },
+    {
+      name: 'sharing',
+      description:
+        'Who can see a universe: its members (editors and viewers), its share link, and handing it to another account (M8-T12).',
+    },
     ...Object.values(entityKinds).map((kind) => ({
       name: kind.plural,
       description: kind.description,

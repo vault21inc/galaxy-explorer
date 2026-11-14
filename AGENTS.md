@@ -81,6 +81,7 @@ Details are in rendering.md §2.
 - HTML in rich text is sanitized on the server with `RICH_TEXT_POLICY`. Markdown is rendered without raw HTML.
 - Services check universe and map scope. Never trust ids from the client.
 - Every route that touches a universe goes through `universeAccess`, in the access guard (`apps/api/src/http/access-guard.ts`): the universe comes from the rows the path names, and a universe the requester can't read is a 404, never a 403. A route about no single universe declares it with `routeAccess()` (`x-ge-access`); a new kind of path parameter is taught to `http/route-universe.ts` first. A child row (a link, a relation) is found through its parent in the path, never by its own id alone. The access contract suite fails on any route it can't classify.
+- Who may reach a universe (its owner, visibility, share key and members) isn't content: it's changed only by the owner's sharing routes, which need a session and log to `access_events`, and History never sees or reverts it (D-41).
 - No secrets in git. Configuration comes from env and is validated at boot.
 - With `GE_AUTH_MODE=none`, the API binds to 127.0.0.1 only.
 

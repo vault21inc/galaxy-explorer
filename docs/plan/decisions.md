@@ -325,4 +325,11 @@ To change a decision, edit its entry, keep the old text on a `Superseded:` line,
   - **Why:** a hook can't be forgotten by a new route, and the services stay as they were. Each route declares only what's unusual (`x-ge-access`: History needs `edit`, deleting the universe `own`, a route about no universe says so). Those declarations are in the OpenAPI document, where the contract suite checks them against data-model §8's rule. A route with a path parameter the hook doesn't know is refused until it's taught.
   - **What it asks of services:** a child row in a path (a link, a relation) must be found through its parent, never by its own id alone. The contract suite found links and relations that weren't, and they're fixed.
   - **Names:** who's asking is `Requester` (`request.requester`). The services' `Viewer` stays the drafts filter, set from the checked access.
-
+- **D-41 Who may reach a universe isn't content** (2026-11-14, M8-T12). A universe's owner, visibility and share key, and its members, are changed only by its owner (and admins, M8-T13). They're recorded in `access_events` and never undone through History.
+  - **Why:** universes are audited, and History's revert writes back every column of a row. An editor could have reverted the batch that made a universe private, or the transfer that made someone else its owner. Reverting the batch that created a universe would have deleted it, without the name and two-factor code that deleting asks for.
+  - **How:**
+    - the audit trigger doesn't log an update that changes only `owner_id`, `visibility` and `share_key`, so such an update needs no change batch;
+    - a revert compares rows without those columns, and a row it writes back keeps their current values (migration 0009), the way the search columns are treated (D-37);
+    - changing only the visibility makes no batch and leaves the version alone;
+    - with accounts, History refuses to revert a batch that made or deleted a universe. Locally, where everything is yours, it still can.
+  - `universe_members` was never audited (M8-T11).

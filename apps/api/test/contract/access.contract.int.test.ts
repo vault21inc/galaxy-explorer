@@ -94,6 +94,7 @@ function valueFor(
     citationId: rows.citationId,
     externalKey: 'contract-key',
     role: 'gallery',
+    username: world.memberUsername,
   };
   return values[param];
 }
@@ -122,6 +123,8 @@ async function attempt(
     headers: { ...world.headers[role], ...ORIGIN },
     ...(op.method === 'get' ? {} : { payload: body }),
   });
+  // A member removed or a universe left: shared again, so the next request finds it as it was.
+  if (op.method !== 'get') await world.restoreMembers();
   return { status: response.statusCode, body: response.body };
 }
 
@@ -130,19 +133,27 @@ type Level = 'read' | 'edit' | 'own';
 /**
  * What data-model §8 says a route needs, worked out here from the route's method and path, apart
  * from what the route declares, so a route that declares too little fails:
- * - reading needs `read`, except History, exports and the image library, which need `edit`
- *   (they show drafts, or what's not published yet);
+ * - reading needs `read`, except History, exports, the image library, the members list and the
+ *   drafts count, which need `edit` (they show drafts, what's not published yet, or who else
+ *   is in);
  * - changing anything needs `edit`;
- * - deleting the universe itself needs `own`, as do its address and visibility (`ownFields`).
+ * - who has access is the owner's (M8-T12): deleting the universe, its members, its share link
+ *   and transferring it need `own`, as do its address and visibility (`ownFields`);
+ * - leaving needs only `read`: a viewer may leave too.
  */
+const UNIVERSE = '/api/v1/universes/{universeId}';
 function specLevel(op: Operation): Level {
-  if (op.method === 'get') return /\/history|\/export$|\/assets/.test(op.path) ? 'edit' : 'read';
-  if (op.method === 'delete' && op.path === '/api/v1/universes/{universeId}') return 'own';
+  if (op.method === 'get') {
+    if (op.path === `${UNIVERSE}/members` || op.path === `${UNIVERSE}/drafts`) return 'edit';
+    return /\/history|\/export$|\/assets/.test(op.path) ? 'edit' : 'read';
+  }
+  if (op.method === 'delete' && op.path === UNIVERSE) return 'own';
+  if (op.method === 'delete' && op.path === `${UNIVERSE}/membership`) return 'read';
+  const sharing = ['/members/{username}', '/share-key', '/transfer'];
+  if (sharing.some((tail) => op.path === `${UNIVERSE}${tail}`)) return 'own';
   return 'edit';
 }
-const OWN_FIELDS: Record<string, readonly string[]> = {
-  '/api/v1/universes/{universeId}': ['slug', 'visibility'],
-};
+const OWN_FIELDS: Record<string, readonly string[]> = { [UNIVERSE]: ['slug', 'visibility'] };
 
 /** What each role should get from a route needing `level`. */
 function expected(role: Role, level: 'read' | 'edit' | 'own'): 'allowed' | 403 | 404 {

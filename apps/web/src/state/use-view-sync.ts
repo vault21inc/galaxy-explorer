@@ -15,6 +15,7 @@ import { useNavigation } from './navigation.ts';
 import type { ViewEntry } from './navigation-stack.ts';
 import { resolveView } from './view-resolve.ts';
 import { setViewNavigator, viewPath } from './view-navigator.ts';
+import { keptSearch } from '@/lib/kept-params.ts';
 
 /** Why the URL's view can't be shown, for the map page to say so. */
 export type ViewProblem = { kind: 'missing' } | { kind: 'error'; error: Error; retry: () => void };
@@ -68,14 +69,8 @@ export function useViewSync({
   });
 
   useEffect(() => {
-    const kept = (extra: Record<string, string> = {}) => {
-      const params = new URLSearchParams();
-      const perf = new URLSearchParams(here.current.location.search).get('perf');
-      if (perf !== null) params.set('perf', perf);
-      for (const [name, value] of Object.entries(extra)) params.set(name, value);
-      const search = params.toString();
-      return search === '' ? '' : `?${search}`;
-    };
+    const kept = (extra: Record<string, string> = {}) =>
+      keptSearch(here.current.location.search, extra);
     setViewNavigator({
       enter: (id) => {
         const top = useNavigation.getState().stack.at(-1);

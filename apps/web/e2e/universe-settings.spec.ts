@@ -171,4 +171,22 @@ test.describe('universe settings (M4-T1)', () => {
     await expect(page).toHaveURL(/\/u\/example-universe\/settings$/);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(/settings$/);
   });
+
+  test('deleting the universe asks for its name, then it’s gone (M8-T12)', async ({ page }) => {
+    const s = await setUp(page.request);
+    await page.goto(s.url);
+    const sharing = page.getByRole('region', { name: 'Sharing' });
+    // No accounts here: nothing to share, so only Delete, and no two-factor code.
+    await expect(sharing.getByRole('button', { name: 'Transfer…' })).toHaveCount(0);
+    await sharing.getByRole('button', { name: 'Delete universe…' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Delete Settings test' });
+    const confirm = dialog.getByRole('button', { name: 'Delete it' });
+    await expect(confirm).toBeDisabled();
+    await expect(dialog.getByLabel('Code from your authenticator app')).toHaveCount(0);
+    await dialog.getByLabel('Type the universe’s name to confirm').fill('Settings test');
+    await confirm.click();
+    await expect(page).toHaveURL(/\/$/);
+    const gone = await page.request.get(`/api/v1/universes/${s.universeId}`);
+    expect(gone.status()).toBe(404);
+  });
 });

@@ -1,4 +1,3 @@
-import { randomBytes } from 'node:crypto';
 import { schema, type Executor } from '@ge/db';
 import {
   MapCreate,
@@ -11,7 +10,7 @@ import {
 } from '@ge/domain';
 import { and, asc, eq, exists, gt, inArray, isNull, or, sql, type SQL } from 'drizzle-orm';
 import { z } from 'zod';
-import { accessTo, type Requester } from './access.ts';
+import { accessFactsOf, universeAccess, type Requester } from './access.ts';
 import { NotFound, VersionConflict } from './errors.ts';
 import { requireInUniverse, requireUniverse } from './lookup.ts';
 import { derivedPlainText, sanitizeRichTextFields } from './sanitize.ts';
@@ -36,9 +35,10 @@ const page = <T>(rows: T[], limit: number, idOf: (row: T) => string) => ({
 
 /**
  * A universe as stored, before anyone asks: `UniverseRead` with its owner's id in place of the
- * owner's name and the requester's access, which `universeReads` adds. Never sent as is.
+ * owner's name, and without the requester's access and role, which `universeReads` adds. Its
+ * `shareKey` is the real one; only the owner is sent it. Never sent as is.
  */
-export const UniverseRecord = UniverseRead.omit({ owner: true, access: true }).extend({
+export const UniverseRecord = UniverseRead.omit({ owner: true, access: true, role: true }).extend({
   ownerId: z.uuid().nullable(),
 });
 export type UniverseRecord = z.infer<typeof UniverseRecord>;
@@ -142,23 +142,33 @@ export async function universeReads(
             .where(inArray(users.id, ownerIds))
         ).map((user) => [user.id, user.username]),
   );
-  const access = await accessTo(
+  const facts = await accessFactsOf(
     ex,
     requester,
     records.map((record) => record.id),
   );
-  return records.flatMap(({ ownerId, ...record }) => {
-    const level = access.get(record.id) ?? 'none';
+  return records.flatMap(({ ownerId, shareKey, ...record }) => {
+    const known = facts.get(record.id);
+    const level = known ? universeAccess(requester, known) : 'none';
     if (level === 'none') return [];
-    return [{ ...record, owner: ownerId ? (owners.get(ownerId) ?? null) : null, access: level }];
+    return [
+      {
+        ...record,
+        owner: ownerId ? (owners.get(ownerId) ?? null) : null,
+        access: level,
+        role: known?.memberRole ?? null,
+        // The link is the owner's to hand out (M8-T12): nobody else is sent its key.
+        shareKey: level === 'own' ? shareKey : null,
+      },
+    ];
   });
 }
 
-/** A share link's key (M8-T12): random and unguessable, 128 bits. */
-function newShareKey(): string {
-  return randomBytes(16).toString('base64url');
-}
-
+/**
+ * Edits a universe's content: its address, name, description and settings. Its `visibility`
+ * isn't content (D-41): the route hands it to `setVisibility` (sharing-service.ts), and an
+ * update that carries only a visibility changes nothing here but checks the version.
+ */
 export async function updateUniverse(
   tx: Executor,
   id: string,
@@ -170,21 +180,17 @@ export async function updateUniverse(
   );
   const row = await requireUniverse(tx, id);
   if (row.version !== version) throw new VersionConflict(recordOf(row));
-  // A link-only universe needs a share key; leaving 'link' drops it, so the old link stops.
-  const sharing =
-    visibility === undefined
-      ? {}
-      : { visibility, shareKey: visibility === 'link' ? (row.shareKey ?? newShareKey()) : null };
-  await tx
-    .update(universes)
-    .set({
-      ...(values as Partial<typeof universes.$inferInsert>),
-      ...derivedPlainText(values),
-      ...sharing,
-      version: sql`${universes.version} + 1`,
-      updatedAt: sql`now()`,
-    })
-    .where(eq(universes.id, id));
+  if (visibility === undefined || Object.keys(values).length > 0) {
+    await tx
+      .update(universes)
+      .set({
+        ...(values as Partial<typeof universes.$inferInsert>),
+        ...derivedPlainText(values),
+        version: sql`${universes.version} + 1`,
+        updatedAt: sql`now()`,
+      })
+      .where(eq(universes.id, id));
+  }
   return getUniverse(tx, id);
 }
 

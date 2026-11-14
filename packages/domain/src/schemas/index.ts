@@ -53,13 +53,13 @@ export {
   MapRead,
   MapUpdate,
   MEMBER_ROLES,
+  MemberRole,
   UNIVERSE_ACCESS,
   UniverseCreate,
   UniverseRead,
   UniverseUpdate,
   VISIBILITIES,
   Visibility,
-  type MemberRole,
   type UniverseAccess,
 } from './containers.ts';
 export {
@@ -92,6 +92,7 @@ export {
   type ViewPayload,
 } from './views.ts';
 export {
+  ACCESS_EVENT_ACTIONS,
   ACCOUNT_LINK_PURPOSES,
   ACCOUNT_LINK_TTL_MS,
   AccountLinkFinish,
@@ -107,7 +108,12 @@ export {
   SITE_ROLES,
   SiteRole,
   TotpCode,
+  UniverseMemberRead,
+  UniverseMemberWrite,
+  UniverseTransfer,
+  UniverseUnlock,
   Username,
+  type AccessEventAction,
   type AccountLinkPurpose,
 } from './accounts.ts';
 export { openApiComponents } from './components.ts';

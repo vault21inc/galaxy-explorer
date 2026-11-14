@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useUniverses } from '@/api/containers.ts';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu.tsx';
 import { containerName } from '@/lib/container-name.ts';
@@ -18,6 +18,8 @@ import { EditToggle } from './edit-toggle.tsx';
 import { SpoilerToggle } from './spoiler-toggle.tsx';
 import { Switcher } from './switcher.tsx';
 import { useUniverseRoute } from './use-universe-route.ts';
+import { keptSearch } from '@/lib/kept-params.ts';
+import { useNoIndex } from './use-no-index.ts';
 
 /**
  * The top bar (ux.md §1): the app's name, the universe and map switchers, the breadcrumbs and
@@ -63,6 +65,9 @@ function UniverseControls({ universeSlug }: { universeSlug: string }) {
   const [cloning, setCloning] = useState(false);
   // Resolved without the map, so a mistyped map slug still shows the switchers to recover.
   const route = useUniverseRoute(universeSlug);
+  useNoIndex(route.status === 'ready' && route.universe.visibility !== 'public');
+  // Another universe gets `perf` only: a share link's key is this universe's.
+  const keepAcross = keptSearch(useLocation().search, {}, ['perf']);
   if (route.status !== 'ready') return null;
 
   const map = route.maps.find((item) => item.slug === mapSlug);
@@ -76,7 +81,7 @@ function UniverseControls({ universeSlug }: { universeSlug: string }) {
           value: item.slug,
           label: containerName(item, policy),
         }))}
-        onSelect={(slug) => void navigate(`/u/${slug}${keep}`)}
+        onSelect={(slug) => void navigate(`/u/${slug}${keepAcross}`)}
         footer={
           <>
             <DropdownMenuItem asChild>
@@ -128,12 +133,8 @@ function UniverseControls({ universeSlug }: { universeSlug: string }) {
   );
 }
 
-/**
- * Query parameters that follow the reader to another universe or map: only `perf`, the
- * development HUD. The selection (`select`) belongs to the map it was made on.
- */
+/** Query parameters that follow the reader to another map: `perf` and a share link's `k`. */
 function useKeptParams(): string {
   const [searchParams] = useSearchParams();
-  const perf = searchParams.get('perf');
-  return perf === null ? '' : `?perf=${encodeURIComponent(perf)}`;
+  return keptSearch(searchParams.toString());
 }

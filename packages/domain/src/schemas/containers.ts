@@ -39,6 +39,7 @@ export type UniverseAccess = (typeof UNIVERSE_ACCESS)[number];
 /** How a universe is shared with another account (M8-T12): changing it, or only reading it. */
 export const MEMBER_ROLES = ['editor', 'viewer'] as const;
 export type MemberRole = (typeof MEMBER_ROLES)[number];
+export const MemberRole = z.enum(MEMBER_ROLES);
 
 export const UniverseUpdate = UniverseCreate.partial().extend({
   /** The owner's alone to change, like the slug (M8-T11). */
@@ -56,6 +57,13 @@ export const UniverseRead = z
     owner: z.string().nullable(),
     /** What the requester may do here; a universe they can't read is never returned. */
     access: z.enum(['read', 'edit', 'own']),
+    /** The requester's role if it's shared with them (M8-T12); null for its owner and others. */
+    role: MemberRole.nullable(),
+    /**
+     * The share link's key, `/u/{slug}?k={key}`, for the owner of a link-only universe; null
+     * for everyone else, and while it's private or public (M8-T12).
+     */
+    shareKey: z.string().nullable(),
     version,
     createdAt: timestamp,
     updatedAt: timestamp,
