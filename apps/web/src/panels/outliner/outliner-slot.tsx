@@ -42,12 +42,18 @@ export function OutlinerSlot({
   groups,
   groupTypes,
   routes,
+  subject = null,
+  emptyNote = null,
 }: {
   universeId: string;
   objects: readonly ViewObject[];
   groups: readonly ViewGroup[];
   groupTypes: readonly ViewGroupType[];
   routes: readonly ViewRoute[];
+  /** A system or orbit view's subject, the outliner's first row. */
+  subject?: ViewObject | null;
+  /** What an empty view says, in the outliner. */
+  emptyNote?: { title: string; hint: string } | null;
 }) {
   const editing = useEditor((state) => state.editing);
   const left = useSidePanel((state) => state.left);
@@ -63,6 +69,8 @@ export function OutlinerSlot({
         groupTypes={groupTypes}
         routes={routes}
         people={people}
+        subject={subject}
+        emptyNote={emptyNote}
       />
     ) : null;
   }
@@ -74,6 +82,8 @@ export function OutlinerSlot({
         groupTypes={groupTypes}
         routes={routes}
         people={people}
+        subject={subject}
+        emptyNote={emptyNote}
         onClose={() => {
           setListOpen(false);
         }}

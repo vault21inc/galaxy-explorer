@@ -289,6 +289,7 @@ Procedural looks are generated once on the GPU and reused (D-10):
 - **Group outlines** are picked through their label (a DOM hit area) or through the outliner. Clicks inside an outline select objects, not the group.
 - **Object labels** are pick targets too: pointing at a label is pointing at its object, for hover, click, double-click and drag (`label-hits.ts`). The hit area reaches back across the gap to the body, so the pointer can move from a body to its label without the hover ending. A body under the pointer whose pick circle is at most 30 px across wins over a label drawn across it; over anything wider (a belt's band, a rift, a route) the label wins. Zooming targets bodies only (zoom-gate.ts): a wheel turned over some system's label would otherwise push into that system.
 - **Placing objects:** a ray–plane intersection with the work plane (y = 0, or the height of the selection being moved). **Placing pins:** a ray–sphere intersection (§8).
+- **The orbit view's globe** isn't a pickable: it would take hover, drag, box selection and zooming. A click that picks nothing but whose ray meets the globe (the same ray–sphere test, `globeSubjectAt`) selects the world itself, so a drag across the globe still turns the camera.
 
 ## 11. Labels
 

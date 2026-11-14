@@ -20,6 +20,7 @@ interface SubjectViewPanelsProps {
  * The page's panels over a system or orbit view: its loading and error states, the notice of a
  * view not built yet (the orbit view until M6), and otherwise the same panels as the galaxy
  * view's (view-panels.tsx) for the subject's children: outliner, toolbar, History and info.
+ * The subject itself is the outliner's first row, so its details open here too.
  */
 export function SubjectViewPanels({
   universeId,
@@ -58,6 +59,7 @@ export function SubjectViewPanels({
       universeSlug={universeSlug}
       mapId={mapId}
       objects={view.data.children}
+      subject={view.data.subject}
       pins={'pins' in view.data ? view.data.pins : view.data.markers}
       mapSettings={edit.mapSettings}
       emptyTitle={edit.emptyTitle}

@@ -11,8 +11,10 @@ import {
 import { labelText } from '@/render/labels/label-text.ts';
 
 /**
- * The outliner's rows (M4-T4, ux.md §1): layer › group type › group › nested groups and member
- * objects, then the routes (M4-T7), then the objects in no group. Pure, so it's unit-tested. Rows come in display order
+ * The outliner's rows (M4-T4, ux.md §1): in a system or orbit view, the view's subject first
+ * (the system or world itself, so it can be selected there too); then layer › group type ›
+ * group › nested groups and member objects, then the routes (M4-T7), then the objects in no
+ * group. Pure, so it's unit-tested. Rows come in display order
  * (each parent before its children), each with its depth and parent, which is all the ARIA tree
  * needs: it's drawn flat, with `aria-level`, and collapsing a row hides its descendants.
  */
@@ -21,7 +23,7 @@ export interface OutlinerRow {
   key: string;
   /** The entity a click selects; null for layer and group type rows, which only expand. */
   id: string | null;
-  kind: 'layer' | 'type' | 'group' | 'route' | 'object' | 'person';
+  kind: 'subject' | 'layer' | 'type' | 'group' | 'route' | 'object' | 'person';
   /** What's shown: the name, or a redaction bar for a hidden spoiler (as the 3D labels do). */
   text: string;
   hidden: boolean;
@@ -94,6 +96,8 @@ export function outlinerRows(
   routes: readonly Route[] = [],
   /** The universe's characters (M6-T6), under a "People" row at the end. */
   people: readonly Person[] = [],
+  /** A system or orbit view's subject: the system or world the view is of. */
+  subject: ViewObject | null = null,
 ): OutlinerRow[] {
   const objectsById = new Map(objects.map((object) => [object.id as string, object]));
   const groupIds = new Set(groups.map((group) => group.id as string));
@@ -104,7 +108,9 @@ export function outlinerRows(
     list.push(group);
     childrenOf.set(group.parentGroupId, list);
   }
-  const rows: OutlinerRow[] = [];
+  const rows: OutlinerRow[] = subject
+    ? [{ ...objectRow(subject, policy, `subject:${subject.id}`, 1, null), kind: 'subject' }]
+    : [];
   const placed = new Set<string>();
 
   // A group, then its nested groups, then its own members. `placed` stops a cycle of parents.

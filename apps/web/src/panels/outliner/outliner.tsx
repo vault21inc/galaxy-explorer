@@ -45,6 +45,8 @@ export function Outliner({
   groupTypes = [],
   routes = [],
   people = [],
+  subject = null,
+  emptyNote = null,
   onClose,
 }: {
   objects: readonly ViewObject[];
@@ -53,6 +55,10 @@ export function Outliner({
   routes?: readonly ViewRoute[];
   /** The universe's characters (M6-T6). */
   people?: readonly Person[];
+  /** A system or orbit view's subject, listed first so that it can be selected (M6). */
+  subject?: ViewObject | null;
+  /** What an empty view says, under the subject's row (view-panels.tsx). */
+  emptyNote?: { title: string; hint: string } | null;
   /** View mode's List button opened it; edit mode shows it always. */
   onClose?: () => void;
 }) {
@@ -66,8 +72,8 @@ export function Outliner({
   const rowRefs = useRef(new Map<string, HTMLElement>());
 
   const all = useMemo(
-    () => outlinerRows(objects, groups, groupTypes, policy, routes, people),
-    [objects, groups, groupTypes, policy, routes, people],
+    () => outlinerRows(objects, groups, groupTypes, policy, routes, people, subject),
+    [objects, groups, groupTypes, policy, routes, people, subject],
   );
   const isOpen = (row: OutlinerRow) => openByDefault(row) !== toggled.has(row.key);
   const needle = filter.trim().toLowerCase();
@@ -243,7 +249,7 @@ export function Outliner({
                   // they show (their name, badges and type), which axe checks match.
                   aria-label={
                     row.hidden
-                      ? `Hidden potential spoiler, ${row.kind === 'object' ? row.badge : row.kind}`
+                      ? `Hidden potential spoiler, ${row.kind === 'object' || row.kind === 'subject' ? row.badge : row.kind}`
                       : undefined
                   }
                   tabIndex={row.key === tabRow ? 0 : -1}
@@ -253,6 +259,7 @@ export function Outliner({
                     isSelected && 'bg-primary/20 hover:bg-primary/25',
                     row.kind === 'layer' && 'text-xs text-muted-foreground label-caps',
                     row.kind === 'type' && 'text-xs text-muted-foreground',
+                    row.kind === 'subject' && 'font-medium',
                   )}
                   // Each level indents by 0.75rem; the chevron column keeps names aligned.
                   style={{ paddingLeft: `${(0.25 + (row.level - 1) * 0.75).toString()}rem` }}
@@ -305,6 +312,12 @@ export function Outliner({
                 </div>
               );
             })}
+          </div>
+        )}
+        {emptyNote && !needle && (
+          <div className="p-2 text-sm">
+            <p className="font-medium">{emptyNote.title}</p>
+            <p className="text-muted-foreground">{emptyNote.hint}</p>
           </div>
         )}
         {/* Places and events without a location (data-model §11) are listed here from M6. */}

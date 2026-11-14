@@ -267,6 +267,106 @@ test.describe('the orbit view (M6-T3)', () => {
   });
 });
 
+test.describe('the view’s own subject', () => {
+  /** Where a latitude and longitude of the globe's surface is on screen. */
+  const globeSpot = async (page: Page, latDeg: number, lonDeg: number) => {
+    const at = await page.evaluate(
+      ([lat, lon]) => {
+        const point = window.__GE_TEST__?.globePoint(lat, lon, 1);
+        return point ? window.__GE_TEST__?.projectPoint(point) : null;
+      },
+      [latDeg, lonDeg] as const,
+    );
+    if (!at) throw new Error(`${String(latDeg)}, ${String(lonDeg)} isn't on screen.`);
+    return at;
+  };
+  const selected = (page: Page) => page.evaluate(() => window.__GE_TEST__?.selectedIds() ?? []);
+
+  test('a click on the globe selects the world; a drag across it still turns the camera', async ({
+    page,
+  }) => {
+    const s = await setUp(page.request);
+    await page.goto(`${s.url}/view/${s.terra}`);
+    await waitForFirstFrame(page);
+    await settled(page);
+    // Face a spot in the south: away from the pin, and below the moons on the equator's plane.
+    await page.evaluate(() => window.__GE_TEST__?.faceGlobePoint(-50, -120));
+    await waitForIdle(page, 300);
+    const spot = await globeSpot(page, -50, -120);
+
+    await page.mouse.click(spot.x, spot.y);
+    await expect.poll(() => selected(page)).toEqual([s.terra]);
+    const details = page.getByRole('complementary', { name: 'Details' });
+    await expect(details).toContainText('Terra');
+    await expect(page).toHaveURL(new RegExp(`select=${s.terra}`));
+
+    // Beside the globe, a click clears the selection, as on empty space anywhere.
+    const box = await page.locator('canvas').boundingBox();
+    if (!box) throw new Error('No canvas.');
+    await page.mouse.click(box.x + 12, box.y + box.height - 12);
+    await expect.poll(() => selected(page)).toEqual([]);
+
+    // A drag across the globe turns the camera; it neither selects the world nor moves it.
+    const before = await cameraPose(page);
+    await page.mouse.move(spot.x, spot.y);
+    await page.mouse.down();
+    await page.mouse.move(spot.x + 120, spot.y, { steps: 10 });
+    await page.mouse.up();
+    await settled(page);
+    expect(await selected(page)).toEqual([]);
+    expect(await cameraPose(page)).not.toEqual(before);
+  });
+
+  test('the outliner lists the world first; its form edits it, and Delete leaves it alone', async ({
+    page,
+  }) => {
+    const s = await setUp(page.request);
+    await page.goto(`${s.url}/view/${s.terra}`);
+    await waitForFirstFrame(page);
+    await settled(page);
+    await page.keyboard.press('e');
+    const outliner = page.getByRole('complementary', { name: 'Outliner' });
+    const first = outliner.getByRole('treeitem').first();
+    await expect(first).toContainText('Terra');
+    await expect(first).toContainText('Planet');
+    await first.click();
+    await expect.poll(() => selected(page)).toEqual([s.terra]);
+
+    // The panel's form is the planet's own: renaming it renames the view's subject.
+    const details = page.getByRole('complementary', { name: 'Details' });
+    const name = details.getByLabel('Name', { exact: true });
+    await name.fill('Terra Nova');
+    await name.press('Enter');
+    await expect(first).toContainText('Terra Nova');
+    await expect(page.getByRole('navigation', { name: 'Breadcrumbs' })).toContainText('Terra Nova');
+
+    // The editor's commands act on what's in the view, never on the world it's of. (A click
+    // on the row takes focus out of the name field, so Delete is the editor's.)
+    await first.click();
+    await page.keyboard.press('Delete');
+    await expect(page.getByRole('dialog', { name: /^Delete/ })).toHaveCount(0);
+    expect((await page.request.get(`/api/v1/objects/${s.terra}`)).status()).toBe(200);
+
+    // An empty world says so under its own row (Luna has nothing around it).
+    // (A page load leaves edit mode, so E again.)
+    await page.goto(`${s.url}/view/${s.luna}`);
+    await waitForFirstFrame(page);
+    await settled(page);
+    await page.keyboard.press('e');
+    await expect(outliner.getByRole('treeitem').first()).toContainText('Luna');
+    await expect(outliner).toContainText('Nothing orbits this world');
+
+    // A system view lists its system first too.
+    await page.goto(`${s.url}/view/${s.system}`);
+    await waitForFirstFrame(page);
+    await settled(page);
+    await page.keyboard.press('e');
+    await outliner.getByRole('treeitem').first().click();
+    await expect.poll(() => selected(page)).toEqual([s.system]);
+    await expect(details.getByLabel('Name', { exact: true })).toHaveValue('Helios');
+  });
+});
+
 /** The station around a planet, from its orbit view. */
 async function stationId(request: APIRequestContext, planetId: string): Promise<string> {
   const view = (await (await request.get(`/api/v1/objects/${planetId}/views/orbit`)).json()) as {

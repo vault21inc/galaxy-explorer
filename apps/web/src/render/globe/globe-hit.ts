@@ -18,13 +18,29 @@ const far = new Vector3();
 export function globeLatLonAt(camera: Camera, ndcX: number, ndcY: number): LatLon | null {
   const globe = globeState();
   if (!globe) return null;
+  const hit = globeHit(camera, ndcX, ndcY);
+  return hit ? unitVectorToLatLon(globe.toGlobe(hit)) : null;
+}
+
+/**
+ * The orbit view's subject, if a point on the canvas falls on its globe, else null: a click
+ * there selects the world itself (use-pointer-selection.ts), when nothing in front of it (a
+ * pin, a moon, a label) took the click first. The globe stays out of the scene index, so
+ * hovering, dragging, box selection and zooming over it work as before.
+ */
+export function globeSubjectAt(camera: Camera, ndcX: number, ndcY: number): string | null {
+  const globe = globeState();
+  if (!globe) return null;
+  return globeHit(camera, ndcX, ndcY) ? globe.subjectId : null;
+}
+
+/** Where the ray through a canvas point first meets the unit sphere, in world space. */
+function globeHit(camera: Camera, ndcX: number, ndcY: number) {
   near.set(ndcX, ndcY, -1).unproject(camera);
   far.set(ndcX, ndcY, 1).unproject(camera);
-  const hit = raySphereIntersect(
+  return raySphereIntersect(
     [near.x, near.y, near.z],
     [far.x - near.x, far.y - near.y, far.z - near.z],
     1,
   );
-  if (!hit) return null;
-  return unitVectorToLatLon(globe.toGlobe(hit));
 }

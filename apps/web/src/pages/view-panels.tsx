@@ -1,5 +1,5 @@
 import type { ViewLocated, ViewGroup, ViewGroupType, ViewObject, ViewRoute } from '@ge/domain';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import { SelectionAnnouncer } from '@/app/selection-announcer.tsx';
 import { StatusPanel } from '@/app/status-panel.tsx';
 import { EditorActions } from '@/editor/actions/editor-actions.tsx';
@@ -20,6 +20,12 @@ interface ViewPanelsProps {
   mapId: string;
   /** The view's objects: the galaxy's top level, or a system's children. */
   objects: readonly ViewObject[];
+  /**
+   * A system or orbit view's subject: the system or world itself. It's the outliner's first
+   * row, and in the orbit view a click on the globe selects it, so its details and form open
+   * here too. The editor's commands leave it out: they act on what's in the view.
+   */
+  subject?: ViewObject;
   groups?: readonly ViewGroup[];
   groupTypes?: readonly ViewGroupType[];
   routes?: readonly ViewRoute[];
@@ -31,17 +37,22 @@ interface ViewPanelsProps {
   emptyTitle: string;
 }
 
+/** What an empty view suggests, under its title. */
+const EMPTY_HINT = 'Add objects in edit mode (E) with the toolbar’s Add button, or press N.';
+
 /**
  * The page's panels over any view that can be edited (M5-T4): the outliner, the edit toolbar
- * and its commands, History, Map settings where they belong, and the info panel. The galaxy
- * and system views both use it, with their own objects; an empty view says so instead of
- * offering the outliner.
+ * and its commands, History, Map settings where they belong, and the info panel. The galaxy,
+ * system and orbit views all use it, with their own objects. An empty galaxy view says so
+ * instead of offering the outliner; an empty system or orbit view says so in the outliner,
+ * under its subject.
  */
 export function ViewPanels({
   universeId,
   universeSlug,
   mapId,
   objects,
+  subject,
   groups = [],
   groupTypes = [],
   routes = [],
@@ -52,21 +63,25 @@ export function ViewPanels({
   const hasSelection = useSelection((state) => state.selectedIds.length > 0);
   const editing = useEditor((state) => state.editing);
   const empty = objects.length === 0;
+  // What the announcer and the info panel can name: the view's objects and its subject.
+  const named = useMemo(() => (subject ? [subject, ...objects] : objects), [subject, objects]);
   return (
     <>
-      {empty ? (
+      {empty && !subject ? (
         <StatusPanel tone="empty" title={emptyTitle}>
-          Add objects in edit mode (E) with the toolbar’s Add button, or press N.
+          {EMPTY_HINT}
         </StatusPanel>
       ) : (
         <>
-          <SelectionAnnouncer objects={objects} />
+          <SelectionAnnouncer objects={named} />
           <OutlinerSlot
             universeId={universeId}
             objects={objects}
             groups={groups}
             groupTypes={groupTypes}
             routes={routes}
+            subject={subject ?? null}
+            emptyNote={empty ? { title: emptyTitle, hint: EMPTY_HINT } : null}
           />
         </>
       )}
@@ -87,11 +102,11 @@ export function ViewPanels({
           <MapSettingsPanel universeId={universeId} mapId={mapId} />
         </Suspense>
       )}
-      {hasSelection && (!empty || pins.length > 0) && (
+      {hasSelection && (!empty || pins.length > 0 || subject) && (
         <Suspense fallback={null}>
           <InfoPanel
             universeId={universeId}
-            objects={objects}
+            objects={named}
             groups={groups}
             routes={routes}
             pins={pins}

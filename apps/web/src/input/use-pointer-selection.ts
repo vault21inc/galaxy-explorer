@@ -1,7 +1,10 @@
 import { CameraControlsImpl } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { useEffect } from 'react';
+import { Vector2 } from 'three';
+import { toNdc } from '@/editor/work-plane.ts';
 import { flyTo } from '@/render/camera/fly-to.ts';
+import { globeSubjectAt } from '@/render/globe/globe-hit.ts';
 import { pickAt } from '@/render/picking/picking.ts';
 import { hoverStore, setHovered } from '@/state/hover.ts';
 import { gizmoBusy } from '@/editor/gizmo-state.ts';
@@ -13,11 +16,15 @@ import { resolveBinding, type Gesture, type Mode, type Target } from './bindings
 import { isClick } from './click.ts';
 import { detectPlatform } from './platform.ts';
 
+/** A click's point in normalized device coordinates, reused. */
+const clickNdc = new Vector2();
+
 /**
  * Hover and selection in the canvas (ux.md §3, §5; rendering.md §10):
  * - pointer moves with no button held pick the object under the pointer: the hover store and
  *   the pointer cursor follow it;
- * - a press released within 4 px is a click: select, toggle or clear, as the bindings say;
+ * - a press released within 4 px is a click: select, toggle or clear, as the bindings say. In
+ *   the orbit view a click on the globe, where nothing else is, selects the world itself;
  * - in edit mode a right-click (or a Mac Ctrl-click) on an object opens the context menu,
  *   selecting the object first unless it's already part of the selection;
  * - a double-click on an object that opens a view enters it (M5-T2); on any other object it
@@ -31,6 +38,10 @@ export function usePointerSelection(mode: Mode): void {
     const platform = detectPlatform();
     let press: { x: number; y: number; button: number; pointerId: number } | null = null;
 
+    const worldAt = (clientX: number, clientY: number): string | null => {
+      toNdc(clientX, clientY, element, clickNdc);
+      return globeSubjectAt(get().camera, clickNdc.x, clickNdc.y);
+    };
     const targetOf = (id: string | null): Target =>
       id === null
         ? 'empty'
@@ -76,13 +87,17 @@ export function usePointerSelection(mode: Mode): void {
               : null;
       if (!gesture) return;
       const hit = pickAt(get(), event.clientX, event.clientY);
-      const action = resolveBinding(gesture, event, mode, targetOf(hit?.id ?? null), platform);
+      // The world under the pointer, in its own orbit view: it can be selected (its details,
+      // its form), but it has no context menu, since none of its commands apply to it there.
+      const world = hit ? null : worldAt(event.clientX, event.clientY);
+      const id = hit?.id ?? world;
+      const action = resolveBinding(gesture, event, mode, targetOf(id), platform);
       const selection = useSelection.getState();
       if (action === 'select') {
-        if (hit) selection.select([hit.id]);
+        if (id !== null) selection.select([id]);
         else selection.clear();
-      } else if (action === 'toggle-select' && hit) {
-        selection.select([hit.id], { toggle: true });
+      } else if (action === 'toggle-select' && id !== null) {
+        selection.select([id], { toggle: true });
       } else if (action === 'context-menu' && hit) {
         if (!selection.selectedIds.includes(hit.id)) selection.select([hit.id]);
         useContextMenu.getState().open(event.clientX, event.clientY);

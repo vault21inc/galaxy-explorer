@@ -119,6 +119,27 @@ describe('outlinerRows', () => {
     expect(byId('p1')?.text).not.toContain('Eisenhorn');
   });
 
+  it('starts with a system or orbit view’s subject, selectable, before everything else', () => {
+    const planet = { ...object('p', 'Gudrun'), baseType: 'planet' } as ViewObject;
+    const withSubject = outlinerRows(
+      [object('m', 'Gudrun I')],
+      [],
+      [],
+      SHOW_SPOILERS,
+      [],
+      [],
+      planet,
+    );
+    expect(withSubject.map((row) => [row.kind, row.id, row.text, row.badge, row.level])).toEqual([
+      ['subject', 'p', 'Gudrun', 'Planet', 1],
+      ['object', 'm', 'Gudrun I', 'System', 1],
+    ]);
+    // A hidden spoiler world keeps its name hidden there too.
+    const secret = { ...planet, isSpoiler: true } as ViewObject;
+    const [first] = outlinerRows([], [], [], HIDE_SPOILERS, [], [], secret);
+    expect(first).toMatchObject({ kind: 'subject', hidden: true });
+  });
+
   it('survives a cycle of parents', () => {
     const cycle = outlinerRows(
       objects,
