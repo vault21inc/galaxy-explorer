@@ -176,8 +176,12 @@ export function SelectionRings() {
       for (const attribute of [centers, radii, clamps, colors, offsets]) {
         attribute.needsUpdate = true;
       }
+      // A frame only if there's a ring to draw or one to clear. Renderers publish while a
+      // frame is drawn (pins on a spinning globe), and an unconditional frame here would ask
+      // for the next one each time, a loop at the display's rate.
+      const shown = geometry.instanceCount;
       geometry.instanceCount = count;
-      invalidate();
+      if (count > 0 || shown > 0) invalidate();
     };
     write();
     const stopHover = hoverStore.subscribe(write);

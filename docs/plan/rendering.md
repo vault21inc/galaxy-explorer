@@ -34,7 +34,7 @@ These are **acceptance criteria**. A milestone that touches 3D isn't done until 
 
 ### Hard rules
 
-1. **Render on demand.** The canvas uses `frameloop="demand"`. Anything that changes the picture calls `invalidate()`. Frames render continuously only while the camera moves or a transition plays; ambient motion (planet spin, cloud drift) is opt-in and capped at 30 fps.
+1. **Render on demand.** The canvas uses `frameloop="demand"`. Anything that changes the picture calls `invalidate()`. Frames render continuously only while the camera moves or a transition plays; ambient motion (planet spin, cloud drift) is opt-in and capped at 30 fps. Its timer is the clock: each tick turns the globe and asks for one frame, and frames only draw the angle. A renderer that publishes positions while a frame is drawn mustn't ask for another frame unless it has something new to show, or it starts a loop at the display's rate.
 2. **Cap the pixel ratio.** DPR is limited to 1.5 by default and drops during interaction (camera-controls' `regress` plus drei's `<AdaptiveDpr>`; the quality guard of §13 steps the setting down if frames stay slow). The picture is crisp when still and lighter while moving. Only the "High" quality setting allows 2.
 3. **No per-frame React work.** Camera pose, hover, projected positions and label placement live in refs or zustand transient subscriptions, never in React state that re-renders components each frame.
 4. **No allocations in `useFrame`.** Reuse vectors and matrices from module-level scratch objects.
@@ -340,7 +340,7 @@ Input mapping comes from the bindings table (ux.md §3). camera-controls has no 
 | Medium (default) | ≤ 1.5, lower while moving | on | 20,000 | 2,048 × 1,024 | |
 | High | ≤ 2 | on | 40,000 | 4,096 × 2,048 | |
 
-  The quality guard steps down one setting if the median fps stays below 45 for 2 seconds of interaction, and shows a small notice. It never steps up automatically.
+  The quality guard steps down one setting if the median fps stays below 45 for 2 seconds of interaction, and shows a small notice. It never steps up automatically. Frames a timer draws on purpose (ambient motion's 30 a second, registered in `render/frame-pacing.ts`) count as on time rather than slow, so turning ambient motion on doesn't lower the quality.
   - It's our own `FrameRateGuard` (M2-T8), not drei's `PerformanceMonitor`. That one counts frames per 250 ms window and keeps its first timestamp across idle time, so under on-demand rendering every pause would read as a low frame rate. The guard measures intervals between rendered frames and skips idle gaps, as the HUD does.
   - It's off under automation (`navigator.webdriver`), so tests and `pnpm perf` measure the default quality.
 - **Galaxy stars:** the same popover has two sliders, Number and Brightness (0–100 %, both 100 % by default). They're remembered per browser (`ge.stars`), so a reader can calm a busy star field without lowering the quality.

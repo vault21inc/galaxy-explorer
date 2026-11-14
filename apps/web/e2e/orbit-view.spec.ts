@@ -63,6 +63,14 @@ async function setUp(request: APIRequestContext) {
         explorable: true,
       }),
       object({ name: plain('Dock'), baseType: 'station', parentId: '$op:2', x: -2, z: 1.5 }),
+      // A pin on Terra: pins move with the spinning globe, which once kept frames coming at
+      // the display's rate instead of ambient motion's 30 a second.
+      { op: 'create', kind: 'place', mapId: map.id, data: { name: plain('Port Terra') } },
+      {
+        op: 'setLocation',
+        id: '$op:5',
+        data: { mode: 'surface', objectId: '$op:2', latDeg: 10, lonDeg: 20 },
+      },
     ],
   })) as { results: { id: string }[] };
   const [system, , terra, luna] = built.results.map((result) => result.id);

@@ -5,6 +5,7 @@ import { AdditiveBlending, BackSide, SphereGeometry, Vector3, type Group, type M
 import { useAppearancePreview, useRateLimited, withPreview } from '@/state/appearance-preview.ts';
 import { useAmbientMotion } from '@/state/quality.ts';
 import { hexToLinear } from '../color.ts';
+import { paceFrames } from '../frame-pacing.ts';
 import { publishLights } from '../stars/system-lights.ts';
 import {
   AMBIENT_MOTION_FPS,
@@ -170,26 +171,34 @@ export function Globe({
     [atmosphereKey, sun],
   );
 
-  // Ambient motion: frames on a timer, and angles from the time between them.
+  // Ambient motion (rendering.md §8): the timer is the clock. Each tick turns the globe by the
+  // time since the last one and asks for a frame; frames only draw the angle. Were frames to
+  // turn it themselves, every frame would move the pins, whose new places ask for another
+  // frame, and the globe would draw at the display's rate (240 a second on a fast monitor)
+  // instead of 30. The timer also tells the frame-rate guard these frames come on purpose.
   const motion = useAmbientMotion();
-  useEffect(() => {
-    if (!motion) return;
-    const timer = setInterval(invalidate, 1_000 / AMBIENT_MOTION_FPS);
-    return () => {
-      clearInterval(timer);
-    };
-  }, [motion, invalidate]);
   const surface = useRef<Group>(null);
   const cloudMesh = useRef<Mesh>(null);
-  const spin = useRef({ angleRad: 0, lastMs: 0 });
+  const spin = useRef({ angleRad: 0 });
+  useEffect(() => {
+    if (!motion) return;
+    const intervalMs = 1_000 / AMBIENT_MOTION_FPS;
+    const release = paceFrames(intervalMs);
+    let lastMs = performance.now();
+    const timer = setInterval(() => {
+      const now = performance.now();
+      const stepS = Math.min((now - lastMs) / 1_000, MAX_STEP_S);
+      lastMs = now;
+      spin.current.angleRad += stepS * GLOBE_SPIN_DEG_PER_S * DEG;
+      invalidate();
+    }, intervalMs);
+    return () => {
+      clearInterval(timer);
+      release();
+    };
+  }, [motion, invalidate]);
   useFrame(() => {
-    const now = performance.now();
     const state = spin.current;
-    if (motion) {
-      const stepS = Math.min((now - (state.lastMs || now)) / 1_000, MAX_STEP_S);
-      state.angleRad += stepS * GLOBE_SPIN_DEG_PER_S * DEG;
-    }
-    state.lastMs = now;
     if (surface.current) surface.current.rotation.y = state.angleRad;
     if (cloudMesh.current) {
       const driftRad = (state.angleRad / GLOBE_SPIN_DEG_PER_S) * GLOBE_CLOUD_DRIFT_DEG_PER_S;

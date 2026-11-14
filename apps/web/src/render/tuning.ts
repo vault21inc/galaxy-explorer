@@ -57,6 +57,11 @@ export const DEFAULT_QUALITY: QualityLevel = 'medium';
  */
 export const QUALITY_FLOOR_FPS = 45;
 export const QUALITY_WINDOW_MS = 2_000;
+/**
+ * While a timer draws frames on purpose (ambient motion, 30 a second), a frame up to this
+ * many times its interval came on time, and isn't counted as slow (frame-rate-guard.ts).
+ */
+export const QUALITY_PACED_SLACK = 1.25;
 
 /**
  * While the camera moves, the pixel ratio drops to this fraction of its resting value

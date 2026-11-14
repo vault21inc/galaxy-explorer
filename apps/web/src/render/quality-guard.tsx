@@ -2,7 +2,8 @@ import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
 import { useQuality } from '@/state/quality.ts';
 import { FrameRateGuard } from './frame-rate-guard.ts';
-import { QUALITY_FLOOR_FPS, QUALITY_WINDOW_MS } from './tuning.ts';
+import { pacedIntervalMs } from './frame-pacing.ts';
+import { QUALITY_FLOOR_FPS, QUALITY_PACED_SLACK, QUALITY_WINDOW_MS } from './tuning.ts';
 
 /**
  * Steps the quality down when the frame rate stays low (rendering.md §13), inside the canvas.
@@ -17,11 +18,12 @@ export function QualityGuard() {
 
   useFrame(() => {
     if (automated) return;
-    guard.current ??= new FrameRateGuard(QUALITY_FLOOR_FPS, QUALITY_WINDOW_MS);
+    guard.current ??= new FrameRateGuard(QUALITY_FLOOR_FPS, QUALITY_WINDOW_MS, QUALITY_PACED_SLACK);
     const now = performance.now();
     const interval = now - last.current;
     last.current = now;
-    if (guard.current.record(interval)) useQuality.getState().stepDown();
+    // Frames a timer asks for on purpose (ambient motion) aren't slow frames.
+    if (guard.current.record(interval, pacedIntervalMs())) useQuality.getState().stepDown();
   });
   return null;
 }

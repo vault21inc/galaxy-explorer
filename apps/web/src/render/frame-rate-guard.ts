@@ -17,25 +17,38 @@ export class FrameRateGuard {
   readonly #floorFps: number;
   readonly #windowMs: number;
 
-  constructor(floorFps: number, windowMs: number, capacity = 2_048) {
+  readonly #pacedSlack: number;
+
+  constructor(floorFps: number, windowMs: number, pacedSlack = 1.25, capacity = 2_048) {
     this.#floorFps = floorFps;
     this.#windowMs = windowMs;
+    this.#pacedSlack = pacedSlack;
     this.#intervalsMs = new Float64Array(capacity);
   }
 
   /**
    * Records the interval since the previous frame. Returns true when a full window of
    * rendering has a median below the floor: time to step down. The window then starts over.
+   *
+   * `pacedMs` is the interval of a timer drawing frames on purpose, such as ambient motion's
+   * 30 a second (frame-pacing.ts): a frame within it (plus `pacedSlack`) came when it was
+   * asked for, so it counts as fast enough, not as slow. Without this, 30 frames a second
+   * would read as a GPU that can't keep 45.
    */
-  record(intervalMs: number): boolean {
+  record(intervalMs: number, pacedMs = 0): boolean {
     if (intervalMs <= 0 || intervalMs > IDLE_GAP_MS) return false;
-    if (this.#count < this.#intervalsMs.length) this.#intervalsMs[this.#count++] = intervalMs;
+    const floorMs = 1_000 / this.#floorFps;
+    const counted =
+      pacedMs > 0 && intervalMs <= pacedMs * this.#pacedSlack
+        ? Math.min(intervalMs, floorMs)
+        : intervalMs;
+    if (this.#count < this.#intervalsMs.length) this.#intervalsMs[this.#count++] = counted;
     this.#renderedMs += intervalMs;
     if (this.#renderedMs < this.#windowMs) return false;
     const sorted = this.#intervalsMs.subarray(0, this.#count).sort();
     const medianMs = sorted[Math.floor(sorted.length / 2)] ?? 0;
     this.reset();
-    return medianMs > 1_000 / this.#floorFps;
+    return medianMs > floorMs;
   }
 
   reset(): void {

@@ -39,6 +39,21 @@ describe('FrameRateGuard', () => {
     for (let i = 0; i < 200; i++) tripped = guard.record(i % 10 === 0 ? 120 : 16.7) || tripped;
     expect(tripped).toBe(false);
   });
+
+  it('doesn’t count frames a timer draws on purpose as slow (ambient motion at 30 fps)', () => {
+    const guard = new FrameRateGuard(45, 2_000);
+    let tripped = false;
+    for (let i = 0; i < 600; i++) tripped = guard.record(33.3, 33.3) || tripped;
+    expect(tripped).toBe(false);
+  });
+
+  it('still steps down when frames are slower than the timer asks for', () => {
+    const guard = new FrameRateGuard(45, 2_000);
+    let tripped = false;
+    // A GPU that can't keep up with the timer: 60 ms frames while ambient motion asks for 33.
+    for (let i = 0; i < 40; i++) tripped = guard.record(60, 33.3) || tripped;
+    expect(tripped).toBe(true);
+  });
 });
 
 describe('stepping the quality down', () => {
