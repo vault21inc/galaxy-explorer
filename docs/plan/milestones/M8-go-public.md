@@ -290,7 +290,7 @@
 - CI adds `pnpm audit --prod` (failing on high severity) and a secret scan (gitleaks).
 
 **Done when:**
-- [ ] securityheaders.com rates the site A or better.
+- [x] securityheaders.com rates the site A or better: A+ for the preview, 2026-11-14.
 - [x] The CSP raises no violations during the golden-path e2e test against a production build.
 - [x] The new CI checks run on every push.
 
@@ -305,7 +305,7 @@
 - **The XSS corpus** (`@ge/domain/testing`, now with Markdown and plain-text payloads) is planted through the API by `e2e/xss.spec.ts`. That test opens the universe list, each object's details with spoilers revealed, the outliner, search and History. It checks that no dialog opens, that no handler attribute, script URL or inline script reaches the page, and that the CSP reports nothing.
 - **Every e2e test fails on a CSP violation,** through `e2e/test.ts` (a lint rule makes specs import it), so the golden path's "Done when" item holds for the whole suite.
 - **CI:** `pnpm audit --prod --audit-level high` in `ci.yml`, and `secrets.yml`. gitleaks 8.30.1, checksum-checked, scans each push's commits; a run by hand and a weekly one scan the whole history.
-- **Left for the owner:** the securityheaders.com rating, once its scan of the site is fine to run. By its rules, all six headers are present; the `'unsafe-inline'` warning caps it at A.
+- **securityheaders.com: A+** (2026-11-14, run by the owner with results hidden), for the preview. It can only see the 401 asking for the password, which carries the same headers as the app's pages; its two warnings say just that (not HTML, an error status). It doesn't flag `'unsafe-inline'` in `style-src`. M8-T5 can scan the production site the same way.
 
 ### M8-T4 Production build and containers
 
