@@ -32,31 +32,45 @@ export function useAccount() {
 
 /**
  * After signing in or out, everything the API said may have changed: whether this reader may
- * edit (`/api/health`), and what they see. Refetching every query is simplest and rare enough.
+ * edit (`/api/health`), what they see. The account itself is known at once, from the response;
+ * everything else is refetched in the background, without waiting, so the page that asked can
+ * move on straight away.
+ *
+ * The refetch leaves account links alone: the link just finished now reads "used", and if that
+ * answer came back first, the link page would swap to "This link was used" and unmount the step
+ * that was about to navigate away (TanStack drops a call's own callbacks once its component is
+ * gone). That race made M8-T1's invite e2e test flaky under load.
  */
-function useEverythingAgain() {
+function useSignedInAs() {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries();
+  return (account: Account | null) => {
+    queryClient.setQueryData(ACCOUNT_KEY, account);
+    void queryClient.invalidateQueries({
+      predicate: (query) =>
+        query.queryKey[0] !== 'auth' ||
+        (query.queryKey[1] !== 'link' && query.queryKey[1] !== 'me'),
+    });
+  };
 }
 
 export function useSignIn() {
-  const again = useEverythingAgain();
+  const signedInAs = useSignedInAs();
   return useMutation({
     mutationFn: (body: { username: string; password: string; totp: string }) =>
       unwrap(api.POST('/api/v1/auth/login', { body })),
-    onSuccess: again,
+    onSuccess: signedInAs,
   });
 }
 
 export function useSignOut() {
-  const again = useEverythingAgain();
+  const signedInAs = useSignedInAs();
   const setAvailable = useEditor((state) => state.setAvailable);
   return useMutation({
     mutationFn: () => unwrap(api.POST('/api/v1/auth/logout')),
-    onSuccess: async () => {
-      // Edit mode goes at once, not when the health check comes back.
+    onSuccess: () => {
+      // Edit mode goes at once, not when the universe's access comes back.
       setAvailable(false);
-      await again();
+      signedInAs(null);
     },
   });
 }
@@ -81,10 +95,10 @@ export function useStartLink(token: string) {
 
 /** Step 2: the first code. The account is made (or reset) and this browser signed in. */
 export function useFinishLink(token: string) {
-  const again = useEverythingAgain();
+  const signedInAs = useSignedInAs();
   return useMutation({
     mutationFn: (body: { setup: string; totp: string }) =>
       unwrap(api.POST('/api/v1/auth/links/{token}/finish', { params: { path: { token } }, body })),
-    onSuccess: again,
+    onSuccess: signedInAs,
   });
 }

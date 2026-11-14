@@ -82,6 +82,7 @@
   - **Config:** `GE_TRUST_PROXY` is new, so behind Caddy the rate limits see the visitor's address rather than the proxy's. Blank values in a `.env` count as unset.
 - **`requireFreshTotp(auth)`** is a route guard reading the code from the `X-GE-TOTP` header. No route uses it yet; T12 and T13 will.
 - **Rate limits:** failures are counted, not attempts, in memory, per address and per username or link. A successful sign-in clears its username's count. T3 adds the general limit.
+- **Signing in, signing out and finishing a link** put the account straight into the web app's cache and refetch everything else in the background, without waiting. Finishing a link used to wait for every query, the link's own among them. The link now read "used", and when that answer came back first, the page swapped to "This link was used" before it could navigate (fixed 2026-11-14, after M8-T12's full e2e run caught it).
 - **The account menu** has only Sign out until T13 adds Account and Admin. "New universe" on the home page now shows only to someone who may edit.
 - **Tests:**
   - **Integration:** `apps/api/test/auth/sign-in.int.test.ts` and `links.int.test.ts` (16 tests), plus a config test. They cover every item above, and also: each code used once, the devices list and signing devices out, a forged or crossed setup refused, History recording the account, and 404s with `GE_AUTH_MODE=none`.
