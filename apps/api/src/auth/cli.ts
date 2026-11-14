@@ -16,6 +16,7 @@ import { createDatabase, schema, type Database } from '@ge/db';
 import { Password, Username } from '@ge/domain';
 import { eq } from 'drizzle-orm';
 import { ConfigError, loadConfig, type Config } from '../config.ts';
+import { recordCliEvent } from '../services/access-events.ts';
 import { sealerFor } from './crypto.ts';
 import { createAccountLink, linkUrl } from './links.ts';
 import { hashPassword } from './passwords.ts';
@@ -141,6 +142,10 @@ async function printLink(db: Database, config: Config, args: string[]): Promise<
   if (command === 'invite') {
     const role = rest.includes('--admin') ? 'admin' : 'member';
     const { token, expiresAt } = await createAccountLink(db, { purpose: 'invite', role });
+    await recordCliEvent(db, {
+      action: 'invite.create',
+      detail: { role, expiresAt: expiresAt.toISOString() },
+    });
     console.log(
       `An invite for ${role === 'admin' ? 'an admin' : 'an account'}, single use, until ${expiresAt.toISOString()}:`,
     );
@@ -155,6 +160,11 @@ async function printLink(db: Database, config: Config, args: string[]): Promise<
     .where(eq(schema.users.username, username));
   if (!user) throw new UsageError(`There is no account named ${username}.`);
   const { token, expiresAt } = await createAccountLink(db, { purpose: 'reset', userId: user.id });
+  await recordCliEvent(db, {
+    action: 'user.reset',
+    userId: user.id,
+    detail: { username, expiresAt: expiresAt.toISOString() },
+  });
   console.log(`A reset link for ${username}, single use, until ${expiresAt.toISOString()}:`);
   console.log(linkUrl(publicUrl, token));
 }

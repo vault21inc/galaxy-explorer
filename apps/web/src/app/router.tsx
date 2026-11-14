@@ -19,6 +19,15 @@ export const router = createBrowserRouter([
         path: '/login',
         lazy: async () => ({ Component: (await import('@/pages/login-page.tsx')).LoginPage }),
       },
+      // The account page and the admin screens (M8-T13), loaded on first visit too.
+      {
+        path: '/account',
+        lazy: async () => ({ Component: (await import('@/pages/account-page.tsx')).AccountPage }),
+      },
+      {
+        path: '/admin',
+        lazy: async () => ({ Component: (await import('@/pages/admin/admin-page.tsx')).AdminPage }),
+      },
       {
         path: '/link/:token',
         lazy: async () => ({

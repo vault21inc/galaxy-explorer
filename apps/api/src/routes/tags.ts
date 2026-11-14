@@ -9,6 +9,11 @@ export function openApiTags(): { name: string; description: string }[] {
       description:
         'Signing in with a password and two-factor code, sessions, and invite and reset links (M8-T1). Only with GE_AUTH_MODE=required.',
     },
+    {
+      name: 'admin',
+      description:
+        'The admin screens (M8-T13): accounts, invites and reset links, universes without their content, and the access log. Admins only.',
+    },
     { name: 'universes', description: 'Fictional settings; everything else lives inside one.' },
     { name: 'maps', description: 'One galaxy at one point in time.' },
     {

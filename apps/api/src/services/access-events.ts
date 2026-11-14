@@ -39,3 +39,15 @@ export async function recordAccessEvent(
     detail: event.detail ?? {},
   });
 }
+
+/** An event done on the server's command line (`pnpm admin:invite`, `admin:reset-link`). */
+export async function recordCliEvent(ex: Executor, event: AccessEvent): Promise<void> {
+  await ex.insert(schema.accessEvents).values({
+    actorId: null,
+    actorLabel: 'cli',
+    action: event.action,
+    userId: event.userId ?? null,
+    universeId: event.universeId ?? null,
+    detail: event.detail ?? {},
+  });
+}

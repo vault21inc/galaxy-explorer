@@ -1,4 +1,4 @@
-import { databaseErrorOf, schema, type Database } from '@ge/db';
+import { databaseErrorOf, schema, type Executor } from '@ge/db';
 import {
   ACCOUNT_LINK_TTL_MS,
   Username,
@@ -53,7 +53,7 @@ export type NewLink = { createdBy?: string | null } & (
 
 /** Makes a link and returns its token, which is shown once and never stored. */
 export async function createAccountLink(
-  db: Database,
+  db: Executor,
   link: NewLink,
 ): Promise<{ token: string; expiresAt: Date }> {
   const token = newToken();

@@ -1,4 +1,4 @@
-import { schema, type Database, type Transaction } from '@ge/db';
+import { schema, type Database, type Executor } from '@ge/db';
 import type { SessionRead } from '@ge/domain';
 import { and, desc, eq, lt, ne } from 'drizzle-orm';
 import type { z } from 'zod';
@@ -19,7 +19,7 @@ const { sessions, users } = schema;
 
 /** Starts a session for an account and returns its token, the cookie's value. */
 export async function createSession(
-  db: Database | Transaction,
+  db: Executor,
   userId: string,
   userAgent: string | null,
 ): Promise<{ token: string; expiresAt: Date }> {
@@ -83,11 +83,7 @@ export async function endSession(
 }
 
 /** Signs every session of an account out, except `keep` if given. */
-export async function endSessionsOf(
-  db: Database | Transaction,
-  userId: string,
-  keep?: string,
-): Promise<void> {
+export async function endSessionsOf(db: Executor, userId: string, keep?: string): Promise<void> {
   await db
     .delete(sessions)
     .where(

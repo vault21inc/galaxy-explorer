@@ -234,13 +234,15 @@ const mb = (bytes: number) => `${(bytes / 1024 ** 2).toFixed(1)} MB`;
 /**
  * Hands a universe to another account, if its media quota has room for the universe's images.
  * The previous owner stays on as an editor (for one of the installation's own universes, the
- * admin handing it over does); the new owner stops being a member, since owning is more.
+ * admin handing it over does); the new owner stops being a member, since owning is more. An
+ * admin's transfer (M8-T13) leaves the previous owner no access: `previousOwnerKeeps: false`.
  */
 export async function transferUniverse(
   ex: Executor,
   requester: Requester,
   universeId: string,
   username: string,
+  options: { previousOwnerKeeps?: boolean } = {},
 ): Promise<void> {
   const universe = await requireUniverse(ex, universeId);
   const account = await accountNamed(ex, username);
@@ -256,7 +258,9 @@ export async function transferUniverse(
     );
   }
   const previousOwnerId =
-    universe.ownerId ?? (requester.kind === 'account' ? requester.account.id : null);
+    options.previousOwnerKeeps === false
+      ? null
+      : (universe.ownerId ?? (requester.kind === 'account' ? requester.account.id : null));
   await ex.update(universes).set({ ownerId: account.id }).where(eq(universes.id, universeId));
   await ex
     .delete(universeMembers)
@@ -274,7 +278,12 @@ export async function transferUniverse(
     action: 'universe.transfer',
     userId: account.id,
     universeId,
-    detail: { slug: universe.slug, to: username, mediaBytes: bytes },
+    detail: {
+      slug: universe.slug,
+      to: username,
+      mediaBytes: bytes,
+      ...(options.previousOwnerKeeps === false ? { byAdmin: true } : {}),
+    },
   });
 }
 

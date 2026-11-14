@@ -19,25 +19,51 @@ export const AUTH_URL = fromEnv('GE_E2E_AUTH_URL');
 
 const REPO_ROOT = resolve(import.meta.dirname, '../../..');
 
+/** The 30-second step a time falls in (RFC 6238): what a code is made from. */
+export function stepAt(offsetS = 0): number {
+  return Math.floor((Date.now() / 1000 + offsetS) / 30);
+}
+
 /**
  * A 6-digit code from an authenticator app for `secret`, `offsetS` seconds from now: RFC 6238
  * written out here (HMAC-SHA1 over the 30-second step, then "dynamic truncation"), so the tests
  * also check that the API's codes are the standard ones authenticator apps make.
  */
 export function totp(secret: string, offsetS = 0): string {
+  return totpAt(secret, stepAt(offsetS));
+}
+
+/** The code of one 30-second step. */
+export function totpAt(secret: string, step: number): string {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   let bits = '';
   for (const char of secret.replace(/[\s=]/g, '').toUpperCase()) {
     bits += alphabet.indexOf(char).toString(2).padStart(5, '0');
   }
   const key = Buffer.from((bits.match(/.{8}/g) ?? []).map((byte) => parseInt(byte, 2)));
-  const step = Math.floor((Date.now() / 1000 + offsetS) / 30);
   const counter = Buffer.alloc(8);
   counter.writeBigUInt64BE(BigInt(step));
   const mac = createHmac('sha1', key).update(counter).digest();
   const offset = (mac.at(-1) ?? 0) & 0xf;
   const value = mac.readUInt32BE(offset) & 0x7fffffff;
   return String(value % 1_000_000).padStart(6, '0');
+}
+
+/**
+ * The account's next code (M8-T13). Each code works once, and the API accepts the current step
+ * and one either side, so the next code is the step after the last one used, once that's no more
+ * than one step ahead of now. That can mean waiting for the clock, at most 30 seconds: only a
+ * test that asks for several codes in a row, such as signing in and then disabling an account.
+ */
+export async function nextCode(account: Account): Promise<string> {
+  for (;;) {
+    const step = Math.max(account.lastStep + 1, stepAt());
+    if (step <= stepAt() + 1) {
+      account.lastStep = step;
+      return totpAt(account.secret, step);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
 }
 
 /** Runs `pnpm admin:invite`, as an admin on the server would, and returns the link's path. */
@@ -65,6 +91,8 @@ export interface Account {
   username: string;
   password: string;
   secret: string;
+  /** The step of the last code used: a code works once (M8-T1). */
+  lastStep: number;
 }
 
 /** An API client for the site with accounts, sending writes from its own origin. */
@@ -74,7 +102,7 @@ export function siteApi(): Promise<APIRequestContext> {
 
 /**
  * An account made through an invite link's two steps, over the API. Its first code is used up
- * here, so the next sign-in must use the next step's code (`totp(secret, 30)`).
+ * here: the next one is `nextCode(account)`.
  */
 export async function accountFromInvite(options: { admin?: boolean } = {}): Promise<Account> {
   const token = inviteLink(options).slice('/link/'.length);
@@ -87,12 +115,13 @@ export async function accountFromInvite(options: { admin?: boolean } = {}): Prom
     const { secret, setup } = (
       (await started.json()) as { data: { secret: string; setup: string } }
     ).data;
+    const lastStep = stepAt();
     const finished = await api.post(`/api/v1/auth/links/${token}/finish`, {
-      data: { setup, totp: totp(secret) },
+      data: { setup, totp: totpAt(secret, lastStep) },
     });
     if (!finished.ok())
       throw new Error(`finish: ${String(finished.status())} ${await finished.text()}`);
-    return { ...account, secret };
+    return { ...account, secret, lastStep };
   } finally {
     await api.dispose();
   }
@@ -105,7 +134,7 @@ export async function signInThrough(api: APIRequestContext, account: Account): P
     data: {
       username: account.username,
       password: account.password,
-      totp: totp(account.secret, 30),
+      totp: await nextCode(account),
     },
   });
   if (!response.ok())

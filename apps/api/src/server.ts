@@ -25,6 +25,8 @@ import { guardPreviewRoles } from './http/preview-roles.ts';
 import { handleError, handleNotFound, problemSchema } from './http/problems.ts';
 import { assetRoutes, mediaAccessRoutes, mediaRoutes } from './routes/assets.ts';
 import { sharingRoutes } from './routes/sharing.ts';
+import { accountRoutes } from './routes/account.ts';
+import { adminRoutes } from './routes/admin.ts';
 import { authRoutes } from './routes/auth.ts';
 import { iconRoutes } from './routes/icons.ts';
 import { wikiRoutes } from './routes/wiki.ts';
@@ -127,6 +129,8 @@ export async function buildServer(config: Config) {
   await app.register(
     async (v1) => {
       await v1.register(authRoutes, { auth });
+      await v1.register(accountRoutes, { db, auth });
+      await v1.register(adminRoutes, { db, auth });
       await v1.register(containerRoutes, { db, auth });
       await v1.register(sharingRoutes, { db, auth });
       await v1.register(entityRoutes, { db });

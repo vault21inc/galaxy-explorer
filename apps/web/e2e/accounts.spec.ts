@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { accountFromInvite, AUTH_URL, inviteLink, totp, uniqueName } from './accounts.ts';
+import { accountFromInvite, AUTH_URL, inviteLink, nextCode, totp, uniqueName } from './accounts.ts';
 import { waitForFirstFrame } from './test-hooks.ts';
 
 /**
@@ -34,7 +34,7 @@ test.describe('accounts (M8-T1)', () => {
     await expect(page.getByRole('alert')).toContainText('That didn’t work');
 
     // The first code was used up making the account: the next one.
-    await page.getByLabel('Code from your authenticator app').fill(totp(admin.secret, 30));
+    await page.getByLabel('Code from your authenticator app').fill(await nextCode(admin));
     await page.getByRole('button', { name: 'Sign in' }).click();
     // Back where they were, now able to edit.
     await expect(page).toHaveURL(new RegExp(`${MAP}$`));

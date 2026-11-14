@@ -12,9 +12,9 @@ import {
 } from '@/components/ui/dropdown-menu.tsx';
 
 /**
- * The account menu at the top bar's right end (M8-T1, ux.md §13): the username, opening Sign
- * out (M8-T13 adds Account and Admin); signed out, a "Sign in" link back to this page. Not shown
- * on a server without accounts.
+ * The account menu at the top bar's right end (M8-T1, T13, ux.md §13): the username, opening
+ * Account, Admin (for admins) and Sign out; signed out, a "Sign in" link back to this page. Not
+ * shown on a server without accounts.
  */
 export function AccountMenu() {
   const enabled = useAccountsEnabled();
@@ -45,6 +45,15 @@ export function AccountMenu() {
         <DropdownMenuLabel className="text-xs text-muted-foreground">
           Signed in as {account.data.username}
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/account">Account</Link>
+        </DropdownMenuItem>
+        {account.data.role === 'admin' && (
+          <DropdownMenuItem asChild>
+            <Link to="/admin">Admin</Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           disabled={signOut.isPending}

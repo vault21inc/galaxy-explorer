@@ -219,9 +219,33 @@
 - **Admin screens** (`/admin`, ux.md §13): Accounts, Universes and Log, as tables with their actions; links are shown once with a Copy button.
 
 **Done when:**
-- [ ] Integration tests: a member and a token get 404 on every admin route; inviting, resetting, disabling and enabling, the role change and the last-admin rule; deleting an account that owns universes is refused; an admin reading another account's private universe gets 404, before and after listing it; transfer and takedown; each action's `access_events` row.
-- [ ] E2E: the admin invites an account from the Accounts screen; the invitee signs up through the link and creates a private universe; the admin sees it in Universes but gets "not found" at its address; the admin disables the account, and its browser is signed out at its next request.
-- [ ] axe finds no violations on the account page, the link pages and the admin screens.
+- [x] Integration tests: a member and a token get 404 on every admin route; inviting, resetting, disabling and enabling, the role change and the last-admin rule; deleting an account that owns universes is refused; an admin reading another account's private universe gets 404, before and after listing it; transfer and takedown; each action's `access_events` row. (Tokens don't exist until M8-T2: the admin scope needs a session, which a token never has, and T2's tests try one on these routes.)
+- [x] E2E: the admin invites an account from the Accounts screen; the invitee signs up through the link and creates a private universe; the admin sees it in Universes but gets "not found" at its address; the admin disables the account, and its browser is signed out at its next request.
+- [x] axe finds no violations on the account page, the link pages and the admin screens.
+
+**As built:**
+- **The admin scope:** the access guard has a fourth scope, `admin` (`routeAccess({ scope: 'admin' })`). It lets through only an account with the `admin` role and a session; everyone else gets the same 404 as a route that doesn't exist, locally too. A universe in an admin route's path isn't checked through `universeAccess`, because these routes don't read content.
+- **Routes** (`routes/admin.ts`, `services/admin-service.ts`):
+  - **Accounts:** the list; invites (no code, the link returned once); reset links (code); `PATCH` for role, status and quota. The role and status need a code; the quota doesn't.
+  - **Disabling** ends the account's sessions at once. The last admin who can sign in can't be demoted, disabled or deleted (422).
+  - **Deleting an account** is refused with a 422 while it owns universes. Its name stays in the log after it's gone.
+  - **Universes:** the list holds facts only: owner, visibility, object count, media and last change. `PATCH { owner }` transfers with a code, through M8-T12's `transferUniverse` with `previousOwnerKeeps: false`. `PATCH { visibility: "private" }` is the takedown, with no code; it drops the share key. `DELETE` (code) is a change batch, like the owner's delete.
+  - **The log** pages newest first, by its time-ordered ids.
+- **The account page's routes** (`routes/account.ts`):
+  - `POST /auth/password` takes the current password and a code. It signs out every other device, logs `user.password`, and counts failures like signing in.
+  - `GET /auth/storage` gives the media per owned universe.
+  - Without accounts they answer 404, like the other account routes.
+- **The command line's** invite and reset links are logged too, as `cli`.
+- **Found on the way:** Drizzle writes a column of a one-table query as a bare `"id"`. Inside a subquery that meant the subquery's own table, which would have made storage counts wrong without failing. The outer row is now named in full there.
+- **Web:**
+  - `/account`: Password, Signed-in devices and Storage.
+  - `/admin`: Accounts, Universes and Log tabs (Radix Tabs). To anyone but an admin it's the ordinary "Page not found".
+  - Each action opens one dialog (`pages/admin/action-dialog.tsx`). It can ask for a typed confirmation (the username, or the universe's address), a value and a code, and can show a link once with Copy.
+  - The account menu gains Account and Admin.
+- **Tests:**
+  - `apps/api/test/admin.int.test.ts` (10 tests). It forgets an account's last code between calls that need one: those tests are about the routes, and M8-T1's about codes working once.
+  - `apps/web/e2e/admin.spec.ts`, with axe on the admin tabs and the account page, and `test/bytes.test.ts`.
+  - The e2e helpers track each account's last code step (`nextCode`), waiting for the clock only when two codes in a row need it.
 
 ### M8-T2 API tokens and remote MCP
 

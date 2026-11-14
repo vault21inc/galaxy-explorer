@@ -32,7 +32,14 @@ export type RouteAccess =
    * creating a universe, the batch endpoint (which checks each operation's universe itself),
    * reading wikis for "Fill from wiki".
    */
-  | { scope: 'editor' };
+  | { scope: 'editor' }
+  /**
+   * The admin screens (M8-T13): only an account with the `admin` role, signed in with a session
+   * (never an API token). Everyone else gets a 404, as if the routes weren't there. A universe
+   * in an admin route's path isn't opened through `universeAccess`: the admin routes deal with
+   * universes without reading their content.
+   */
+  | { scope: 'admin' };
 
 declare module 'fastify' {
   interface FastifySchema {
@@ -85,6 +92,15 @@ export function registerAccessGuard(app: FastifyInstance, db: Database): void {
       return refuse(reply, 500, 'This route declares no access rule.');
     }
     if (access.scope === 'open') return;
+    if (access.scope === 'admin') {
+      const { requester } = request;
+      const admin =
+        requester.kind === 'account' &&
+        requester.account.role === 'admin' &&
+        request.sessionId !== null;
+      if (!admin) return refuse(reply, 404, `No route for ${request.method} ${request.url}.`);
+      return;
+    }
     if (access.scope === 'editor') {
       if (!request.canEdit) return notAllowed(request, reply, 'You can’t make changes here.');
       return;

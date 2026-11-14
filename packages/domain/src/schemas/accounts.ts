@@ -137,8 +137,9 @@ export const UniverseUnlock = z.strictObject({
 export const UniverseTransfer = z.strictObject({ username: Username });
 
 /**
- * What `access_events` records (M8-T12, data-model §3.8): account and access changes, the
- * admin screens' log. M8-T13 adds the admin actions.
+ * What `access_events` records (M8-T12, T13, data-model §3.8): account and access changes, the
+ * admin screens' log. Sharing's come from universes' owners, the rest from admins (or `cli`,
+ * the server's command line), and `user.password` from the account itself.
  */
 export const ACCESS_EVENT_ACTIONS = [
   'member.add',
@@ -149,5 +150,102 @@ export const ACCESS_EVENT_ACTIONS = [
   'universe.link',
   'universe.transfer',
   'universe.delete',
+  'universe.takedown',
+  'invite.create',
+  'user.reset',
+  'user.disable',
+  'user.enable',
+  'user.role',
+  'user.quota',
+  'user.delete',
+  'user.password',
 ] as const;
 export type AccessEventAction = (typeof ACCESS_EVENT_ACTIONS)[number];
+
+// ---- the account page (M8-T13, ux.md §13) --------------------------------------------------
+
+/** Changing one's password: the current one, the new one, and a current code. */
+export const PasswordChange = z.strictObject({
+  currentPassword: z.string().min(1).max(PASSWORD_MAX_LENGTH),
+  newPassword: Password,
+  totp: TotpCode,
+});
+
+/** How much of the media quota the account's universes use, universe by universe. */
+export const StorageRead = z.object({
+  quotaBytes: z.int().nonnegative(),
+  usedBytes: z.int().nonnegative(),
+  universes: z.array(
+    z.object({ id: z.uuid(), slug: z.string(), name: z.string(), bytes: z.int().nonnegative() }),
+  ),
+});
+
+// ---- the admin screens (M8-T13, ux.md §13) -------------------------------------------------
+
+/** One account, as the Accounts screen lists it. */
+export const AdminUserRead = z.object({
+  id: z.uuid(),
+  username: Username,
+  role: SiteRole,
+  createdAt: timestamp,
+  lastLoginAt: timestamp.nullable(),
+  /** Set: the account can't sign in. */
+  disabledAt: timestamp.nullable(),
+  universesOwned: z.int().nonnegative(),
+  mediaUsedBytes: z.int().nonnegative(),
+  mediaQuotaBytes: z.int().nonnegative(),
+});
+
+/**
+ * What an admin may change about an account. Changing the role or disabling needs a current
+ * code; the last admin can't be demoted or disabled.
+ */
+export const AdminUserUpdate = z
+  .strictObject({
+    role: SiteRole.optional(),
+    disabled: z.boolean().optional(),
+    mediaQuotaBytes: z.int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
+  })
+  .refine((update) => Object.keys(update).length > 0, 'Send at least one field to change.');
+
+/** Making an invite: the new account's role. */
+export const AdminInviteCreate = z.strictObject({ role: SiteRole });
+
+/** An invite or reset link, shown once: its address and when it stops working. */
+export const AdminLinkRead = z.object({ url: z.string(), expiresAt: timestamp });
+
+/** One universe, as the Universes screen lists it: about it, never what's in it. */
+export const AdminUniverseRead = z.object({
+  id: z.uuid(),
+  slug: z.string(),
+  name: z.string(),
+  owner: Username.nullable(),
+  visibility: z.enum(['private', 'link', 'public']),
+  objectCount: z.int().nonnegative(),
+  mediaBytes: z.int().nonnegative(),
+  /** When anything in it last changed. */
+  lastChangeAt: timestamp,
+});
+
+/**
+ * An admin's change to a universe: hand it to an account (whose owner keeps no access; needs a
+ * current code), or make it private (a takedown).
+ */
+export const AdminUniverseUpdate = z.union([
+  z.strictObject({ owner: Username }),
+  z.strictObject({ visibility: z.literal('private') }),
+]);
+
+/** One row of the access log (`GET /admin/events`), newest first. */
+export const AccessEventRead = z.object({
+  id: z.uuid(),
+  /** Who did it: their username at the time, `local` or `cli`. */
+  actor: z.string(),
+  action: z.enum(ACCESS_EVENT_ACTIONS),
+  /** The account it concerns, by its username now, if it still exists. */
+  user: Username.nullable(),
+  /** The universe it concerns, by its address now, if it still exists. */
+  universe: z.string().nullable(),
+  detail: z.record(z.string(), z.unknown()),
+  createdAt: timestamp,
+});
