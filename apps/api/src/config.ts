@@ -16,6 +16,10 @@ const WikiSourceConfig = z.object({
 });
 export type WikiSourceConfig = z.infer<typeof WikiSourceConfig>;
 
+/** An optional setting where a blank value (`GE_PUBLIC_URL=` in a .env file) means unset. */
+const optional = <T extends z.ZodType>(schema: T) =>
+  z.preprocess((value) => (value === '' ? undefined : value), schema.optional());
+
 /** The wikis offered unless GE_WIKI_SOURCES says otherwise. */
 export const DEFAULT_WIKI_SOURCES: readonly WikiSourceConfig[] = [
   {
@@ -45,6 +49,24 @@ const configSchema = z
      * docs/ops/preview.md). Off on your own machine.
      */
     GE_PREVIEW_ROLES: z.enum(['on', 'off']).default('off'),
+    /**
+     * With GE_AUTH_MODE=required (M8-T1): the key that seals two-factor secrets and setup
+     * tokens (auth/crypto.ts). At least 32 characters of randomness, such as
+     * `openssl rand -base64 48`. Changing it makes every account's two-factor codes unreadable.
+     */
+    GE_SESSION_SECRET: optional(z.string().min(32, 'Use at least 32 characters.')),
+    /**
+     * With GE_AUTH_MODE=required: the address the site is served from, such as
+     * https://galaxy.example. Writes must come from this origin (CSRF, auth/origin-check.ts),
+     * links are made with it, and the session cookie is `Secure` when it's https.
+     */
+    GE_PUBLIC_URL: optional(z.url({ protocol: /^https?$/ })),
+    /**
+     * Which proxies' `X-Forwarded-For` to believe, so the rate limits see the visitor's
+     * address rather than the proxy's: Fastify's `trustProxy`, such as `loopback` or
+     * `127.0.0.1,10.0.0.0/8`. Unset: none.
+     */
+    GE_TRUST_PROXY: optional(z.string().min(1)),
     /**
      * How the API introduces itself to wikis (M7-T3). Wikis ask for a name and a way to reach
      * whoever runs the client; set it to include yours.
@@ -78,6 +100,16 @@ const configSchema = z
     path: ['GE_HOST'],
     message: 'GE_AUTH_MODE=none only allows a loopback host (127.0.0.1, ::1 or localhost)',
   })
+  // Accounts need both: the secret to seal two-factor secrets, the URL for cookies and links.
+  .refine(
+    (env) =>
+      env.GE_AUTH_MODE !== 'required' ||
+      (env.GE_SESSION_SECRET !== undefined && env.GE_PUBLIC_URL !== undefined),
+    {
+      path: ['GE_SESSION_SECRET'],
+      message: 'GE_AUTH_MODE=required needs GE_SESSION_SECRET and GE_PUBLIC_URL',
+    },
+  )
   .transform((env) => ({
     databaseUrl: env.DATABASE_URL,
     authMode: env.GE_AUTH_MODE,
@@ -85,6 +117,10 @@ const configSchema = z
     port: env.GE_PORT,
     logLevel: env.GE_LOG_LEVEL,
     previewRoles: env.GE_PREVIEW_ROLES === 'on',
+    sessionSecret: env.GE_SESSION_SECRET,
+    /** Just the origin (scheme, host and port), which is what `Origin` headers carry. */
+    publicUrl: env.GE_PUBLIC_URL === undefined ? undefined : new URL(env.GE_PUBLIC_URL).origin,
+    trustProxy: env.GE_TRUST_PROXY,
     wikiUserAgent: env.GE_WIKI_USER_AGENT,
     wikiSources: env.GE_WIKI_SOURCES,
     mediaDir: isAbsolute(env.GE_MEDIA_DIR)

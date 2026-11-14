@@ -14,6 +14,17 @@ export const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { path: '/', element: <HomePage /> },
+      // Signing in and account links (M8-T1): loaded on first visit, as most readers never need them.
+      {
+        path: '/login',
+        lazy: async () => ({ Component: (await import('@/pages/login-page.tsx')).LoginPage }),
+      },
+      {
+        path: '/link/:token',
+        lazy: async () => ({
+          Component: (await import('@/pages/account-link-page.tsx')).AccountLinkPage,
+        }),
+      },
       { path: '/u/:universeSlug', element: <UniversePage /> },
       // A static segment ranks above `:mapSlug`, so no map may use the slug `settings`. Loaded
       // on first visit: its forms bring the rich-text editor, which the galaxy view doesn't need.

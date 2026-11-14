@@ -26,7 +26,7 @@ Run from the repository root. Each one listed here exists and runs; the last tab
 | `pnpm format` / `pnpm format:check` | format code with Prettier / only check it (Markdown is left alone) |
 | `pnpm lint` / `pnpm typecheck` / `pnpm test` | the parts of `pnpm check`, one at a time |
 | `pnpm test:integration` | API and DB tests (`*.int.test.ts`) against the test Postgres; unit tests are `*.test.ts` |
-| `pnpm test:e2e` | Playwright end-to-end tests in Chromium and WebKit (`-- --project=chromium` for one browser). They build the web app with the test hooks and start their own API on port 3101, using the `ge_e2e` database on the test server. Install the browsers once with `pnpm --filter @ge/web exec playwright install chromium webkit`. CI runs them in Chromium with software rendering and leaves out `leaks.spec.ts`, which `pnpm perf` covers |
+| `pnpm test:e2e` | Playwright end-to-end tests in Chromium and WebKit (`-- --project=chromium` for one browser). They build the web app with the test hooks and start their own API on port 3101, using the `ge_e2e` database on the test server, and a second API with accounts on port 3108 (`ge_e2e_auth`, served at http://localhost:4174) for `accounts.spec.ts`. Install the browsers once with `pnpm --filter @ge/web exec playwright install chromium webkit`. CI runs them in Chromium with software rendering and leaves out `leaks.spec.ts`, which `pnpm perf` covers |
 | `pnpm build` | production build of the web app into `apps/web/dist` |
 | `pnpm db:migrate` / `pnpm db:reset` | apply migrations (and fill any missing search indexes, D-37) / drop, create and migrate the dev database, then seed the demo universe (local databases only) |
 | `pnpm db:seed demo` / `pnpm db:seed stress` | seed the demo universe / the 5,000-object performance map (`--objects`, `--groups`, `--routes`, `--seed`; `--closed` makes no system open a view, as `pnpm perf` seeds it). Idempotent: re-running changes nothing |
@@ -40,6 +40,9 @@ Added by later tasks; update this file when you add one:
 | Command | Does | Added in |
 |---|---|---|
 | `pnpm mcp` | the MCP server over stdio, for LLM agents: tools generated from the registries, calling the API at `GE_API_URL` (default http://127.0.0.1:3100, so run `pnpm dev` too). How to add it to Claude Code and Claude Desktop: [apps/mcp/README.md](apps/mcp/README.md) | M7-T7 |
+| `pnpm admin:create-user [--admin]` | make an account on the command line: asks for a username and password, prints the two-factor QR code and secret, and saves the account only after one valid code. The first admin is made this way. Needs `GE_PUBLIC_URL` and `GE_SESSION_SECRET` | M8-T1 |
+| `pnpm admin:invite [--admin]` | print an invite link (7 days, single use) to `/link/{token}`. Needs `GE_PUBLIC_URL` | M8-T1 |
+| `pnpm admin:reset-link <username>` | print a reset link (24 hours, single use) for a new password and two-factor codes. Needs `GE_PUBLIC_URL` | M8-T1 |
 
 ## Non-negotiables
 

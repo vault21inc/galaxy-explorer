@@ -1,4 +1,5 @@
 import {
+  ACCOUNT_LINK_PURPOSES,
   ACTOR_TYPES,
   BASE_TYPES,
   ENTITY_KINDS,
@@ -8,6 +9,7 @@ import {
   IMAGE_ROLES,
   LOCATION_MODES,
   RELATION_TYPES,
+  SITE_ROLES,
 } from '@ge/domain';
 import { sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
@@ -45,6 +47,9 @@ describe('registry ↔ database consistency', () => {
     ['entity_images_role_check', IMAGE_ROLES],
     ['entity_locations_mode_check', LOCATION_MODES],
     ['change_batches_actor_type_check', ACTOR_TYPES],
+    ['users_role_check', SITE_ROLES],
+    ['account_links_purpose_check', ACCOUNT_LINK_PURPOSES],
+    ['account_links_role_check', SITE_ROLES],
   ])('%s lists exactly the registry values', (constraint, values) =>
     withTestDb(async (db) => {
       expect((await checkValues(db, constraint)).sort()).toEqual([...values].sort());

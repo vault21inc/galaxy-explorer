@@ -397,6 +397,7 @@ create table users (
   role               text not null default 'member' check (role in ('admin', 'member')),
   password_hash      text not null,                    -- argon2id
   totp_secret_enc    bytea not null,                   -- encrypted with a key derived from GE_SESSION_SECRET
+  totp_last_step     bigint,                           -- the 30-second step of the last code accepted: each code works once (M8-T1)
   media_quota_bytes  bigint not null default 2147483648,  -- 2 GiB across the universes it owns; admins change it
   disabled_at        timestamptz,                      -- set: can't sign in, sessions and tokens stop
   created_at         timestamptz not null default now(),
@@ -446,11 +447,13 @@ create table access_events (
 create index access_events_created_idx on access_events (created_at desc);
 
 create table sessions (
-  id_hash     bytea primary key,                       -- sha256 of the cookie value; the raw value is never stored
-  user_id     uuid not null references users on delete cascade,
-  created_at  timestamptz not null default now(),
-  expires_at  timestamptz not null,
-  user_agent  text
+  id            uuid primary key default uuidv7(),     -- names a device to its account, revealing nothing about the token
+  token_hash    bytea not null unique,                 -- sha256 of the cookie value; the raw value is never stored
+  user_id       uuid not null references users on delete cascade,
+  created_at    timestamptz not null default now(),
+  expires_at    timestamptz not null,                  -- 30 days, sliding forward as it's used
+  last_seen_at  timestamptz not null default now(),    -- for the account page's devices list
+  user_agent    text
 );
 
 create table api_tokens (
@@ -467,6 +470,7 @@ create table api_tokens (
 ```
 
 - **The migration** gives existing universes `visibility = 'public'` and no owner, so an installation that had no accounts behaves as before; new universes start `private` and belong to the account that made them.
+- **As built in M8-T1:** `sessions` has an `id` and `last_seen_at`, and `users` has `totp_last_step`. The link steps keep nothing in `account_links` between them: `start` returns the chosen username, the password's hash and the new two-factor secret sealed by the API, and `finish` opens them (M8-T1's as-built notes).
 - **A token** can do what its account can at the moment of each request, no more: narrowed by its scopes and, if set, to one universe. There is no admin scope: account and admin actions need a session.
 - **Media quota:** the sum of `assets.byte_size` over the universes an account owns. An upload that would pass it is refused with a 413 that says how much is used. Uploads by an editor count against the universe's owner.
 

@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    // The tests run in Node and drive the browser from there: they may use Node's own modules
+    // (the admin command line, HMAC for two-factor codes). The app's source may not, so only
+    // this folder gets Node's types.
+    "types": ["vite/client", "node"]
+  },
+  // The tests read 3D state through `window.__GE_TEST__`, declared with the hooks themselves.
+  "include": [".", "../src/render/test-hooks.ts"]
+}

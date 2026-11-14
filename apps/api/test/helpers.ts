@@ -12,6 +12,9 @@ export function testConfig(overrides: Partial<Config> = {}): Config {
     port: 0,
     logLevel: 'silent',
     previewRoles: false,
+    sessionSecret: undefined,
+    publicUrl: undefined,
+    trustProxy: undefined,
     wikiUserAgent: 'GalaxyExplorer/test',
     // No wiki unless a test sets up its own fixture server (M7-T3).
     wikiSources: [],

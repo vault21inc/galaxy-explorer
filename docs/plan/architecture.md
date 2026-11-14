@@ -269,7 +269,8 @@ The system and orbit payloads have the same shape: the subject, its direct child
 - **The viewer of a request** is resolved once, in a Fastify hook: the account behind the session cookie or token (with its site role), the share keys the browser has unlocked, or nobody. Services receive it as today's `Viewer`, which grows from "may see drafts" to "who is asking".
 - **Every service call that touches a universe asks `universeAccess(viewer, universe)`** for `none`, `read`, `edit` or `own`. Entities, maps and assets reach their universe through their own rows, never through ids the client sent. `none` is a 404 on every route; a 403 means the requester can read the universe but may not do that.
 - **A contract test walks the OpenAPI document,** so no route can be missed: for every route with a universe, map, entity or asset in its path, a stranger and an anonymous visitor get 404 on a private universe, a viewer reads and gets 403 on writes, and an editor writes but can't change who has access.
-- **Account, sharing and admin routes** need a session; a token never reaches them. Destructive ones (deleting or transferring a universe, disabling an account, issuing a reset link) also ask for a current two-factor code.
+- **Signing in (M8-T1):** a password (argon2id) and a code from an authenticator app (TOTP, each code once), then an `HttpOnly`, `SameSite=Lax` session cookie whose token is stored only as a hash. Every write must carry `Origin` equal to `GE_PUBLIC_URL` (CSRF). Failed sign-ins and link attempts are limited per address and per username or link. Accounts come from invite links, and the first admin from `pnpm admin:create-user --admin`.
+- **Account, sharing and admin routes** need a session; a token never reaches them. Destructive ones (deleting or transferring a universe, disabling an account, issuing a reset link) also ask for a current two-factor code, in an `X-GE-TOTP` header (the `requireFreshTotp` guard).
 - **The web app learns what it may do from the universe itself:** `UniverseRead` carries the requester's `access`, with the universe's `visibility` and its owner's username. Edit mode is offered from `edit` up, and the sharing controls at `own`. `/api/health`'s `canEdit` (D-31) goes away with the preview.
 - **`GE_AUTH_MODE=none`** has no accounts: the local actor has `own` on everything, and the account routes answer 404.
 
@@ -327,9 +328,10 @@ All configuration comes from environment variables, validated by a Zod schema at
 | `GE_HOST`, `GE_PORT` | api | `127.0.0.1`, `3100`. With `GE_AUTH_MODE=none` the host must be a loopback address. |
 | `GE_LOG_LEVEL` | api | `info` (`fatal` … `trace`, or `silent`) |
 | `GE_MEDIA_DIR` | api | `./.data/media` |
-| `GE_PUBLIC_URL` | api, web build | `http://localhost:5173` |
+| `GE_PUBLIC_URL` | api (M8-T1) | with `GE_AUTH_MODE=required`: the site's address, such as `https://galaxy.example`. Writes must come from its origin, links are made with it, and the session cookie is `Secure` when it's https |
 | `VITE_TEST_HOOKS` | web build | unset; `1` exposes `window.__GE_TEST__` in a production build, for e2e tests (development builds always have it) |
-| `GE_SESSION_SECRET` | api (M8) | 32+ random bytes |
+| `GE_SESSION_SECRET` | api (M8-T1) | with `GE_AUTH_MODE=required`: 32+ random characters (`openssl rand -base64 48`); seals two-factor secrets, so changing it locks every account out of its codes |
+| `GE_TRUST_PROXY` | api (M8-T1) | unset; behind a proxy, whose `X-Forwarded-For` to believe (Fastify's `trustProxy`, such as `loopback`), so rate limits see the visitor's address |
 | `GE_WIKI_USER_AGENT` | api (M7) | `GalaxyExplorer/0.1 (contact: …)`; wikis ask for a way to reach whoever runs the client |
 | `GE_WIKI_SOURCES` | api (M7) | the wikis "Fill from wiki" may read, as JSON `[{ "id", "label", "apiUrl" }]`; default: the Warhammer 40k Wiki (D-35) |
 | `GE_API_URL`, `GE_API_TOKEN` | mcp (M7) | `http://127.0.0.1:3100/api/v1` |

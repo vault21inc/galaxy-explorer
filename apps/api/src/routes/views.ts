@@ -23,7 +23,7 @@ const VIEW_DOC =
 
 export const viewRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, { db }, done) => {
   const viewerOf = (request: Parameters<typeof actorOf>[0], includeDrafts: boolean | undefined) =>
-    visibleTo(actorOf(request), { includeDrafts });
+    visibleTo(request.actor, { includeDrafts });
   const spoilersApplied = <T extends object>(view: T, spoilers: 'include' | 'exclude') =>
     spoilers === 'exclude' ? excludeViewSpoilers(view) : view;
 

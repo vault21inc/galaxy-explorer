@@ -56,8 +56,37 @@
 - A login page at `/login`, built with shadcn components, and the account menu in the top bar (username, Sign out; "Sign in" when signed out).
 
 **Done when:**
-- [ ] Integration tests cover: a wrong password; a wrong or old TOTP code; a successful login; an expired session; logout; a cross-origin mutation rejected; an invite accepted once and refused the second time; an expired link; a taken username; a reset that replaces the password and TOTP and ends the account's sessions; a disabled account's session and login refused; the rate limit.
-- [ ] E2E: the admin logs in and edits; logged out, the edit toggle is gone. An invite link (made with `pnpm admin:invite` in the test's setup) leads through username, password and TOTP to a signed-in account.
+- [x] Integration tests cover: a wrong password; a wrong or old TOTP code; a successful login; an expired session; logout; a cross-origin mutation rejected; an invite accepted once and refused the second time; an expired link; a taken username; a reset that replaces the password and TOTP and ends the account's sessions; a disabled account's session and login refused; the rate limit.
+- [x] E2E: the admin logs in and edits; logged out, the edit toggle is gone. An invite link (made with `pnpm admin:invite` in the test's setup) leads through username, password and TOTP to a signed-in account.
+
+**As built:**
+- **Where:** `apps/api/src/auth/` holds the parts:
+  - `crypto.ts`: tokens and sealing;
+  - `passwords.ts`, `totp.ts`, `attempt-limiter.ts`;
+  - `sessions.ts`, `sign-in.ts`, `links.ts`;
+  - `requester.ts`, the per-request hook;
+  - `cli.ts`, the admin commands.
+
+  The routes are in `routes/auth.ts`. The web pages are `pages/login-page.tsx` and `pages/account-link-page.tsx` (with `pages/account-link/`), and the menu is `app/account-menu.tsx`.
+- **Who's asking:** the hook sets `request.account`, `request.actor` and `request.canEdit` once per request.
+  - Readers' draft filtering takes `request.actor`, and `actorOf` refuses an anonymous visitor.
+  - `/api/health`'s `canEdit` and the export routes read `request.canEdit`.
+  - T11 replaces `canEdit` with `universeAccess`.
+- **Different from the plan:**
+  - **`sessions` has an `id`**, so a device can be signed out without exposing its token's hash. It also has `last_seen_at`, for the devices list. The session slides forward at most once every 5 minutes, so reading doesn't mean writing on every request.
+  - **`users.totp_last_step`** makes each code work once (RFC 6238 §5.2). A replayed code fails, even inside its 30 seconds.
+  - **A link's two steps keep nothing in the database between them.** `start` returns the chosen username, the password's hash and the new secret, sealed with a key derived from `GE_SESSION_SECRET` (AES-256-GCM, 30 minutes). `finish` opens them. So `account_links` needs no pending columns, and an abandoned step leaves nothing behind.
+  - **`GET /auth/me` answers `{ data: null }`** when signed out, rather than a 401, so a signed-out page logs no errors.
+  - **"Quota used" moves to T11,** which gives universes owners; `/auth/me` returns the quota only.
+  - **The cookie is `Secure` whenever `GE_PUBLIC_URL` is https,** which production always is. Over http on localhost it isn't, because WebKit won't send a `Secure` cookie there.
+  - **Config:** `GE_TRUST_PROXY` is new, so behind Caddy the rate limits see the visitor's address rather than the proxy's. Blank values in a `.env` count as unset.
+- **`requireFreshTotp(auth)`** is a route guard reading the code from the `X-GE-TOTP` header. No route uses it yet; T12 and T13 will.
+- **Rate limits:** failures are counted, not attempts, in memory, per address and per username or link. A successful sign-in clears its username's count. T3 adds the general limit.
+- **The account menu** has only Sign out until T13 adds Account and Admin. "New universe" on the home page now shows only to someone who may edit.
+- **Tests:**
+  - **Integration:** `apps/api/test/auth/sign-in.int.test.ts` and `links.int.test.ts` (16 tests), plus a config test. They cover every item above, and also: each code used once, the devices list and signing devices out, a forged or crossed setup refused, History recording the account, and 404s with `GE_AUTH_MODE=none`.
+  - **E2E:** `apps/web/e2e/accounts.spec.ts` runs against a second API with `GE_AUTH_MODE=required` (port 3108, database `ge_e2e_auth`), behind a second preview server (4174) of the same build. It also checks the login and link pages with axe.
+  - **Typing:** `e2e/tsconfig.json` gives only the tests Node's types, for `pnpm admin:invite` and a hand-written RFC 6238 code generator.
 
 ### M8-T11 Ownership, visibility and the access check
 
@@ -76,7 +105,7 @@
 - **Creating a universe** needs an account, which becomes its owner. Importing (M7-T4) and the practice universe (T10) follow the same rule.
 - **History** records the account: `actor_type = 'user'` with its id and username, or `'api_token'` with the token's name and its account's.
 - **Media:** `/media/u/{universeId}/…` is served only with `read` on that universe. In development and tests Fastify's own route checks; `GET /api/v1/media-access` answers the same question for Caddy's `forward_auth` (T4). Non-public universes' files get `Cache-Control: private`.
-- **Media quota:** an upload that would take the owner past `media_quota_bytes` is refused with a 413 that says how much is used.
+- **Media quota:** an upload that would take the owner past `media_quota_bytes` is refused with a 413 that says how much is used. `GET /auth/me` gains `mediaUsedBytes`, the media of the universes the account owns (moved here from T1).
 - **The web app:** the edit toggle follows the universe's `access` (from `edit` up) instead of `/api/health`'s `canEdit`; a universe the requester can't read shows the ordinary "not found" page, with "Sign in" if they're signed out; the home page lists Your universes, Shared with you and the public ones (ux.md §13).
 - **AGENTS.md:** the Security rules gain "every service call that touches a universe asks `universeAccess`; a universe the requester can't read is a 404".
 

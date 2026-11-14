@@ -22,6 +22,9 @@ const app = await buildServer({
   port: 0,
   logLevel: 'silent',
   previewRoles: false,
+  sessionSecret: undefined,
+  publicUrl: undefined,
+  trustProxy: undefined,
   wikiUserAgent: 'GalaxyExplorer/openapi',
   wikiSources: [],
 });

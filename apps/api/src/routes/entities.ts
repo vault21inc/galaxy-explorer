@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { ENTITY_KINDS, entityKinds, schemasFor, type EntityKind } from '@ge/domain';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { actorOf, inBatch } from '../http/batch.ts';
+import { inBatch } from '../http/batch.ts';
 import {
   envelope,
   idParams,
@@ -92,7 +92,7 @@ function registerKind(app: App, db: Database, kind: EntityKind): void {
         z.infer<typeof listQuery> &
         z.infer<typeof readQuery>;
       const result = await listEntities(db, kind, scopeOf(request.params), {
-        viewer: visibleTo(actorOf(request), { includeDrafts: query.includeDrafts }),
+        viewer: visibleTo(request.actor, { includeDrafts: query.includeDrafts }),
         where: extensionFilters(kind, query),
         ...(typeof query.status === 'string'
           ? { status: query.status as 'draft' | 'published' }
@@ -183,7 +183,7 @@ function registerKind(app: App, db: Database, kind: EntityKind): void {
     async (request) => {
       const { spoilers, includeDrafts, include } = request.query;
       const read = await getEntity(db, kind, request.params.id, {
-        viewer: visibleTo(actorOf(request), { includeDrafts }),
+        viewer: visibleTo(request.actor, { includeDrafts }),
         include: includesOf(include),
       });
       return { data: applySpoilers(kind, read, spoilers) } as never;

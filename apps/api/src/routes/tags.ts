@@ -4,6 +4,11 @@ import { configResources, entityKinds } from '@ge/domain';
 export function openApiTags(): { name: string; description: string }[] {
   return [
     { name: 'health', description: 'Is the API up, and can it reach its database?' },
+    {
+      name: 'auth',
+      description:
+        'Signing in with a password and two-factor code, sessions, and invite and reset links (M8-T1). Only with GE_AUTH_MODE=required.',
+    },
     { name: 'universes', description: 'Fictional settings; everything else lives inside one.' },
     { name: 'maps', description: 'One galaxy at one point in time.' },
     ...Object.values(entityKinds).map((kind) => ({

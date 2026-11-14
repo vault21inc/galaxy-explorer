@@ -15,7 +15,7 @@ import {
 import { eq } from 'drizzle-orm';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { actorOf, inBatch } from '../http/batch.ts';
+import { inBatch } from '../http/batch.ts';
 import { cloneMap } from '../services/clone-service.ts';
 import {
   envelope,
@@ -182,7 +182,7 @@ export const containerRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app,
     async (request) => {
       const { cursor, limit, spoilers, includeDrafts } = request.query;
       const result = await listMaps(db, request.params.universeId, {
-        viewer: visibleTo(actorOf(request), { includeDrafts }),
+        viewer: visibleTo(request.actor, { includeDrafts }),
         limit,
         ...(cursor ? { cursor } : {}),
       });
@@ -264,7 +264,7 @@ export const containerRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app,
       const map = await getMap(
         db,
         request.params.mapId,
-        visibleTo(actorOf(request), { includeDrafts }),
+        visibleTo(request.actor, { includeDrafts }),
       );
       return { data: spoilers === 'exclude' ? redactMap(map, HIDE_SPOILERS) : map };
     },

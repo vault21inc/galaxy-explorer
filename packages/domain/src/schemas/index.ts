@@ -85,4 +85,23 @@ export {
   viewPayloads,
   type ViewPayload,
 } from './views.ts';
+export {
+  ACCOUNT_LINK_PURPOSES,
+  ACCOUNT_LINK_TTL_MS,
+  AccountLinkFinish,
+  AccountLinkRead,
+  AccountLinkSetup,
+  AccountLinkStart,
+  AccountRead,
+  LoginRequest,
+  Password,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  SessionRead,
+  SITE_ROLES,
+  SiteRole,
+  TotpCode,
+  Username,
+  type AccountLinkPurpose,
+} from './accounts.ts';
 export { openApiComponents } from './components.ts';

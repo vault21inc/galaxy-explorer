@@ -1,13 +1,12 @@
 import type { Database } from '@ge/db';
 import { CSV_COLUMNS, exportJsonSchema, IMPORT_MODES, ImportReport } from '@ge/domain';
-import type { FastifyReply } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { exportZip } from '../exchange/export-service.ts';
 import { importUpload } from '../exchange/import-service.ts';
 import { MAX_IMPORT_BYTES } from '../exchange/zip.ts';
 import { actorOf } from '../http/batch.ts';
-import { isEditor } from '../http/preview-roles.ts';
 import { problem } from '../http/problems.ts';
 import { envelope, problemResponses } from '../http/schemas.ts';
 import { InvalidRequest } from '../services/errors.ts';
@@ -33,15 +32,15 @@ export const exchangeRoutes: FastifyPluginCallbackZod<{
   db: Database;
   store: BlobStore;
   version: string;
-  previewRoles: boolean;
-}> = (app, { db, store, version, previewRoles }, done) => {
+}> = (app, { db, store, version }, done) => {
   const generator = `Galaxy Explorer ${version}`;
 
-  /** Exports include drafts: on the private preview, only its editor may take one. */
-  const refuseReaders = (request: Parameters<typeof isEditor>[0]) =>
-    isEditor(request, previewRoles)
+  /** Exports include drafts: only someone who may edit may take one (the preview's editor, or
+   * a signed-in account until M8-T11). */
+  const refuseReaders = (request: FastifyRequest) =>
+    request.canEdit
       ? undefined
-      : problem(403, 'Only the editor may export: an export includes drafts.');
+      : problem(403, 'Only an editor may export: an export includes drafts.');
 
   const sendZip = (reply: FastifyReply, file: { filename: string; zip: Uint8Array }) =>
     reply

@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
-import { AUDITED_TABLES, CLONE_SPEC, tableKey } from '../src/audit/index.ts';
+import { ACCOUNT_TABLES, AUDITED_TABLES, CLONE_SPEC, tableKey } from '../src/audit/index.ts';
 import { withTestDb } from '../src/testing/index.ts';
 
 // The audit trigger and the clone spec must cover every content table (architecture.md §3.6,
@@ -9,8 +9,12 @@ import { withTestDb } from '../src/testing/index.ts';
 const audited = AUDITED_TABLES.map(tableKey);
 const auditedNames = audited.map((table) => table.name);
 const cloned = CLONE_SPEC.map((entry) => entry.table);
-/** Tables that are bookkeeping, not content: never audited. */
-const NOT_AUDITED = ['change_batches', 'change_log'];
+/** Tables that are bookkeeping or accounts (M8-T1), not content: never audited. */
+const NOT_AUDITED = [
+  'change_batches',
+  'change_log',
+  ...ACCOUNT_TABLES.map((t) => tableKey(t).name),
+];
 
 describe('audit and clone coverage', () => {
   it('gives every audited table the trigger, with its primary key as arguments', () =>
@@ -26,7 +30,7 @@ describe('audit and clone coverage', () => {
       expect(triggers).toEqual(Object.fromEntries(audited.map((t) => [t.name, t.primaryKey])));
     }));
 
-  it('audits every table except the history tables themselves', () =>
+  it('audits every table except the history and account tables', () =>
     withTestDb(async (db) => {
       const result = await db.execute<{ table: string }>(
         sql`select tablename as table from pg_tables where schemaname = 'public'`,

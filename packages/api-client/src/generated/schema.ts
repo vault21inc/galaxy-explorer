@@ -24,6 +24,164 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign in
+         * @description Signs in with a username, password and a current two-factor code, and sets the session cookie (30 days, renewed as it’s used). Any mistake gets the same 401. Five failures in 15 minutes from one address, or for one username, get 429s until the window passes.
+         */
+        post: operations["auth.login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign out
+         * @description Ends this session and clears its cookie. Signed out already, it does nothing.
+         */
+        post: operations["auth.logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The signed-in account
+         * @description The account this request is signed in as, or `null` when it isn’t.
+         */
+        get: operations["auth.me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The account’s signed-in devices */
+        get: operations["auth.sessions.list"];
+        put?: never;
+        post?: never;
+        /**
+         * Sign out every other device
+         * @description Ends all of the account’s sessions except this one.
+         */
+        delete: operations["auth.sessions.endOthers"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/sessions/{sessionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Sign out one device */
+        delete: operations["auth.sessions.end"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/links/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What an invite or reset link is for
+         * @description Whether the link is an invite or a reset, and whether it still works (`ready`), was used, or expired. An unknown link is a 404.
+         */
+        get: operations["auth.links.get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/links/{token}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Step 1 of a link: username and password
+         * @description Checks the username (an invite only; 409 if it’s taken) and the password, and returns a new two-factor secret, as text and as a QR code, with the sealed `setup` to send back to `finish`. Nothing is saved yet.
+         */
+        post: operations["auth.links.start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/links/{token}/finish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Step 2 of a link: the first code
+         * @description Checks one code from the authenticator app against the setup from `start`. Then the account is made (an invite) or its password and two-factor codes are replaced and its sessions ended (a reset), the link is used up, and this browser is signed in.
+         */
+        post: operations["auth.links.finish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/universes": {
         parameters: {
             query?: never;
@@ -2325,6 +2483,43 @@ export interface components {
             dryRun?: boolean;
             operations: components["schemas"]["BatchOperationInput"][];
         };
+        AccountReadInput: {
+            /** Format: uuid */
+            id: string;
+            username: string;
+            /** @enum {string} */
+            role: "admin" | "member";
+            mediaQuotaBytes: number;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        SessionReadInput: {
+            /** Format: uuid */
+            id: string;
+            userAgent: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastSeenAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            current: boolean;
+        };
+        AccountLinkReadInput: {
+            /** @enum {string} */
+            purpose: "invite" | "reset";
+            /** @enum {string} */
+            state: "ready" | "used" | "expired";
+            username: string | null;
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        AccountLinkSetupInput: {
+            setup: string;
+            secret: string;
+            otpauthUri: string;
+            qrCode: string;
+        };
         ViewObjectInput: {
             /** Format: uuid */
             id: string;
@@ -4324,6 +4519,43 @@ export interface components {
             dryRun?: boolean;
             operations: components["schemas"]["BatchOperation"][];
         };
+        AccountRead: {
+            /** Format: uuid */
+            id: string;
+            username: string;
+            /** @enum {string} */
+            role: "admin" | "member";
+            mediaQuotaBytes: number;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        SessionRead: {
+            /** Format: uuid */
+            id: string;
+            userAgent: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastSeenAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            current: boolean;
+        };
+        AccountLinkRead: {
+            /** @enum {string} */
+            purpose: "invite" | "reset";
+            /** @enum {string} */
+            state: "ready" | "used" | "expired";
+            username: string | null;
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        AccountLinkSetup: {
+            setup: string;
+            secret: string;
+            otpauthUri: string;
+            qrCode: string;
+        };
         ViewObject: {
             /** Format: uuid */
             id: string;
@@ -5769,6 +6001,222 @@ export interface operations {
                             authMode: "none" | "required";
                             canEdit: boolean;
                         };
+                    };
+                };
+            };
+        };
+    };
+    "auth.login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    username: string;
+                    password: string;
+                    totp: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AccountRead"];
+                    };
+                };
+            };
+        };
+    };
+    "auth.logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "auth.me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AccountRead"] | null;
+                    };
+                };
+            };
+        };
+    };
+    "auth.sessions.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SessionRead"][];
+                    };
+                };
+            };
+        };
+    };
+    "auth.sessions.endOthers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "auth.sessions.end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "auth.links.get": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AccountLinkRead"];
+                    };
+                };
+            };
+        };
+    };
+    "auth.links.start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    username?: string;
+                    password: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AccountLinkSetup"];
+                    };
+                };
+            };
+        };
+    };
+    "auth.links.finish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    setup: string;
+                    totp: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AccountRead"];
                     };
                 };
             };

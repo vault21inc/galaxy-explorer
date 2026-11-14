@@ -40,7 +40,6 @@ import {
   withOtherEnds,
 } from '../services/aspects/read.ts';
 import { SEES_EVERYTHING, visibleTo } from '../services/visibility.ts';
-import { actorOf } from '../http/batch.ts';
 import { ASPECT_DOC, aspectWriter, deleted, entityParams, list } from './aspect-helpers.ts';
 
 /** Images, links, facts and relations of any entity, under `/entities/{entityId}/…` (data-model §3.4). */
@@ -348,7 +347,7 @@ export const contentRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, {
     },
     async (request) => {
       await requireOwner(db, request.params.entityId);
-      const viewer = visibleTo(actorOf(request));
+      const viewer = visibleTo(request.actor);
       return { data: await listRelations(db, request.params.entityId, viewer) } as never;
     },
   );

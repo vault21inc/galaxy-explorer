@@ -12,10 +12,12 @@
     "test": "vitest run --project unit --passWithNoTests",
     "test:integration": "vitest run --project integration",
     "openapi:write": "node src/openapi-cli.ts ../../packages/api-client/openapi.json",
-    "seed": "node --env-file-if-exists=../../.env src/seeds/cli.ts"
+    "seed": "node --env-file-if-exists=../../.env src/seeds/cli.ts",
+    "admin": "node --env-file-if-exists=../../.env src/auth/cli.ts"
   },
   "dependencies": {
     "@fastify/compress": "9.3.0",
+    "@fastify/cookie": "11.1.5",
     "@fastify/multipart": "10.1.6",
     "@fastify/sensible": "6.0.7",
     "@fastify/swagger": "9.9.3",
@@ -24,11 +26,14 @@
     "@ge/domain": "workspace:*",
     "@iconify-json/game-icons": "1.2.4",
     "@iconify-json/lucide": "1.2.153",
+    "@node-rs/argon2": "2.2.2",
     "drizzle-orm": "catalog:",
     "fastify": "5.12.8",
     "fastify-type-provider-zod": "7.0.0",
     "fflate": "0.8.3",
     "file-type": "22.2.0",
+    "otplib": "13.5.0",
+    "qrcode": "1.5.4",
     "sanitize-html": "2.18.1",
     "sharp": "0.35.5",
     "zod": "catalog:"
@@ -37,6 +42,7 @@
     "@apidevtools/swagger-parser": "13.1.0",
     "@ge/config": "workspace:*",
     "@types/node": "catalog:",
+    "@types/qrcode": "1.5.6",
     "@types/sanitize-html": "2.16.2",
     "eslint": "catalog:",
     "openapi-types": "12.1.3",

@@ -6,6 +6,15 @@ import {
 } from 'fastify-type-provider-zod';
 import { BatchNotFoundError, databaseErrorOf, RevertConflictError } from '@ge/db';
 import { z } from 'zod';
+import {
+  LinkGone,
+  LinkNotFound,
+  NotSignedIn,
+  Refused,
+  SignInFailed,
+  TooManyAttempts,
+  UsernameTaken,
+} from '../auth/errors.ts';
 import { BatchOperationError } from '../services/batch-service.ts';
 import { UnsupportedImage } from '../storage/image-pipeline.ts';
 import {
@@ -82,6 +91,10 @@ export function handleError(error: FastifyError, request: FastifyRequest, reply:
     return sendProblem(reply, problem(400, `The ${part} is invalid.`, errors));
   }
 
+  // Too many tries (M8-T1): say when to try again, in the header too.
+  if (error instanceof TooManyAttempts) {
+    void reply.header('retry-after', String(error.retryAfterS));
+  }
   const domainProblem = problemForDomainError(error);
   if (domainProblem) {
     if (domainProblem.status >= 500) request.log.error({ err: error }, 'batch operation failed');
@@ -112,6 +125,8 @@ export function handleNotFound(request: FastifyRequest, reply: FastifyReply) {
  */
 export function problemForDomainError(error: unknown): Problem | undefined {
   if (error instanceof BatchOperationError) return problemForOperation(error);
+  const authProblem = problemForAuthError(error);
+  if (authProblem) return authProblem;
   if (error instanceof RuleViolation) {
     return problem(
       422,
@@ -199,4 +214,17 @@ function problemForOperation(error: BatchOperationError): Problem {
         }
       : {}),
   };
+}
+
+/** Problems for account and sign-in errors (M8-T1, auth/errors.ts). */
+function problemForAuthError(error: unknown): Problem | undefined {
+  if (error instanceof NotSignedIn || error instanceof SignInFailed) {
+    return problem(401, error.message);
+  }
+  if (error instanceof Refused) return problem(403, error.message);
+  if (error instanceof LinkNotFound) return problem(404, error.message);
+  if (error instanceof UsernameTaken) return problem(409, error.message);
+  if (error instanceof LinkGone) return problem(410, error.message);
+  if (error instanceof TooManyAttempts) return problem(429, error.message);
+  return undefined;
 }

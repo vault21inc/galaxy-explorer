@@ -1,6 +1,7 @@
 import { toSnakeCase } from 'drizzle-orm/casing';
 import { getTableConfig, type PgTable } from 'drizzle-orm/pg-core';
 import {
+  accountLinks,
   assets,
   celestialObjects,
   citations,
@@ -20,17 +21,26 @@ import {
   objectSubtypes,
   routes,
   routeWaypoints,
+  sessions,
   universes,
+  users,
 } from '../schema/index.ts';
 
 /**
  * Every content table, each with the `ge_audit` trigger (data-model §9). A write to any of them
  * is logged to `change_log` in the current change batch, which is what undo and revert replay.
- * Not audited: `change_batches` and `change_log` themselves, and the auth tables (M8).
+ * Not audited: `change_batches` and `change_log` themselves, and `ACCOUNT_TABLES` below.
  *
  * An introspection test fails if a table with `map_id` or a foreign key to `entities` is
  * missing here, or if a listed table lacks the trigger.
  */
+/**
+ * The account tables (M8-T1, data-model §3.8): not content, so not audited. Signing in,
+ * sessions and links are never undone through History, and password hashes stay out of
+ * `change_log`.
+ */
+export const ACCOUNT_TABLES: readonly PgTable[] = [users, sessions, accountLinks];
+
 export const AUDITED_TABLES: readonly PgTable[] = [
   universes,
   maps,

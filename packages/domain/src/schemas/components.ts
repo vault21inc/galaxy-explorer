@@ -7,6 +7,7 @@ import { entityKinds, type EntityKind } from '../registry/entity-kinds.ts';
 import type { ConfigResource } from '../registry/config-resources.ts';
 import { RichText } from '../richtext/schema.ts';
 import { Appearance, PlanetAppearance } from './appearance.ts';
+import * as accounts from './accounts.ts';
 import * as aspects from './aspects.ts';
 import { BatchOperation, BatchRequest } from './batch.ts';
 import * as containers from './containers.ts';
@@ -66,6 +67,10 @@ export function openApiComponents(): Record<string, z.ZodType> {
     MapRead: containers.MapRead,
     BatchOperation,
     BatchRequest,
+    AccountRead: accounts.AccountRead,
+    SessionRead: accounts.SessionRead,
+    AccountLinkRead: accounts.AccountLinkRead,
+    AccountLinkSetup: accounts.AccountLinkSetup,
     ViewObject: views.ViewObject,
     ViewGroup: views.ViewGroup,
     ViewGroupType: views.ViewGroupType,

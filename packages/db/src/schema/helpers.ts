@@ -52,3 +52,11 @@ function literal(value: string): string {
  * a select returns, though nothing reads it back: queries use it inside SQL.
  */
 export const tsvector = customType<{ data: string }>({ dataType: () => 'tsvector' });
+
+/**
+ * Raw bytes (M8-T1: hashes and encrypted secrets). Drizzle 0.45 has no `bytea` column; node-pg
+ * reads and writes it as a Buffer.
+ */
+export const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType: () => 'bytea',
+});

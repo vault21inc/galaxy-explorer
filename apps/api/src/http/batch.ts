@@ -1,14 +1,18 @@
 import { withBatch, type Actor, type Database, type Transaction } from '@ge/db';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { NotSignedIn } from '../auth/errors.ts';
 
-/**
- * Who is making a request. With GE_AUTH_MODE=none (the proof of concept) every request is the
- * local owner; M8 adds sessions and API tokens, and anonymous readers.
- */
+/** Every request's actor with GE_AUTH_MODE=none: the owner, on their own machine. */
 export const LOCAL_ACTOR: Actor = { type: 'local', label: 'local' };
 
-export function actorOf(_request: FastifyRequest): Actor {
-  return LOCAL_ACTOR;
+/**
+ * Who a change is recorded as (History): the local actor, or the signed-in account (M8-T1,
+ * auth/requester.ts). An anonymous visitor can't make one; the request hook already refuses
+ * their writes, and this makes sure.
+ */
+export function actorOf(request: FastifyRequest): Actor {
+  if (request.actor) return request.actor;
+  throw new NotSignedIn('Sign in to make changes.');
 }
 
 /**

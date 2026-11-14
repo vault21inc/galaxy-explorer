@@ -2,7 +2,6 @@ import type { Database } from '@ge/db';
 import { SearchResult } from '@ge/domain';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { actorOf } from '../http/batch.ts';
 import { envelope, problemResponses, readQuery } from '../http/schemas.ts';
 import { searchUniverse } from '../services/search-service.ts';
 import { visibleTo } from '../services/visibility.ts';
@@ -34,7 +33,7 @@ export const searchRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, { 
         q,
         spoilers,
         limit,
-        viewer: visibleTo(actorOf(request), { includeDrafts }),
+        viewer: visibleTo(request.actor, { includeDrafts }),
       });
       return { data };
     },

@@ -17,3 +17,8 @@ export const FIELD_KEY_PATTERN = '^[a-z][a-z0-9_]*$';
 export const CITATION_TARGET_PATTERN = '^(name|summary|description|field:[a-z][a-z0-9_]*)$';
 /** An absolute http or https URL. */
 export const HTTP_URL_PATTERN = '^https?://';
+/**
+ * An account's username (M8-T1, data-model §3.8): 3 to 32 lower-case letters, digits, hyphens
+ * or underscores, starting with a letter or digit.
+ */
+export const USERNAME_PATTERN = '^[a-z0-9][a-z0-9_-]{2,31}$';

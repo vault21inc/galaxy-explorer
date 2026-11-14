@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import fastifyCompress from '@fastify/compress';
+import fastifyCookie from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
 import fastifySensible from '@fastify/sensible';
 import fastifySwagger from '@fastify/swagger';
@@ -17,9 +18,12 @@ import {
 } from 'fastify-type-provider-zod';
 import packageJson from '../package.json' with { type: 'json' };
 import type { Config } from './config.ts';
+import { createAuthContext } from './auth/context.ts';
+import { registerRequester } from './auth/requester.ts';
 import { guardPreviewRoles } from './http/preview-roles.ts';
 import { handleError, handleNotFound, problemSchema } from './http/problems.ts';
 import { assetRoutes, mediaRoutes } from './routes/assets.ts';
+import { authRoutes } from './routes/auth.ts';
 import { iconRoutes } from './routes/icons.ts';
 import { wikiRoutes } from './routes/wiki.ts';
 import { batchRoutes } from './routes/batch.ts';
@@ -54,6 +58,8 @@ function registerComponents(): void {
 export async function buildServer(config: Config) {
   registerComponents();
   const app = Fastify({
+    // Behind a proxy (Caddy), the visitor's address is in X-Forwarded-For, for the rate limits.
+    trustProxy: config.trustProxy ?? false,
     logger: {
       level: config.logLevel,
       redact: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'],
@@ -72,6 +78,14 @@ export async function buildServer(config: Config) {
     },
   });
   app.addHook('onClose', () => db.$client.end());
+  // Accounts (M8-T1): only with GE_AUTH_MODE=required, where config validation guarantees both.
+  const auth =
+    config.authMode === 'required' && config.sessionSecret && config.publicUrl
+      ? createAuthContext(db, { sessionSecret: config.sessionSecret, publicUrl: config.publicUrl })
+      : null;
+  // Cookies first: the requester hook reads the session cookie.
+  await app.register(fastifyCookie);
+  registerRequester(app, { auth, previewRoles: config.previewRoles });
   // The private preview: only the proxy's editor may write (docs/ops/preview.md).
   guardPreviewRoles(app, config.previewRoles);
 
@@ -105,14 +119,10 @@ export async function buildServer(config: Config) {
   app.get('/api/llm-guide.md', { schema: { hide: true } }, async (_request, reply) =>
     reply.type('text/markdown; charset=utf-8').send(await readFile(LLM_GUIDE, 'utf8')),
   );
-  await app.register(healthRoutes, {
-    db,
-    version: packageJson.version,
-    authMode: config.authMode,
-    previewRoles: config.previewRoles,
-  });
+  await app.register(healthRoutes, { db, version: packageJson.version, authMode: config.authMode });
   await app.register(
     async (v1) => {
+      await v1.register(authRoutes, { auth });
       await v1.register(containerRoutes, { db });
       await v1.register(entityRoutes, { db });
       await v1.register(configRoutes, { db });
@@ -123,12 +133,7 @@ export async function buildServer(config: Config) {
       await v1.register(historyRoutes, { db });
       await v1.register(viewRoutes, { db });
       await v1.register(assetRoutes, { db, store });
-      await v1.register(exchangeRoutes, {
-        db,
-        store,
-        version: packageJson.version,
-        previewRoles: config.previewRoles,
-      });
+      await v1.register(exchangeRoutes, { db, store, version: packageJson.version });
       await v1.register(iconRoutes);
       await v1.register(searchRoutes, { db });
       await v1.register(wikiRoutes, {

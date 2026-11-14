@@ -25,6 +25,26 @@ const e2eDatabaseUrl = new URL(testServerUrl);
 e2eDatabaseUrl.pathname = '/ge_e2e';
 
 /**
+ * Accounts (M8-T1): a second API with GE_AUTH_MODE=required, on its own database, behind a
+ * second preview server of the same build. Only e2e/accounts*.spec.ts use it (e2e/accounts.ts
+ * reads these from the environment).
+ */
+const AUTH_API_PORT = '3108';
+const AUTH_WEB_PORT = '4174';
+const authDatabaseUrl = new URL(testServerUrl);
+authDatabaseUrl.pathname = '/ge_e2e_auth';
+process.env.GE_E2E_AUTH_DATABASE_URL = authDatabaseUrl.toString();
+process.env.GE_E2E_AUTH_URL = `http://localhost:${AUTH_WEB_PORT}`;
+/** The fixture wiki, so neither API ever reads the real one. */
+const wikiSources = JSON.stringify([
+  {
+    id: 'warhammer40k',
+    label: 'Warhammer 40k Wiki',
+    apiUrl: `http://127.0.0.1:${WIKI_PORT}/api.php`,
+  },
+]);
+
+/**
  * Playwright end-to-end tests (`pnpm test:e2e`): real browsers driving the app built with
  * VITE_TEST_HOOKS=1, so tests read 3D state from `window.__GE_TEST__` (rendering.md §14).
  * Locally they run in Chromium and WebKit; CI runs Chromium with software rendering.
@@ -80,13 +100,7 @@ export default defineConfig({
         // Its own media, apart from development's uploads.
         GE_MEDIA_DIR: './.data/e2e-media',
         // The fixture wiki below, never the real one.
-        GE_WIKI_SOURCES: JSON.stringify([
-          {
-            id: 'warhammer40k',
-            label: 'Warhammer 40k Wiki',
-            apiUrl: `http://127.0.0.1:${WIKI_PORT}/api.php`,
-          },
-        ]),
+        GE_WIKI_SOURCES: wikiSources,
       },
       reuseExistingServer: false,
       timeout: 60_000,
@@ -106,6 +120,38 @@ export default defineConfig({
       env: { VITE_TEST_HOOKS: '1', GE_PORT: API_PORT },
       reuseExistingServer: false,
       timeout: 120_000,
+    },
+    {
+      // The API with accounts (M8-T1), on the demo universe.
+      command: [
+        'rm -rf ../../.data/e2e-auth-media',
+        'pnpm --filter @ge/db db:reset',
+        'pnpm --filter @ge/api seed demo',
+        'pnpm --filter @ge/api start',
+      ].join(' && '),
+      url: `http://127.0.0.1:${AUTH_API_PORT}/api/health`,
+      env: {
+        DATABASE_URL: authDatabaseUrl.toString(),
+        GE_PORT: AUTH_API_PORT,
+        GE_LOG_LEVEL: 'warn',
+        GE_MEDIA_DIR: './.data/e2e-auth-media',
+        GE_WIKI_SOURCES: wikiSources,
+        GE_AUTH_MODE: 'required',
+        // A test-only value: this server holds nothing but the tests' own accounts.
+        GE_SESSION_SECRET: 'e2e only: seals the test accounts’ two-factor secrets',
+        GE_PUBLIC_URL: `http://localhost:${AUTH_WEB_PORT}`,
+      },
+      reuseExistingServer: false,
+      timeout: 60_000,
+    },
+    {
+      // The same build, served again in front of the API with accounts, once the first preview
+      // server answers: it starts only after the build.
+      command: `node e2e/fixtures/wait-for-url.ts http://localhost:${WEB_PORT} && pnpm preview --port ${AUTH_WEB_PORT} --strictPort`,
+      url: `http://localhost:${AUTH_WEB_PORT}`,
+      env: { GE_PORT: AUTH_API_PORT },
+      reuseExistingServer: false,
+      timeout: 200_000,
     },
   ],
 });

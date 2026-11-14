@@ -4,8 +4,9 @@
  * queries. Column names are camelCase here and snake_case in the database.
  *
  * Foreign keys are in SQL at the end of each migration, not here: see migrations/README.md.
- * Citations arrive in M7, and the auth tables in M8.
+ * The account tables (M8-T1) are in accounts.ts; they aren't audited.
  */
+export { accountLinks, sessions, users } from './accounts.ts';
 export { citations, entityImages, entityLinks, entityRelations, fieldValues } from './aspects.ts';
 export { assets } from './assets.ts';
 export { maps, universes } from './containers.ts';

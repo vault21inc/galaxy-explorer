@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { useUniverses } from '@/api/containers.ts';
+import { useCanEdit } from '@/editor/use-can-edit.ts';
 import { containerName } from '@/lib/container-name.ts';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { errorMessage } from '@/app/route-states.tsx';
@@ -10,6 +11,7 @@ import { NewUniverseForm } from './new-universe-form.tsx';
 export function HomePage() {
   const universes = useUniverses();
   const policy = useSpoilerPolicy();
+  const canEdit = useCanEdit();
 
   if (universes.error) {
     return (
@@ -47,9 +49,9 @@ export function HomePage() {
           </ul>
         )}
       </section>
-      {/* Anyone may create a universe while GE_AUTH_MODE=none, the only mode until M8 adds
-          logins; then this form is for the owner only. */}
-      <NewUniverseForm />
+      {/* Anyone may create a universe on a server without accounts; with them, a signed-in
+          account (M8-T1; M8-T11 makes it the owner). */}
+      {canEdit && <NewUniverseForm />}
     </main>
   );
 }

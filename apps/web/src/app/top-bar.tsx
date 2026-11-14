@@ -10,6 +10,7 @@ import { ShortcutHelp } from '@/panels/shortcut-help/shortcut-help.tsx';
 import { CommandPalette } from '@/palette/command-palette.tsx';
 import { PaletteButton } from '@/palette/palette-button.tsx';
 import { useCanEdit } from '@/editor/use-can-edit.ts';
+import { AccountMenu } from './account-menu.tsx';
 import { Breadcrumbs } from './breadcrumbs.tsx';
 import { CloneMapDialog } from './clone-map-dialog.tsx';
 import { QualityPopover } from './quality-popover.tsx';
@@ -20,8 +21,8 @@ import { useUniverseRoute } from './use-universe-route.ts';
 
 /**
  * The top bar (ux.md §1): the app's name, the universe and map switchers, the breadcrumbs and
- * the edit toggle, the events list (M6-T7) and the layers (on a map), the spoiler toggle, the shortcut help (M4-T9) and the settings, and
- * search with the command palette (M7-T6).
+ * the edit toggle, the events list (M6-T7) and the layers (on a map), the spoiler toggle, the shortcut help (M4-T9) and the settings,
+ * search with the command palette (M7-T6), and the account menu (M8-T1).
  */
 export function TopBar() {
   const { universeSlug, mapSlug } = useParams();
@@ -45,6 +46,7 @@ export function TopBar() {
         <SpoilerToggle />
         <ShortcutHelp />
         <QualityPopover />
+        <AccountMenu />
       </div>
       <CommandPalette />
     </header>

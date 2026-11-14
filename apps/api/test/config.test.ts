@@ -21,6 +21,22 @@ describe('loadConfig', () => {
     });
   });
 
+  it('needs a session secret and the public URL for accounts (M8-T1)', () => {
+    const required = { DATABASE_URL, GE_AUTH_MODE: 'required', GE_HOST: '0.0.0.0' };
+    expect(() => loadConfig(required)).toThrow(/GE_SESSION_SECRET and GE_PUBLIC_URL/);
+    expect(() =>
+      loadConfig({ ...required, GE_SESSION_SECRET: 'short', GE_PUBLIC_URL: 'https://a.test' }),
+    ).toThrow(ConfigError);
+    const config = loadConfig({
+      ...required,
+      GE_SESSION_SECRET: 'x'.repeat(32),
+      GE_PUBLIC_URL: 'https://galaxy.example/some/path',
+      GE_TRUST_PROXY: 'loopback',
+    });
+    // Only the origin: it's what browsers send in `Origin`.
+    expect(config).toMatchObject({ publicUrl: 'https://galaxy.example', trustProxy: 'loopback' });
+  });
+
   it('turns on the preview roles only when asked', () => {
     expect(loadConfig({ DATABASE_URL, GE_PREVIEW_ROLES: 'on' }).previewRoles).toBe(true);
     expect(() => loadConfig({ DATABASE_URL, GE_PREVIEW_ROLES: 'yes' })).toThrow(ConfigError);
@@ -69,7 +85,13 @@ describe('loadConfig', () => {
   });
 
   it('allows any host once login is required', () => {
-    const config = loadConfig({ DATABASE_URL, GE_HOST: '0.0.0.0', GE_AUTH_MODE: 'required' });
+    const config = loadConfig({
+      DATABASE_URL,
+      GE_HOST: '0.0.0.0',
+      GE_AUTH_MODE: 'required',
+      GE_SESSION_SECRET: 'x'.repeat(32),
+      GE_PUBLIC_URL: 'https://galaxy.example',
+    });
     expect(config.host).toBe('0.0.0.0');
   });
 });
