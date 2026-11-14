@@ -25,6 +25,7 @@
     "db:seed": "pnpm --filter @ge/api seed",
     "api:generate": "pnpm --filter @ge/api openapi:write && pnpm --filter @ge/api-client generate",
     "api:check": "pnpm api:generate && git diff --exit-code -- packages/api-client/openapi.json packages/api-client/src/generated",
+    "headers:caddy": "pnpm --silent --filter @ge/api headers:caddy",
     "check": "prettier --check . && turbo run lint typecheck test",
     "perf": "pnpm --filter @ge/perf perf",
     "mcp": "pnpm --silent --filter @ge/mcp start",

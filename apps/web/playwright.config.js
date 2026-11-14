@@ -104,6 +104,8 @@ export default defineConfig({
         GE_MEDIA_DIR: './.data/e2e-media',
         // The fixture wiki below, never the real one.
         GE_WIKI_SOURCES: wikiSources,
+        // The parallel browsers all come from 127.0.0.1, far busier than any one visitor (M8-T3).
+        GE_RATE_LIMITS: 'off',
       },
       reuseExistingServer: false,
       timeout: 60_000,
@@ -143,6 +145,7 @@ export default defineConfig({
         // A test-only value: this server holds nothing but the tests' own accounts.
         GE_SESSION_SECRET: 'e2e only: seals the test accounts’ two-factor secrets',
         GE_PUBLIC_URL: `http://localhost:${AUTH_WEB_PORT}`,
+        GE_RATE_LIMITS: 'off',
       },
       reuseExistingServer: false,
       timeout: 60_000,

@@ -20,6 +20,7 @@ import { requireMediaRoom } from '../services/quota.ts';
 import { ASSET_KEY_PATTERN, type LocalBlobStore } from '../storage/blob-store.ts';
 import { processImage, sha256Of } from '../storage/image-pipeline.ts';
 import { routeAccess } from '../http/access-guard.ts';
+import { rateLimit } from '../http/rate-limits.ts';
 
 const ASSETS_DOC =
   "Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.";
@@ -44,6 +45,7 @@ export const assetRoutes: FastifyPluginCallbackZod<{ db: Database; store: LocalB
         summary: 'Upload an image',
         description: `${ASSETS_DOC}\n\nSend \`multipart/form-data\` with the image in a field named \`file\`: PNG, JPEG, WebP, AVIF or GIF (first frame), at most 25 MB. The type is read from the bytes, not the name. The same image uploaded again returns the existing asset with 200; a new one is 201. Set alt text and credit afterwards with PATCH /assets/{id}.`,
         operationId: 'assets.upload',
+        ...rateLimit('uploads'),
         consumes: ['multipart/form-data'],
         params: universeParams,
         response: {
@@ -211,6 +213,7 @@ export const mediaAccessRoutes: FastifyPluginCallbackZod<{ db: Database }> = (
         description:
           'For the proxy in front of /media (Caddy’s forward_auth): reads the file’s path from `X-Forwarded-Uri`, such as `/media/u/{universeId}/{assetId}/display.webp`, and answers 204 with the `Cache-Control` (and, for a universe that isn’t public, `X-Robots-Tag`) to send if the requester can read its universe, else 404.',
         operationId: 'media.access',
+        ...rateLimit('media'),
         // It checks the file's universe itself, from the forwarded path.
         ...routeAccess({ scope: 'open' }),
         response: { 204: z.null(), ...problemResponses },
@@ -241,7 +244,7 @@ export const mediaRoutes: FastifyPluginCallbackZod<{ db: Database; store: LocalB
   { db, store },
   done,
 ) => {
-  app.get('/media/*', { schema: { hide: true } }, async (request, reply) => {
+  app.get('/media/*', { schema: { hide: true, ...rateLimit('media') } }, async (request, reply) => {
     const key = (request.params as { '*': string })['*'];
     const headers = await mediaHeaders(db, request, key);
     const data = headers ? await store.get(key) : null;
@@ -249,9 +252,12 @@ export const mediaRoutes: FastifyPluginCallbackZod<{ db: Database; store: LocalB
       reply.callNotFound();
       return reply;
     }
+    // Every stored variant is WebP (storage/image-pipeline.ts), shown in the page rather than
+    // downloaded, and never taken for anything else (M8-T3): Caddy sends the same in production.
     return reply
       .type('image/webp')
       .headers(headers)
+      .header('content-disposition', 'inline')
       .header('x-content-type-options', 'nosniff')
       .send(data);
   });

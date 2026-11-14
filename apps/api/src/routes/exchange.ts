@@ -12,6 +12,7 @@ import { InvalidRequest } from '../services/errors.ts';
 import { requireMap } from '../services/lookup.ts';
 import type { BlobStore } from '../storage/blob-store.ts';
 import { routeAccess } from '../http/access-guard.ts';
+import { rateLimit } from '../http/rate-limits.ts';
 
 /**
  * Import and export (M7-T4, architecture.md §5): a universe or map as a zip of JSON files and
@@ -92,6 +93,7 @@ export const exchangeRoutes: FastifyPluginCallbackZod<{
         summary: 'Import an export’s zip, or a CSV of objects',
         description: IMPORT_DOC,
         operationId: 'universes.import',
+        ...rateLimit('uploads'),
         consumes: ['multipart/form-data'],
         params: z.object({ universeId: z.uuid() }),
         querystring: z.object({

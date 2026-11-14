@@ -6,7 +6,9 @@
   "description": "Pure TypeScript shared by every package: Zod schemas, registries, rich text, spoiler redaction, geo math.",
   "exports": {
     ".": "./src/index.ts",
-    "./galaxy": "./src/galaxy/index.ts"
+    "./galaxy": "./src/galaxy/index.ts",
+    "./security": "./src/security/headers.ts",
+    "./testing": "./src/testing/xss-corpus.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings=0",

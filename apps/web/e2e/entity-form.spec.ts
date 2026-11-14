@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page } from './test.ts';
 import { waitForFirstFrame } from './test-hooks.ts';
 import { getJson } from './api.ts';
 

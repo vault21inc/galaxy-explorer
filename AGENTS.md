@@ -26,7 +26,7 @@ Run from the repository root. Each one listed here exists and runs; the last tab
 | `pnpm format` / `pnpm format:check` | format code with Prettier / only check it (Markdown is left alone) |
 | `pnpm lint` / `pnpm typecheck` / `pnpm test` | the parts of `pnpm check`, one at a time |
 | `pnpm test:integration` | API and DB tests (`*.int.test.ts`) against the test Postgres; unit tests are `*.test.ts` |
-| `pnpm test:e2e` | Playwright end-to-end tests in Chromium and WebKit (`-- --project=chromium` for one browser). They build the web app with the test hooks and start their own API on port 3101, using the `ge_e2e` database on the test server, and a second API with accounts on port 3108 (`ge_e2e_auth`, served at http://localhost:4174) for `accounts.spec.ts`. Install the browsers once with `pnpm --filter @ge/web exec playwright install chromium webkit`. CI runs them in Chromium with software rendering and leaves out `leaks.spec.ts`, which `pnpm perf` covers |
+| `pnpm test:e2e` | Playwright end-to-end tests in Chromium and WebKit (`-- --project=chromium` for one browser). They build the web app with the test hooks, serve it with the production security headers (any CSP violation fails the test) and start their own API on port 3101, without rate limits, using the `ge_e2e` database on the test server, and a second API with accounts on port 3108 (`ge_e2e_auth`, served at http://localhost:4174) for `accounts.spec.ts`. Install the browsers once with `pnpm --filter @ge/web exec playwright install chromium webkit`. CI runs them in Chromium with software rendering and leaves out `leaks.spec.ts`, which `pnpm perf` covers |
 | `pnpm build` | production build of the web app into `apps/web/dist` |
 | `pnpm db:migrate` / `pnpm db:reset` | apply migrations (and fill any missing search indexes, D-37) / drop, create and migrate the dev database, then seed the demo universe (local databases only) |
 | `pnpm db:seed demo` / `pnpm db:seed stress` | seed the demo universe / the 5,000-object performance map (`--objects`, `--groups`, `--routes`, `--seed`; `--closed` makes no system open a view, as `pnpm perf` seeds it). Idempotent: re-running changes nothing |
@@ -44,6 +44,7 @@ Added by later tasks; update this file when you add one:
 | `pnpm admin:create-user [--admin]` | make an account on the command line: asks for a username and password, prints the two-factor QR code and secret, and saves the account only after one valid code. The first admin is made this way. Needs `GE_PUBLIC_URL` and `GE_SESSION_SECRET` | M8-T1 |
 | `pnpm admin:invite [--admin]` | print an invite link (7 days, single use) to `/link/{token}`. Needs `GE_PUBLIC_URL` | M8-T1 |
 | `pnpm admin:reset-link <username>` | print a reset link (24 hours, single use) for a new password and two-factor codes. Needs `GE_PUBLIC_URL` | M8-T1 |
+| `pnpm headers:caddy` | write `ops/caddy/security-headers.caddy` from `packages/domain/src/security/headers.ts`; run it after changing the headers and commit the result (a unit test fails while it's stale) | M8-T3 |
 
 ## Non-negotiables
 
@@ -82,6 +83,8 @@ Details are in rendering.md §2.
 - HTML in rich text is sanitized on the server with `RICH_TEXT_POLICY`. Markdown is rendered without raw HTML.
 - Services check universe and map scope. Never trust ids from the client.
 - Every route that touches a universe goes through `universeAccess`, in the access guard (`apps/api/src/http/access-guard.ts`): the universe comes from the rows the path names, and a universe the requester can't read is a 404, never a 403. A route about no single universe declares it with `routeAccess()` (`x-ge-access`), and the admin routes with `{ scope: 'admin' }`, which is a 404 to everyone but a signed-in admin; a new kind of path parameter is taught to `http/route-universe.ts` first. An account or sharing route declares `session: true`: an API token gets a 403 there, as on every `/auth/` route but `GET /auth/token` (M8-T2). A token's narrowing (`read`, one universe) lives in `universeAccess`, so never check a token's scope anywhere else. A child row (a link, a relation) is found through its parent in the path, never by its own id alone. The access contract suite fails on any route it can't classify.
+- Every route has a rate limit (M8-T3, D-43). A route that takes uploads, checks a password or a link, or tells whether a username exists declares a stricter tier with `rateLimit()` (`x-ge-rate-limit`); the tier test fails on a route its rules don't expect.
+- The Content-Security-Policy allows no inline scripts and no eval. The headers live in `packages/domain/src/security/headers.ts` (then run `pnpm headers:caddy`). e2e specs import `test` from `./test.ts`, which fails a test on any CSP violation; a lint rule says so.
 - Who may reach a universe (its owner, visibility, share key and members) isn't content: it's changed only by the owner's sharing routes, which need a session and log to `access_events`, and History never sees or reverts it (D-41).
 - No secrets in git. Configuration comes from env and is validated at boot.
 - With `GE_AUTH_MODE=none`, the API binds to 127.0.0.1 only.

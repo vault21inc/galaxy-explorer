@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page } from './test.ts';
 import { waitForFirstFrame, waitForIdle } from './test-hooks.ts';
 
 /** The outliner (M3-T9): an ARIA tree that mirrors the canvas's selection both ways. */

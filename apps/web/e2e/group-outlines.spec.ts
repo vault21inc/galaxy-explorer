@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page } from './test.ts';
 import { waitForFirstFrame, waitForIdle } from './test-hooks.ts';
 
 /** Group outlines and their labels in the galaxy view (M4-T3, rendering.md §6). */

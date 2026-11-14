@@ -9,6 +9,7 @@ import { checkPassword, hashPassword } from '../auth/passwords.ts';
 import { endSessionsOf } from '../auth/sessions.ts';
 import { checkFreshCode } from '../auth/sign-in.ts';
 import { routeAccess } from '../http/access-guard.ts';
+import { rateLimit } from '../http/rate-limits.ts';
 import { problem } from '../http/problems.ts';
 import { envelope, problemResponses } from '../http/schemas.ts';
 import { recordAccessEvent } from '../services/access-events.ts';
@@ -46,6 +47,7 @@ export const accountRoutes: FastifyPluginCallbackZod<{
       schema: {
         tags,
         operationId: 'auth.password.change',
+        ...rateLimit('auth'),
         summary: 'Change the password',
         description:
           'Needs the current password and a current code from the authenticator app. Every other device is signed out; this one stays signed in. Failures count against the same limits as signing in.',

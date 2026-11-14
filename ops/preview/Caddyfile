@@ -8,16 +8,15 @@
 #   GE_WEB_ROOT       the built web app (apps/web/dist)
 #   GE_API_UPSTREAM   where the API listens; 127.0.0.1:3100 unless set
 
+# The site's security headers (M8-T3), generated from packages/domain/src/security/headers.ts
+# into ops/caddy/security-headers.caddy. preview-deploy.sh installs it next to this file.
+import security-headers.caddy
+
 {$GE_PREVIEW_HOST} {
 	encode zstd gzip
 
-	header {
-		Strict-Transport-Security "max-age=31536000"
-		X-Content-Type-Options nosniff
-		Referrer-Policy strict-origin-when-cross-origin
-		X-Frame-Options DENY
-		-Server
-	}
+	# On every response, the 401 asking for the password included.
+	import security-headers
 
 	# One route, so everything runs in the order written: sign-in first, then the role header
 	# the API trusts, then the app. (Outside a route, Caddy sorts directives itself, and its

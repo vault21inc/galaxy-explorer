@@ -59,7 +59,13 @@ export default defineConfig({
       ].join(' && '),
       cwd: repoRoot,
       url: `http://127.0.0.1:${API_PORT}/api/health`,
-      env: { DATABASE_URL: perfDatabaseUrl.toString(), GE_PORT: API_PORT, GE_LOG_LEVEL: 'warn' },
+      env: {
+        DATABASE_URL: perfDatabaseUrl.toString(),
+        GE_PORT: API_PORT,
+        GE_LOG_LEVEL: 'warn',
+        // Timing runs, not traffic: the round trips and the 5,000-object import (M8-T3).
+        GE_RATE_LIMITS: 'off',
+      },
       reuseExistingServer: false,
       timeout: 120_000,
     },

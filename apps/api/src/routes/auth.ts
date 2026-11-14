@@ -19,6 +19,7 @@ import { signIn } from '../auth/sign-in.ts';
 import { problem } from '../http/problems.ts';
 import { mediaUsedBytes } from '../services/quota.ts';
 import { routeAccess } from '../http/access-guard.ts';
+import { rateLimit } from '../http/rate-limits.ts';
 
 /**
  * Signing in and account links (M8-T1, architecture.md §7, ux.md §13), under /api/v1/auth.
@@ -69,6 +70,7 @@ export const authRoutes: FastifyPluginCallbackZod<{ auth: AuthContext | null }> 
       schema: {
         tags,
         operationId: 'auth.login',
+        ...rateLimit('auth'),
         ...routeAccess({ scope: 'open' }),
         summary: 'Sign in',
         description:
@@ -186,6 +188,7 @@ export const authRoutes: FastifyPluginCallbackZod<{ auth: AuthContext | null }> 
       schema: {
         tags,
         operationId: 'auth.links.get',
+        ...rateLimit('links'),
         ...routeAccess({ scope: 'open' }),
         summary: 'What an invite or reset link is for',
         description:
@@ -205,6 +208,7 @@ export const authRoutes: FastifyPluginCallbackZod<{ auth: AuthContext | null }> 
       schema: {
         tags,
         operationId: 'auth.links.start',
+        ...rateLimit('links'),
         ...routeAccess({ scope: 'open' }),
         summary: 'Step 1 of a link: username and password',
         description:
@@ -225,6 +229,7 @@ export const authRoutes: FastifyPluginCallbackZod<{ auth: AuthContext | null }> 
       schema: {
         tags,
         operationId: 'auth.links.finish',
+        ...rateLimit('links'),
         ...routeAccess({ scope: 'open' }),
         summary: 'Step 2 of a link: the first code',
         description:

@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './test.ts';
 import { accountFromInvite, AUTH_URL, inviteLink, nextCode, totp, uniqueName } from './accounts.ts';
 import { waitForFirstFrame } from './test-hooks.ts';
 

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test.ts';
 import { framesDuring, waitForFirstFrame, waitForIdle } from './test-hooks.ts';
 
 /** Sky stars (tuning.ts SKY_STAR_COUNT) plus depth stars at the default quality, Medium. */

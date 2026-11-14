@@ -118,7 +118,7 @@ This:
 - installs and builds;
 - starts Postgres and migrates the database;
 - starts the API and waits for `/api/health`;
-- installs the Caddyfile and reloads Caddy.
+- installs the Caddyfile, with the security headers it imports (`ops/caddy/security-headers.caddy`, M8-T3), and reloads Caddy.
 
 Open `https://203-0-113-5.sslip.io`, sign in, and you should see an empty app. The first visit can take a few seconds while Caddy gets its certificate.
 

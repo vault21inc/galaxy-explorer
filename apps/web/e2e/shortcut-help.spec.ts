@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './test.ts';
 import { waitForFirstFrame, waitForIdle } from './test-hooks.ts';
 
 /** The shortcut help (M4-T9): `?` or the Help button, generated from the binding tables. */

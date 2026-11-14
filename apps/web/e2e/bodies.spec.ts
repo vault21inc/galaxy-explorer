@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test.ts';
 import { galaxyObjects } from './demo.ts';
 import { waitForFirstFrame, waitForIdle } from './test-hooks.ts';
 

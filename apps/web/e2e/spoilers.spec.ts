@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './test.ts';
 import { galaxyObjects } from './demo.ts';
 import { waitForFirstFrame } from './test-hooks.ts';
 

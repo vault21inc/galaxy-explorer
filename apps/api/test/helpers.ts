@@ -15,6 +15,9 @@ export function testConfig(overrides: Partial<Config> = {}): Config {
     sessionSecret: undefined,
     publicUrl: undefined,
     trustProxy: undefined,
+    // Tests send far more requests from one address than anyone would; the rate limits'
+    // own tests turn them on.
+    rateLimits: false,
     wikiUserAgent: 'GalaxyExplorer/test',
     // No wiki unless a test sets up its own fixture server (M7-T3).
     wikiSources: [],

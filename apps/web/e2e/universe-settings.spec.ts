@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { CONFIG_RESOURCES, configResources } from '@ge/domain';
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page } from './test.ts';
 import { getJson } from './api.ts';
 
 /** The universe settings page (M4-T1): the details form and one table per config resource. */

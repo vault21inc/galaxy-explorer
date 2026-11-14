@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './test.ts';
 import { framesDuring, waitForFirstFrame, waitForIdle } from './test-hooks.ts';
 
 /**

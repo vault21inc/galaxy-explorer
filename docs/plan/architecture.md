@@ -272,6 +272,7 @@ The system and orbit payloads have the same shape: the subject, its direct child
 - **Signing in (M8-T1):** a password (argon2id) and a code from an authenticator app (TOTP, each code once), then an `HttpOnly`, `SameSite=Lax` session cookie whose token is stored only as a hash. Every write must carry `Origin` equal to `GE_PUBLIC_URL` (CSRF). Failed sign-ins and link attempts are limited per address and per username or link. Accounts come from invite links, and the first admin from `pnpm admin:create-user --admin`.
 - **Share links (M8-T12):** `POST /universes/unlock` takes the slug and key from `/u/{slug}?k={key}`, and sets an `HttpOnly` cookie per universe, `ge_share_{universeId}`. The requester hook reads them into the requester's share keys, and `universeAccess` compares each with the universe's current key, so a new link locks out the old one at once. The web app keeps `k` in the address between views. Private and link-only universes are sent with `X-Robots-Tag: noindex`, and the page adds a robots `<meta>` while one is on screen.
 - **API tokens (M8-T2, D-42):** `Authorization: Bearer ge_…` acts for the token's account. `universeAccess` narrows the account's access by the token: a token for one universe reaches no other, and a read token reads as a viewer would. A revoked token, or one of a disabled account, gets 401 at its next request. Requests with a token read no cookies, so there's nothing for the Origin check to protect. Remote MCP (`pnpm mcp:http`) checks each request's token before serving it.
+- **Rate limits (M8-T3, D-43):** every route has a tier, in memory, counted per token, per account, or per address when there's neither (an IPv6 address by its /64). Past it, a 429 with `Retry-After`. Routes without a tier share 600 requests a minute; media files and their check 3,000; signing in and changing a password 10 a minute per address; account and share links 20 a minute per address; adding members 60 an hour; uploads and imports 120 an hour. A route declares its tier as `x-ge-rate-limit` (`rateLimit()`), which a test checks against these rules. `GE_RATE_LIMITS=off` only for the e2e tests and `pnpm perf`.
 - **Account, sharing and admin routes** need a session (`session: true` in `x-ge-access`); a token never reaches them, and gets a 403 on every `/auth/` route but `GET /auth/token`. The admin routes are a 404 to everyone but a signed-in admin (the guard's `admin` scope, M8-T13). Destructive ones (deleting or transferring a universe, disabling an account, issuing a reset link) also ask for a current two-factor code, in an `X-GE-TOTP` header (the `requireFreshTotp` guard).
 - **The web app learns what it may do from the universe itself:** `UniverseRead` carries the requester's `access`, with the universe's `visibility` and its owner's username. Edit mode is offered from `edit` up, and the sharing controls at `own`. `/api/health`'s `canEdit` (D-31) goes away with the preview.
 - **`GE_AUTH_MODE=none`** has no accounts: the local actor has `own` on everything, and the account routes answer 404.
@@ -280,12 +281,12 @@ The system and orbit payloads have the same shape: the subject, its direct child
 
 - `BlobStore` interface: `put(key, data, contentType)`, `get(key)`, `delete(key)`, `publicUrl(key)`. `LocalBlobStore` writes to `GE_MEDIA_DIR`; in development Fastify serves the files under `/media/`, in production Caddy does.
 - Pipeline:
-  1. Limit uploads to 25 MB.
+  1. Limit uploads to 25 MB, one file per request (nothing after it is read) and a few short fields (M8-T3).
   2. Sniff the real type with `file-type`. Accept PNG, JPEG, WebP and AVIF, plus GIF for its first frame only.
-  3. sharp decodes and re-encodes to WebP, which strips EXIF and anything else embedded.
+  3. sharp decodes and re-encodes to WebP, which strips EXIF and anything else embedded. An image of more than 16,384 × 8,192 pixels is refused from its header, before decoding (a small file can claim a huge size).
   4. Write the variants: `thumb` (256 px), `display` (1,600 px) and, for surface textures, `texture` (2:1, power-of-two width, at most 4,096 × 2,048).
   5. Deduplicate by the SHA-256 of the original.
-- Keys: `u/{universeId}/{assetId}/{variant}.webp`. The API's `/media/*` serves only keys of that shape (development and tests).
+- Keys: `u/{universeId}/{assetId}/{variant}.webp`. The API's `/media/*` serves only keys of that shape (development and tests), as `image/webp` with `Content-Disposition: inline` and `X-Content-Type-Options: nosniff` (M8-T3); production's Caddy sends the same.
 - **Private universes' files are private too (M8, D-34):** a file is served only to a request with at least `read` on its universe, else 404. In production Caddy still serves the files, after asking the API (`forward_auth` to `GET /api/v1/media-access`, which reads the universe from the key and the viewer from the cookies). Files of a `public` universe are cached publicly; the others are sent `Cache-Control: private`. Uploads need `edit`, and count against the owner's media quota.
 - An entity's images carry their asset (`ImageRead.asset`: URLs, size, alt text, credit), so readers draw the gallery from one response.
 - Every asset carries `altText`, `credit`, `sourceUrl` and `license` (A5). The UI shows the credit wherever the image appears.
@@ -334,6 +335,7 @@ All configuration comes from environment variables, validated by a Zod schema at
 | `VITE_TEST_HOOKS` | web build | unset; `1` exposes `window.__GE_TEST__` in a production build, for e2e tests (development builds always have it) |
 | `GE_SESSION_SECRET` | api (M8-T1) | with `GE_AUTH_MODE=required`: 32+ random characters (`openssl rand -base64 48`); seals two-factor secrets, so changing it locks every account out of its codes |
 | `GE_TRUST_PROXY` | api (M8-T1) | unset; behind a proxy, whose `X-Forwarded-For` to believe (Fastify's `trustProxy`, such as `loopback`), so rate limits see the visitor's address |
+| `GE_RATE_LIMITS` | api (M8-T3) | `on`; `off` only for the e2e tests and `pnpm perf`, whose parallel browsers all come from one address (D-43) |
 | `GE_WIKI_USER_AGENT` | api (M7) | `GalaxyExplorer/0.1 (contact: …)`; wikis ask for a way to reach whoever runs the client |
 | `GE_WIKI_SOURCES` | api (M7) | the wikis "Fill from wiki" may read, as JSON `[{ "id", "label", "apiUrl" }]`; default: the Warhammer 40k Wiki (D-35) |
 | `GE_API_URL`, `GE_API_TOKEN` | mcp (M7) | `http://127.0.0.1:3100`, the API's origin; `GE_API_TOKEN` is an API token from the account page (M8-T2), sent by `pnpm mcp` with every call |
@@ -357,7 +359,7 @@ All configuration comes from environment variables, validated by a Zod schema at
 | Database | Vitest + real Postgres 18 (`TEST_DATABASE_URL`) | migrations from empty, constraints, audit trigger, revert, clone, consistency tests (§3.6) |
 | API | Vitest + `fastify.inject()` + real Postgres | the **generic contract suite**, run once per registered kind (create, read, list, update, version conflict, delete, spoiler flags, batch id, revert), plus rule-specific tests |
 | Web components | Vitest + Testing Library (jsdom) | panels, forms, rich text renderer, `<Redactable>`; 3D components aren't unit-tested |
-| End-to-end | Playwright (Chromium + WebKit locally, Chromium in CI) | user flows per milestone, driven by real mouse and keyboard; 3D state checked through `window.__GE_TEST__` ([rendering.md §14](rendering.md#14-test-hooks-and-performance-measurement)) |
+| End-to-end | Playwright (Chromium + WebKit locally, Chromium in CI) | user flows per milestone, driven by real mouse and keyboard; 3D state checked through `window.__GE_TEST__` ([rendering.md §14](rendering.md#14-test-hooks-and-performance-measurement)). The production build is served with the production security headers, and every test fails on a Content-Security-Policy violation (`e2e/test.ts`, M8-T3) |
 | Performance | `pnpm perf` (Playwright, headed, local Mac) | frame-time budgets with the stress seed; reports land in `docs/perf/` |
 
 CI runs everything except `pnpm perf`. CI has no real GPU, so performance is measured on the owner's Mac.
@@ -375,6 +377,8 @@ backup (cron container): nightly pg_dump + media archive ──▶ DigitalOcean 
 ```
 
 All services run under one `docker-compose.prod.yml` on one droplet. Migrations run as a one-off container before the API starts.
+
+**Security headers (M8-T3, D-43):** `packages/domain/src/security/headers.ts` is the one list: HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Cross-Origin-Opener-Policy`, a `Permissions-Policy` that turns off what the app doesn't use, and the web app's Content-Security-Policy (scripts only from the site's files, no eval; inline styles allowed for Radix). Caddy imports them from `ops/caddy/security-headers.caddy`, generated by `pnpm headers:caddy`; the CSP is a default there, so the API's own policy (`default-src 'none'`) stays on its responses. The API sends all of them itself too, as a fallback.
 
 ## 15. Coding conventions
 

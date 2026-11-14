@@ -68,6 +68,11 @@ const configSchema = z
      */
     GE_TRUST_PROXY: optional(z.string().min(1)),
     /**
+     * The rate limits on every route (M8-T3, http/rate-limits.ts). `off` only for test runs
+     * whose parallel browsers all come from one address (the e2e tests, `pnpm perf`).
+     */
+    GE_RATE_LIMITS: z.enum(['on', 'off']).default('on'),
+    /**
      * How the API introduces itself to wikis (M7-T3). Wikis ask for a name and a way to reach
      * whoever runs the client; set it to include yours.
      */
@@ -121,6 +126,7 @@ const configSchema = z
     /** Just the origin (scheme, host and port), which is what `Origin` headers carry. */
     publicUrl: env.GE_PUBLIC_URL === undefined ? undefined : new URL(env.GE_PUBLIC_URL).origin,
     trustProxy: env.GE_TRUST_PROXY,
+    rateLimits: env.GE_RATE_LIMITS === 'on',
     wikiUserAgent: env.GE_WIKI_USER_AGENT,
     wikiSources: env.GE_WIKI_SOURCES,
     mediaDir: isAbsolute(env.GE_MEDIA_DIR)

@@ -14,6 +14,13 @@
       "runtimeArgs": ["--filter", "@ge/web", "dev"],
       "port": 5173,
       "url": "http://localhost:5173"
+    },
+    {
+      "name": "web-preview",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@ge/web", "preview", "--port", "4173", "--strictPort"],
+      "port": 4173,
+      "url": "http://localhost:4173"
     }
   ]
 }

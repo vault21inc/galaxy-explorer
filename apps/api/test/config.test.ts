@@ -13,12 +13,20 @@ describe('loadConfig', () => {
       port: 3100,
       logLevel: 'info',
       previewRoles: false,
+      // On unless turned off (M8-T3).
+      rateLimits: true,
       wikiUserAgent:
         'GalaxyExplorer/0.1 (self-hosted; set GE_WIKI_USER_AGENT to add contact details)',
       wikiSources: DEFAULT_WIKI_SOURCES,
       // Relative to the repository root, wherever the API is started from.
       mediaDir: fileURLToPath(new URL('../../../.data/media', import.meta.url)),
     });
+  });
+
+  it('turns the rate limits off only when told to (M8-T3)', () => {
+    expect(loadConfig({ DATABASE_URL, GE_RATE_LIMITS: 'off' }).rateLimits).toBe(false);
+    expect(loadConfig({ DATABASE_URL, GE_RATE_LIMITS: 'on' }).rateLimits).toBe(true);
+    expect(() => loadConfig({ DATABASE_URL, GE_RATE_LIMITS: 'no' })).toThrow(/GE_RATE_LIMITS/);
   });
 
   it('needs a session secret and the public URL for accounts (M8-T1)', () => {

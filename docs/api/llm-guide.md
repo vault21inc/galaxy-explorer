@@ -87,6 +87,7 @@ Aspects are set through `batch` operations, on the entity's `id`:
 6. **Never delete unless you were asked to.** A delete also removes everything inside: a system's stars and planets, a group's memberships.
 7. **Say what you did.** Every write returns its `batchId`, and is listed in the History panel as "MCP: …". Tell the user which batches you made, so they can undo them.
 8. **Read errors.** A rule the API enforces (a moon outside a planet, a fact for the wrong kind) comes back as a 422 that names the field and says why. Fix the input rather than retrying it as it was.
+9. **Mind the rate limit.** A token may send about 600 requests a minute, and uploads and imports 120 an hour. Past it, a `429` says how many seconds to wait (`Retry-After`): wait, then go on. Many small writes go faster as one `batch` anyway.
 
 ## 3. Worked examples
 

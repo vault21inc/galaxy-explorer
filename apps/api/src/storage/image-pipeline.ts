@@ -33,6 +33,14 @@ const TEXTURE_ASPECT_TOLERANCE = 0.05;
 
 const WEBP_QUALITY = 82;
 
+/**
+ * The most pixels an upload may have (M8-T3): 16,384 × 8,192, the largest globe map worth
+ * reading. A file's header states its size, and a small file can claim a huge one (a
+ * "decompression bomb"): sharp refuses past this before decoding a pixel. Decoded, an image
+ * this size takes about 512 MB.
+ */
+export const MAX_INPUT_PIXELS = 16_384 * 8_192;
+
 /** The upload isn't an image we take. */
 export class UnsupportedImage extends Error {
   override readonly name = 'UnsupportedImage';
@@ -77,14 +85,19 @@ export async function processImage(data: Buffer): Promise<ProcessedImage> {
   }
   // `.rotate()` without an angle applies the EXIF orientation, so photos stand upright once
   // the metadata is gone. sharp reads only the first frame of a GIF or animated WebP.
-  const upright = sharp(data, { failOn: 'error' }).rotate();
+  const upright = sharp(data, { failOn: 'error', limitInputPixels: MAX_INPUT_PIXELS }).rotate();
   let width: number;
   let height: number;
   try {
     // The header alone gives the size; `autoOrient` is it after turning upright.
     const metadata = await upright.metadata();
     ({ width, height } = metadata.autoOrient);
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('pixel limit')) {
+      throw new UnsupportedImage(
+        `That image has more than ${String(Math.round(MAX_INPUT_PIXELS / 1e6))} million pixels (16,384 × 8,192). Make it smaller and upload it again.`,
+      );
+    }
     throw new UnsupportedImage('That image is damaged or incomplete, so it can’t be read.');
   }
 

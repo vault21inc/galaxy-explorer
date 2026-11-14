@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page } from './test.ts';
 import { waitForFirstFrame, waitForIdle } from './test-hooks.ts';
 
 /** Planet surfaces: the generator, the system view's textures and the editor (M6-T2). */

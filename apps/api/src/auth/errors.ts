@@ -22,16 +22,25 @@ export class SignInFailed extends Error {
   }
 }
 
-/** Too many failures for this address, account or link: 429, with when to try again. */
+/** "1 minute", "40 seconds": a wait in words. */
+function waitText(seconds: number): string {
+  const [count, unit] =
+    seconds < 60 ? [Math.max(1, seconds), 'second'] : [Math.ceil(seconds / 60), 'minute'];
+  return `${String(count)} ${unit}${count === 1 ? '' : 's'}`;
+}
+
+/**
+ * Too many failures for this address, account or link, or too many requests (the rate limits,
+ * M8-T3): 429, with when to try again.
+ */
 export class TooManyAttempts extends Error {
   override readonly name = 'TooManyAttempts';
   readonly retryAfterS: number;
 
-  constructor(retryAfterS: number) {
-    const minutes = Math.max(1, Math.ceil(retryAfterS / 60));
-    super(
-      `Too many tries. Wait ${String(minutes)} minute${minutes === 1 ? '' : 's'} and try again.`,
-    );
+  constructor(retryAfterS: number, what: 'tries' | 'requests' = 'tries') {
+    // Failures are counted over 15 minutes, so their wait is said in whole minutes.
+    const wait = what === 'tries' ? waitText(Math.max(60, retryAfterS)) : waitText(retryAfterS);
+    super(`Too many ${what}. Wait ${wait} and try again.`);
     this.retryAfterS = retryAfterS;
   }
 }

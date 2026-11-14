@@ -3,7 +3,7 @@
   "info": {
     "title": "Galaxy Explorer API",
     "version": "0.0.0",
-    "description": "REST API for building and exploring galaxies. Bodies are JSON in camelCase, wrapped as `{ \"data\": … }`; lists add `nextCursor`. Errors are RFC 9457 problem+json. Every write is one change batch (X-GE-Batch-Id in the response), which can be reverted. Updates need the `version` you read. Conventions: docs/plan/architecture.md §5. LLM agents: read [the guide](/api/llm-guide.md) first; the MCP server (apps/mcp) offers these routes as tools."
+    "description": "REST API for building and exploring galaxies. Bodies are JSON in camelCase, wrapped as `{ \"data\": … }`; lists add `nextCursor`. Errors are RFC 9457 problem+json. Every write is one change batch (X-GE-Batch-Id in the response), which can be reverted. Updates need the `version` you read. Conventions: docs/plan/architecture.md §5. Rate limits (429 with Retry-After): `default`: 600 a minute per token, account or address. Every route without a tier, sharing one budget: ten requests a second. `media`: 3000 a minute per token, account or address. Media files and the check before each (`/media-access`): a gallery is many images at once, and they don’t count against the rest. `auth`: 10 a minute per address. Signing in and changing a password: guessing. Failed tries are limited further, per address and per username (5 in 15 minutes). `links`: 20 a minute per address. Invite and reset links, and share links: guessing. `members`: 60 an hour per token, account or address. Adding a member, whose answer says whether a username exists. `uploads`: 120 an hour per token, account or address. Uploads and imports: storage and the work of reading them. A route's tier is its `x-ge-rate-limit`. LLM agents: read [the guide](/api/llm-guide.md) first; the MCP server (apps/mcp) offers these routes as tools."
   },
   "components": {
     "schemas": {
@@ -21101,6 +21101,7 @@
             }
           }
         },
+        "x-ge-rate-limit": "auth",
         "x-ge-access": {
           "scope": "open"
         },
@@ -21290,6 +21291,7 @@
             "required": true
           }
         ],
+        "x-ge-rate-limit": "links",
         "x-ge-access": {
           "scope": "open"
         },
@@ -21361,6 +21363,7 @@
             "required": true
           }
         ],
+        "x-ge-rate-limit": "links",
         "x-ge-access": {
           "scope": "open"
         },
@@ -21433,6 +21436,7 @@
             "required": true
           }
         ],
+        "x-ge-rate-limit": "links",
         "x-ge-access": {
           "scope": "open"
         },
@@ -21499,6 +21503,7 @@
             }
           }
         },
+        "x-ge-rate-limit": "auth",
         "x-ge-access": {
           "scope": "open",
           "session": true
@@ -24882,6 +24887,7 @@
             "required": true
           }
         ],
+        "x-ge-rate-limit": "members",
         "x-ge-access": {
           "scope": "universe",
           "level": "own",
@@ -25432,6 +25438,7 @@
             }
           }
         },
+        "x-ge-rate-limit": "links",
         "x-ge-access": {
           "scope": "open"
         },
@@ -37212,6 +37219,7 @@
             "required": true
           }
         ],
+        "x-ge-rate-limit": "uploads",
         "responses": {
           "200": {
             "description": "Default Response",
@@ -37694,6 +37702,7 @@
           "assets"
         ],
         "description": "For the proxy in front of /media (Caddy’s forward_auth): reads the file’s path from `X-Forwarded-Uri`, such as `/media/u/{universeId}/{assetId}/display.webp`, and answers 204 with the `Cache-Control` (and, for a universe that isn’t public, `X-Robots-Tag`) to send if the requester can read its universe, else 404.",
+        "x-ge-rate-limit": "media",
         "x-ge-access": {
           "scope": "open"
         },
@@ -37883,6 +37892,7 @@
             "required": true
           }
         ],
+        "x-ge-rate-limit": "uploads",
         "responses": {
           "200": {
             "description": "Default Response",

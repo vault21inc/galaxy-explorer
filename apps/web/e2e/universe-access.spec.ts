@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test.ts';
 import { accountFromInvite, AUTH_URL, signInThrough, uniqueName } from './accounts.ts';
 
 /**

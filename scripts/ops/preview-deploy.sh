@@ -44,6 +44,8 @@ done
 curl -fsS http://127.0.0.1:3100/api/health; echo
 
 echo "== Caddy"
+# The Caddyfile imports the security headers (M8-T3) from beside itself.
+sudo install -m 644 "$APP/ops/caddy/security-headers.caddy" /etc/caddy/security-headers.caddy
 sudo install -m 644 "$APP/ops/preview/Caddyfile" /etc/caddy/Caddyfile
 # Until the sign-ins are set (step 4), Caddy would refuse the Caddyfile: say so instead.
 if ! sudo grep -q '^GE_EDITOR_HASH=.\+' /etc/caddy/preview.env \

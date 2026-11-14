@@ -21,6 +21,8 @@ import type { Config } from './config.ts';
 import { createAuthContext } from './auth/context.ts';
 import { registerRequester } from './auth/requester.ts';
 import { registerAccessGuard } from './http/access-guard.ts';
+import { registerRateLimits, rateLimitsText } from './http/rate-limits.ts';
+import { registerSecurityHeaders, swaggerUiCsp } from './http/security-headers.ts';
 import { guardPreviewRoles } from './http/preview-roles.ts';
 import { handleError, handleNotFound, problemSchema } from './http/problems.ts';
 import { assetRoutes, mediaAccessRoutes, mediaRoutes } from './routes/assets.ts';
@@ -75,7 +77,12 @@ export async function buildServer(config: Config) {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   app.setErrorHandler(handleError);
-  app.setNotFoundHandler(handleNotFound);
+  // Security headers on everything the API sends (M8-T3), as a fallback for Caddy's.
+  registerSecurityHeaders(app);
+  // Rate limits (M8-T3), before any route is added so that each one gets its tier; asking for
+  // routes that don't exist counts too.
+  const limitNotFound = config.rateLimits ? await registerRateLimits(app) : null;
+  app.setNotFoundHandler(limitNotFound ? { preHandler: limitNotFound } : {}, handleNotFound);
 
   const db = createDatabase(config.databaseUrl, {
     onIdleClientError: (error) => {
@@ -98,8 +105,19 @@ export async function buildServer(config: Config) {
 
   await app.register(fastifySensible);
   await app.register(fastifyCompress);
-  // Image uploads (M3-T7): one file of at most 25 MB per request.
-  await app.register(fastifyMultipart, { limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 } });
+  // Image uploads (M3-T7) and imports: one file per request, of at most 25 MB unless the route
+  // allows more (imports, M7-T4). Nothing else is read, so other fields are kept few and short:
+  // they would be held in memory (M8-T3).
+  await app.register(fastifyMultipart, {
+    limits: {
+      fileSize: MAX_UPLOAD_BYTES,
+      files: 1,
+      fields: 4,
+      fieldSize: 1_024,
+      parts: 5,
+      headerPairs: 100,
+    },
+  });
   const store = new LocalBlobStore(config.mediaDir);
   await app.register(fastifySwagger, {
     openapi: {
@@ -111,6 +129,7 @@ export async function buildServer(config: Config) {
           'REST API for building and exploring galaxies. Bodies are JSON in camelCase, wrapped as `{ "data": … }`; lists add `nextCursor`. ' +
           'Errors are RFC 9457 problem+json. Every write is one change batch (X-GE-Batch-Id in the response), which can be reverted. ' +
           'Updates need the `version` you read. Conventions: docs/plan/architecture.md §5. ' +
+          `Rate limits (429 with Retry-After): ${rateLimitsText()} A route's tier is its \`x-ge-rate-limit\`. ` +
           'LLM agents: read [the guide](/api/llm-guide.md) first; the MCP server (apps/mcp) offers these routes as tools.',
       },
       tags: openApiTags(),
@@ -119,7 +138,12 @@ export async function buildServer(config: Config) {
     // Named shapes become components/schemas and are referenced, not repeated per route.
     transformObject: jsonSchemaTransformObject,
   });
-  await app.register(fastifySwaggerUi, { routePrefix: '/api/docs' });
+  // The docs page runs scripts, so it sends its own Content-Security-Policy (M8-T3).
+  await app.register(fastifySwaggerUi, {
+    routePrefix: '/api/docs',
+    staticCSP: true,
+    transformStaticCSP: swaggerUiCsp,
+  });
 
   app.get('/api/openapi.json', { schema: { hide: true } }, () => app.swagger());
   // The guide for LLM agents (M7-T8), from docs/api, linked from the docs and /llms.txt.

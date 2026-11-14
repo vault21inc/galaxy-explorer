@@ -12,6 +12,7 @@
     "test": "vitest run --project unit --passWithNoTests",
     "test:integration": "vitest run --project integration",
     "openapi:write": "node src/openapi-cli.ts ../../packages/api-client/openapi.json",
+    "headers:caddy": "node src/http/caddy-headers-cli.ts",
     "seed": "node --env-file-if-exists=../../.env src/seeds/cli.ts",
     "admin": "node --env-file-if-exists=../../.env src/auth/cli.ts"
   },
@@ -19,6 +20,7 @@
     "@fastify/compress": "9.3.0",
     "@fastify/cookie": "11.1.5",
     "@fastify/multipart": "10.1.6",
+    "@fastify/rate-limit": "11.2.2",
     "@fastify/sensible": "6.0.7",
     "@fastify/swagger": "9.9.3",
     "@fastify/swagger-ui": "6.1.3",

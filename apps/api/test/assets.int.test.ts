@@ -1,6 +1,7 @@
 import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { crc32, deflateSync } from 'node:zlib';
 import { withTestDb } from '@ge/db/testing';
 import { MAX_UPLOAD_BYTES, rt } from '@ge/domain';
 import { fileTypeFromBuffer } from 'file-type';
@@ -54,6 +55,28 @@ function png(width: number, height: number) {
 }
 
 const stored = (key: string) => readFile(join(mediaDir, key));
+
+/** A PNG that is only a header claiming `width` × `height`, and a scrap of data. */
+function pngClaiming(width: number, height: number) {
+  const chunk = (type: string, data: Buffer) => {
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    const body = Buffer.concat([Buffer.from(type), data]);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(crc32(body));
+    return Buffer.concat([length, body, crc]);
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8; // 8 bits per sample, greyscale
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk('IHDR', header),
+    chunk('IDAT', deflateSync(Buffer.alloc(1_000))),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
+}
 
 describe('POST /universes/{id}/assets', () => {
   it('turns a PNG into WebP variants of the expected sizes', () =>
@@ -190,6 +213,47 @@ describe('POST /universes/{id}/assets', () => {
       expect(await readdir(mediaDir)).toEqual([]);
     }));
 
+  it('refuses an image whose header claims more pixels than it may decode', () =>
+    run(async (api, { universeId }) => {
+      // 74 bytes that say 30,000 × 30,000: a "decompression bomb" (M8-T3).
+      const { status, body } = await upload(api, universeId, pngClaiming(30_000, 30_000));
+      expect(status).toBe(415);
+      expect(body.detail).toMatch(/more than 134 million pixels/);
+      expect(await readdir(mediaDir)).toEqual([]);
+    }));
+
+  it('reads the first file and nothing after it (M8-T3)', () =>
+    run(async (api, { universeId }) => {
+      const send = (payload: Buffer, boundary: string) =>
+        api.app.inject({
+          method: 'POST',
+          url: `/api/v1/universes/${universeId}/assets`,
+          payload,
+          headers: { 'content-type': `multipart/form-data; boundary=${boundary}` },
+        });
+      const image = await png(32, 32);
+      const part = (boundary: string, name: string, body: Buffer, file = false) =>
+        Buffer.concat([
+          Buffer.from(
+            `--${boundary}\r\nContent-Disposition: form-data; name="${name}"${file ? '; filename="a.png"\r\nContent-Type: image/png' : ''}\r\n\r\n`,
+          ),
+          body,
+          Buffer.from('\r\n'),
+        ]);
+      const close = (boundary: string) => Buffer.from(`--${boundary}--\r\n`);
+
+      const twoFiles = Buffer.concat([
+        part('b1', 'file', image, true),
+        part('b1', 'other', image, true),
+        close('b1'),
+      ]);
+      // The first file is the upload; the request isn't read past it.
+      const first = await send(twoFiles, 'b1');
+      expect(first.statusCode).toBe(201);
+      const list = await api.expect(200, 'GET', `/universes/${universeId}/assets`);
+      expect(list.body.data).toHaveLength(1);
+    }));
+
   it('returns the same asset when the same file is uploaded twice', () =>
     run(async (api, { universeId }) => {
       const image = await png(300, 300);
@@ -263,6 +327,9 @@ describe('/media/*', () => {
       expect(served.statusCode).toBe(200);
       expect(served.headers['content-type']).toBe('image/webp');
       expect(served.headers['cache-control']).toContain('immutable');
+      // Shown in the page, never downloaded or taken for anything but its type (M8-T3).
+      expect(served.headers['content-disposition']).toBe('inline');
+      expect(served.headers['x-content-type-options']).toBe('nosniff');
       for (const url of [
         '/media/../package.json',
         '/media/u/%2e%2e/%2e%2e/package.json',

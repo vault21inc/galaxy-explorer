@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page } from './test.ts';
 import { waitForFirstFrame, waitForIdle } from './test-hooks.ts';
 
 /** How the system view draws (M5-T3, rendering.md §7, D-29). */

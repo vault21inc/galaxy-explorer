@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page } from './test.ts';
 import { framesDuring, waitForFirstFrame, waitForIdle } from './test-hooks.ts';
 
 /** The orbit view: the globe, what orbits it, and moving in and out (M6-T3, rendering.md §8). */

@@ -64,6 +64,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Known vulnerabilities in what the site runs (M8-T3): high or critical ones fail the run.
+      # Development tools are left out; Dependabot keeps everything up to date. The secret scan
+      # is its own workflow (secrets.yml).
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
       - name: Format check, lint, typecheck and unit tests
         run: pnpm check
 

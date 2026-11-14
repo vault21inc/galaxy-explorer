@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+import { WEB_APP_HEADERS } from '@ge/domain/security';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
@@ -14,7 +15,14 @@ export default defineConfig(({ mode }) => {
     // VITE_* variables (such as VITE_TEST_HOOKS) come from the repository's .env files.
     envDir: repoRoot,
     plugins: [react(), tailwindcss()],
-    resolve: { alias: { '@': resolve(import.meta.dirname, 'src') } },
+    resolve: {
+      alias: [
+        { find: '@', replacement: resolve(import.meta.dirname, 'src') },
+        // Zod, set up for the Content-Security-Policy before any schema is made (src/zod.ts).
+        // Only the bare name: src/zod.ts itself imports 'zod/v4'.
+        { find: /^zod$/, replacement: resolve(import.meta.dirname, 'src/zod.ts') },
+      ],
+    },
     server: {
       port: 5173,
       strictPort: true,
@@ -22,6 +30,11 @@ export default defineConfig(({ mode }) => {
       // no cross-origin setup in development.
       proxy: { '/api': apiOrigin, '/media': apiOrigin },
     },
+    // `vite preview` serves the production build with the production site's security headers
+    // (M8-T3), Content-Security-Policy included, so the e2e tests would catch anything the
+    // policy blocks. The API's responses, proxied, keep their own. The dev server sends none:
+    // its hot reloading runs inline scripts.
+    preview: { headers: WEB_APP_HEADERS },
     // Web Workers (src/workers/) are built as ES modules, like the app, so they can share its
     // code (the domain package) and `new Worker(…, { type: 'module' })` works in every browser.
     worker: { format: 'es' },

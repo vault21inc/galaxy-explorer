@@ -12,6 +12,7 @@ import { z } from 'zod';
 import type { AuthContext } from '../auth/context.ts';
 import { requireFreshTotp, SHARE_COOKIE_TTL_MS, shareCookieName } from '../auth/requester.ts';
 import { routeAccess } from '../http/access-guard.ts';
+import { rateLimit } from '../http/rate-limits.ts';
 import { problem } from '../http/problems.ts';
 import { envelope, problemResponses } from '../http/schemas.ts';
 import type { Requester } from '../services/access.ts';
@@ -99,6 +100,7 @@ export const sharingRoutes: FastifyPluginCallbackZod<{
         summary: 'Share a universe with an account, or change its role',
         description: `${SHARING_DOC} Takes an exact username: one that doesn’t exist is a 404 that says so, and nothing lists or suggests accounts.`,
         operationId: 'universes.members.put',
+        ...rateLimit('members'),
         ...routeAccess({ scope: 'universe', level: 'own', session: true }),
         params: memberParams,
         body: UniverseMemberWrite,
@@ -205,6 +207,7 @@ export const sharingRoutes: FastifyPluginCallbackZod<{
         summary: 'Open a share link',
         description: `${SHARING_DOC} A share link is \`/u/{slug}?k={key}\`. Given the slug and key, this remembers the key in an HttpOnly cookie for that universe, so this browser can read it (and its images) until the link is replaced. Anything but a current link is a 404, as for an address that’s free.`,
         operationId: 'universes.unlock',
+        ...rateLimit('links'),
         // It finds the universe from the link itself, and a wrong key reads as nothing there.
         ...routeAccess({ scope: 'open' }),
         body: UniverseUnlock,

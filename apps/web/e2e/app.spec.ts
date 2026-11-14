@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test.ts';
 import { frameCount, framesDuring, waitForFirstFrame, waitForIdle } from './test-hooks.ts';
 
 /** The idle budget: no frames at all while nothing moves (rendering.md §2). */

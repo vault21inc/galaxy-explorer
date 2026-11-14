@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './test.ts';
 import { frameCount, waitForFirstFrame } from './test-hooks.ts';
 
 /** The demo universe (apps/api/src/seeds/demo.ts), seeded into the e2e database. */
