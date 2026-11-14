@@ -39,7 +39,7 @@ Added by later tasks; update this file when you add one:
 
 | Command | Does | Added in |
 |---|---|---|
-| (none yet) | | |
+| `pnpm mcp` | the MCP server over stdio, for LLM agents: tools generated from the registries, calling the API at `GE_API_URL` (default http://127.0.0.1:3100, so run `pnpm dev` too). How to add it to Claude Code and Claude Desktop: [apps/mcp/README.md](apps/mcp/README.md) | M7-T7 |
 
 ## Non-negotiables
 

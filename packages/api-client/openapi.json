@@ -21037,7 +21037,7 @@
       },
       "post": {
         "operationId": "objects.create",
-        "summary": "Create a object",
+        "summary": "Create an object",
         "tags": [
           "objects"
         ],
@@ -21130,7 +21130,7 @@
     "/api/v1/maps/{mapId}/objects/by-key/{externalKey}": {
       "put": {
         "operationId": "objects.upsertByKey",
-        "summary": "Create or update a object by its external key",
+        "summary": "Create or update an object by its external key",
         "tags": [
           "objects"
         ],
@@ -21252,7 +21252,7 @@
     "/api/v1/objects/{id}": {
       "get": {
         "operationId": "objects.get",
-        "summary": "Get a object",
+        "summary": "Get an object",
         "tags": [
           "objects"
         ],
@@ -21370,7 +21370,7 @@
       },
       "patch": {
         "operationId": "objects.update",
-        "summary": "Update a object",
+        "summary": "Update an object",
         "tags": [
           "objects"
         ],
@@ -21461,7 +21461,7 @@
       },
       "delete": {
         "operationId": "objects.delete",
-        "summary": "Delete a object",
+        "summary": "Delete an object",
         "tags": [
           "objects"
         ],
@@ -23826,7 +23826,7 @@
       },
       "post": {
         "operationId": "events.create",
-        "summary": "Create a event",
+        "summary": "Create an event",
         "tags": [
           "events"
         ],
@@ -23919,7 +23919,7 @@
     "/api/v1/maps/{mapId}/events/by-key/{externalKey}": {
       "put": {
         "operationId": "events.upsertByKey",
-        "summary": "Create or update a event by its external key",
+        "summary": "Create or update an event by its external key",
         "tags": [
           "events"
         ],
@@ -24041,7 +24041,7 @@
     "/api/v1/events/{id}": {
       "get": {
         "operationId": "events.get",
-        "summary": "Get a event",
+        "summary": "Get an event",
         "tags": [
           "events"
         ],
@@ -24159,7 +24159,7 @@
       },
       "patch": {
         "operationId": "events.update",
-        "summary": "Update a event",
+        "summary": "Update an event",
         "tags": [
           "events"
         ],
@@ -24250,7 +24250,7 @@
       },
       "delete": {
         "operationId": "events.delete",
-        "summary": "Delete a event",
+        "summary": "Delete an event",
         "tags": [
           "events"
         ],

@@ -267,8 +267,26 @@
 - `apps/mcp/README.md` explains how to add the server to Claude Code (`claude mcp add …`) and Claude Desktop, with example prompts.
 
 **Done when:**
-- [ ] Integration test: an MCP client in the test calls `objects_create` with a temporary-reference batch to create a system and its planets, then calls `history_revert`, and the database returns to its starting state.
-- [ ] Adding a registry kind automatically yields its tools; a test asserts the tool list against the registry.
+- [x] Integration test: an MCP client in the test calls `objects_create` with a temporary-reference batch to create a system and its planets, then calls `history_revert`, and the database returns to its starting state.
+- [x] Adding a registry kind automatically yields its tools; a test asserts the tool list against the registry.
+
+**As built:**
+- **`apps/mcp`** on the official SDK (`@modelcontextprotocol/sdk` 1.32.2), over stdio: `pnpm mcp`, or `node apps/mcp/src/main.ts` with `GE_API_URL` (and `GE_API_TOKEN` from M8). `apps/mcp/README.md` covers Claude Code (`claude mcp add …`), Claude Desktop and example prompts.
+- **62 tools:**
+  - `src/tools.ts` generates 61 from the registries: 6 per entity kind, 4 per settings resource, and the 9 shared ones that map to an operation;
+  - `import_dry_run` takes a CSV's text or a zip in base64, since its route takes an upload.
+- **Inputs and descriptions come from the OpenAPI document** (`@ge/api-client/openapi.json`) rather than from `@ge/domain`'s Zod schemas directly, though the document is generated from those schemas:
+  - each tool's input is its operation's path and query parameters plus its body's fields;
+  - the components it refers to are copied into `$defs`, so each schema stands alone;
+  - a body field named like a parameter (an upsert's `externalKey`) gives way to the parameter.
+
+  The API validates every call with the same Zod schemas. The tools are served by the protocol server under the SDK's `McpServer`, given JSON Schema directly.
+- **Writes are labelled batches:** `X-GE-Batch-Description: MCP: <tool> — <name, key or id>` (percent-encoded). `batch` prefixes its own description the same way, since that route takes it from the body. Results are JSON: the item, or a list's page, and for a write `{ batchId, result }`. A problem response becomes a tool error that reads like the API's ("409 …").
+- **Tests:**
+  - `apps/mcp/test/tools.test.ts`: the tool list against the registries, each tool's operation, standalone schemas, labels;
+  - `apps/mcp/test/mcp.int.test.ts`, an MCP client over an in-memory transport against the real API in its own process (port 3105, database `ge_mcp_test`). It builds a system with `batch` and `$op:0` references, adds an object with `objects_create`, checks both labels in `history_list`, reverts both, and the database's rows match the start (read with `pg`). It also covers upserts without duplicates, a version update, `search`, `view_galaxy`, a stale version's 409 as a tool error, and `import_dry_run`.
+- **Shared test helper:** starting the API for another package's tests moved from the API client's tests to `@ge/config/test-api`, now used by both.
+- **API docs:** entity route summaries say "an object", "an event": agents read them.
 
 ### M7-T8 LLM guide
 

@@ -43,6 +43,8 @@ function registerKind(app: App, db: Database, kind: EntityKind): void {
   const schemas = schemasFor(kind);
   const { plural } = def;
   const one = def.label.one.toLowerCase();
+  // "an object", "an event", "a group": the summaries are read by people and LLM agents.
+  const aOne = `${/^[aeiou]/.test(one) ? 'an' : 'a'} ${one}`;
   const response = entityResponse(kind);
   const scoped = def.scope === 'map';
   const scopeParams = scoped ? z.object({ mapId: z.uuid() }) : z.object({ universeId: z.uuid() });
@@ -113,7 +115,7 @@ function registerKind(app: App, db: Database, kind: EntityKind): void {
     {
       schema: {
         ...docs(
-          `Create a ${one}`,
+          `Create ${aOne}`,
           `Example body:\n\n\`\`\`json\n${JSON.stringify(def.example, null, 2)}\n\`\`\``,
         ),
         operationId: `${plural}.create`,
@@ -140,7 +142,7 @@ function registerKind(app: App, db: Database, kind: EntityKind): void {
     {
       schema: {
         ...docs(
-          `Create or update a ${one} by its external key`,
+          `Create or update ${aOne} by its external key`,
           'Idempotent: the first call creates the entity with this `externalKey`, later calls update it (no `version` needed). Use this from scripts and LLM agents so re-running them never duplicates content.',
         ),
         operationId: `${plural}.upsertByKey`,
@@ -171,7 +173,7 @@ function registerKind(app: App, db: Database, kind: EntityKind): void {
     `/${plural}/:id`,
     {
       schema: {
-        ...docs(`Get a ${one}`),
+        ...docs(`Get ${aOne}`),
         operationId: `${plural}.get`,
         params: idParams,
         querystring: readQuery.extend(includeQuery.shape),
@@ -193,7 +195,7 @@ function registerKind(app: App, db: Database, kind: EntityKind): void {
     {
       schema: {
         ...docs(
-          `Update a ${one}`,
+          `Update ${aOne}`,
           'Send only the fields to change, plus the `version` you read. A stale version returns 409 with the current record.',
         ),
         operationId: `${plural}.update`,
@@ -220,7 +222,7 @@ function registerKind(app: App, db: Database, kind: EntityKind): void {
     {
       schema: {
         ...docs(
-          `Delete a ${one}`,
+          `Delete ${aOne}`,
           'Deletes what depends on it too (data-model §11); revert the batch to undo.',
         ),
         operationId: `${plural}.delete`,

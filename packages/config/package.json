@@ -9,7 +9,11 @@
     "./prettier": "./prettier.js",
     "./vitest": "./vitest.js",
     "./workspace": "./workspace.js",
-    "./tsconfig.base.json": "./tsconfig.base.json"
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./test-api": {
+      "types": "./test-api.d.ts",
+      "default": "./test-api.js"
+    }
   },
   "scripts": {
     "lint": "eslint . --max-warnings=0",

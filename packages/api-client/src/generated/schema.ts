@@ -162,7 +162,7 @@ export interface paths {
         get: operations["objects.list"];
         put?: never;
         /**
-         * Create a object
+         * Create an object
          * @description A celestial object: a system, star, planet, moon, asteroid belt, station, nebula, anomaly, black hole or marker (`baseType`). Objects nest: `parentId` is the object it sits inside, or null for the top level of the galaxy. Which parents a base type allows is fixed (a planet goes in a system or the galaxy; a moon in a planet). x, y, z are a position in the parent's frame: light-years in the galaxy (+Y is galactic north), system units (roughly AU) inside a system, and body radii around a planet. `explorable` makes systems open a system view and planets or moons an orbit view. `appearance` holds only overrides of the type and subtype defaults.
          *
          *     Example body:
@@ -201,7 +201,7 @@ export interface paths {
         };
         get?: never;
         /**
-         * Create or update a object by its external key
+         * Create or update an object by its external key
          * @description A celestial object: a system, star, planet, moon, asteroid belt, station, nebula, anomaly, black hole or marker (`baseType`). Objects nest: `parentId` is the object it sits inside, or null for the top level of the galaxy. Which parents a base type allows is fixed (a planet goes in a system or the galaxy; a moon in a planet). x, y, z are a position in the parent's frame: light-years in the galaxy (+Y is galactic north), system units (roughly AU) inside a system, and body radii around a planet. `explorable` makes systems open a system view and planets or moons an orbit view. `appearance` holds only overrides of the type and subtype defaults.
          *
          *     Idempotent: the first call creates the entity with this `externalKey`, later calls update it (no `version` needed). Use this from scripts and LLM agents so re-running them never duplicates content.
@@ -222,14 +222,14 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get a object
+         * Get an object
          * @description A celestial object: a system, star, planet, moon, asteroid belt, station, nebula, anomaly, black hole or marker (`baseType`). Objects nest: `parentId` is the object it sits inside, or null for the top level of the galaxy. Which parents a base type allows is fixed (a planet goes in a system or the galaxy; a moon in a planet). x, y, z are a position in the parent's frame: light-years in the galaxy (+Y is galactic north), system units (roughly AU) inside a system, and body radii around a planet. `explorable` makes systems open a system view and planets or moons an orbit view. `appearance` holds only overrides of the type and subtype defaults.
          */
         get: operations["objects.get"];
         put?: never;
         post?: never;
         /**
-         * Delete a object
+         * Delete an object
          * @description A celestial object: a system, star, planet, moon, asteroid belt, station, nebula, anomaly, black hole or marker (`baseType`). Objects nest: `parentId` is the object it sits inside, or null for the top level of the galaxy. Which parents a base type allows is fixed (a planet goes in a system or the galaxy; a moon in a planet). x, y, z are a position in the parent's frame: light-years in the galaxy (+Y is galactic north), system units (roughly AU) inside a system, and body radii around a planet. `explorable` makes systems open a system view and planets or moons an orbit view. `appearance` holds only overrides of the type and subtype defaults.
          *
          *     Deletes what depends on it too (data-model §11); revert the batch to undo.
@@ -238,7 +238,7 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * Update a object
+         * Update an object
          * @description A celestial object: a system, star, planet, moon, asteroid belt, station, nebula, anomaly, black hole or marker (`baseType`). Objects nest: `parentId` is the object it sits inside, or null for the top level of the galaxy. Which parents a base type allows is fixed (a planet goes in a system or the galaxy; a moon in a planet). x, y, z are a position in the parent's frame: light-years in the galaxy (+Y is galactic north), system units (roughly AU) inside a system, and body radii around a planet. `explorable` makes systems open a system view and planets or moons an orbit view. `appearance` holds only overrides of the type and subtype defaults.
          *
          *     Send only the fields to change, plus the `version` you read. A stale version returns 409 with the current record.
@@ -539,7 +539,7 @@ export interface paths {
         get: operations["events.list"];
         put?: never;
         /**
-         * Create a event
+         * Create an event
          * @description Something that happened. `dateText` is free text in the universe's own date format (such as "240.M41"); `dateSort` is an optional number to order events by. It may have a location like a place, and characters relate to it with the `participant` relation.
          *
          *     Example body:
@@ -572,7 +572,7 @@ export interface paths {
         };
         get?: never;
         /**
-         * Create or update a event by its external key
+         * Create or update an event by its external key
          * @description Something that happened. `dateText` is free text in the universe's own date format (such as "240.M41"); `dateSort` is an optional number to order events by. It may have a location like a place, and characters relate to it with the `participant` relation.
          *
          *     Idempotent: the first call creates the entity with this `externalKey`, later calls update it (no `version` needed). Use this from scripts and LLM agents so re-running them never duplicates content.
@@ -593,14 +593,14 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get a event
+         * Get an event
          * @description Something that happened. `dateText` is free text in the universe's own date format (such as "240.M41"); `dateSort` is an optional number to order events by. It may have a location like a place, and characters relate to it with the `participant` relation.
          */
         get: operations["events.get"];
         put?: never;
         post?: never;
         /**
-         * Delete a event
+         * Delete an event
          * @description Something that happened. `dateText` is free text in the universe's own date format (such as "240.M41"); `dateSort` is an optional number to order events by. It may have a location like a place, and characters relate to it with the `participant` relation.
          *
          *     Deletes what depends on it too (data-model §11); revert the batch to undo.
@@ -609,7 +609,7 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * Update a event
+         * Update an event
          * @description Something that happened. `dateText` is free text in the universe's own date format (such as "240.M41"); `dateSort` is an optional number to order events by. It may have a location like a place, and characters relate to it with the `participant` relation.
          *
          *     Send only the fields to change, plus the `version` you read. A stale version returns 409 with the current record.
