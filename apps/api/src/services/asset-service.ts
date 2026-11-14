@@ -4,7 +4,7 @@ import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
 import type { z } from 'zod';
 import { assetKey, type BlobStore } from '../storage/blob-store.ts';
 import type { ImageVariant, ProcessedImage, VariantName } from '../storage/image-pipeline.ts';
-import { NotFound } from './errors.ts';
+import { NotFound, requireChanges } from './errors.ts';
 
 /** Uploaded images (data-model §3.6, architecture.md §8). */
 
@@ -124,6 +124,7 @@ export async function updateAssetMetadata(
   const patch = Object.fromEntries(
     Object.entries(input).map(([field, value]) => [field, value === '' ? null : value]),
   );
+  requireChanges(patch);
   const [row] = await tx.update(assets).set(patch).where(eq(assets.id, id)).returning();
   if (!row) throw new NotFound('asset', id);
   return toAssetRead(row);

@@ -6,6 +6,7 @@ import { problemResponses } from '../http/schemas.ts';
 import { NotFound } from '../services/errors.ts';
 import { MediaWikiSource } from '../wiki/media-wiki.ts';
 import { leadMarkdown, wikiTemplates } from '../wiki/wikitext.ts';
+import { routeAccess } from '../http/access-guard.ts';
 
 const WIKI_DOC =
   'For "Fill from wiki" (M7-T3): the wikis this installation is configured to read (GE_WIKI_SOURCES), searched and previewed through their MediaWiki API, one request a second per wiki, with answers kept for a day. Nothing here writes: the dialog applies what the owner picks as one batch, with citations.';
@@ -38,6 +39,7 @@ export const wikiRoutes: FastifyPluginCallbackZod<{
         summary: 'The wikis this installation can fill from',
         description: WIKI_DOC,
         operationId: 'wiki.sources',
+        ...routeAccess({ scope: 'editor' }),
         response: { 200: z.object({ data: z.array(WikiSourceInfo) }), ...problemResponses },
       },
     },
@@ -58,6 +60,7 @@ export const wikiRoutes: FastifyPluginCallbackZod<{
         summary: 'Search a wiki',
         description: `${WIKI_DOC} Returns up to 10 pages, best first, each with a plain-text snippet.`,
         operationId: 'wiki.search',
+        ...routeAccess({ scope: 'editor' }),
         querystring: sourceQuery.extend({ q: z.string().trim().min(1).max(200) }),
         response: { 200: z.object({ data: z.array(WikiSearchHit) }), ...problemResponses },
       },
@@ -76,6 +79,7 @@ export const wikiRoutes: FastifyPluginCallbackZod<{
         summary: 'Read a wiki page for filling',
         description: `${WIKI_DOC} Follows redirects. Returns the page's templates with named parameters (the first is usually its info box) as plain text, its lead section as Markdown with links as text, its address, and the wiki's text licence. Images are never offered: wiki artwork usually isn't covered by the text licence.`,
         operationId: 'wiki.preview',
+        ...routeAccess({ scope: 'editor' }),
         querystring: sourceQuery.extend({ title: z.string().trim().min(1).max(300) }),
         response: { 200: z.object({ data: WikiPreview }), ...problemResponses },
       },

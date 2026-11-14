@@ -1,6 +1,7 @@
 import { pingDatabase, type Database } from '@ge/db';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
+import { routeAccess } from '../http/access-guard.ts';
 
 const healthResponse = z.object({
   data: z.object({
@@ -35,6 +36,7 @@ export const healthRoutes: FastifyPluginCallbackZod<HealthRouteOptions> = (app, 
     {
       schema: {
         operationId: 'health.get',
+        ...routeAccess({ scope: 'open' }),
         tags: ['health'],
         summary: 'Check that the API and its database are up',
         description:

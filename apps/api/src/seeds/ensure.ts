@@ -22,6 +22,7 @@ import { createConfig, updateConfig } from '../services/config-service.ts';
 import {
   createMap,
   createUniverse,
+  INSTALLATION_OWN,
   updateMap,
   updateUniverse,
 } from '../services/container-service.ts';
@@ -37,7 +38,8 @@ const { universes, maps, entityLinks, entityRelations, entityImages, assets } = 
 
 export async function ensureUniverse(tx: Executor, values: z.input<typeof UniverseCreate>) {
   const [existing] = await tx.select().from(universes).where(eq(universes.slug, values.slug));
-  if (!existing) return createUniverse(tx, values);
+  // The seeds' universes are the installation's own: no owner, public (D-34).
+  if (!existing) return createUniverse(tx, values, INSTALLATION_OWN);
   const { slug: _slug, ...rest } = values;
   return updateUniverse(tx, existing.id, { ...rest, version: existing.version });
 }
@@ -104,7 +106,7 @@ export async function ensureLink(
     .select({ id: entityLinks.id })
     .from(entityLinks)
     .where(and(eq(entityLinks.entityId, entityId), eq(entityLinks.url, values.url)));
-  return existing ? updateLink(tx, existing.id, values) : addLink(tx, entityId, values);
+  return existing ? updateLink(tx, entityId, existing.id, values) : addLink(tx, entityId, values);
 }
 
 export async function ensureRelation(
@@ -124,7 +126,7 @@ export async function ensureRelation(
     );
   if (!existing) return addRelation(tx, fromEntityId, values);
   const { role, isSpoiler, sortKey } = values;
-  return updateRelation(tx, existing.id, { role, isSpoiler, sortKey });
+  return updateRelation(tx, fromEntityId, existing.id, { role, isSpoiler, sortKey });
 }
 
 export async function ensureImage(

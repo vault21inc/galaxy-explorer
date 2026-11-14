@@ -1,6 +1,16 @@
-import { ACCOUNT_LINK_PURPOSES, SITE_ROLES, USERNAME_PATTERN } from '@ge/domain';
+import { ACCOUNT_LINK_PURPOSES, MEMBER_ROLES, SITE_ROLES, USERNAME_PATTERN } from '@ge/domain';
 import { sql } from 'drizzle-orm';
-import { bigint, check, index, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import {
+  bigint,
+  check,
+  index,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { bytea, idColumn, matches, oneOf } from './helpers.ts';
 
 /**
@@ -96,5 +106,26 @@ export const accountLinks = pgTable(
       'account_links_reset_user_check',
       sql`(${t.purpose} = 'reset') = (${t.userId} is not null)`,
     ),
+  ],
+);
+
+/**
+ * Who a universe is shared with (M8-T11, D-34): editors change its content, viewers read it.
+ * Its owner is `universes.owner_id`, not a row here. Not audited, like the other account
+ * tables: sharing isn't undone through History, and M8-T12 logs it in `access_events`.
+ */
+export const universeMembers = pgTable(
+  'universe_members',
+  {
+    universeId: uuid().notNull(),
+    userId: uuid().notNull(),
+    role: text().notNull(),
+    addedBy: uuid(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ name: 'universe_members_pk', columns: [t.universeId, t.userId] }),
+    index('universe_members_user_idx').on(t.userId),
+    check('universe_members_role_check', oneOf(t.role, MEMBER_ROLES)),
   ],
 );

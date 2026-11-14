@@ -86,3 +86,28 @@ export class ImportBlocked extends Error {
     this.report = report;
   }
 }
+
+/** An upload that would take the universe's owner past their media quota (M8-T11): 413. */
+export class QuotaExceeded extends Error {
+  override readonly name = 'QuotaExceeded';
+  readonly usedBytes: number;
+  readonly quotaBytes: number;
+
+  constructor(usedBytes: number, quotaBytes: number) {
+    const mb = (bytes: number) => `${(bytes / 1024 ** 2).toFixed(1)} MB`;
+    super(
+      `This image would take the universe’s owner past their media quota: ${mb(usedBytes)} of ${mb(quotaBytes)} is used. Delete images, or ask an admin for more.`,
+    );
+    this.usedBytes = usedBytes;
+    this.quotaBytes = quotaBytes;
+  }
+}
+
+/**
+ * Refuses an update with nothing in it (`PATCH` with `{}`): there's nothing to write, and the
+ * database can't run an update that sets no column. A 400, like any other bad request.
+ */
+export function requireChanges(patch: object): void {
+  if (Object.keys(patch).length === 0)
+    throw new InvalidRequest('Send at least one field to change.');
+}

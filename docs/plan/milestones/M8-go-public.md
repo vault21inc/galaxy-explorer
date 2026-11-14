@@ -110,10 +110,48 @@
 - **AGENTS.md:** the Security rules gain "every service call that touches a universe asks `universeAccess`; a universe the requester can't read is a 404".
 
 **Done when:**
-- [ ] The access contract suite walks the OpenAPI document, with no route listed by hand: for every route with a universe, map, entity, asset, batch or settings record in its path, on a private universe a stranger and an anonymous visitor get 404, a viewer reads and gets 403 on every write, an editor writes but gets 403 on address, visibility, members, transfer and delete, and the owner may do all of it. A route the suite can't classify fails it.
-- [ ] Integration tests: drafts are hidden from viewers and shown to editors; `GET /universes` lists exactly what each kind of requester can read; a batch touching two universes, one of them not editable, changes nothing; a private universe's media file is 404 for a stranger and served to a viewer; an upload past the quota is refused.
-- [ ] E2E: an account's new universe is private, and a signed-out browser gets "not found" at its address; made public, it appears on the home page for everyone.
-- [ ] With `GE_AUTH_MODE=none`, every existing test passes unchanged.
+- [x] The access contract suite walks the OpenAPI document, with no route listed by hand: for every route with a universe, map, entity, asset, batch or settings record in its path, on a private universe a stranger and an anonymous visitor get 404, a viewer reads and gets 403 on every write, an editor writes but gets 403 on address, visibility, members, transfer and delete, and the owner may do all of it. A route the suite can't classify fails it.
+- [x] Integration tests: drafts are hidden from viewers and shown to editors; `GET /universes` lists exactly what each kind of requester can read; a batch touching two universes, one of them not editable, changes nothing; a private universe's media file is 404 for a stranger and served to a viewer; an upload past the quota is refused.
+- [x] E2E: an account's new universe is private, and a signed-out browser gets "not found" at its address; made public, it appears on the home page for everyone.
+- [x] With `GE_AUTH_MODE=none`, every existing test passes unchanged, with two exceptions that test the same behaviour by new names. An API test of the drafts filter calls the renamed `viewerFor` (was `visibleTo`). `navigation.spec.ts`'s failed-request test now fails the request the universe page makes, `/universes/by-slug/{slug}`, instead of the list.
+
+**As built:**
+- **One check, in front of every route (D-40):** a `preValidation` hook (`http/access-guard.ts`), rather than a call at each service's entry.
+  - It finds the universe from the route's path parameters (`http/route-universe.ts`): a `mapId` in `maps`, an entity's `id` in `entities`, a settings row's `id` in its table, and so on. The universe always comes from the row itself, and all the rows a path names must agree.
+  - It asks `universeAccess` (`services/access.ts`), and answers 404 for `none`. The message is exactly a missing row's: "No map with id …".
+  - For a level too low it answers 403, or 401 when signed out.
+  - It runs before the route's validation, so a refused request is refused whatever its body says.
+- **Each route's level** defaults to `read` for GET and `edit` otherwise. A route says more in its schema as `x-ge-access`, which also lands in the OpenAPI document:
+  - History, exports and the image library need `edit`;
+  - deleting the universe needs `own`;
+  - its `slug` and `visibility` are `ownFields`.
+
+  Routes about no single universe say `open` (health, icons, signing in, the lists, `by-slug`, `media-access`) or `editor` (creating a universe, the batch endpoint, the wiki). A route that does neither, or has a path parameter the guard doesn't know, is refused with a 500 until it's taught.
+- **The batch endpoint** checks every operation's `mapId`, `universeId` and `id` before running any (`services/batch-access.ts`), and names the refused operation.
+- **Who's asking** is `request.requester` (local, an account, or anonymous, with the share keys T12 will unlock). The services' `Viewer` stays what it was, the drafts filter: `viewerFor(access, { includeDrafts })` honours drafts from `edit` up. A viewer who asks for drafts gets 403.
+- **Found by the contract suite and fixed:**
+  - links and relations were updated and deleted by their own id alone, so one of another universe's entities could be reached through an entity the requester could edit. They're now found through the path's entity too.
+  - `PATCH` with an empty body was a 500 on images, links, relations and assets; it's now a 400.
+  - deleting a settings row still in use (a group type with groups) was a 500; RESTRICT foreign keys now answer 409.
+- **Universes:**
+  - `GET /universes/by-slug/{slug}` is new; the web app resolves `/u/{slug}` with it.
+  - New universes belong to the account that makes them, private. Locally, and for the seeds, they're the installation's own: no owner, public.
+  - `UniverseRead` gains `visibility`, `owner` and `access`. Services return a `UniverseRecord` with `ownerId`, and only the routes add who's asking.
+  - `PATCH` takes `visibility` now, for the e2e test and T12. Choosing `link` makes a share key; leaving `link` drops it.
+- **Media:**
+  - `/media/*` is served only with `read`, with `Cache-Control: public` for public universes and `private` otherwise.
+  - `GET /api/v1/media-access` answers the same for Caddy, from `X-Forwarded-Uri`, with 204 and the `Cache-Control` to send.
+  - Uploads past the owner's quota get a 413, and `GET /auth/me` reports `mediaUsedBytes`.
+- **Admins** own the installation's own universes (no owner), and nothing else.
+- **Every route documents 401 and 403,** which is most of the regenerated client's growth.
+- **The web app:**
+  - **Edit mode** follows the universe's `access` (`useCanEdit`). `useCanCreate` (health's `canEdit`) decides "New universe".
+  - **The home page** lists Your universes, Shared with you (with the role) and Public universes, with Private and Link-only badges and "by {owner}".
+  - **"Not found"** offers "Sign in" to a signed-out reader.
+- **Tests:**
+  - `apps/api/test/contract/access.contract.int.test.ts`, with its world in `access-world.ts`. It checks each route's declared level against data-model §8's rule worked out on its own, and it fails when a level is lowered.
+  - `apps/api/test/access.int.test.ts` (9 tests).
+  - `apps/web/e2e/universe-access.spec.ts`, and `test/home-sections.test.ts`.
 
 ### M8-T12 Sharing: editors, viewers and links
 

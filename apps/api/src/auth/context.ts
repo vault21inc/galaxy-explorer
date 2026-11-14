@@ -59,8 +59,12 @@ export function signedIn(user: UserRow): SignedIn {
   };
 }
 
-export function accountRead(account: SignedIn): z.infer<typeof AccountRead> {
-  return { ...account, createdAt: account.createdAt.toISOString() };
+/** The account as `GET /auth/me` returns it, with the media its universes hold. */
+export function accountRead(
+  account: SignedIn,
+  mediaUsedBytes: number,
+): z.infer<typeof AccountRead> {
+  return { ...account, mediaUsedBytes, createdAt: account.createdAt.toISOString() };
 }
 
 /** The account's two-factor secret, opened. */

@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { schema, type Executor } from '@ge/db';
 import {
   MapCreate,
@@ -6,9 +7,11 @@ import {
   UniverseCreate,
   UniverseRead,
   UniverseUpdate,
+  type Visibility,
 } from '@ge/domain';
-import { and, asc, eq, gt, sql } from 'drizzle-orm';
-import type { z } from 'zod';
+import { and, asc, eq, exists, gt, inArray, isNull, or, sql, type SQL } from 'drizzle-orm';
+import { z } from 'zod';
+import { accessTo, type Requester } from './access.ts';
 import { NotFound, VersionConflict } from './errors.ts';
 import { requireInUniverse, requireUniverse } from './lookup.ts';
 import { derivedPlainText, sanitizeRichTextFields } from './sanitize.ts';
@@ -16,7 +19,7 @@ import type { Viewer } from './visibility.ts';
 
 /** Universes and maps (data-model §3.1): versioned like entities, deleted with everything in them. */
 
-const { assets, maps, universes } = schema;
+const { assets, maps, universeMembers, universes, users } = schema;
 type Row = Record<string, unknown>;
 
 const stamps = (row: Row) => ({
@@ -31,47 +34,153 @@ const page = <T>(rows: T[], limit: number, idOf: (row: T) => string) => ({
 
 // ---- universes ----------------------------------------------------------------------------
 
-export async function createUniverse(tx: Executor, input: z.input<typeof UniverseCreate>) {
+/**
+ * A universe as stored, before anyone asks: `UniverseRead` with its owner's id in place of the
+ * owner's name and the requester's access, which `universeReads` adds. Never sent as is.
+ */
+export const UniverseRecord = UniverseRead.omit({ owner: true, access: true }).extend({
+  ownerId: z.uuid().nullable(),
+});
+export type UniverseRecord = z.infer<typeof UniverseRecord>;
+
+const recordOf = (row: Row): UniverseRecord => UniverseRecord.parse(stamps(row));
+
+/**
+ * Who a new universe belongs to (M8-T11, D-34): the account that makes it, private; or, with no
+ * accounts (and for the seeds), nobody, which makes it the installation's own, public.
+ */
+export interface Placement {
+  ownerId: string | null;
+  visibility: Visibility;
+}
+export const INSTALLATION_OWN: Placement = { ownerId: null, visibility: 'public' };
+
+export async function createUniverse(
+  tx: Executor,
+  input: z.input<typeof UniverseCreate>,
+  placement: Placement,
+): Promise<UniverseRecord> {
   const values = sanitizeRichTextFields(UniverseCreate, UniverseCreate.parse(input));
   const [row] = await tx
     .insert(universes)
-    .values({ ...values, ...derivedPlainText(values) } as typeof universes.$inferInsert)
+    .values({
+      ...values,
+      ...derivedPlainText(values),
+      ...placement,
+    } as typeof universes.$inferInsert)
     .returning();
   if (!row) throw new Error('Insert returned no row.');
-  return UniverseRead.parse(stamps(row));
+  return recordOf(row);
 }
 
-export async function getUniverse(ex: Executor, id: string) {
-  return UniverseRead.parse(stamps(await requireUniverse(ex, id)));
+export async function getUniverse(ex: Executor, id: string): Promise<UniverseRecord> {
+  return recordOf(await requireUniverse(ex, id));
 }
 
-export async function listUniverses(ex: Executor, options: { cursor?: string; limit: number }) {
+/** The universe at `/u/{slug}`, whoever may read it. */
+export async function getUniverseBySlug(ex: Executor, slug: string): Promise<UniverseRecord> {
+  const [row] = await ex.select().from(universes).where(eq(universes.slug, slug));
+  if (!row) throw new NotFound('universe', slug);
+  return recordOf(row);
+}
+
+/**
+ * The universes a requester can read, which is what lists show (data-model §8): public ones,
+ * plus the account's own and those shared with it, plus, for an admin, the installation's own.
+ * A link-only universe is never listed for someone who only has its key.
+ */
+function readableBy(requester: Requester): SQL | undefined {
+  if (requester.kind === 'local') return undefined;
+  const isPublic = eq(universes.visibility, 'public');
+  if (requester.kind === 'anonymous') return isPublic;
+  const { id, role } = requester.account;
+  return or(
+    isPublic,
+    eq(universes.ownerId, id),
+    exists(
+      sql`(select 1 from ${universeMembers} where ${universeMembers.universeId} = ${universes.id}
+           and ${universeMembers.userId} = ${id})`,
+    ),
+    role === 'admin' ? isNull(universes.ownerId) : undefined,
+  );
+}
+
+export async function listUniverses(
+  ex: Executor,
+  requester: Requester,
+  options: { cursor?: string; limit: number },
+) {
   const rows = await ex
     .select()
     .from(universes)
-    .where(options.cursor ? gt(universes.id, options.cursor) : undefined)
+    .where(
+      and(readableBy(requester), options.cursor ? gt(universes.id, options.cursor) : undefined),
+    )
     .orderBy(asc(universes.id))
     .limit(options.limit + 1);
   const result = page(rows, options.limit, (row) => row.id);
-  return { ...result, items: result.items.map((row) => UniverseRead.parse(stamps(row))) };
+  return { ...result, items: result.items.map(recordOf) };
+}
+
+/**
+ * Universes as a requester sees them: with their owners' usernames and the requester's access.
+ * One they can't read is left out (the access guard has already refused it on its own routes).
+ */
+export async function universeReads(
+  ex: Executor,
+  requester: Requester,
+  records: readonly UniverseRecord[],
+): Promise<z.infer<typeof UniverseRead>[]> {
+  const ownerIds = [...new Set(records.flatMap((record) => record.ownerId ?? []))];
+  const owners = new Map(
+    ownerIds.length === 0
+      ? []
+      : (
+          await ex
+            .select({ id: users.id, username: users.username })
+            .from(users)
+            .where(inArray(users.id, ownerIds))
+        ).map((user) => [user.id, user.username]),
+  );
+  const access = await accessTo(
+    ex,
+    requester,
+    records.map((record) => record.id),
+  );
+  return records.flatMap(({ ownerId, ...record }) => {
+    const level = access.get(record.id) ?? 'none';
+    if (level === 'none') return [];
+    return [{ ...record, owner: ownerId ? (owners.get(ownerId) ?? null) : null, access: level }];
+  });
+}
+
+/** A share link's key (M8-T12): random and unguessable, 128 bits. */
+function newShareKey(): string {
+  return randomBytes(16).toString('base64url');
 }
 
 export async function updateUniverse(
   tx: Executor,
   id: string,
   input: z.input<typeof UniverseUpdate>,
-) {
-  const { version, ...values } = sanitizeRichTextFields(
+): Promise<UniverseRecord> {
+  const { version, visibility, ...values } = sanitizeRichTextFields(
     UniverseUpdate,
     UniverseUpdate.parse(input),
   );
-  const current = await getUniverse(tx, id);
-  if (current.version !== version) throw new VersionConflict(current);
+  const row = await requireUniverse(tx, id);
+  if (row.version !== version) throw new VersionConflict(recordOf(row));
+  // A link-only universe needs a share key; leaving 'link' drops it, so the old link stops.
+  const sharing =
+    visibility === undefined
+      ? {}
+      : { visibility, shareKey: visibility === 'link' ? (row.shareKey ?? newShareKey()) : null };
   await tx
     .update(universes)
     .set({
       ...(values as Partial<typeof universes.$inferInsert>),
       ...derivedPlainText(values),
+      ...sharing,
       version: sql`${universes.version} + 1`,
       updatedAt: sql`now()`,
     })

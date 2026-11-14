@@ -1,4 +1,4 @@
-import { schema, type Database } from '@ge/db';
+import { schema, type Database, type Executor } from '@ge/db';
 import {
   MapClone,
   MapCreate,
@@ -13,6 +13,7 @@ import {
   toPlainText,
 } from '@ge/domain';
 import { eq } from 'drizzle-orm';
+import type { FastifyRequest } from 'fastify';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { inBatch } from '../http/batch.ts';
@@ -32,12 +33,19 @@ import {
   deleteUniverse,
   getMap,
   getUniverse,
+  getUniverseBySlug,
+  INSTALLATION_OWN,
   listMaps,
   listUniverses,
+  universeReads,
   updateMap,
   updateUniverse,
+  type UniverseRecord,
 } from '../services/container-service.ts';
-import { visibleTo } from '../services/visibility.ts';
+import { NotFound } from '../services/errors.ts';
+import { problem } from '../http/problems.ts';
+import { viewerFor } from '../services/visibility.ts';
+import { routeAccess } from '../http/access-guard.ts';
 
 /** Universes and maps: the containers everything else lives in (data-model §3.1). */
 
@@ -52,26 +60,79 @@ const MAP_DOC =
   'One galaxy at one point in time (U7); cloning a map makes another era. Map-scoped entities (objects, groups, places, events) belong to one map. `isSpoiler` hides the whole map from readers who hide spoilers.';
 
 export const containerRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, { db }, done) => {
+  /** Universes as this requester sees them, spoilers redacted if asked. */
+  const reads = async (
+    ex: Executor,
+    request: FastifyRequest,
+    records: UniverseRecord[],
+    spoilers?: 'include' | 'exclude',
+  ) => {
+    const data = await universeReads(ex, request.requester, records);
+    return spoilers === 'exclude' ? data.map((item) => redactUniverse(item, HIDE_SPOILERS)) : data;
+  };
+  const one = <T>(items: T[]): T => {
+    const [item] = items;
+    // Only a universe the requester can read gets this far.
+    if (item === undefined) throw new Error('The universe is out of reach.');
+    return item;
+  };
+
   app.get(
     '/universes',
     {
       schema: {
         ...universeTag,
         summary: 'List universes',
-        description: UNIVERSE_DOC,
+        description: `${UNIVERSE_DOC} Lists the universes the requester can read: public ones, and with an account, its own and those shared with it. A link-only universe isn't listed for someone who only has its link.`,
         operationId: 'universes.list',
+        ...routeAccess({ scope: 'open' }),
         querystring: listQuery.extend(readQuery.shape),
         response: { 200: page(UniverseRead), ...problemResponses },
       },
     },
     async (request) => {
       const { cursor, limit, spoilers } = request.query;
-      const result = await listUniverses(db, { limit, ...(cursor ? { cursor } : {}) });
-      const data =
-        spoilers === 'exclude'
-          ? result.items.map((item) => redactUniverse(item, HIDE_SPOILERS))
-          : result.items;
-      return { data, nextCursor: result.nextCursor } as never;
+      const result = await listUniverses(db, request.requester, {
+        limit,
+        ...(cursor ? { cursor } : {}),
+      });
+      return {
+        data: await reads(db, request, result.items, spoilers),
+        nextCursor: result.nextCursor,
+      } as never;
+    },
+  );
+
+  app.get(
+    '/universes/by-slug/:slug',
+    {
+      schema: {
+        ...universeTag,
+        summary: 'Get a universe by its address',
+        description: `${UNIVERSE_DOC} The universe at /u/{slug}, for anyone who can read it, listed or not (a link-only universe opens this way). Anyone else gets a 404, as for an address that's free.`,
+        operationId: 'universes.bySlug',
+        // It finds the universe itself, then asks universeAccess, as the guard would.
+        ...routeAccess({ scope: 'open' }),
+        params: z.object({ slug: z.string().min(1).max(100) }),
+        querystring: readQuery,
+        response: { 200: envelope(UniverseRead), ...problemResponses },
+      },
+    },
+    async (request, reply) => {
+      const { slug } = request.params;
+      const record = await getUniverseBySlug(db, slug).catch((error: unknown) => {
+        if (error instanceof NotFound) return null;
+        throw error;
+      });
+      const [data] = record ? await reads(db, request, [record], request.query.spoilers) : [];
+      // Hidden reads exactly like missing.
+      if (!data) {
+        return reply
+          .code(404)
+          .type('application/problem+json')
+          .send(problem(404, `No universe at /u/${slug}.`));
+      }
+      return { data };
     },
   );
 
@@ -81,21 +142,28 @@ export const containerRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app,
       schema: {
         ...universeTag,
         summary: 'Create a universe',
-        description: UNIVERSE_DOC,
+        description: `${UNIVERSE_DOC} With accounts, the new universe belongs to the account that makes it and starts private.`,
         operationId: 'universes.create',
+        ...routeAccess({ scope: 'editor' }),
         body: UniverseCreate,
         response: { 201: envelope(UniverseRead), ...problemResponses },
       },
     },
     async (request, reply) => {
+      const { requester } = request;
+      // With accounts, the maker owns it, private (D-34); locally, it's the installation's.
+      const placement =
+        requester.kind === 'account'
+          ? { ownerId: requester.account.id, visibility: 'private' as const }
+          : INSTALLATION_OWN;
       const data = await inBatch(db, request, reply, 'Create universe', {}, async (tx, batchId) => {
-        const universe = await createUniverse(tx, request.body);
+        const universe = await createUniverse(tx, request.body, placement);
         // The batch couldn't name its universe before the universe existed.
         await tx
           .update(schema.changeBatches)
           .set({ universeId: universe.id })
           .where(eq(schema.changeBatches.id, batchId));
-        return universe;
+        return one(await reads(tx, request, [universe]));
       });
       return reply.code(201).send({ data });
     },
@@ -116,10 +184,7 @@ export const containerRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app,
     },
     async (request) => {
       const universe = await getUniverse(db, request.params.universeId);
-      return {
-        data:
-          request.query.spoilers === 'exclude' ? redactUniverse(universe, HIDE_SPOILERS) : universe,
-      };
+      return { data: one(await reads(db, request, [universe], request.query.spoilers)) };
     },
   );
 
@@ -129,8 +194,9 @@ export const containerRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app,
       schema: {
         ...universeTag,
         summary: 'Update a universe',
-        description: UNIVERSE_DOC,
+        description: `${UNIVERSE_DOC} Its owner alone changes its address (\`slug\`) and \`visibility\`: \`private\`, \`link\` (anyone with the share link) or \`public\`.`,
         operationId: 'universes.update',
+        ...routeAccess({ scope: 'universe', ownFields: ['slug', 'visibility'] }),
         params: universeParams,
         body: UniverseUpdate,
         response: { 200: envelope(UniverseRead), ...problemResponses },
@@ -138,8 +204,8 @@ export const containerRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app,
     },
     async (request, reply) => {
       const { universeId } = request.params;
-      const data = await inBatch(db, request, reply, 'Edit universe', { universeId }, (tx) =>
-        updateUniverse(tx, universeId, request.body),
+      const data = await inBatch(db, request, reply, 'Edit universe', { universeId }, async (tx) =>
+        one(await reads(tx, request, [await updateUniverse(tx, universeId, request.body)])),
       );
       return { data };
     },
@@ -151,8 +217,9 @@ export const containerRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app,
       schema: {
         ...universeTag,
         summary: 'Delete a universe and everything in it',
-        description: UNIVERSE_DOC,
+        description: `${UNIVERSE_DOC} Only its owner may.`,
         operationId: 'universes.delete',
+        ...routeAccess({ scope: 'universe', level: 'own' }),
         params: universeParams,
         body: versionBody,
         response: { 204: z.null(), ...problemResponses },
@@ -182,7 +249,7 @@ export const containerRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app,
     async (request) => {
       const { cursor, limit, spoilers, includeDrafts } = request.query;
       const result = await listMaps(db, request.params.universeId, {
-        viewer: visibleTo(request.actor, { includeDrafts }),
+        viewer: viewerFor(request.universeAccess, { includeDrafts }),
         limit,
         ...(cursor ? { cursor } : {}),
       });
@@ -264,7 +331,7 @@ export const containerRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app,
       const map = await getMap(
         db,
         request.params.mapId,
-        visibleTo(request.actor, { includeDrafts }),
+        viewerFor(request.universeAccess, { includeDrafts }),
       );
       return { data: spoilers === 'exclude' ? redactMap(map, HIDE_SPOILERS) : map };
     },

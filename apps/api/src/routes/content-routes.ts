@@ -39,7 +39,7 @@ import {
   listRelations,
   withOtherEnds,
 } from '../services/aspects/read.ts';
-import { SEES_EVERYTHING, visibleTo } from '../services/visibility.ts';
+import { SEES_EVERYTHING, viewerFor } from '../services/visibility.ts';
 import { ASPECT_DOC, aspectWriter, deleted, entityParams, list } from './aspect-helpers.ts';
 
 /** Images, links, facts and relations of any entity, under `/entities/{entityId}/…` (data-model §3.4). */
@@ -239,7 +239,7 @@ export const contentRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, {
     },
     async (request, reply) => {
       const data = await write(request, reply, request.params.entityId, 'Edit link', (tx) =>
-        updateLink(tx, request.params.linkId, request.body),
+        updateLink(tx, request.params.entityId, request.params.linkId, request.body),
       );
       return { data } as never;
     },
@@ -258,7 +258,7 @@ export const contentRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, {
     },
     async (request, reply) => {
       await write(request, reply, request.params.entityId, 'Remove link', (tx) =>
-        removeLink(tx, request.params.linkId),
+        removeLink(tx, request.params.entityId, request.params.linkId),
       );
       return reply.code(204).send(null);
     },
@@ -347,7 +347,7 @@ export const contentRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, {
     },
     async (request) => {
       await requireOwner(db, request.params.entityId);
-      const viewer = visibleTo(request.actor);
+      const viewer = viewerFor(request.universeAccess);
       return { data: await listRelations(db, request.params.entityId, viewer) } as never;
     },
   );
@@ -393,7 +393,7 @@ export const contentRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, {
     async (request, reply) => {
       const { entityId, relationId } = request.params;
       const data = await write(request, reply, entityId, 'Edit relation', async (tx) => {
-        const relation = await updateRelation(tx, relationId, request.body);
+        const relation = await updateRelation(tx, entityId, relationId, request.body);
         const [withOther] = await withOtherEnds(tx, entityId, [relation], SEES_EVERYTHING);
         return withOther;
       });
@@ -414,7 +414,7 @@ export const contentRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, {
     },
     async (request, reply) => {
       await write(request, reply, request.params.entityId, 'Remove relation', (tx) =>
-        removeRelation(tx, request.params.relationId),
+        removeRelation(tx, request.params.entityId, request.params.relationId),
       );
       return reply.code(204).send(null);
     },

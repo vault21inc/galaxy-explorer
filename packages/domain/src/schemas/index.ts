@@ -52,9 +52,15 @@ export {
   MapCreate,
   MapRead,
   MapUpdate,
+  MEMBER_ROLES,
+  UNIVERSE_ACCESS,
   UniverseCreate,
   UniverseRead,
   UniverseUpdate,
+  VISIBILITIES,
+  Visibility,
+  type MemberRole,
+  type UniverseAccess,
 } from './containers.ts';
 export {
   BatchOperation,

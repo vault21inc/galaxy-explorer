@@ -6,6 +6,7 @@ import { actorOf } from '../http/batch.ts';
 import { envelope, listQuery, page, problemResponses } from '../http/schemas.ts';
 import { RevertConflicts } from '../services/errors.ts';
 import { findRevertConflicts, getBatchDetail, listHistory } from '../services/history-service.ts';
+import { routeAccess } from '../http/access-guard.ts';
 
 /** History: list batches, see what one changed, and revert it (data-model §9). */
 
@@ -63,6 +64,7 @@ export const historyRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, {
         summary: "List a universe's changes, newest first",
         description: HISTORY_DOC,
         operationId: 'history.list',
+        ...routeAccess({ scope: 'universe', level: 'edit' }),
         params: z.object({ universeId: z.uuid() }),
         querystring: listQuery.extend({
           actorType: z.enum(ACTOR_TYPES).optional().describe('Only changes by this kind of actor.'),
@@ -106,6 +108,7 @@ export const historyRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, {
         summary: 'What one change did, per entity',
         description: `${HISTORY_DOC} The summary groups rows by entity, including cascaded rows and aspect changes (links, facts, members…).`,
         operationId: 'history.get',
+        ...routeAccess({ scope: 'universe', level: 'edit' }),
         params: batchParams,
         response: { 200: envelope(BatchDetail), ...problemResponses },
       },

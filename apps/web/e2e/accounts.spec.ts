@@ -62,8 +62,10 @@ test.describe('accounts (M8-T1)', () => {
 
     await page.getByRole('button', { name: `Account: ${admin.username}` }).click();
     await page.getByRole('menuitem', { name: 'Sign out' }).click();
-    await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible();
+    await expect(page.getByRole('banner').getByRole('link', { name: 'Sign in' })).toBeVisible();
     await expect(editButton(page)).toHaveCount(0);
+    // The new universe is private (M8-T11): signed out, it's "not found".
+    await expect(page.getByText(`No universe called “${slug}”`)).toBeVisible();
   });
 
   test('an invite link leads through username, password and codes to a signed-in account', async ({

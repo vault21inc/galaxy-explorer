@@ -11,7 +11,7 @@ import {
   systemView,
 } from '../services/view-service.ts';
 import { eventList } from '../services/event-list.ts';
-import { visibleTo } from '../services/visibility.ts';
+import { viewerFor } from '../services/visibility.ts';
 
 /**
  * View payloads (architecture.md §6): everything one view draws, in one request. The 3D client
@@ -23,7 +23,7 @@ const VIEW_DOC =
 
 export const viewRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, { db }, done) => {
   const viewerOf = (request: Parameters<typeof actorOf>[0], includeDrafts: boolean | undefined) =>
-    visibleTo(request.actor, { includeDrafts });
+    viewerFor(request.universeAccess, { includeDrafts });
   const spoilersApplied = <T extends object>(view: T, spoilers: 'include' | 'exclude') =>
     spoilers === 'exclude' ? excludeViewSpoilers(view) : view;
 

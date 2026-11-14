@@ -1,5 +1,7 @@
-import { schema, type Actor } from '@ge/db';
+import { schema } from '@ge/db';
+import type { UniverseAccess } from '@ge/domain';
 import { sql, type SQL } from 'drizzle-orm';
+import { atLeast } from './access.ts';
 
 /**
  * Who can see drafts (data-model §8). Drafts are secret, unlike spoilers, so they're filtered
@@ -11,11 +13,16 @@ export interface Viewer {
 }
 
 /**
- * The viewer for a request. Editors (any signed-in actor; with GE_AUTH_MODE=none, everyone)
- * may ask for drafts with `includeDrafts=true`; anonymous readers can't (M8).
+ * The viewer for a request (M8-T11): drafts only when asked for with `includeDrafts=true`, and
+ * only for someone who may edit the universe (the access guard refuses anyone else who asks).
  */
-export function visibleTo(actor: Actor | null, options: { includeDrafts?: boolean } = {}): Viewer {
-  return { includeDrafts: actor !== null && (options.includeDrafts ?? false) };
+export function viewerFor(
+  access: UniverseAccess | null,
+  options: { includeDrafts?: boolean | undefined } = {},
+): Viewer {
+  return {
+    includeDrafts: options.includeDrafts === true && access !== null && atLeast(access, 'edit'),
+  };
 }
 
 /** Editors in tests and internal code that must see everything. */

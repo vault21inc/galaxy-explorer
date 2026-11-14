@@ -3,6 +3,7 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { problemResponses } from '../http/schemas.ts';
 import { iconDrawings, searchIcons } from '../services/icon-catalog.ts';
+import { routeAccess } from '../http/access-guard.ts';
 
 const ICONS_DOC =
   "The bundled icon sets for event categories and pins (M6-T4): Lucide (ISC) and game-icons.net (CC BY 3.0, credited on the site). An icon key is `set:name`, such as `game-icons:crossed-swords`; a key without a set is Lucide's.";
@@ -22,6 +23,7 @@ export const iconRoutes: FastifyPluginCallbackZod = (app, _options, done) => {
         summary: 'Search the icon sets',
         description: `${ICONS_DOC} Every word of \`q\` must appear in the name; exact and leading matches come first.`,
         operationId: 'icons.search',
+        ...routeAccess({ scope: 'open' }),
         querystring: z.object({
           q: z.string().max(100).default(''),
           set: z.enum(ICON_SETS).optional(),
@@ -45,6 +47,7 @@ export const iconRoutes: FastifyPluginCallbackZod = (app, _options, done) => {
         summary: "Get icons' drawings",
         description: `${ICONS_DOC} \`keys\` is a comma-separated list of up to ${MAX_KEYS.toString()} keys; unknown keys are left out of the answer.`,
         operationId: 'icons.get',
+        ...routeAccess({ scope: 'open' }),
         querystring: z.object({
           keys: z
             .string()

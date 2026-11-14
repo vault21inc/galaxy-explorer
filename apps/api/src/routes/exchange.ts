@@ -1,17 +1,17 @@
 import type { Database } from '@ge/db';
 import { CSV_COLUMNS, exportJsonSchema, IMPORT_MODES, ImportReport } from '@ge/domain';
-import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyReply } from 'fastify';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { exportZip } from '../exchange/export-service.ts';
 import { importUpload } from '../exchange/import-service.ts';
 import { MAX_IMPORT_BYTES } from '../exchange/zip.ts';
 import { actorOf } from '../http/batch.ts';
-import { problem } from '../http/problems.ts';
 import { envelope, problemResponses } from '../http/schemas.ts';
 import { InvalidRequest } from '../services/errors.ts';
 import { requireMap } from '../services/lookup.ts';
 import type { BlobStore } from '../storage/blob-store.ts';
+import { routeAccess } from '../http/access-guard.ts';
 
 /**
  * Import and export (M7-T4, architecture.md §5): a universe or map as a zip of JSON files and
@@ -35,13 +35,6 @@ export const exchangeRoutes: FastifyPluginCallbackZod<{
 }> = (app, { db, store, version }, done) => {
   const generator = `Galaxy Explorer ${version}`;
 
-  /** Exports include drafts: only someone who may edit may take one (the preview's editor, or
-   * a signed-in account until M8-T11). */
-  const refuseReaders = (request: FastifyRequest) =>
-    request.canEdit
-      ? undefined
-      : problem(403, 'Only an editor may export: an export includes drafts.');
-
   const sendZip = (reply: FastifyReply, file: { filename: string; zip: Uint8Array }) =>
     reply
       .header('content-disposition', `attachment; filename="${file.filename}"`)
@@ -56,14 +49,14 @@ export const exchangeRoutes: FastifyPluginCallbackZod<{
         summary: 'Export a universe as a zip',
         description: EXPORT_DOC,
         operationId: 'universes.export',
+        // An export includes drafts: it's for those who may edit the universe (M8-T11).
+        ...routeAccess({ scope: 'universe', level: 'edit' }),
         params: z.object({ universeId: z.uuid() }),
         // A zip, not JSON: no response schema, so Fastify sends the bytes as they are.
         produces: ['application/zip'],
       },
     },
     async (request, reply) => {
-      const refused = refuseReaders(request);
-      if (refused) return reply.code(403).type('application/problem+json').send(refused);
       return sendZip(reply, await exportZip(db, store, request.params.universeId, { generator }));
     },
   );
@@ -76,14 +69,13 @@ export const exchangeRoutes: FastifyPluginCallbackZod<{
         summary: 'Export one map as a zip',
         description: `The map, with the universe’s settings rows, assets and characters it may use. ${EXPORT_DOC}`,
         operationId: 'maps.export',
+        ...routeAccess({ scope: 'universe', level: 'edit' }),
         params: z.object({ mapId: z.uuid() }),
         // A zip, not JSON: no response schema, so Fastify sends the bytes as they are.
         produces: ['application/zip'],
       },
     },
     async (request, reply) => {
-      const refused = refuseReaders(request);
-      if (refused) return reply.code(403).type('application/problem+json').send(refused);
       const map = await requireMap(db, request.params.mapId);
       return sendZip(
         reply,
@@ -146,6 +138,7 @@ export const exchangeRoutes: FastifyPluginCallbackZod<{
         description:
           'The files of an export zip, for tools and LLM agents that write imports: manifest.json, universe.json and maps/<slug>.json.',
         operationId: 'exchange.schema',
+        ...routeAccess({ scope: 'open' }),
       },
     },
     () => exportJsonSchema(),

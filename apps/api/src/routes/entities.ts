@@ -23,7 +23,7 @@ import {
   upsertEntityByKey,
 } from '../services/entity-service.ts';
 import { applySpoilers } from '../services/redaction.ts';
-import { visibleTo } from '../services/visibility.ts';
+import { viewerFor } from '../services/visibility.ts';
 import { entityResponse, extensionFilters, filterQuery } from './entity-schemas.ts';
 
 /**
@@ -92,7 +92,7 @@ function registerKind(app: App, db: Database, kind: EntityKind): void {
         z.infer<typeof listQuery> &
         z.infer<typeof readQuery>;
       const result = await listEntities(db, kind, scopeOf(request.params), {
-        viewer: visibleTo(request.actor, { includeDrafts: query.includeDrafts }),
+        viewer: viewerFor(request.universeAccess, { includeDrafts: query.includeDrafts }),
         where: extensionFilters(kind, query),
         ...(typeof query.status === 'string'
           ? { status: query.status as 'draft' | 'published' }
@@ -183,7 +183,7 @@ function registerKind(app: App, db: Database, kind: EntityKind): void {
     async (request) => {
       const { spoilers, includeDrafts, include } = request.query;
       const read = await getEntity(db, kind, request.params.id, {
-        viewer: visibleTo(request.actor, { includeDrafts }),
+        viewer: viewerFor(request.universeAccess, { includeDrafts }),
         include: includesOf(include),
       });
       return { data: applySpoilers(kind, read, spoilers) } as never;

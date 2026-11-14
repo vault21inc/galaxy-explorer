@@ -97,3 +97,17 @@ export async function accountFromInvite(options: { admin?: boolean } = {}): Prom
     await api.dispose();
   }
 }
+
+/** Signs a browser context in through the API, with the account's next code. */
+export async function signInThrough(api: APIRequestContext, account: Account): Promise<void> {
+  const response = await api.post('/api/v1/auth/login', {
+    headers: { origin: AUTH_URL },
+    data: {
+      username: account.username,
+      password: account.password,
+      totp: totp(account.secret, 30),
+    },
+  });
+  if (!response.ok())
+    throw new Error(`sign-in: ${String(response.status())} ${await response.text()}`);
+}

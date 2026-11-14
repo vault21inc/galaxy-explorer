@@ -63,7 +63,11 @@ export const versionBody = z.strictObject({
 /** The error responses every route may give, for the documentation. */
 export const problemResponses = {
   400: problemSchema.describe('The request is invalid.'),
-  404: problemSchema.describe('Not found.'),
+  401: problemSchema.describe('Signed out: sign in to do this (M8).'),
+  403: problemSchema.describe('This universe can be read, but not changed this way (M8-T11).'),
+  404: problemSchema.describe(
+    'Not found, or in a universe the requester can’t read, which looks the same (M8-T11).',
+  ),
   409: problemSchema.describe('Conflict: a stale version or a duplicate.'),
   422: problemSchema.describe('A rule of the model was broken.'),
 } as const;

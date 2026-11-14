@@ -1,4 +1,4 @@
-import { unwrap, type components } from '@ge/api-client';
+import { ApiError, unwrap, type components } from '@ge/api-client';
 import { rt } from '@ge/domain';
 import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './client.ts';
@@ -24,6 +24,29 @@ export function useUniverses() {
       );
       return page.data;
     },
+  });
+}
+
+/**
+ * The universe at `/u/{slug}` (M8-T11), for anyone who can read it, listed or not: null when
+ * there's none, or none this reader may see, which the API answers alike.
+ */
+export function useUniverseBySlug(slug: string | undefined) {
+  return useQuery({
+    queryKey: ['universe', 'by-slug', slug ?? ''],
+    queryFn:
+      slug === undefined
+        ? skipToken
+        : async ({ signal }) => {
+            try {
+              return await unwrap(
+                api.GET('/api/v1/universes/by-slug/{slug}', { params: { path: { slug } }, signal }),
+              );
+            } catch (error) {
+              if (error instanceof ApiError && error.status === 404) return null;
+              throw error;
+            }
+          },
   });
 }
 

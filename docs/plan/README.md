@@ -36,6 +36,7 @@ It runs locally first, then on one DigitalOcean droplet.
 | [rendering.md](rendering.md) | a three.js primer, the performance budget, how each view is drawn, picking, labels, camera, transitions, test hooks |
 | [ux.md](ux.md) | layout, modes, **input bindings**, shortcuts, editing interactions, spoilers, rich text, accessibility, visual direction |
 | [milestones/](milestones/) | the work itself: one file per milestone, broken into tasks with acceptance criteria |
+| [later/](later/) | plans to come back to: written down, but not scheduled or decided |
 
 **Agents:** read [AGENTS.md](../../AGENTS.md), this README, then the milestone file for your task and the doc sections it lists under "Read first".
 
@@ -65,6 +66,9 @@ It runs locally first, then on one DigitalOcean droplet.
 - book or "content pack" features.
 
 Each of these can be revisited later, and the registries leave room for them.
+
+**Plans to come back to** ([later/](later/)):
+- [Ring-shaped groups](later/ring-shaped-groups.md): groups drawn as rings around the galaxy's centre, for galaxies with concentric regions such as Star Wars's Core, Mid Rim and Outer Rim.
 
 ## Glossary
 
@@ -224,4 +228,5 @@ M0 ──▶ M1 ──▶ M2 ──▶ M3 ──┬──▶ M4 ─────�
 - **2026-11-14:** M7-T7 done: an MCP server (`pnpm mcp`, apps/mcp) gives LLM agents such as Claude Code 62 tools generated from the registries and described by the API. Every change an agent makes is a batch labelled "MCP: …" that the History panel can revert.
 - **2026-11-14:** M7-T8 done, and with it every M7 task: a guide for LLM agents (`/api/llm-guide.md`, `/llms.txt`). A fresh Claude Code session, given only the guide and the MCP server, built the M7 demo content, undid its moons as asked, and made no errors. M7's acceptance (the demo end to end) is the owner's.
 - **2026-11-14:** M8 started. M8-T1 done: accounts and signing in. With `GE_AUTH_MODE=required`, people sign in at `/login` with a username, a password and a code from an authenticator app. Accounts come from single-use invite links (`/link/{token}`), which lead through a username, a password and the two-factor setup. `pnpm admin:create-user --admin` makes the first admin, and `pnpm admin:invite` and `admin:reset-link` print links. Signed out, visitors only read. D-39 records four calls about how it works. On your own machine nothing changes: there's still no login.
+- **2026-11-14:** M8-T11 done: ownership, visibility and the access check. Each universe now has an owner and is private, link-only or public. Universes from before accounts are public, and new ones private to the account that makes them. One check in front of every route answers 404 for a universe the requester can't read, and 403 for what they can read but may not do. A contract suite tries every route in the OpenAPI document as a stranger, an anonymous visitor, a viewer, an editor and the owner. Media files follow their universe, and uploads count against the owner's quota. The home page lists Your universes, Shared with you and the public ones. D-40: the check is one hook, from the route's path. Locally nothing changes.
 

@@ -6,13 +6,12 @@ import {
   type ConfigResource,
   type EntityKind,
   type MapRead,
-  type UniverseRead,
 } from '@ge/domain';
 import { asc, eq, inArray } from 'drizzle-orm';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import type { z } from 'zod';
 import { listConfig } from '../services/config-service.ts';
-import { getUniverse, listMaps } from '../services/container-service.ts';
+import { getUniverse, listMaps, type UniverseRecord } from '../services/container-service.ts';
 import { listEntities } from '../services/entity-read.ts';
 import { SEES_EVERYTHING } from '../services/visibility.ts';
 
@@ -40,7 +39,7 @@ type Row = Record<string, unknown>;
 export type ByEntity<R = Row> = Map<string, R[]>;
 
 export interface UniverseData {
-  universe: z.infer<typeof UniverseRead>;
+  universe: UniverseRecord;
   maps: z.infer<typeof MapRead>[];
   assets: (typeof assets.$inferSelect)[];
   config: Record<ConfigResource, Row[]>;

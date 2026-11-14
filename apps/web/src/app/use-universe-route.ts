@@ -1,9 +1,10 @@
-import { useMaps, useUniverses, type GalaxyMap, type Universe } from '@/api/containers.ts';
+import { useMaps, useUniverseBySlug, type GalaxyMap, type Universe } from '@/api/containers.ts';
 
 /**
  * Resolves the slugs in `/u/:universeSlug/:mapSlug` to records. Pages and the top bar call it
  * with the same slugs and share TanStack Query's cache, so it costs two requests per universe,
- * however many components ask.
+ * however many components ask. The universe is looked up by its address (M8-T11), so a
+ * link-only universe, which no list shows, opens too.
  */
 export type UniverseRoute =
   | { status: 'loading' }
@@ -12,14 +13,14 @@ export type UniverseRoute =
   | { status: 'ready'; universe: Universe; maps: GalaxyMap[]; map: GalaxyMap | undefined };
 
 export function useUniverseRoute(universeSlug: string, mapSlug?: string): UniverseRoute {
-  const universes = useUniverses();
-  const universe = universes.data?.find((item) => item.slug === universeSlug);
+  const found = useUniverseBySlug(universeSlug);
+  const universe = found.data ?? undefined;
   const maps = useMaps(universe?.id);
 
-  if (universes.error) {
-    return { status: 'error', error: universes.error, retry: () => void universes.refetch() };
+  if (found.error) {
+    return { status: 'error', error: found.error, retry: () => void found.refetch() };
   }
-  if (!universes.data) return { status: 'loading' };
+  if (found.data === undefined) return { status: 'loading' };
   if (!universe) return { status: 'missing', what: 'universe', slug: universeSlug };
   if (maps.error) return { status: 'error', error: maps.error, retry: () => void maps.refetch() };
   if (!maps.data) return { status: 'loading' };

@@ -1,8 +1,11 @@
 import type { Database } from '@ge/db';
 import { AssetMetadata, AssetRead, MAX_UPLOAD_BYTES } from '@ge/domain';
+import type { FastifyRequest } from 'fastify';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { inBatch } from '../http/batch.ts';
+import { problem, problemSchema } from '../http/problems.ts';
+import { accessFactsOf, universeAccess } from '../services/access.ts';
 import { envelope, listQuery, page, problemResponses } from '../http/schemas.ts';
 import {
   findDuplicate,
@@ -13,8 +16,10 @@ import {
 } from '../services/asset-service.ts';
 import { InvalidRequest } from '../services/errors.ts';
 import { requireUniverse } from '../services/lookup.ts';
+import { requireMediaRoom } from '../services/quota.ts';
 import { ASSET_KEY_PATTERN, type LocalBlobStore } from '../storage/blob-store.ts';
 import { processImage, sha256Of } from '../storage/image-pipeline.ts';
+import { routeAccess } from '../http/access-guard.ts';
 
 const ASSETS_DOC =
   "Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.";
@@ -41,7 +46,12 @@ export const assetRoutes: FastifyPluginCallbackZod<{ db: Database; store: LocalB
         operationId: 'assets.upload',
         consumes: ['multipart/form-data'],
         params: universeParams,
-        response: { 200: envelope(AssetRead), 201: envelope(AssetRead), ...problemResponses },
+        response: {
+          200: envelope(AssetRead),
+          201: envelope(AssetRead),
+          ...problemResponses,
+          413: problemSchema.describe('Too large, or past the owner’s media quota (M8-T11).'),
+        },
       },
     },
     async (request, reply) => {
@@ -54,6 +64,8 @@ export const assetRoutes: FastifyPluginCallbackZod<{ db: Database; store: LocalB
 
       const duplicate = await findDuplicate(db, universeId, sha256Of(data));
       if (duplicate) return reply.code(200).send({ data: duplicate });
+      // A new image counts against the universe's owner's media quota (M8-T11).
+      await requireMediaRoom(db, universeId, data.length);
 
       const image = await processImage(data);
       const name = part.filename.trim() || null;
@@ -90,6 +102,7 @@ export const assetRoutes: FastifyPluginCallbackZod<{ db: Database; store: LocalB
         summary: "List a universe's images, newest first",
         description: ASSETS_DOC,
         operationId: 'assets.list',
+        ...routeAccess({ scope: 'universe', level: 'edit' }),
         params: universeParams,
         querystring: listQuery,
         response: { 200: page(AssetRead), ...problemResponses },
@@ -114,6 +127,7 @@ export const assetRoutes: FastifyPluginCallbackZod<{ db: Database; store: LocalB
         summary: 'Get an image',
         description: ASSETS_DOC,
         operationId: 'assets.get',
+        ...routeAccess({ scope: 'universe', level: 'edit' }),
         params: assetParams,
         response: { 200: envelope(AssetRead), ...problemResponses },
       },
@@ -151,28 +165,89 @@ export const assetRoutes: FastifyPluginCallbackZod<{ db: Database; store: LocalB
   done();
 };
 
+/** A media file's universe: the `{universeId}` in `u/{universeId}/{assetId}/{variant}.webp`. */
+function universeOfKey(key: string): string | null {
+  return ASSET_KEY_PATTERN.test(key) ? (key.split('/')[1] ?? null) : null;
+}
+
+/**
+ * Whether the requester may see a media file (M8-T11, architecture.md §8): only with at least
+ * `read` on its universe. Files of public universes may be cached by anyone; the others only
+ * by the browser that asked (`Cache-Control: private`). Null: a 404.
+ */
+async function mediaCacheControl(
+  db: Database,
+  request: FastifyRequest,
+  key: string,
+): Promise<string | null> {
+  const universeId = universeOfKey(key);
+  if (!universeId) return null;
+  const facts = (await accessFactsOf(db, request.requester, [universeId])).get(universeId);
+  if (!facts || universeAccess(request.requester, facts) === 'none') return null;
+  // Files never change once written: a new upload is a new key.
+  return `${facts.visibility === 'public' ? 'public' : 'private'}, max-age=31536000, immutable`;
+}
+
+/**
+ * `GET /api/v1/media-access` (M8-T11): in production Caddy serves the media files itself, after
+ * asking this route about each request (`forward_auth`, M8-T4), which passes the browser's
+ * cookies and the file's path in `X-Forwarded-Uri`. 204 with the `Cache-Control` to send, or 404.
+ */
+export const mediaAccessRoutes: FastifyPluginCallbackZod<{ db: Database }> = (
+  app,
+  { db },
+  done,
+) => {
+  app.get(
+    '/media-access',
+    {
+      schema: {
+        tags: ['assets'],
+        summary: 'May this browser see a media file?',
+        description:
+          'For the proxy in front of /media (Caddy’s forward_auth): reads the file’s path from `X-Forwarded-Uri`, such as `/media/u/{universeId}/{assetId}/display.webp`, and answers 204 with the `Cache-Control` to send if the requester can read its universe, else 404.',
+        operationId: 'media.access',
+        // It checks the file's universe itself, from the forwarded path.
+        ...routeAccess({ scope: 'open' }),
+        response: { 204: z.null(), ...problemResponses },
+      },
+    },
+    async (request, reply) => {
+      const uri = request.headers['x-forwarded-uri'];
+      const path = typeof uri === 'string' ? (uri.split('?')[0] ?? '') : '';
+      const key = path.startsWith('/media/') ? path.slice('/media/'.length) : '';
+      const cacheControl = await mediaCacheControl(db, request, key);
+      if (!cacheControl) {
+        return reply.code(404).type('application/problem+json').send(problem(404, 'Not found.'));
+      }
+      return reply.header('cache-control', cacheControl).code(204).send(null);
+    },
+  );
+  done();
+};
+
 /**
  * `/media/*` in development and tests (architecture.md §8): the stored variants, read from
  * `GE_MEDIA_DIR`. Only keys of the shape uploads produce are served, so no other file under the
- * directory (or outside it) can be asked for. Production serves the same paths from Caddy.
+ * directory (or outside it) can be asked for, and only to someone who can read their universe
+ * (M8-T11). Production serves the same paths from Caddy, after asking `/api/v1/media-access`.
  */
-export const mediaRoutes: FastifyPluginCallbackZod<{ store: LocalBlobStore }> = (
+export const mediaRoutes: FastifyPluginCallbackZod<{ db: Database; store: LocalBlobStore }> = (
   app,
-  { store },
+  { db, store },
   done,
 ) => {
   app.get('/media/*', { schema: { hide: true } }, async (request, reply) => {
     const key = (request.params as { '*': string })['*'];
-    const data = ASSET_KEY_PATTERN.test(key) ? await store.get(key) : null;
-    if (!data) {
-      // The usual 404 problem; returning the reply tells Fastify it has been sent.
+    const cacheControl = await mediaCacheControl(db, request, key);
+    const data = cacheControl ? await store.get(key) : null;
+    if (!cacheControl || !data) {
       reply.callNotFound();
       return reply;
     }
-    // A key names one asset's one variant, which never changes: cache it for good.
     return reply
       .type('image/webp')
-      .header('cache-control', 'public, max-age=31536000, immutable')
+      .header('cache-control', cacheControl)
       .header('x-content-type-options', 'nosniff')
       .send(data);
   });

@@ -4,7 +4,7 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { envelope, problemResponses, readQuery } from '../http/schemas.ts';
 import { searchUniverse } from '../services/search-service.ts';
-import { visibleTo } from '../services/visibility.ts';
+import { viewerFor } from '../services/visibility.ts';
 
 /** Search (M7-T6): the command palette's results, and a way in for API clients. */
 export const searchRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, { db }, done) => {
@@ -33,7 +33,7 @@ export const searchRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, { 
         q,
         spoilers,
         limit,
-        viewer: visibleTo(request.actor, { includeDrafts }),
+        viewer: viewerFor(request.universeAccess, { includeDrafts }),
       });
       return { data };
     },

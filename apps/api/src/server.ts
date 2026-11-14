@@ -20,9 +20,10 @@ import packageJson from '../package.json' with { type: 'json' };
 import type { Config } from './config.ts';
 import { createAuthContext } from './auth/context.ts';
 import { registerRequester } from './auth/requester.ts';
+import { registerAccessGuard } from './http/access-guard.ts';
 import { guardPreviewRoles } from './http/preview-roles.ts';
 import { handleError, handleNotFound, problemSchema } from './http/problems.ts';
-import { assetRoutes, mediaRoutes } from './routes/assets.ts';
+import { assetRoutes, mediaAccessRoutes, mediaRoutes } from './routes/assets.ts';
 import { authRoutes } from './routes/auth.ts';
 import { iconRoutes } from './routes/icons.ts';
 import { wikiRoutes } from './routes/wiki.ts';
@@ -88,6 +89,8 @@ export async function buildServer(config: Config) {
   registerRequester(app, { auth, previewRoles: config.previewRoles });
   // The private preview: only the proxy's editor may write (docs/ops/preview.md).
   guardPreviewRoles(app, config.previewRoles);
+  // Who may do what in each universe (M8-T11), before any route's validation or handler.
+  registerAccessGuard(app, db);
 
   await app.register(fastifySensible);
   await app.register(fastifyCompress);
@@ -133,6 +136,7 @@ export async function buildServer(config: Config) {
       await v1.register(historyRoutes, { db });
       await v1.register(viewRoutes, { db });
       await v1.register(assetRoutes, { db, store });
+      await v1.register(mediaAccessRoutes, { db });
       await v1.register(exchangeRoutes, { db, store, version: packageJson.version });
       await v1.register(iconRoutes);
       await v1.register(searchRoutes, { db });
@@ -143,7 +147,7 @@ export async function buildServer(config: Config) {
     },
     { prefix: '/api/v1' },
   );
-  await app.register(mediaRoutes, { store });
+  await app.register(mediaRoutes, { db, store });
 
   return app;
 }

@@ -22,6 +22,7 @@ import {
   routes,
   routeWaypoints,
   sessions,
+  universeMembers,
   universes,
   users,
 } from '../schema/index.ts';
@@ -35,11 +36,11 @@ import {
  * missing here, or if a listed table lacks the trigger.
  */
 /**
- * The account tables (M8-T1, data-model §3.8): not content, so not audited. Signing in,
- * sessions and links are never undone through History, and password hashes stay out of
- * `change_log`.
+ * The account and access tables (M8-T1, T11, data-model §3.8): not content, so not audited.
+ * Signing in, sessions, links and sharing are never undone through History, and password hashes
+ * stay out of `change_log`.
  */
-export const ACCOUNT_TABLES: readonly PgTable[] = [users, sessions, accountLinks];
+export const ACCOUNT_TABLES: readonly PgTable[] = [users, sessions, accountLinks, universeMembers];
 
 export const AUDITED_TABLES: readonly PgTable[] = [
   universes,

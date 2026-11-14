@@ -638,6 +638,7 @@ When redaction removes content (`spoilers=exclude`), a hidden text keeps its sha
 - **Admins get no access from being admins,** except to unowned universes. The admin routes (transfer, takedown, delete) work on a universe without reading its content.
 - **Lists show only what the requester can read:** `GET /universes` returns public universes, plus the requester's own and those shared with them. A `link` universe is never listed for someone who only has its key.
 - **Media follow their universe:** a file under `u/{universeId}/…` is served only to someone with at least `read` there (architecture §8).
+- **As built (M8-T11, D-40):** the API checks this in one hook in front of every route, from the rows the path names; the batch endpoint checks each operation's rows. The access contract suite tries every route in the OpenAPI document as each kind of requester.
 
 ## 9. History: batches, audit trigger, revert
 

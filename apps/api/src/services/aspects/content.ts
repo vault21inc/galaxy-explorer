@@ -1,8 +1,8 @@
 import { schema, type Executor } from '@ge/db';
 import { CitationWrite, FactWrite, ImageWrite, LinkWrite, RelationWrite } from '@ge/domain';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, or } from 'drizzle-orm';
 import type { z } from 'zod';
-import { NotFound } from '../errors.ts';
+import { NotFound, requireChanges } from '../errors.ts';
 import { checkAspectAllowed, checkFact, checkImage, checkRelation } from '../rules/aspects.ts';
 import { sanitizeRichTextFields } from '../sanitize.ts';
 import { withAssets } from './read.ts';
@@ -38,6 +38,7 @@ export async function updateImage(
   input: z.input<ReturnType<typeof ImageWrite.partial>>,
 ) {
   const patch = sanitizeRichTextFields(ImageWrite, ImageWrite.partial().parse(input));
+  requireChanges(patch);
   if (patch.assetId !== undefined && patch.assetId !== key.assetId) {
     await checkImage(tx, await requireOwner(tx, key.entityId), patch.assetId);
   }
@@ -73,22 +74,32 @@ export async function addLink(tx: Executor, entityId: string, input: z.input<typ
   return row;
 }
 
+/**
+ * Links and relations are found through the entity in the route as well as by their own id
+ * (M8-T11): one of another entity, perhaps in another universe, is as good as missing.
+ */
 export async function updateLink(
   tx: Executor,
+  entityId: string,
   linkId: string,
   input: z.input<ReturnType<typeof LinkWrite.partial>>,
 ) {
+  const patch = LinkWrite.partial().parse(input);
+  requireChanges(patch);
   const [row] = await tx
     .update(entityLinks)
-    .set(LinkWrite.partial().parse(input))
-    .where(eq(entityLinks.id, linkId))
+    .set(patch)
+    .where(and(eq(entityLinks.id, linkId), eq(entityLinks.entityId, entityId)))
     .returning();
   if (!row) throw new NotFound('link', linkId);
   return row;
 }
 
-export async function removeLink(tx: Executor, linkId: string) {
-  const rows = await tx.delete(entityLinks).where(eq(entityLinks.id, linkId)).returning();
+export async function removeLink(tx: Executor, entityId: string, linkId: string) {
+  const rows = await tx
+    .delete(entityLinks)
+    .where(and(eq(entityLinks.id, linkId), eq(entityLinks.entityId, entityId)))
+    .returning();
   if (rows.length === 0) throw new NotFound('link', linkId);
 }
 
@@ -176,25 +187,31 @@ export async function addRelation(
 const RelationPatch = RelationWrite.pick({ role: true, isSpoiler: true, sortKey: true }).partial();
 
 /** Changes a relation's role, spoiler flag or order; to change its ends, remove and add it. */
+/** A relation of this entity, from either end. */
+const relationOf = (entityId: string, relationId: string) =>
+  and(
+    eq(entityRelations.id, relationId),
+    or(eq(entityRelations.fromEntityId, entityId), eq(entityRelations.toEntityId, entityId)),
+  );
+
 export async function updateRelation(
   tx: Executor,
+  entityId: string,
   relationId: string,
   input: z.input<typeof RelationPatch>,
 ) {
   const patch = sanitizeRichTextFields(RelationPatch, RelationPatch.parse(input));
+  requireChanges(patch);
   const [row] = await tx
     .update(entityRelations)
     .set(patch)
-    .where(eq(entityRelations.id, relationId))
+    .where(relationOf(entityId, relationId))
     .returning();
   if (!row) throw new NotFound('relation', relationId);
   return row;
 }
 
-export async function removeRelation(tx: Executor, relationId: string) {
-  const rows = await tx
-    .delete(entityRelations)
-    .where(eq(entityRelations.id, relationId))
-    .returning();
+export async function removeRelation(tx: Executor, entityId: string, relationId: string) {
+  const rows = await tx.delete(entityRelations).where(relationOf(entityId, relationId)).returning();
   if (rows.length === 0) throw new NotFound('relation', relationId);
 }

@@ -1968,6 +1968,14 @@
           "settings": {
             "$ref": "#/components/schemas/UniverseSettingsInput"
           },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "private",
+              "link",
+              "public"
+            ]
+          },
           "version": {
             "type": "integer",
             "exclusiveMinimum": 0,
@@ -2022,6 +2030,28 @@
           "namePlain": {
             "type": "string"
           },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "private",
+              "link",
+              "public"
+            ]
+          },
+          "owner": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "access": {
+            "type": "string",
+            "enum": [
+              "read",
+              "edit",
+              "own"
+            ]
+          },
           "version": {
             "type": "integer",
             "exclusiveMinimum": 0,
@@ -2046,6 +2076,9 @@
           "settings",
           "id",
           "namePlain",
+          "visibility",
+          "owner",
+          "access",
           "version",
           "createdAt",
           "updatedAt"
@@ -2912,6 +2945,11 @@
             "minimum": 0,
             "maximum": 9007199254740991
           },
+          "mediaUsedBytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -2923,6 +2961,7 @@
           "username",
           "role",
           "mediaQuotaBytes",
+          "mediaUsedBytes",
           "createdAt"
         ]
       },
@@ -11859,6 +11898,14 @@
           "settings": {
             "$ref": "#/components/schemas/UniverseSettings"
           },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "private",
+              "link",
+              "public"
+            ]
+          },
           "version": {
             "type": "integer",
             "exclusiveMinimum": 0,
@@ -11913,6 +11960,28 @@
           "namePlain": {
             "type": "string"
           },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "private",
+              "link",
+              "public"
+            ]
+          },
+          "owner": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "access": {
+            "type": "string",
+            "enum": [
+              "read",
+              "edit",
+              "own"
+            ]
+          },
           "version": {
             "type": "integer",
             "exclusiveMinimum": 0,
@@ -11937,6 +12006,9 @@
           "settings",
           "id",
           "namePlain",
+          "visibility",
+          "owner",
+          "access",
           "version",
           "createdAt",
           "updatedAt"
@@ -12805,6 +12877,11 @@
             "minimum": 0,
             "maximum": 9007199254740991
           },
+          "mediaUsedBytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -12816,6 +12893,7 @@
           "username",
           "role",
           "mediaQuotaBytes",
+          "mediaUsedBytes",
           "createdAt"
         ],
         "additionalProperties": false
@@ -19811,6 +19889,9 @@
           "health"
         ],
         "description": "Returns 200 with `status: \"ok\"` when the database answers, and 503 with `status: \"degraded\"` and `db: \"down\"` when it does not.",
+        "x-ge-access": {
+          "scope": "open"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -19968,6 +20049,9 @@
             }
           }
         },
+        "x-ge-access": {
+          "scope": "open"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -19999,6 +20083,9 @@
           "auth"
         ],
         "description": "Ends this session and clears its cookie. Signed out already, it does nothing.",
+        "x-ge-access": {
+          "scope": "open"
+        },
         "responses": {
           "200": {
             "description": "Default Response"
@@ -20014,6 +20101,9 @@
           "auth"
         ],
         "description": "The account this request is signed in as, or `null` when it isn’t.",
+        "x-ge-access": {
+          "scope": "open"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -20051,6 +20141,9 @@
         "tags": [
           "auth"
         ],
+        "x-ge-access": {
+          "scope": "open"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -20083,6 +20176,9 @@
           "auth"
         ],
         "description": "Ends all of the account’s sessions except this one.",
+        "x-ge-access": {
+          "scope": "open"
+        },
         "responses": {
           "200": {
             "description": "Default Response"
@@ -20109,6 +20205,9 @@
             "required": true
           }
         ],
+        "x-ge-access": {
+          "scope": "open"
+        },
         "responses": {
           "200": {
             "description": "Default Response"
@@ -20136,6 +20235,9 @@
             "required": true
           }
         ],
+        "x-ge-access": {
+          "scope": "open"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -20204,6 +20306,9 @@
             "required": true
           }
         ],
+        "x-ge-access": {
+          "scope": "open"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -20273,6 +20378,9 @@
             "required": true
           }
         ],
+        "x-ge-access": {
+          "scope": "open"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -20303,7 +20411,7 @@
         "tags": [
           "universes"
         ],
-        "description": "A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions).",
+        "description": "A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions). Lists the universes the requester can read: public ones, and with an account, its own and those shared with it. A link-only universe isn't listed for someone who only has its link.",
         "parameters": [
           {
             "schema": {
@@ -20356,6 +20464,9 @@
             "description": "Editors only: include unpublished drafts."
           }
         ],
+        "x-ge-access": {
+          "scope": "open"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -20402,8 +20513,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -20440,7 +20571,7 @@
         "tags": [
           "universes"
         ],
-        "description": "A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions).",
+        "description": "A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions). With accounts, the new universe belongs to the account that makes it and starts private.",
         "requestBody": {
           "required": true,
           "content": {
@@ -20450,6 +20581,9 @@
               }
             }
           }
+        },
+        "x-ge-access": {
+          "scope": "editor"
         },
         "responses": {
           "201": {
@@ -20481,8 +20615,161 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/universes/by-slug/{slug}": {
+      "get": {
+        "operationId": "universes.bySlug",
+        "summary": "Get a universe by its address",
+        "tags": [
+          "universes"
+        ],
+        "description": "A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions). The universe at /u/{slug}, for anyone who can read it, listed or not (a link-only universe opens this way). Anyone else gets a 404, as for an address that's free.",
+        "parameters": [
+          {
+            "schema": {
+              "default": "include",
+              "type": "string",
+              "enum": [
+                "include",
+                "exclude"
+              ]
+            },
+            "in": "query",
+            "name": "spoilers",
+            "required": false,
+            "description": "`exclude` blacks out everything flagged as a potential spoiler before it leaves the server."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "in": "query",
+            "name": "includeDrafts",
+            "required": false,
+            "description": "Editors only: include unpublished drafts."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "in": "path",
+            "name": "slug",
+            "required": true
+          }
+        ],
+        "x-ge-access": {
+          "scope": "open"
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/UniverseRead"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -20591,8 +20878,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -20629,7 +20936,7 @@
         "tags": [
           "universes"
         ],
-        "description": "A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions).",
+        "description": "A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions). Its owner alone changes its address (`slug`) and `visibility`: `private`, `link` (anyone with the share link) or `public`.",
         "requestBody": {
           "required": true,
           "content": {
@@ -20652,6 +20959,13 @@
             "required": true
           }
         ],
+        "x-ge-access": {
+          "scope": "universe",
+          "ownFields": [
+            "slug",
+            "visibility"
+          ]
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -20682,8 +20996,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -20720,7 +21054,7 @@
         "tags": [
           "universes"
         ],
-        "description": "A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions).",
+        "description": "A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions). Only its owner may.",
         "requestBody": {
           "required": true,
           "content": {
@@ -20755,6 +21089,10 @@
             "required": true
           }
         ],
+        "x-ge-access": {
+          "scope": "universe",
+          "level": "own"
+        },
         "responses": {
           "204": {
             "description": "Default Response"
@@ -20769,8 +21107,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -20918,8 +21276,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -21009,8 +21387,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -21121,8 +21519,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -21231,8 +21649,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -21322,8 +21760,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -21409,8 +21867,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -21666,8 +22144,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -21757,8 +22255,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -21879,8 +22397,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -21999,8 +22537,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -22090,8 +22648,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -22177,8 +22755,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -22382,8 +22980,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -22473,8 +23091,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -22595,8 +23233,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -22715,8 +23373,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -22806,8 +23484,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -22893,8 +23591,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -23066,8 +23784,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -23157,8 +23895,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -23279,8 +24037,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -23399,8 +24177,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -23490,8 +24288,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -23577,8 +24395,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -23750,8 +24588,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -23841,8 +24699,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -23963,8 +24841,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -24083,8 +24981,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -24174,8 +25092,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -24261,8 +25199,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -24455,8 +25413,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -24546,8 +25524,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -24668,8 +25666,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -24788,8 +25806,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -24879,8 +25917,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -24966,8 +26024,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -25139,8 +26217,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -25230,8 +26328,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -25352,8 +26470,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -25472,8 +26610,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -25563,8 +26721,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -25650,8 +26828,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -25772,8 +26970,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -25863,8 +27081,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -25946,8 +27184,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -26037,8 +27295,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -26102,8 +27380,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -26224,8 +27522,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -26315,8 +27633,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -26398,8 +27736,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -26489,8 +27847,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -26554,8 +27932,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -26676,8 +28074,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -26767,8 +28185,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -26850,8 +28288,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -26941,8 +28399,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -27006,8 +28484,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -27128,8 +28626,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -27219,8 +28737,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -27302,8 +28840,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -27393,8 +28951,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -27458,8 +29036,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -27544,8 +29142,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -27635,8 +29253,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -27787,8 +29425,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -27877,8 +29535,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -27963,8 +29641,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -28054,8 +29752,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -28131,8 +29849,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -28217,8 +29955,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -28308,8 +30066,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -28436,8 +30214,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -28511,8 +30309,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -28597,8 +30415,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -28718,8 +30556,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -28793,8 +30651,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -28879,8 +30757,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -28970,8 +30868,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -29092,8 +31010,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -29167,8 +31105,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -29257,8 +31215,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -29348,8 +31326,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -29413,8 +31411,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -29499,8 +31517,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -29606,8 +31644,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -29714,8 +31772,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -29805,8 +31883,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -29891,8 +31989,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -29985,8 +32103,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -30035,6 +32173,9 @@
               }
             }
           }
+        },
+        "x-ge-access": {
+          "scope": "editor"
         },
         "responses": {
           "200": {
@@ -30162,8 +32303,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -30286,6 +32447,10 @@
             "required": true
           }
         ],
+        "x-ge-access": {
+          "scope": "universe",
+          "level": "edit"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -30417,8 +32582,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -30470,6 +32655,10 @@
             "required": true
           }
         ],
+        "x-ge-access": {
+          "scope": "universe",
+          "level": "edit"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -30706,8 +32895,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -30812,8 +33021,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -30922,8 +33151,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -31032,8 +33281,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -31142,8 +33411,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -31252,8 +33541,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -31354,8 +33663,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -31366,6 +33695,16 @@
           },
           "409": {
             "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Too large, or past the owner’s media quota (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -31428,6 +33767,10 @@
             "required": true
           }
         ],
+        "x-ge-access": {
+          "scope": "universe",
+          "level": "edit"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -31474,8 +33817,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -31527,6 +33890,10 @@
             "required": true
           }
         ],
+        "x-ge-access": {
+          "scope": "universe",
+          "level": "edit"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -31557,8 +33924,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -31648,8 +34035,106 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/media-access": {
+      "get": {
+        "operationId": "media.access",
+        "summary": "May this browser see a media file?",
+        "tags": [
+          "assets"
+        ],
+        "description": "For the proxy in front of /media (Caddy’s forward_auth): reads the file’s path from `X-Forwarded-Uri`, such as `/media/u/{universeId}/{assetId}/display.webp`, and answers 204 with the `Cache-Control` to send if the requester can read its universe, else 404.",
+        "x-ge-access": {
+          "scope": "open"
+        },
+        "responses": {
+          "204": {
+            "description": "Default Response"
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -31701,6 +34186,10 @@
             "required": true
           }
         ],
+        "x-ge-access": {
+          "scope": "universe",
+          "level": "edit"
+        },
         "responses": {
           "200": {
             "description": "Default Response"
@@ -31728,6 +34217,10 @@
             "required": true
           }
         ],
+        "x-ge-access": {
+          "scope": "universe",
+          "level": "edit"
+        },
         "responses": {
           "200": {
             "description": "Default Response"
@@ -31822,8 +34315,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -31863,6 +34376,9 @@
           "exchange"
         ],
         "description": "The files of an export zip, for tools and LLM agents that write imports: manifest.json, universe.json and maps/<slug>.json.",
+        "x-ge-access": {
+          "scope": "open"
+        },
         "responses": {
           "200": {
             "description": "Default Response"
@@ -31913,6 +34429,9 @@
             "required": false
           }
         ],
+        "x-ge-access": {
+          "scope": "open"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -31967,8 +34486,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -32019,6 +34558,9 @@
             "required": true
           }
         ],
+        "x-ge-access": {
+          "scope": "open"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -32077,8 +34619,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -32213,8 +34775,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -32254,6 +34836,9 @@
           "wiki"
         ],
         "description": "For \"Fill from wiki\" (M7-T3): the wikis this installation is configured to read (GE_WIKI_SOURCES), searched and previewed through their MediaWiki API, one request a second per wiki, with answers kept for a day. Nothing here writes: the dialog applies what the owner picks as one batch, with citations.",
+        "x-ge-access": {
+          "scope": "editor"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -32304,8 +34889,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -32367,6 +34972,9 @@
             "required": true
           }
         ],
+        "x-ge-access": {
+          "scope": "editor"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -32413,8 +35021,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {
@@ -32476,6 +35104,9 @@
             "required": true
           }
         ],
+        "x-ge-access": {
+          "scope": "editor"
+        },
         "responses": {
           "200": {
             "description": "Default Response",
@@ -32588,8 +35219,28 @@
               }
             }
           },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not found.",
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
             "content": {
               "application/json": {
                 "schema": {

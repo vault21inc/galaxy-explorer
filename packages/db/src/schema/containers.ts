@@ -5,6 +5,7 @@ import {
   SLUG_PATTERN,
   type Underlay,
   type UniverseSettings,
+  VISIBILITIES,
 } from '@ge/domain';
 import { boolean, check, jsonb, numeric, pgTable, text, unique, uuid } from 'drizzle-orm/pg-core';
 import { idColumn, matches, oneOf, stamps } from './helpers.ts';
@@ -22,9 +23,22 @@ export const universes = pgTable(
     /** How dates are written in this universe (E2). */
     dateFormatNotes: jsonb().$type<RichText>(),
     settings: jsonb().$type<UniverseSettings>().notNull().default({}),
+    /**
+     * Its owner (M8-T11, D-34), who alone changes its address, visibility and members. Null:
+     * the installation's own, which admins own (and, with GE_AUTH_MODE=none, everyone).
+     */
+    ownerId: uuid(),
+    /** Who may read it: 'private', 'link' (anyone with the share link) or 'public'. */
+    visibility: text().notNull().default('private'),
+    /** Random; set while the visibility is 'link', as part of the share link (M8-T12). */
+    shareKey: text(),
     ...stamps(),
   },
-  (t) => [check('universes_slug_format', matches(t.slug, SLUG_PATTERN))],
+  (t) => [
+    check('universes_slug_format', matches(t.slug, SLUG_PATTERN)),
+    check('universes_visibility_check', oneOf(t.visibility, VISIBILITIES)),
+    unique('universes_share_key_uq').on(t.shareKey),
+  ],
 );
 
 /** One galaxy at one point in time (U7). */

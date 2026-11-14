@@ -1,0 +1,129 @@
+import { schema, type Executor } from '@ge/db';
+import type { MemberRole, UniverseAccess, Visibility } from '@ge/domain';
+import { and, eq, inArray } from 'drizzle-orm';
+import type { SignedIn } from '../auth/context.ts';
+
+/**
+ * Who may do what in a universe (M8-T11, D-34, data-model §8). `universeAccess` is the only
+ * place that decides; everything else asks it.
+ */
+
+/**
+ * Who is asking, worked out once per request (auth/requester.ts):
+ * - `local`: GE_AUTH_MODE=none, on your own machine, where everyone owns everything, except
+ *   the private preview's readers (`mayEdit: false`), who only read;
+ * - `account`: someone signed in;
+ * - `anonymous`: nobody signed in.
+ *
+ * `shareKeys` are the share links' keys this browser has unlocked, by universe (M8-T12).
+ */
+export type Requester = { shareKeys: ReadonlyMap<string, string> } & (
+  | { kind: 'local'; mayEdit: boolean }
+  | { kind: 'account'; account: SignedIn }
+  | { kind: 'anonymous' }
+);
+
+/** What `universeAccess` needs to know about a universe. */
+export interface AccessFacts {
+  id: string;
+  ownerId: string | null;
+  visibility: Visibility;
+  shareKey: string | null;
+  /** The requester's role in it, if it's shared with them. */
+  memberRole: MemberRole | null;
+}
+
+const RANK: Record<UniverseAccess, number> = { none: 0, read: 1, edit: 2, own: 3 };
+
+/** Whether `access` allows what `needed` allows. */
+export function atLeast(access: UniverseAccess, needed: UniverseAccess): boolean {
+  return RANK[access] >= RANK[needed];
+}
+
+/**
+ * The access table of data-model §8:
+ * - `own`: its owner; an admin, for an unowned universe; everyone locally;
+ * - `edit`: its editors;
+ * - `read`: its viewers; anyone, for a public universe; anyone with its key, for a link one;
+ * - `none`: everyone else, who get a 404 as if it didn't exist.
+ *
+ * Being an admin gives nothing else: admins manage accounts, not other people's content.
+ */
+export function universeAccess(requester: Requester, universe: AccessFacts): UniverseAccess {
+  if (requester.kind === 'local') return requester.mayEdit ? 'own' : 'read';
+  if (requester.kind === 'account') {
+    const { account } = requester;
+    if (universe.ownerId === account.id) return 'own';
+    if (universe.ownerId === null && account.role === 'admin') return 'own';
+    if (universe.memberRole === 'editor') return 'edit';
+    if (universe.memberRole === 'viewer') return 'read';
+  }
+  if (universe.visibility === 'public') return 'read';
+  const key = requester.shareKeys.get(universe.id);
+  if (universe.visibility === 'link' && universe.shareKey !== null && key === universe.shareKey) {
+    return 'read';
+  }
+  return 'none';
+}
+
+const { universeMembers, universes } = schema;
+
+/** The facts `universeAccess` needs, for each of these universes that exists. */
+export async function accessFactsOf(
+  ex: Executor,
+  requester: Requester,
+  universeIds: readonly string[],
+): Promise<Map<string, AccessFacts>> {
+  if (universeIds.length === 0) return new Map();
+  const columns = {
+    id: universes.id,
+    ownerId: universes.ownerId,
+    visibility: universes.visibility,
+    shareKey: universes.shareKey,
+  };
+  const ids = inArray(universes.id, [...universeIds]);
+  // Only an account can be a member; without one there's nothing to join.
+  const rows =
+    requester.kind === 'account'
+      ? await ex
+          .select({ ...columns, memberRole: universeMembers.role })
+          .from(universes)
+          .leftJoin(
+            universeMembers,
+            and(
+              eq(universeMembers.universeId, universes.id),
+              eq(universeMembers.userId, requester.account.id),
+            ),
+          )
+          .where(ids)
+      : (await ex.select(columns).from(universes).where(ids)).map((row) => ({
+          ...row,
+          memberRole: null,
+        }));
+  // The database's check constraints allow only the registry's values.
+  return new Map(
+    rows.map((row) => [
+      row.id,
+      {
+        ...row,
+        visibility: row.visibility as Visibility,
+        memberRole: row.memberRole as MemberRole | null,
+      },
+    ]),
+  );
+}
+
+/** The requester's access to each of these universes; one that doesn't exist is `none`. */
+export async function accessTo(
+  ex: Executor,
+  requester: Requester,
+  universeIds: readonly string[],
+): Promise<Map<string, UniverseAccess>> {
+  const facts = await accessFactsOf(ex, requester, universeIds);
+  return new Map(
+    universeIds.map((id) => {
+      const known = facts.get(id);
+      return [id, known ? universeAccess(requester, known) : 'none'];
+    }),
+  );
+}

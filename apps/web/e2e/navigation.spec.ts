@@ -71,7 +71,8 @@ test.describe('routes and navigation', () => {
 
   test('a failed request shows an error with a working Retry', async ({ page }) => {
     let fail = true;
-    await page.route('**/api/v1/universes?*', async (route) => {
+    // The universe at the address, which the page looks up by its slug (M8-T11).
+    await page.route('**/api/v1/universes/by-slug/*', async (route) => {
       if (fail) await route.fulfill({ status: 503, body: 'down' });
       else await route.fallback();
     });

@@ -8,10 +8,10 @@ import { addLink, addRelation, attachImage, setFact } from '../../src/services/a
 import { getEntity, listEntities } from '../../src/services/entity-read.ts';
 import { createEntity, deleteEntity, updateEntity } from '../../src/services/entity-service.ts';
 import { NotFound, VersionConflict } from '../../src/services/errors.ts';
-import { SEES_EVERYTHING, visibleTo, type Viewer } from '../../src/services/visibility.ts';
-import { actor, buildWorld, inBatch, newEntity, newGroup, newObject } from './world.ts';
+import { SEES_EVERYTHING, viewerFor, type Viewer } from '../../src/services/visibility.ts';
+import { buildWorld, inBatch, newEntity, newGroup, newObject } from './world.ts';
 
-const anonymous: Viewer = visibleTo(null);
+const anonymous: Viewer = viewerFor(null);
 
 async function setStatus(
   db: Database,
@@ -333,9 +333,11 @@ describe('drafts (data-model §8)', () => {
       expect(await list(SEES_EVERYTHING)).toHaveLength(4);
     }));
 
-  it('lets only editors ask for drafts', () => {
-    expect(visibleTo(null, { includeDrafts: true })).toEqual({ includeDrafts: false });
-    expect(visibleTo(actor, { includeDrafts: true })).toEqual({ includeDrafts: true });
-    expect(visibleTo(actor)).toEqual({ includeDrafts: false });
+  it('lets only editors ask for drafts (M8-T11)', () => {
+    expect(viewerFor(null, { includeDrafts: true })).toEqual({ includeDrafts: false });
+    expect(viewerFor('read', { includeDrafts: true })).toEqual({ includeDrafts: false });
+    expect(viewerFor('edit', { includeDrafts: true })).toEqual({ includeDrafts: true });
+    expect(viewerFor('own', { includeDrafts: true })).toEqual({ includeDrafts: true });
+    expect(viewerFor('own')).toEqual({ includeDrafts: false });
   });
 });

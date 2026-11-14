@@ -3,8 +3,11 @@ import { BatchRequest, ENTITY_KINDS, MAX_BATCH_OPERATIONS } from '@ge/domain';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { actorOf } from '../http/batch.ts';
+import { problem } from '../http/problems.ts';
+import { refuseBatch } from '../services/batch-access.ts';
 import { envelope, problemResponses } from '../http/schemas.ts';
 import { batchImpact, runOperations, type OperationResult } from '../services/batch-service.ts';
+import { routeAccess } from '../http/access-guard.ts';
 
 const BATCH_DOC = `Runs up to ${String(MAX_BATCH_OPERATIONS)} operations in order, in one transaction and one change batch: all of them happen, or none do, and the whole request is one undo step.
 
@@ -54,12 +57,25 @@ export const batchRoutes: FastifyPluginCallbackZod<{ db: Database }> = (app, { d
         summary: 'Run many operations as one change',
         description: BATCH_DOC,
         operationId: 'batch.run',
+        ...routeAccess({ scope: 'editor' }),
         body: BatchRequest,
         response: { 200: envelope(BatchResponse), ...problemResponses },
       },
     },
     async (request, reply) => {
       const { description, dryRun = false, operations } = request.body;
+      // Every operation's universe must be the requester's to change, before any runs (M8-T11).
+      const refused = await refuseBatch(db, request.requester, operations);
+      if (refused) {
+        const detail =
+          refused.status === 404
+            ? `Operation ${String(refused.index)}: no ${refused.what} with id ${refused.id}.`
+            : `Operation ${String(refused.index)}: you can read this universe but not change it.`;
+        return reply
+          .code(refused.status)
+          .type('application/problem+json')
+          .send(problem(refused.status, detail, undefined, { operationIndex: refused.index }));
+      }
       if (dryRun) {
         try {
           await withBatch(db, actorOf(request), description, async (tx, batchId) => {

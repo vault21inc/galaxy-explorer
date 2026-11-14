@@ -8,8 +8,10 @@ import {
   FIELD_VALUE_TYPES,
   IMAGE_ROLES,
   LOCATION_MODES,
+  MEMBER_ROLES,
   RELATION_TYPES,
   SITE_ROLES,
+  VISIBILITIES,
 } from '@ge/domain';
 import { sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
@@ -50,6 +52,8 @@ describe('registry ↔ database consistency', () => {
     ['users_role_check', SITE_ROLES],
     ['account_links_purpose_check', ACCOUNT_LINK_PURPOSES],
     ['account_links_role_check', SITE_ROLES],
+    ['universes_visibility_check', VISIBILITIES],
+    ['universe_members_role_check', MEMBER_ROLES],
   ])('%s lists exactly the registry values', (constraint, values) =>
     withTestDb(async (db) => {
       expect((await checkValues(db, constraint)).sort()).toEqual([...values].sort());

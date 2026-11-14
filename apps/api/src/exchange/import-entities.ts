@@ -250,7 +250,7 @@ export async function importRelations(
     const saved = await run.step(tx, where, (sp) => {
       const { relationType: _type, ...patch } = fields;
       return existing
-        ? updateRelation(sp, existing.id, patch)
+        ? updateRelation(sp, from.id, existing.id, patch)
         : addRelation(sp, from.id, { ...fields, toEntityId: to.id } as never);
     });
     if (saved) run.count('relations', existing ? 'update' : 'create');

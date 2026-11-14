@@ -191,15 +191,35 @@ export interface paths {
         };
         /**
          * List universes
-         * @description A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions).
+         * @description A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions). Lists the universes the requester can read: public ones, and with an account, its own and those shared with it. A link-only universe isn't listed for someone who only has its link.
          */
         get: operations["universes.list"];
         put?: never;
         /**
          * Create a universe
-         * @description A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions).
+         * @description A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions). With accounts, the new universe belongs to the account that makes it and starts private.
          */
         post: operations["universes.create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/universes/by-slug/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a universe by its address
+         * @description A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions). The universe at /u/{slug}, for anyone who can read it, listed or not (a link-only universe opens this way). Anyone else gets a 404, as for an address that's free.
+         */
+        get: operations["universes.bySlug"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -222,14 +242,14 @@ export interface paths {
         post?: never;
         /**
          * Delete a universe and everything in it
-         * @description A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions).
+         * @description A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions). Only its owner may.
          */
         delete: operations["universes.delete"];
         options?: never;
         head?: never;
         /**
          * Update a universe
-         * @description A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions).
+         * @description A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions). Its owner alone changes its address (`slug`) and `visibility`: `private`, `link` (anyone with the share link) or `public`.
          */
         patch: operations["universes.update"];
         trace?: never;
@@ -1666,6 +1686,26 @@ export interface paths {
         patch: operations["assets.update"];
         trace?: never;
     };
+    "/api/v1/media-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * May this browser see a media file?
+         * @description For the proxy in front of /media (Caddy’s forward_auth): reads the file’s path from `X-Forwarded-Uri`, such as `/media/u/{universeId}/{assetId}/display.webp`, and answers 204 with the `Cache-Control` to send if the requester can read its universe, else 404.
+         */
+        get: operations["media.access"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/universes/{universeId}/export": {
         parameters: {
             query?: never;
@@ -2308,6 +2348,8 @@ export interface components {
             description?: components["schemas"]["RichTextInput"] | null;
             dateFormatNotes?: components["schemas"]["RichTextInput"] | null;
             settings?: components["schemas"]["UniverseSettingsInput"];
+            /** @enum {string} */
+            visibility?: "private" | "link" | "public";
             version: number;
         };
         UniverseReadInput: {
@@ -2319,6 +2361,11 @@ export interface components {
             /** Format: uuid */
             id: string;
             namePlain: string;
+            /** @enum {string} */
+            visibility: "private" | "link" | "public";
+            owner: string | null;
+            /** @enum {string} */
+            access: "read" | "edit" | "own";
             version: number;
             /** Format: date-time */
             createdAt: string;
@@ -2490,6 +2537,7 @@ export interface components {
             /** @enum {string} */
             role: "admin" | "member";
             mediaQuotaBytes: number;
+            mediaUsedBytes: number;
             /** Format: date-time */
             createdAt: string;
         };
@@ -4344,6 +4392,8 @@ export interface components {
             description?: components["schemas"]["RichText"] | null;
             dateFormatNotes?: components["schemas"]["RichText"] | null;
             settings?: components["schemas"]["UniverseSettings"];
+            /** @enum {string} */
+            visibility?: "private" | "link" | "public";
             version: number;
         };
         UniverseRead: {
@@ -4355,6 +4405,11 @@ export interface components {
             /** Format: uuid */
             id: string;
             namePlain: string;
+            /** @enum {string} */
+            visibility: "private" | "link" | "public";
+            owner: string | null;
+            /** @enum {string} */
+            access: "read" | "edit" | "own";
             version: number;
             /** Format: date-time */
             createdAt: string;
@@ -4526,6 +4581,7 @@ export interface components {
             /** @enum {string} */
             role: "admin" | "member";
             mediaQuotaBytes: number;
+            mediaUsedBytes: number;
             /** Format: date-time */
             createdAt: string;
         };
@@ -6261,7 +6317,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -6323,7 +6397,108 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "universes.bySlug": {
+        parameters: {
+            query?: {
+                /** @description `exclude` blacks out everything flagged as a potential spoiler before it leaves the server. */
+                spoilers?: "include" | "exclude";
+                /** @description Editors only: include unpublished drafts. */
+                includeDrafts?: "true" | "false";
+            };
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["UniverseRead"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -6388,7 +6563,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -6451,7 +6644,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -6515,7 +6726,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -6585,7 +6814,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -6649,7 +6896,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -6717,7 +6982,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -6782,7 +7065,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -6845,7 +7146,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -6909,7 +7228,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -6991,7 +7328,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -7055,7 +7410,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -7131,7 +7504,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -7198,7 +7589,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -7261,7 +7670,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -7325,7 +7752,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -7403,7 +7848,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -7467,7 +7930,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -7543,7 +8024,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -7610,7 +8109,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -7673,7 +8190,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -7737,7 +8272,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -7811,7 +8364,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -7875,7 +8446,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -7951,7 +8540,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8018,7 +8625,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8081,7 +8706,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8145,7 +8788,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8219,7 +8880,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8283,7 +8962,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8359,7 +9056,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8426,7 +9141,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8489,7 +9222,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8553,7 +9304,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8629,7 +9398,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8693,7 +9480,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8769,7 +9574,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8836,7 +9659,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8899,7 +9740,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8963,7 +9822,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9037,7 +9914,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9101,7 +9996,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9177,7 +10090,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9244,7 +10175,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9307,7 +10256,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9371,7 +10338,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9437,7 +10422,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9501,7 +10504,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9561,7 +10582,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9617,7 +10656,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9681,7 +10738,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9747,7 +10822,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9811,7 +10904,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9871,7 +10982,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9927,7 +11056,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9991,7 +11138,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10057,7 +11222,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10121,7 +11304,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10181,7 +11382,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10237,7 +11456,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10301,7 +11538,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10367,7 +11622,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10431,7 +11704,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10491,7 +11782,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10547,7 +11856,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10611,7 +11938,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10671,7 +12016,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10735,7 +12098,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10793,7 +12174,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10867,7 +12266,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10927,7 +12344,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10991,7 +12426,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11048,7 +12501,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11108,7 +12579,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11172,7 +12661,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11229,7 +12736,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11299,7 +12824,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11359,7 +12902,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11428,7 +12989,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11485,7 +13064,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11545,7 +13142,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11609,7 +13224,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11666,7 +13299,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11735,7 +13386,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11795,7 +13464,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11859,7 +13546,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11915,7 +13620,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11975,7 +13698,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12041,7 +13782,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12107,7 +13866,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12169,7 +13946,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12229,7 +14024,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12293,7 +14106,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12374,7 +14205,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12463,7 +14312,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12567,7 +14434,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12633,7 +14518,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12698,7 +14601,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12763,7 +14684,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12828,7 +14767,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12893,7 +14850,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -12959,7 +14934,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -13030,7 +15023,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -13041,6 +15052,15 @@ export interface operations {
             };
             /** @description Conflict: a stale version or a duplicate. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too large, or past the owner’s media quota (M8-T11). */
+            413: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13090,7 +15110,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -13154,7 +15192,97 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "media.access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -13259,7 +15387,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -13344,7 +15490,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -13409,7 +15573,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -13478,7 +15660,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -13540,7 +15740,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -13604,7 +15822,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -13681,7 +15917,25 @@ export interface operations {
                     "application/json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Not found. */
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
             404: {
                 headers: {
                     [name: string]: unknown;

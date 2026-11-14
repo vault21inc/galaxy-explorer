@@ -57,8 +57,9 @@ export const AccountRead = z.object({
   id: z.uuid(),
   username: Username,
   role: SiteRole,
-  /** How much media the universes it owns may hold together (M8-T11 counts what's used). */
+  /** How much media the universes it owns may hold together, and how much they do (M8-T11). */
   mediaQuotaBytes: z.int().nonnegative(),
+  mediaUsedBytes: z.int().nonnegative(),
   createdAt: timestamp,
 });
 

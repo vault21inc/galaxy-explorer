@@ -21,6 +21,7 @@ import {
   ImportBlocked,
   InvalidRequest,
   NotFound,
+  QuotaExceeded,
   RevertConflicts,
   RuleViolation,
   UpstreamError,
@@ -139,6 +140,8 @@ export function problemForDomainError(error: unknown): Problem | undefined {
     return problem(409, error.message, undefined, { report: error.report });
   }
   if (error instanceof UpstreamError) return problem(502, error.message);
+  // Too big for the owner's media quota (M8-T11): payload too large.
+  if (error instanceof QuotaExceeded) return problem(413, error.message);
   // An upload that isn't an image we take: unsupported media type.
   if (error instanceof UnsupportedImage) return problem(415, error.message);
   if (error instanceof NotFound || error instanceof BatchNotFoundError)
@@ -171,6 +174,12 @@ export function problemForDomainError(error: unknown): Problem | undefined {
       return problem(
         422,
         `That refers to something that doesn't exist or is in use (${database.constraint ?? 'reference'}).`,
+      );
+    // A RESTRICT foreign key: deleting something still in use, such as a group type with groups.
+    case '23001':
+      return problem(
+        409,
+        `That is still in use, so it can't be deleted (${database.constraint ?? 'reference'}).`,
       );
     case '23514':
       return problem(
