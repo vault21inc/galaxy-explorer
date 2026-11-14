@@ -202,8 +202,19 @@ test.describe('places and events (M6-T5)', () => {
     await latitude.press('Enter');
     await expect.poll(async () => (await locationOf(page.request, id))?.latDeg).toBe(5);
 
-    // Drag the pin to 10° N, 15° E.
-    await waitForIdle(page, 300);
+    // Drag the pin to 10° N, 15° E, from where it's drawn now. The save comes back before the
+    // view is reloaded and the pin redrawn, so wait for the pin itself to stand at 5° N.
+    await expect
+      .poll(() =>
+        page.evaluate((target) => {
+          const hooks = window.__GE_TEST__;
+          const at = hooks?.screenPositionOf(target);
+          const point = hooks?.globePoint(5, 0, 1);
+          const spot = point ? hooks?.projectPoint(point) : null;
+          return at && spot ? Math.hypot(at.x - spot.x, at.y - spot.y) : Infinity;
+        }, id),
+      )
+      .toBeLessThan(2);
     const from = await page.evaluate((target) => window.__GE_TEST__?.screenPositionOf(target), id);
     if (!from) throw new Error('The pin is off screen.');
     const to = await globeSpot(page, 10, 15);
