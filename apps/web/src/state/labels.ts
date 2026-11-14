@@ -10,6 +10,17 @@ import { safeStorage } from '@/lib/safe-storage.ts';
 export const LABEL_MODES = ['hover', 'groups', 'all'] as const;
 export type LabelMode = (typeof LABEL_MODES)[number];
 
+/** A label mode from untrusted text (a build setting), or `fallback` if it isn't one. */
+export function labelModeOr(value: unknown, fallback: LabelMode): LabelMode {
+  return (LABEL_MODES as readonly unknown[]).includes(value) ? (value as LabelMode) : fallback;
+}
+
+/**
+ * The mode a first visit starts in: hover only, unless the deployment's build says otherwise
+ * (`VITE_DEFAULT_LABEL_MODE`, D-38). A remembered choice replaces it.
+ */
+export const FIRST_LABEL_MODE = labelModeOr(import.meta.env.VITE_DEFAULT_LABEL_MODE, 'hover');
+
 interface LabelState {
   mode: LabelMode;
   /** Space is held: show all labels, whatever the mode. Not remembered. */
@@ -22,7 +33,7 @@ interface LabelState {
 export const useLabels = create<LabelState>()(
   persist(
     (set, get) => ({
-      mode: 'hover',
+      mode: FIRST_LABEL_MODE,
       showAllHeld: false,
       cycle: () => {
         const index = LABEL_MODES.indexOf(get().mode);

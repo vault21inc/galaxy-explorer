@@ -22,6 +22,9 @@ as_ge "git log -1 --format='   %h %s'"
 
 echo "== Install and build"
 as_ge "pnpm install --frozen-lockfile --reporter=silent"
+# The web app's build settings are the VITE_ lines of preview.env, such as the first-visit
+# defaults (D-38); Vite reads apps/web/.env.production.local, which git ignores.
+as_ge "grep '^VITE_' '$ENV_FILE' > apps/web/.env.production.local || true"
 as_ge "pnpm --filter @ge/web build >/dev/null"
 
 echo "== Database"

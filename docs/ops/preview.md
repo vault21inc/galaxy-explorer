@@ -82,6 +82,8 @@ On the server:
 
    `openssl rand -hex 24` makes a good password.
 
+   Its `VITE_` lines are the web app's build settings: the deploy writes them to `apps/web/.env.production.local` before building. The preview sets the first-visit defaults (D-38) so testers start with every label shown and spoilers shown: `VITE_DEFAULT_LABEL_MODE=all` and `VITE_DEFAULT_SPOILERS=shown`. A tester's own choice (L, Shift + S, the toggle) is remembered in their browser and wins. Remove the lines for the app's usual defaults, then deploy again.
+
 2. Choose two passwords: yours and the testers'. Hash each (it asks you to type it):
 
    ```bash

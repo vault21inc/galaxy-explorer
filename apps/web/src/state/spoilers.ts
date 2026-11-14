@@ -5,6 +5,13 @@ import { useShallow } from 'zustand/react/shallow';
 import { safeStorage } from '@/lib/safe-storage.ts';
 import { useEditor } from './editor.ts';
 
+/**
+ * Whether a first visit shows potential spoilers: no (P3), unless the deployment's build says
+ * so (`VITE_DEFAULT_SPOILERS=shown`, D-38), as the private preview does for its testers. A
+ * remembered choice replaces it.
+ */
+export const FIRST_SHOW_ALL = import.meta.env.VITE_DEFAULT_SPOILERS === 'shown';
+
 interface SpoilerState {
   /** "Spoilers: Shown": off by default for every visitor (ux.md §6, P3). Remembered per browser. */
   showAll: boolean;
@@ -25,7 +32,7 @@ interface SpoilerState {
 export const useSpoilers = create<SpoilerState>()(
   persist(
     (set, get) => ({
-      showAll: false,
+      showAll: FIRST_SHOW_ALL,
       revealed: new Set<string>(),
       toggle: () => {
         set({ showAll: !get().showAll });
