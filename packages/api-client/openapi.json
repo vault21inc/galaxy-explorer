@@ -3,7 +3,7 @@
   "info": {
     "title": "Galaxy Explorer API",
     "version": "0.0.0",
-    "description": "REST API for building and exploring galaxies. Bodies are JSON in camelCase, wrapped as `{ \"data\": … }`; lists add `nextCursor`. Errors are RFC 9457 problem+json. Every write is one change batch (X-GE-Batch-Id in the response), which can be reverted. Updates need the `version` you read. Conventions: docs/plan/architecture.md §5."
+    "description": "REST API for building and exploring galaxies. Bodies are JSON in camelCase, wrapped as `{ \"data\": … }`; lists add `nextCursor`. Errors are RFC 9457 problem+json. Every write is one change batch (X-GE-Batch-Id in the response), which can be reverted. Updates need the `version` you read. Conventions: docs/plan/architecture.md §5. LLM agents: read [the guide](/api/llm-guide.md) first; the MCP server (apps/mcp) offers these routes as tools."
   },
   "components": {
     "schemas": {
