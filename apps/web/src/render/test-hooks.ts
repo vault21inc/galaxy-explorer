@@ -362,6 +362,11 @@ export function installTestHooks(): void {
       const [x, y, z] = latLonToUnitVector({ latDeg, lonDeg });
       const [px, py, pz] = state.toWorld([x * distanceRadii, y * distanceRadii, z * distanceRadii]);
       void controls.setLookAt(px, py, pz, 0, 0, 0, false);
+      // camera-controls moves the camera itself on its next update, in the next frame. Apply
+      // the pose now, so a test that projects a point right after sees the new camera even
+      // when that frame is slow to come (a new globe's first frames in software rendering).
+      controls.update(0);
+      controls.camera.updateMatrixWorld();
       canvasState()?.invalidate();
     },
     pin: (id) => {

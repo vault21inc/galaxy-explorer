@@ -164,6 +164,16 @@ test('the golden path (M6-T8)', async ({ page }) => {
   const date = panel(page).getByLabel('Date', { exact: true });
   await date.fill('240.M41');
   await date.press('Enter');
+  // Saved before the next change: step 8 undoes the last three changes in order, and a save
+  // still in flight could land after the person's and take its place on the undo stack.
+  await expect
+    .poll(async () => {
+      const { data } = (await getJson(page.request, `/api/v1/events/${event}`)) as {
+        data: { dateText: string | null };
+      };
+      return data.dateText;
+    })
+    .toBe('240.M41');
   const people = panel(page).getByRole('region', { name: 'People involved' });
   await people.getByRole('combobox', { name: 'Add to People involved' }).fill('Gregor Eisenhorn');
   await page.getByRole('option', { name: 'Create “Gregor Eisenhorn”' }).click();
