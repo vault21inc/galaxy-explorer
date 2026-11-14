@@ -41,10 +41,10 @@ describe('the security headers', () => {
 });
 
 describe('the API sends them', () => {
-  const headersOf = async (url: string) => {
+  const headersOf = async (url: string, headers: Record<string, string> = {}) => {
     const app = await buildServer(testConfig());
     try {
-      return (await app.inject({ method: 'GET', url })).headers;
+      return (await app.inject({ method: 'GET', url, headers })).headers;
     } finally {
       await app.close();
     }
@@ -58,6 +58,14 @@ describe('the API sends them', () => {
       }
       expect(headers['content-security-policy']).toBe(cspHeader(API_CSP));
     }
+  });
+
+  it('only when no proxy is in front, but for its own policy: Caddy sets the rest', async () => {
+    const headers = await headersOf('/api/openapi.json', { 'x-forwarded-for': '203.0.113.9' });
+    for (const name of Object.keys(SECURITY_HEADERS)) {
+      expect(headers[name.toLowerCase()], name).toBeUndefined();
+    }
+    expect(headers['content-security-policy']).toBe(cspHeader(API_CSP));
   });
 
   it('with the docs page’s policy on the docs page', async () => {

@@ -4,17 +4,18 @@
 # Import this file at the top of a Caddyfile, then `import security-headers` in the site.
 
 (security-headers) {
+	# Set as each request comes in, so that every response has them, errors included.
 	header {
-		# Set as each response is written, replacing the API’s own copies.
-		>Strict-Transport-Security "max-age=31536000"
-		>X-Content-Type-Options "nosniff"
-		>Referrer-Policy "strict-origin-when-cross-origin"
-		>X-Frame-Options "DENY"
-		>Cross-Origin-Opener-Policy "same-origin"
-		>Permissions-Policy "accelerometer=(), autoplay=(), bluetooth=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(), xr-spatial-tracking=()"
-		# The web app’s policy, for every response that doesn’t bring its own (the API’s do).
-		?Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
-		# Which server software this is helps nobody but an attacker.
-		-Server
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "DENY"
+		Cross-Origin-Opener-Policy "same-origin"
+		Permissions-Policy "accelerometer=(), autoplay=(), bluetooth=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(), xr-spatial-tracking=()"
+		# The web app’s policy. The API adds its own, stricter one, and browsers enforce both.
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 	}
+	# Which server software this is helps nobody but an attacker. (Deleting is deferred, so
+	# it has a block of its own.)
+	header -Server
 }
