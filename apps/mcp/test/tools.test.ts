@@ -1,8 +1,9 @@
+import { readFile } from 'node:fs/promises';
 import { CONFIG_RESOURCES, configResources, ENTITY_KINDS, entityKinds } from '@ge/domain';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { describe, expect, it } from 'vitest';
-import { batchLabel, buildTools, createMcpServer } from '../src/index.ts';
+import { batchLabel, buildTools, createMcpServer, subjectOf } from '../src/index.ts';
 
 /** The MCP server's tools (M7-T7): generated from the registries, described by the API. */
 
@@ -84,9 +85,30 @@ describe('the MCP tools', () => {
     );
   });
 
+  it('are the ones the LLM guide’s examples use (M7-T8)', async () => {
+    const guide = await readFile(
+      new URL('../../../docs/api/llm-guide.md', import.meta.url),
+      'utf8',
+    );
+    const used = [...guide.matchAll(/"tool": "([a-z_]+)"/g)].map((match) => match[1]);
+    expect(used.length).toBeGreaterThan(5);
+    const names = (await listed()).map((tool) => tool.name);
+    for (const name of used) expect(names).toContain(name);
+  });
+
   it('label an agent’s changes for the History panel', () => {
     expect(batchLabel('objects_create', 'Gudrun')).toBe('MCP: objects_create — Gudrun');
     expect(batchLabel('batch', '')).toBe('MCP: batch');
     expect(batchLabel('objects_create', 'x'.repeat(300))).toHaveLength(200);
+    // Named by what the agent made: an entity's rich-text name, a setting's plain name or label.
+    const plain = { format: 'plain', source: 'Gudrun' };
+    expect(subjectOf({ mapId: 'm', name: plain })).toBe('Gudrun');
+    expect(subjectOf({ universeId: 'u', name: 'Sub-sector', layer: 'Administrative' })).toBe(
+      'Sub-sector',
+    );
+    expect(subjectOf({ universeId: 'u', key: 'population', label: 'Population' })).toBe(
+      'Population',
+    );
+    expect(subjectOf({ batchId: 'b' })).toBe('b');
   });
 });

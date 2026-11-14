@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import fastifyCompress from '@fastify/compress';
 import fastifyMultipart from '@fastify/multipart';
 import fastifySensible from '@fastify/sensible';
@@ -35,6 +36,9 @@ import { waypointRoutes } from './routes/waypoint-routes.ts';
 import { viewRoutes } from './routes/views.ts';
 import { openApiTags } from './routes/tags.ts';
 import { LocalBlobStore } from './storage/blob-store.ts';
+
+/** The guide for LLM agents (M7-T8), served at /api/llm-guide.md. */
+const LLM_GUIDE = new URL('../../../docs/api/llm-guide.md', import.meta.url);
 
 /**
  * Builds the API without listening on a port, so tests can call `app.inject()`.
@@ -85,7 +89,8 @@ export async function buildServer(config: Config) {
         description:
           'REST API for building and exploring galaxies. Bodies are JSON in camelCase, wrapped as `{ "data": … }`; lists add `nextCursor`. ' +
           'Errors are RFC 9457 problem+json. Every write is one change batch (X-GE-Batch-Id in the response), which can be reverted. ' +
-          'Updates need the `version` you read. Conventions: docs/plan/architecture.md §5.',
+          'Updates need the `version` you read. Conventions: docs/plan/architecture.md §5. ' +
+          'LLM agents: read [the guide](/api/llm-guide.md) first; the MCP server (apps/mcp) offers these routes as tools.',
       },
       tags: openApiTags(),
     },
@@ -96,6 +101,10 @@ export async function buildServer(config: Config) {
   await app.register(fastifySwaggerUi, { routePrefix: '/api/docs' });
 
   app.get('/api/openapi.json', { schema: { hide: true } }, () => app.swagger());
+  // The guide for LLM agents (M7-T8), from docs/api, linked from the docs and /llms.txt.
+  app.get('/api/llm-guide.md', { schema: { hide: true } }, async (_request, reply) =>
+    reply.type('text/markdown; charset=utf-8').send(await readFile(LLM_GUIDE, 'utf8')),
+  );
   await app.register(healthRoutes, {
     db,
     version: packageJson.version,

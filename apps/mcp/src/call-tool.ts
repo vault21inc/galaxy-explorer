@@ -44,10 +44,23 @@ const pick = (args: Args, names: readonly string[]): Args =>
 const MAX_DESCRIPTION = 200;
 
 /** What a write is about, for its batch label: a name, a key, or an id. */
-function subjectOf(args: Args): string {
-  const name = args.name as { source?: unknown } | undefined;
+export function subjectOf(args: Args): string {
+  // An entity's name is rich text; a settings row's is plain ("Sub-sector"), and a field
+  // definition has a label and key instead. Ids only when nothing names it (M7-T8's trial
+  // found field definitions labelled by their universe's id).
+  const name = args.name as { source?: unknown } | string | undefined;
+  if (typeof name === 'string') return name;
   if (typeof name?.source === 'string') return name.source;
-  for (const field of ['externalKey', 'slug', 'id', 'batchId', 'mapId', 'universeId']) {
+  for (const field of [
+    'label',
+    'key',
+    'externalKey',
+    'slug',
+    'id',
+    'batchId',
+    'mapId',
+    'universeId',
+  ]) {
     if (typeof args[field] === 'string') return args[field];
   }
   return '';

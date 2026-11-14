@@ -298,7 +298,31 @@
 - An `llms.txt` at the site root points to the guide and the OpenAPI document.
 
 **Done when:**
-- [ ] A fresh Claude Code session, given only the guide and the MCP server, builds the M7 demo content without help. Record the transcript summary in the commit message.
+- [x] A fresh Claude Code session, given only the guide and the MCP server, builds the M7 demo content without help. Record the transcript summary in the commit message.
+
+**As built:**
+- **The guide,** `docs/api/llm-guide.md`:
+  - concepts: kinds, the object tree and which parents each base type allows, frames and units, rich text, settings, and aspects through `batch` operations;
+  - eight rules: find first, external keys and upserts, one batch with `$op` references, dry runs, versions, no deletes unless asked, report the batch ids, read errors;
+  - worked examples: a system with planets, moons, an event on a surface, a sub-sector, facts and a subtype;
+  - how to undo, and the read tools.
+
+  The API serves it at `/api/llm-guide.md`, the API reference's description points agents to it, and `/llms.txt` at the site root (`apps/web/public/llms.txt`) lists it, the OpenAPI document and the export format.
+- **Kept true by tests:**
+  - `apps/api/test/llm-guide.test.ts` checks it's served and linked, and that its base-type table matches the registry;
+  - `apps/mcp/test/tools.test.ts` checks that every tool its examples call exists.
+- **The trial** (2026-11-14): `claude -p` from an empty folder, with no built-in tools (`--tools ""`), only this MCP server (`--strict-mcp-config`, 62 tools), the guide as its only briefing, and a fresh database holding an empty "Warhammer 40,000" universe with an "M41" map. Its task was the demo content, in plain words:
+  - three planet facts and a Hive World subtype;
+  - the Gudrun System at x 1200, z −400 with a star and four planets, Gudrun a Hive World with its three facts;
+  - the Hubris System;
+  - a Helican sub-sector holding both;
+  - "The siege of Gudrun" (240.M41) on Gudrun's surface;
+  - three moons, then undo only the moons.
+
+  It took 21 turns, 20 tool calls, no errors, 69 s and $1.08.
+  - **What it did:** it looked things up first, made the settings rows, dry-ran one 14-operation batch (both systems, Gudrun's subtype and facts, the group and its members, the event and its location) and ran it, added the moons as a second batch, reverted that one, then read the orbit view, Gudrun and the group back.
+  - **Checked in the database:** all of it as asked, Gudrun's three facts, the event at 20°, 30° on Gudrun, no moons, and the history labelled "MCP: …" with the moons' revert.
+- **Found by the trial:** writes to settings were labelled by their universe's id ("MCP: field_definitions_create — <id>"), because the label looked only for an entity's rich-text name. They're now named by a setting's plain name, label or key.
 
 ---
 

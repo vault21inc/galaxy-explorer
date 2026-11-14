@@ -1,0 +1,13 @@
+# Galaxy Explorer
+
+> A builder for fictional galaxies: universes, maps for different eras, and on them systems, planets, regions, routes, places, events and characters, with spoilers that readers can hide. Its REST API, and an MCP server over it, let LLM agents read and build that content; every change is a batch the owner can revert.
+
+## Docs
+
+- [Guide for LLM agents](/api/llm-guide.md): concepts, rules (external keys, batches with temporary references, dry runs) and worked examples. Read it first.
+- [OpenAPI document](/api/openapi.json): every route, its parameters and its bodies.
+- [API reference](/api/docs): the same, to browse.
+
+## Optional
+
+- [Export format](/api/v1/export-schema.json): the JSON Schema of an export's files, for writing imports.
