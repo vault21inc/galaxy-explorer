@@ -3,10 +3,11 @@ import {
   richTextTree,
   spoilerKeys,
   toPlainText,
+  truncateRichNodes,
   type RichNode,
   type RichText,
 } from '@ge/domain';
-import { createElement, useMemo, type ReactNode } from 'react';
+import { createElement, useMemo, useState, type ReactNode } from 'react';
 import { Redactable } from './redactable.tsx';
 
 interface RichTextViewProps {
@@ -16,6 +17,11 @@ interface RichTextViewProps {
   /** Inline content (a name): no paragraph spacing. */
   inline?: boolean;
   className?: string;
+  /**
+   * Shows only about this many characters at first, cut at a word, with "More" to show the
+   * rest and "Less" to fold it again (the panel's description).
+   */
+  maxChars?: number;
 }
 
 /**
@@ -24,14 +30,34 @@ interface RichTextViewProps {
  * React elements here; no HTML string ever reaches the page, so hostile markup can't run.
  * A whole-field spoiler and each inline spoiler become `<Redactable>`.
  */
-export function RichTextView({ value, fieldKey, inline, className }: RichTextViewProps) {
+export function RichTextView({ value, fieldKey, inline, className, maxChars }: RichTextViewProps) {
   const tree = useMemo(() => (value ? richTextTree(value) : []), [value]);
+  const preview = useMemo(
+    () => (maxChars === undefined ? null : truncateRichNodes(tree, maxChars)),
+    [tree, maxChars],
+  );
+  const [expanded, setExpanded] = useState(false);
   if (!value) return null;
-  const content = renderNodes(tree, fieldKey);
+  const folded = preview?.truncated === true && !expanded;
+  const content = renderNodes(folded ? preview.nodes : tree, fieldKey);
   const body = inline ? (
     <span className={className}>{unwrapParagraphs(content, tree)}</span>
   ) : (
-    <div className={['rich-text', className].filter(Boolean).join(' ')}>{content}</div>
+    <div className={['rich-text', className].filter(Boolean).join(' ')}>
+      {content}
+      {preview?.truncated && (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          className="text-sm text-primary underline-offset-2 hover:underline"
+          onClick={() => {
+            setExpanded(!expanded);
+          }}
+        >
+          {expanded ? 'Less' : 'More'}
+        </button>
+      )}
+    </div>
   );
   return (
     <Redactable

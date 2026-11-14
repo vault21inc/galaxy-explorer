@@ -27,6 +27,8 @@ What the app looks like and how it responds to the mouse, trackpad, touch and ke
   - Help: the keyboard shortcuts (M4-T9), and from M8-T10 the guided tours (§12);
   - from M8, the account menu (§13), or "Sign in".
 - **Right panel:** about 380 px wide, collapsible. It shows the selection's details, or for several selected items, a summary with bulk actions. On screens narrower than 768 px it becomes a bottom sheet.
+  - **Reading** (the owner's request after M7-T6): the name stays pinned at the top while the rest scrolls under it. The picture comes next (the cover across the panel, the gallery two to a row), then the summary, then the description. A description longer than about 265 characters shows its start, cut at a word, with **More**; **Less** folds it again, and a new selection starts folded.
+  - In edit mode the form leads, and the images editor keeps its place further down.
 - **Left outliner:** a tree of the current view's contents, grouped by group. It's always available in edit mode, and in view mode through a "List" button. It is also the accessible alternative to the canvas (§10). The History and Map settings panels open in its place, one at a time; closing them brings the outliner back.
 - **Bottom toolbar:** edit mode only.
 - **Overlays:** the shortcut help (`?`, §12), a tour's step (§12), and toasts in the bottom-right corner.

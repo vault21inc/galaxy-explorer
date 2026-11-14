@@ -1,6 +1,5 @@
 import { lazy, Suspense } from 'react';
 import { useEditor } from '@/state/editor.ts';
-import { SectionHeading } from '../sections/section-heading.tsx';
 import type { SectionProps } from '../types.ts';
 import { ImageFigure } from './image-figure.tsx';
 
@@ -9,7 +8,8 @@ const ImagesEditor = lazy(() => import('./images-editor.tsx'));
 
 /**
  * The Images section (M3-T7): the cover across the panel, then the gallery two to a row, each
- * with its credit. In edit mode, the editor: add, caption, credit, cover, spoiler, remove.
+ * with its credit. When reading it sits under the name, above the text, so it needs no
+ * heading. In edit mode, the editor: add, caption, credit, cover, spoiler, remove.
  */
 export function ImagesSection(props: SectionProps) {
   const editing = useEditor((state) => state.editing);
@@ -28,7 +28,6 @@ export function ImagesSection(props: SectionProps) {
   const gallery = drawable.filter((image) => image.role === 'gallery');
   return (
     <section aria-label="Images">
-      <SectionHeading>Images</SectionHeading>
       <div className="flex flex-col gap-3">
         {cover && <ImageFigure entityId={props.entity.id} image={cover} large />}
         {gallery.length > 0 && (

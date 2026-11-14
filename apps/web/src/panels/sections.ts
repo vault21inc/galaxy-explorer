@@ -42,6 +42,14 @@ export const PANEL_SECTIONS: readonly SectionDef[] = [
   // Filling the description and facts from a wiki page (M7-T3).
   { id: 'wiki-fill', component: WikiFillSection, appliesTo: always, mode: 'edit' },
   { id: 'header', component: HeaderSection, appliesTo: always, mode: 'view' },
+  // The picture first when reading, under the name; the editor keeps its place below.
+  {
+    id: 'images',
+    component: ImagesSection,
+    include: 'images',
+    appliesTo: (kind) => kind.aspects.images,
+    mode: 'view',
+  },
   {
     id: 'summary',
     component: textSection('summary', 'text-foreground/90'),
@@ -78,10 +86,11 @@ export const PANEL_SECTIONS: readonly SectionDef[] = [
   // Groups nest (data-model §3.3): where this one sits, and what sits inside it.
   { id: 'nesting', component: NestingSection, appliesTo: (kind) => kind.aspects.members },
   {
-    id: 'images',
+    id: 'images-editor',
     component: ImagesSection,
     include: 'images',
     appliesTo: (kind) => kind.aspects.images,
+    mode: 'edit',
   },
   {
     id: 'facts',
