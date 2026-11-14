@@ -68,6 +68,9 @@ async function mcp(token: string, id: number, method: string, params: object) {
 test('an agent with a write token creates an object over remote MCP, until the token is revoked', async ({
   page,
 }) => {
+  // Two codes, signing in and then making the token: the second may wait up to 30 seconds for
+  // the clock (nextCode), as in admin.spec.ts.
+  test.slow();
   const account = await accountFromInvite();
   await signInThrough(page.context().request, account);
   const universe = await ownUniverse(page.context().request);
