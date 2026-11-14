@@ -325,3 +325,29 @@ export function resolveEditKey(
   );
   return row?.action ?? null;
 }
+
+/**
+ * Shortcuts with the primary modifier that work on every page, even with focus in a text field
+ * (M7-T6): ⌘K on a Mac, Ctrl + K elsewhere, opens the command palette.
+ */
+export type GlobalKeyAction = 'open-palette';
+
+export const GLOBAL_KEY_BINDINGS: readonly { key: string; action: GlobalKeyAction }[] = [
+  { key: 'k', action: 'open-palette' },
+];
+
+export const GLOBAL_ACTION_DESCRIPTIONS: Readonly<Record<GlobalKeyAction, string>> = {
+  'open-palette': 'Search, or run a command',
+};
+
+/** The global command for a key press with the primary modifier alone, or null. */
+export function resolveGlobalKey(
+  event: HeldKeys & { key: string },
+  platform: Platform,
+): GlobalKeyAction | null {
+  if (event.altKey || event.shiftKey || !isPrimaryModifier(event, platform)) return null;
+  // On a Mac, Ctrl isn't the primary key: Ctrl + K is the text fields' own shortcut there.
+  if (platform === 'mac' && event.ctrlKey) return null;
+  const row = GLOBAL_KEY_BINDINGS.find((binding) => binding.key === event.key.toLowerCase());
+  return row?.action ?? null;
+}

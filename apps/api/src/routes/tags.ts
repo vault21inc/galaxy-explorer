@@ -34,6 +34,7 @@ export function openApiTags(): { name: string; description: string }[] {
     },
     { name: 'locations', description: 'Where a place or event is.' },
     { name: 'batch', description: 'Many operations in one transaction and one undo step.' },
+    { name: 'search', description: 'Full-text search over a universe’s entries (M7-T6).' },
     {
       name: 'exchange',
       description:

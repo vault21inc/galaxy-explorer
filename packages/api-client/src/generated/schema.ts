@@ -1632,6 +1632,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/universes/{universeId}/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search a universe
+         * @description Full-text search over the universe’s entries: names, summaries, descriptions, text facts and relation roles. Each word of `q` matches words that start with it, ignoring case and accents ("gud" finds Gudrun). Results are ranked (names that start with the first word first) and carry the kind, the map, a path (the map, then the objects the entry is inside) and a snippet. With `spoilers=exclude`, only text that isn’t a potential spoiler is searched, and hidden names are blacked out.
+         */
+        get: operations["universes.search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/wiki/sources": {
         parameters: {
             query?: never;
@@ -1986,6 +2006,17 @@ export interface components {
                 message: string;
             }[];
             blocked: boolean;
+        };
+        SearchResultInput: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
+            mapId: string | null;
+            parentId: string | null;
+            name: string;
+            path: string[];
+            snippet: string;
         };
         CitationWriteInput: {
             target: string;
@@ -3974,6 +4005,17 @@ export interface components {
                 message: string;
             }[];
             blocked: boolean;
+        };
+        SearchResult: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "celestial_object" | "group" | "route" | "place" | "event" | "character";
+            mapId: string | null;
+            parentId: string | null;
+            name: string;
+            path: string[];
+            snippet: string;
         };
         CitationWrite: {
             target: string;
@@ -12907,6 +12949,75 @@ export interface operations {
                             width: number;
                             height: number;
                         }[];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "universes.search": {
+        parameters: {
+            query: {
+                /** @description `exclude` blacks out everything flagged as a potential spoiler before it leaves the server. */
+                spoilers?: "include" | "exclude";
+                /** @description Editors only: include unpublished drafts. */
+                includeDrafts?: "true" | "false";
+                /** @description The words to look for. */
+                q: string;
+                /** @description Results (1–50). */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                universeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SearchResult"][];
                     };
                 };
             };

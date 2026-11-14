@@ -1,5 +1,12 @@
 import { sql, type SQL } from 'drizzle-orm';
-import { boolean, integer, timestamp, uuid, type AnyPgColumn } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  customType,
+  integer,
+  timestamp,
+  uuid,
+  type AnyPgColumn,
+} from 'drizzle-orm/pg-core';
 
 /**
  * Building blocks shared by the table definitions.
@@ -39,3 +46,9 @@ export function matches(column: AnyPgColumn, pattern: string): SQL {
 function literal(value: string): string {
   return `'${value.replaceAll("'", "''")}'`;
 }
+
+/**
+ * A Postgres full-text search vector (M7-T6). Drizzle has no type for it; its text form is what
+ * a select returns, though nothing reads it back: queries use it inside SQL.
+ */
+export const tsvector = customType<{ data: string }>({ dataType: () => 'tsvector' });

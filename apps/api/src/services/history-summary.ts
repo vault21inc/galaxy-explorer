@@ -1,3 +1,4 @@
+import { SEARCH_COLUMNS } from '@ge/db';
 import { toCamelCase } from 'drizzle-orm/casing';
 
 /**
@@ -34,6 +35,8 @@ const IGNORED = new Set([
   'name_plain',
   'entity_id',
   'map_id',
+  // Derived for search (M7-T6), never edited.
+  ...SEARCH_COLUMNS,
 ]);
 
 /** The entity a log row is about, if it's about one. */

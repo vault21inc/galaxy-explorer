@@ -1,18 +1,13 @@
-import type { components } from '@ge/api-client';
 import { containerName } from '@/lib/container-name.ts';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
-import { viewNavigation } from '@/state/view-navigator.ts';
-import { goToLocated } from '../relations/shown-where.ts';
+import { showEntity } from '@/state/show-entity.ts';
 import { SectionHeading } from '../sections/section-heading.tsx';
 import type { SectionProps } from '../types.ts';
 
-type Counterpart = components['schemas']['Counterpart'];
-
 /**
  * "Same object on other maps" (M7-T5, D-17): the copies and originals of this entry made by
- * cloning maps, one per map. Choosing one opens that map where the entry is shown, selected:
- * an object in its parent's view (a planet in its system), a place or event wherever it's
- * located, anything else in the galaxy view.
+ * cloning maps, one per map. Choosing one opens that map where the entry is shown, selected
+ * (showEntity).
  */
 export function CounterpartsSection({ entity }: SectionProps) {
   const policy = useSpoilerPolicy();
@@ -28,7 +23,7 @@ export function CounterpartsSection({ entity }: SectionProps) {
               type="button"
               className="text-left text-primary underline-offset-2 hover:underline"
               onClick={() => {
-                open(counterpart);
+                showEntity({ ...counterpart, mapId: counterpart.map.id });
               }}
             >
               {containerName(counterpart.map, policy)}
@@ -41,14 +36,4 @@ export function CounterpartsSection({ entity }: SectionProps) {
       </ul>
     </section>
   );
-}
-
-function open(counterpart: Counterpart): void {
-  const { id, kind, map } = counterpart;
-  if (kind === 'place' || kind === 'event') {
-    void goToLocated(id, map.id);
-    return;
-  }
-  const subject = kind === 'celestial_object' ? counterpart.parentId : null;
-  viewNavigation.show(subject, { select: id, mapId: map.id });
 }

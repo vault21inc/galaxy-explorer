@@ -734,7 +734,7 @@ Deletes are hard deletes: the change log keeps everything needed to revert them.
   - view payloads: `celestial_objects (map_id, parent_id)`, `entities (map_id, kind)`;
   - pins: `entity_locations (object_id)`;
   - history: `change_log (batch_id, id)`.
-- M7 adds `search_public` and `search_all` `tsvector` columns to `entities`, maintained by the service on write because the spoiler-aware text extraction is TypeScript, with GIN indexes.
+- M7 adds `search_public` and `search_all` `tsvector` columns to `entities` (migration 0006, `to_tsvector('simple', unaccent(…))`), with GIN indexes. The spoiler-aware text extraction is TypeScript, so they're kept from there: as built (M7-T6, D-37), `withBatch` refreshes every entity a batch touched before it commits, and the audit treats them as derived (an update of only these columns isn't logged, and revert compares rows without them).
 - **Migrations:**
   - Drizzle generates the table DDL.
   - Triggers, functions, `nulls not distinct` indexes, `on delete set null (col)` and other constructs Drizzle can't express go in custom SQL migrations (`drizzle-kit generate --custom`).

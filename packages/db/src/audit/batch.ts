@@ -2,6 +2,7 @@ import type { ActorType } from '@ge/domain';
 import { eq, sql } from 'drizzle-orm';
 import type { Database } from '../client.ts';
 import { changeBatches } from '../schema/index.ts';
+import { refreshSearchForBatch } from '../search/refresh.ts';
 
 /** Who is making a change: shown in the History panel (data-model §3.7). */
 export interface Actor {
@@ -52,7 +53,10 @@ export async function withBatch<T>(
     // `true` makes the setting local to this transaction: the audit trigger reads it, and it
     // disappears at commit, so a pooled connection never carries it into the next request.
     await tx.execute(sql`select set_config('ge.batch_id', ${batch.id}, true)`);
-    return { result: await fn(tx, batch.id), batchId: batch.id };
+    const result = await fn(tx, batch.id);
+    // Search is derived from what the batch changed: brought up to date before it commits.
+    await refreshSearchForBatch(tx, batch.id);
+    return { result, batchId: batch.id };
   });
 }
 

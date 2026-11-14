@@ -6,7 +6,7 @@ import {
   type EntityKind,
   type EntityReadOf,
 } from '@ge/domain';
-import { and, asc, eq, gt, ilike, sql, type SQL } from 'drizzle-orm';
+import { and, asc, eq, getTableColumns, gt, ilike, sql, type SQL } from 'drizzle-orm';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import {
   getLocation,
@@ -23,6 +23,13 @@ import { NotFound } from './errors.ts';
 import { entityVisible, type Viewer } from './visibility.ts';
 
 const { entities } = schema;
+
+/** An entity's columns but its search vectors (M7-T6): they're for queries, not for reading. */
+const {
+  searchPublic: _searchPublic,
+  searchAll: _searchAll,
+  ...entityColumns
+} = getTableColumns(entities);
 
 /** An entity as the API returns it, plus any aspects asked for with `include`. */
 export type EntityRead<K extends EntityKind> = EntityReadOf<K> &
@@ -57,14 +64,14 @@ async function loadRows(ex: Executor, kind: EntityKind, condition: SQL, viewer: 
   const where = and(eq(entities.kind, kind), condition, entityVisible(viewer));
   if (!extension) {
     const rows = await ex
-      .select({ entity: entities })
+      .select({ entity: entityColumns })
       .from(entities)
       .where(where)
       .orderBy(asc(entities.id));
     return rows.map((row) => ({ entity: row.entity, extension: {} }));
   }
   const rows = await ex
-    .select({ entity: entities, extension })
+    .select({ entity: entityColumns, extension })
     .from(entities)
     .innerJoin(extension, eq(extension.entityId, entities.id))
     .where(where)

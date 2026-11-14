@@ -62,6 +62,20 @@ export async function createEntity<K extends EntityKind>(
   scope: EntityScope,
   input: z.input<ReturnType<typeof schemasFor<K>>['create']>,
 ): Promise<EntityRead<K>> {
+  const id = await insertEntity(tx, kind, scope, input);
+  return getEntity(tx, kind, id, { viewer: SEES_EVERYTHING });
+}
+
+/**
+ * Creates an entity, with every rule `createEntity` checks, and returns only its id: for bulk
+ * writers such as imports (M7-T4), which don't need it read back.
+ */
+export async function insertEntity<K extends EntityKind>(
+  tx: Executor,
+  kind: K,
+  scope: EntityScope,
+  input: z.input<ReturnType<typeof schemasFor<K>>['create']>,
+): Promise<string> {
   const schemas = schemasFor(kind);
   const parsed = sanitizeRichTextFields(schemas.create, schemas.create.parse(input) as Row);
   const where = await resolveScope(tx, kind, scope);
@@ -88,7 +102,7 @@ export async function createEntity<K extends EntityKind>(
       mapId: where.mapId,
     } as never);
   }
-  return getEntity(tx, kind, entity.id, { viewer: SEES_EVERYTHING });
+  return entity.id;
 }
 
 /** Defaults the service fills in: a group's outline color comes from its group type. */
@@ -109,6 +123,17 @@ export async function updateEntity<K extends EntityKind>(
   id: string,
   input: z.input<ReturnType<typeof schemasFor<K>>['update']>,
 ): Promise<EntityRead<K>> {
+  await applyEntityUpdate(tx, kind, id, input);
+  return getEntity(tx, kind, id, { viewer: SEES_EVERYTHING });
+}
+
+/** Updates an entity, with every check `updateEntity` makes, without reading it back. */
+export async function applyEntityUpdate<K extends EntityKind>(
+  tx: Executor,
+  kind: K,
+  id: string,
+  input: z.input<ReturnType<typeof schemasFor<K>>['update']>,
+): Promise<void> {
   const schemas = schemasFor(kind);
   const { version, ...changes } = sanitizeRichTextFields(
     schemas.update,
@@ -142,7 +167,6 @@ export async function updateEntity<K extends EntityKind>(
   if (table && Object.keys(extension).length > 0) {
     await tx.update(table).set(extension).where(eq(table.entityId, id));
   }
-  return getEntity(tx, kind, id, { viewer: SEES_EVERYTHING });
 }
 
 /**

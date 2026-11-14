@@ -63,6 +63,7 @@ export * from './patterns.ts';
 export * from './registry/index.ts';
 export * from './richtext/index.ts';
 export * from './schemas/index.ts';
+export * from './search/index.ts';
 export * from './spoilers/index.ts';
 export * from './wiki/index.ts';
 export type { Deg, Ly, Px, Radii, Su } from './units.ts';

@@ -32,6 +32,11 @@ export function setViewNavigator(next: ViewNavigator | null): void {
   navigator = next;
 }
 
+/** Whether a map page is showing, so moving between views is possible. */
+export function hasViewNavigator(): boolean {
+  return navigator !== null;
+}
+
 export const viewNavigation: ViewNavigator = {
   enter: (objectId) => navigator?.enter(objectId),
   exit: () => navigator?.exit(),

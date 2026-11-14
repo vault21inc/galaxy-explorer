@@ -25,7 +25,7 @@ import {
   unique,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { idColumn, isSpoilerColumn, matches, oneOf, stamps } from './helpers.ts';
+import { idColumn, isSpoilerColumn, matches, oneOf, stamps, tsvector } from './helpers.ts';
 
 /** Kinds shared by every map of a universe, from the registry (characters). */
 const UNIVERSE_SCOPED_KINDS = ENTITY_KINDS.filter((kind) => entityKinds[kind].scope === 'universe');
@@ -53,6 +53,13 @@ export const entities = pgTable(
     /** Lineage across cloned maps (U7). */
     clonedFromEntityId: uuid(),
     ...stamps(),
+    /**
+     * Full-text search (M7-T6, data-model §12): everything, and what a reader who hides spoilers
+     * may find. Derived from the entity, its text facts and its relations' roles, and
+     * refreshed when a change batch ends (search/refresh.ts), never edited.
+     */
+    searchPublic: tsvector(),
+    searchAll: tsvector(),
   },
   (t) => [
     // The target of same-map composite foreign keys (data-model §2).
@@ -65,6 +72,8 @@ export const entities = pgTable(
       sql`(${oneOf(t.kind, UNIVERSE_SCOPED_KINDS)}) = (${t.mapId} is null)`,
     ),
     index('entities_map_kind_idx').on(t.mapId, t.kind),
+    index('entities_search_public_idx').using('gin', t.searchPublic),
+    index('entities_search_all_idx').using('gin', t.searchAll),
   ],
 );
 

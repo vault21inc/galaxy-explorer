@@ -115,7 +115,14 @@ const AUDITED = new Set(AUDITED_TABLES.map((table) => tableKey(table).name));
 
 const content = (row: Record<string, unknown> | null) => {
   if (!row) return null;
-  const { updated_at: _updatedAt, version: _version, ...rest } = row;
+  const {
+    updated_at: _updatedAt,
+    version: _version,
+    // Derived for search (M7-T6); a refresh since the batch isn't a conflict.
+    search_public: _searchPublic,
+    search_all: _searchAll,
+    ...rest
+  } = row;
   return rest;
 };
 

@@ -28,7 +28,7 @@ Run from the repository root. Each one listed here exists and runs; the last tab
 | `pnpm test:integration` | API and DB tests (`*.int.test.ts`) against the test Postgres; unit tests are `*.test.ts` |
 | `pnpm test:e2e` | Playwright end-to-end tests in Chromium and WebKit (`-- --project=chromium` for one browser). They build the web app with the test hooks and start their own API on port 3101, using the `ge_e2e` database on the test server. Install the browsers once with `pnpm --filter @ge/web exec playwright install chromium webkit`. CI runs them in Chromium with software rendering and leaves out `leaks.spec.ts`, which `pnpm perf` covers |
 | `pnpm build` | production build of the web app into `apps/web/dist` |
-| `pnpm db:migrate` / `pnpm db:reset` | apply migrations / drop, create and migrate the dev database, then seed the demo universe (local databases only) |
+| `pnpm db:migrate` / `pnpm db:reset` | apply migrations (and fill any missing search indexes, D-37) / drop, create and migrate the dev database, then seed the demo universe (local databases only) |
 | `pnpm db:seed demo` / `pnpm db:seed stress` | seed the demo universe / the 5,000-object performance map (`--objects`, `--groups`, `--routes`, `--seed`; `--closed` makes no system open a view, as `pnpm perf` seeds it). Idempotent: re-running changes nothing |
 | `pnpm db:generate` | generate a migration from `packages/db/src/schema` with drizzle-kit; add `--custom` for an empty one to write by hand |
 | `pnpm api:generate` | regenerate `packages/api-client` (`openapi.json` and `src/generated/schema.ts`) from the API's routes; **run it after changing any route or API schema, and commit the result** |

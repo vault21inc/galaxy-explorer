@@ -11,7 +11,8 @@ import {
 } from '../services/aspects/content.ts';
 import { addMembers, setLocation, setMembers } from '../services/aspects/placement.ts';
 import { setWaypoints } from '../services/aspects/waypoints.ts';
-import { createEntity, upsertEntityByKey, type EntityScope } from '../services/entity-service.ts';
+import { applyEntityUpdate, insertEntity, type EntityScope } from '../services/entity-service.ts';
+import { RuleViolation } from '../services/errors.ts';
 import { topoOrder } from './records.ts';
 import { withIds, type EntityRefs, type ImportRun, type Resolvers } from './import-context.ts';
 import type { EntityEntry, MapContent } from './import-read.ts';
@@ -41,6 +42,13 @@ const ASPECTS = [
 const { citations, entityImages, entityLinks, entityLocations, entityRelations, fieldValues } =
   schema;
 
+/** An entry already there with a key the import may use: what a merge needs to update it. */
+export interface ExistingEntry {
+  id: string;
+  kind: string;
+  version: number;
+}
+
 export interface Imported {
   entry: EntityEntry;
   id: string;
@@ -62,7 +70,7 @@ export async function importEntities(
   entries: readonly EntityEntry[],
   refs: EntityRefs,
   resolvers: Resolvers,
-  existingKeys: ReadonlySet<string>,
+  existingKeys: ReadonlyMap<string, ExistingEntry>,
 ): Promise<Imported[]> {
   const ordered = topoOrder(
     entries,
@@ -102,22 +110,28 @@ export async function importEntities(
       leaveOut('it refers to something not imported');
       continue;
     }
-    const saved = await run.step(tx, where, (sp) =>
-      key !== null && run.mode === 'merge'
-        ? upsertEntityByKey(sp, kind, scope, key, converted.input as never)
-        : createEntity(sp, kind, scope, converted.input as never).then((entity) => ({
-            entity,
-            created: true,
-          })),
-    );
+    // In a merge, the entry with this key is updated. The keys were read once, with each
+    // entry's kind and version, so the write needs no lookups of its own; nor is the entry
+    // read back, which the services' create and update would do (M7-T4's 30 s budget).
+    const existing = key !== null && run.mode === 'merge' ? existingKeys.get(key) : undefined;
+    const saved = await run.step(tx, where, async (sp) => {
+      if (!existing) {
+        return { id: await insertEntity(sp, kind, scope, converted.input as never), created: true };
+      }
+      if (existing.kind !== kind) {
+        throw new RuleViolation(`The key “${String(key)}” already belongs to a ${existing.kind}.`);
+      }
+      const input = { ...converted.input, version: existing.version };
+      await applyEntityUpdate(sp, kind, existing.id, input as never);
+      return { id: existing.id, created: false };
+    });
     if (!saved) {
       leaveOut('it couldn’t be imported');
       continue;
     }
-    const id = (saved.entity as { id: string }).id;
-    if (ref !== null) refs.set(ref, id);
+    if (ref !== null) refs.set(ref, saved.id);
     run.count(section, saved.created ? 'create' : 'update');
-    imported.push({ entry, id, created: saved.created });
+    imported.push({ entry, id: saved.id, created: saved.created });
   }
   return imported;
 }

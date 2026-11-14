@@ -23,6 +23,7 @@ import { iconRoutes } from './routes/icons.ts';
 import { wikiRoutes } from './routes/wiki.ts';
 import { batchRoutes } from './routes/batch.ts';
 import { exchangeRoutes } from './routes/exchange.ts';
+import { searchRoutes } from './routes/search.ts';
 import { configRoutes } from './routes/config.ts';
 import { containerRoutes } from './routes/containers.ts';
 import { contentRoutes } from './routes/content-routes.ts';
@@ -120,6 +121,7 @@ export async function buildServer(config: Config) {
         previewRoles: config.previewRoles,
       });
       await v1.register(iconRoutes);
+      await v1.register(searchRoutes, { db });
       await v1.register(wikiRoutes, {
         sources: config.wikiSources,
         userAgent: config.wikiUserAgent,

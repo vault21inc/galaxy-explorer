@@ -3,6 +3,8 @@ import {
   BINDINGS,
   EDIT_ACTION_DESCRIPTIONS,
   EDIT_KEY_BINDINGS,
+  GLOBAL_ACTION_DESCRIPTIONS,
+  GLOBAL_KEY_BINDINGS,
   KEY_ACTION_HELP,
   KEY_BINDINGS,
   type Gesture,
@@ -138,6 +140,12 @@ export function helpSections({
     const help = KEY_ACTION_HELP[action];
     const keys = formatKeys(key, help.shift ? ['shift'] : [], platform);
     (help.section === 'edit' ? edit : everywhere).add(help.description, keys);
+  }
+  for (const binding of GLOBAL_KEY_BINDINGS) {
+    everywhere.add(
+      GLOBAL_ACTION_DESCRIPTIONS[binding.action],
+      formatKeys(binding.key, ['primary'], platform),
+    );
   }
   for (const binding of EDIT_KEY_BINDINGS) {
     if (binding.platform !== undefined && binding.platform !== platform) continue;

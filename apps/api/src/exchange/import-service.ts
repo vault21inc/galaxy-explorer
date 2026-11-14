@@ -20,6 +20,7 @@ import {
   importEntities,
   importMemberships,
   importRelations,
+  type ExistingEntry,
 } from './import-entities.ts';
 import { readUpload, type ImportContent } from './import-read.ts';
 import { importAssets, importConfig, importMap, importUniverseFields } from './import-settings.ts';
@@ -109,7 +110,8 @@ async function importContent(
     .select({ id: schema.assets.id, sha256: schema.assets.sha256 })
     .from(schema.assets)
     .where(eq(schema.assets.universeId, universeId));
-  const universeRefs = new EntityRefs(await keysIn(tx, universeId, null));
+  const universeKeys = await keysIn(tx, universeId, null);
+  const universeRefs = new EntityRefs(idsOf(universeKeys));
   const resolvers: Resolvers = {
     entities: universeRefs,
     config: new ConfigRefs(labels),
@@ -142,7 +144,7 @@ async function importContent(
     content.universeEntries,
     universeRefs,
     resolvers,
-    new Set(await universeKeys(tx, universeId)),
+    universeKeys,
   );
   await importAspects(tx, run, universeImported, resolvers);
   await importRelations(tx, run, 'universe.json', (universe?.relations ?? []) as never, resolvers);
@@ -162,7 +164,8 @@ async function importContent(
       mapId = await importMap(tx, run, universeId, map, maps, resolvers);
     }
     if (mapId === null) continue;
-    const refs = new EntityRefs(await keysIn(tx, universeId, mapId), universeRefs);
+    const mapKeys = await keysIn(tx, universeId, mapId);
+    const refs = new EntityRefs(idsOf(mapKeys), universeRefs);
     const mapResolvers = { ...resolvers, entities: refs };
     const imported = await importEntities(
       tx,
@@ -171,7 +174,7 @@ async function importContent(
       map.entries,
       refs,
       mapResolvers,
-      new Set((await keysIn(tx, universeId, mapId)).keys()),
+      mapKeys,
     );
     await importAspects(tx, run, imported, mapResolvers);
     await importRelations(tx, run, map.source, map.relations, mapResolvers);
@@ -180,10 +183,19 @@ async function importContent(
 }
 
 /** External keys already used in a map, or (null) among the universe-scoped entities. */
-async function keysIn(tx: Executor, universeId: string, mapId: string | null) {
+async function keysIn(
+  tx: Executor,
+  universeId: string,
+  mapId: string | null,
+): Promise<Map<string, ExistingEntry>> {
   const { entities } = schema;
   const rows = await tx
-    .select({ key: entities.externalKey, id: entities.id })
+    .select({
+      key: entities.externalKey,
+      id: entities.id,
+      kind: entities.kind,
+      version: entities.version,
+    })
     .from(entities)
     .where(
       and(
@@ -192,9 +204,10 @@ async function keysIn(tx: Executor, universeId: string, mapId: string | null) {
         isNotNull(entities.externalKey),
       ),
     );
-  return new Map(rows.map((row) => [row.key ?? '', row.id]));
+  return new Map(
+    rows.map((row) => [row.key ?? '', { id: row.id, kind: row.kind, version: row.version }]),
+  );
 }
 
-async function universeKeys(tx: Executor, universeId: string) {
-  return (await keysIn(tx, universeId, null)).keys();
-}
+const idsOf = (keys: ReadonlyMap<string, ExistingEntry>) =>
+  new Map([...keys].map(([key, entry]) => [key, entry.id]));

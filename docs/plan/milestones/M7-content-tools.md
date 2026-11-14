@@ -178,7 +178,10 @@
   - **The report:** creates, updates, kept and left out per kind of record; conflicts and references to nothing (either blocks the import: a blocked real import writes nothing and answers 409 with the report); entries left out; notes. A dry run does everything and rolls back.
   - **CSV:** an empty cell leaves a field as it is. `group_key` puts the object in that group, moving it out of another group of the same type.
 - **Settings page:** an "Import and export" section. It has export links (the universe, or a chosen map) and an import form: file, "Add as new" or "Update by key", the map for a CSV, then **Check** (the dry run's report) and **Import**, enabled once a check passes.
-- **Speed:** `pnpm perf` now times a 5,000-row CSV import (`scripts/perf/import.spec.ts`) against the 30 s budget, as D-33 keeps speed checks there. On the owner's Mac, beside the stress map: 14.7 s as new objects, 23.2 s as an update by key; a dry run costs about what the import does. An update reads each entry before and after writing it (the services' upsert), which is where its extra time goes; that is the place to look if bigger imports get slow.
+- **Speed:** `pnpm perf` now times a 5,000-row CSV import (`scripts/perf/import.spec.ts`) against the 30 s budget, as D-33 keeps speed checks there. On the owner's Mac, beside the stress map:
+  - first, 14.7 s as new objects and 23.2 s as an update by key; a dry run costs about what the import does;
+  - M7-T6's search refresh pushed the update to 26–32 s;
+  - since then, the import writes through `insertEntity` and `applyEntityUpdate`, the services' create and update without reading the entry back, and updates use the keys, kinds and versions it read once: 8–10 s as new objects, 13.5 s as an update by key.
 - **Dependency:** fflate 0.8.3 for the zips.
 - **Tests:**
   - `packages/domain/test/export-format.test.ts`: references, the schemas and CSV parsing;
@@ -225,8 +228,28 @@
 - **Command palette** (⌘/Ctrl + K): search results plus commands such as "Toggle spoilers", "Go to map…" and "New system". Choosing a result navigates through the views and selects it.
 
 **Done when:**
-- [ ] Tests show that a spoiler-only word isn't found with `spoilers=exclude` and is found with `include`.
-- [ ] E2E: ⌘K, type "gud", Enter lands on Gudrun.
+- [x] Tests show that a spoiler-only word isn't found with `spoilers=exclude` and is found with `include`.
+- [x] E2E: ⌘K, type "gud", Enter lands on Gudrun.
+
+**As built:**
+- **Indexes (migration 0006, D-37):** `search_public` and `search_all` on `entities`, `to_tsvector('simple', unaccent(…))`, with GIN indexes. The text comes from `searchText()` in `@ge/domain`:
+  - the name, summary and description, text facts, and the roles of relations at either end;
+  - for the public index, the same after `redactEntity` with spoilers hidden, inline spoilers blacked out, so a hidden entry has no public text at all.
+- **Kept by the batches, not by each service:** `withBatch` refreshes every entity the batch touched (its row, its facts, its relations) before it commits (`packages/db/src/search/refresh.ts`). So imports, seeds, clones and reverts keep search current with no code of their own.
+  - The columns are derived, not content: the audit trigger doesn't log an update that changes only them, revert compares rows without them, and history doesn't list them. Re-indexing an entity therefore never blocks undoing an older change to its facts.
+  - `pnpm db:migrate` fills rows that have no index yet (the rows from before 0006).
+- **`GET /universes/{id}/search?q&spoilers&includeDrafts&limit`:**
+  - each word of `q`, folded like the index, matches words that start with it ("gud" finds Gudrun);
+  - ranking puts names that start with the first word first, then `ts_rank`, then shorter names; with spoilers excluded, a hidden name earns no place;
+  - each result carries its kind, map and parent (to go there), a path (the map, then the objects it's inside) and a snippet around the match. With spoilers excluded, names, paths and snippets come from public text.
+- **The palette** (`apps/web/src/palette/`), opened by ⌘/Ctrl + K on every page (a global binding in the bindings registry, so the shortcut help lists it) or the top bar's **Search** button:
+  - search results, following the reader's spoiler setting, with drafts in edit mode;
+  - commands: show or hide spoilers, go to another map, new system and edit mode on a map (editors), universe settings, keyboard shortcuts, all universes.
+
+  It's an ARIA combobox: the arrow keys move through results and commands, and Enter runs one. A result goes to its entry through the views (`showEntity`, shared with "On other maps"): Gudrun, a planet, opens its system's view with Gudrun selected. It's built without a palette library: it's one list and an input.
+- **Tests:**
+  - `apps/api/test/search.int.test.ts`: the spoiler-only word with `include` and `exclude`; whole hidden entries; public snippets; prefixes, accents and ranking with paths; text facts and relation roles; a fact's batch reverting after a rename, leaving search current; drafts;
+  - `apps/web/e2e/search.spec.ts`: the "Done when" path, commands, the Search button and the arrow keys.
 
 ### M7-T7 MCP server
 
