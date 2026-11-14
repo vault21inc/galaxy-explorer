@@ -149,6 +149,32 @@ describe('a region’s form (M4-T6)', () => {
   });
 });
 
+describe('size per view (U3)', () => {
+  const formFor = (baseType: string) =>
+    render(
+      <EntityForm
+        kind="celestial_object"
+        entity={{ ...entityOf('celestial_object'), baseType } as unknown as PanelEntity}
+        fieldDefinitions={[]}
+        subtypes={[]}
+      />,
+    );
+
+  it('offers a size only for the views the type is drawn in, not the one it opens', () => {
+    const planet = formFor('planet');
+    expect(planet).toContain('>Size · Galaxy<');
+    expect(planet).toContain('>Size · System<');
+    // In its own orbit view a planet is the scale; no other orbit view draws one.
+    expect(planet).not.toContain('>Size · Orbit<');
+  });
+
+  it('says where a moon’s orbit size applies: around its planet', () => {
+    const moon = formFor('moon');
+    expect(moon).toContain('>Size · Orbit<');
+    expect(moon).toContain('How big it’s drawn around its planet.');
+  });
+});
+
 describe('forms are generated', () => {
   it('no kind has a form file of its own', () => {
     // Vite lists the files without loading them (`eager` is off and nothing is awaited).

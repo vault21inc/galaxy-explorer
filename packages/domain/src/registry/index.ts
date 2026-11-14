@@ -48,6 +48,7 @@ export {
   isPlanetType,
   isRegionType,
   objectTypes,
+  viewsDrawnIn,
   type BaseType,
   type ObjectTypeDef,
 } from './object-types.ts';

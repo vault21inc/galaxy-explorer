@@ -597,6 +597,8 @@ const FieldValue = z.discriminatedUnion('type', [
 
 The displayed size in a view is `objectTypes[baseType].size[view] × appearance.scale[view]`, in that view's unit. The galaxy view then clamps it to a minimum and maximum size on screen ([rendering.md §6](rendering.md#6-galaxy-view)).
 
+The form offers a size only for the views a type is drawn in among the view's objects (`viewsDrawnIn`, from its allowed parents). In the view a type opens it's the subject, and that view is measured in its own radii, so a planet has no orbit size to set; a moon's orbit size is its size around its planet, which the form says (2026-11-14, the owner's question).
+
 The API stores and returns overrides only; view payloads carry the resolved result. The editor shows inherited values greyed out, each with a "reset to default" button.
 
 ## 7. Spoiler flags

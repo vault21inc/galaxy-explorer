@@ -9,6 +9,7 @@ import {
   relationTypes,
   VIEW_LEVELS,
   viewLevels,
+  viewsDrawnIn,
   type ViewLevelDef,
 } from '../src/registry/index.ts';
 
@@ -63,6 +64,23 @@ describe('registry invariants', () => {
         expect(baseTypes).toContain(subject);
         expect(objectTypes[subject as keyof typeof objectTypes].explorableAs).toBe(level);
       }
+    }
+  });
+
+  it('a type is drawn among the objects of its parents’ views, never as one in its own', () => {
+    expect(viewsDrawnIn('planet')).toEqual(['galaxy', 'system']);
+    expect(viewsDrawnIn('moon')).toEqual(['orbit']);
+    expect(viewsDrawnIn('station')).toEqual(['galaxy', 'system', 'orbit']);
+    expect(viewsDrawnIn('star')).toEqual(['system']);
+    expect(viewsDrawnIn('system')).toEqual(['galaxy']);
+    // A view a type opens holds it only as its subject, unless a parent opens the same view:
+    // a moon around its planet.
+    for (const type of BASE_TYPES) {
+      const opens = objectTypes[type].explorableAs;
+      const parentsOpen = objectTypes[type].parents.some(
+        (parent) => parent !== 'map' && objectTypes[parent as typeof type].explorableAs === opens,
+      );
+      if (opens && !parentsOpen) expect(viewsDrawnIn(type), type).not.toContain(opens);
     }
   });
 

@@ -4,7 +4,9 @@ import {
   objectTypes,
   VIEW_LEVELS,
   viewLevels,
+  viewsDrawnIn,
   type BaseType,
+  type ObjectTypeDef,
   type ViewLevel,
 } from '@ge/domain';
 import { useEffect, useId, useRef, useState } from 'react';
@@ -17,8 +19,11 @@ import { FieldRow, ResetButton } from './field-row.tsx';
 const STEPS = 1_000;
 
 /**
- * Size per view (U3): one slider per view the base type is drawn in, multiplying its default
- * size there. Inherited values (1, or the subtype's) are dimmed; an override has Reset.
+ * Size per view (U3): one slider per view the base type is drawn in among the view's objects
+ * (`viewsDrawnIn`), multiplying its default size there. Never for the view it opens itself,
+ * where it's the scale (a planet in its own orbit view), and a type that also appears in that
+ * view around another body (a moon around its planet) says so. Inherited values (1, or the
+ * subtype's) are dimmed; an override has Reset.
  *
  * The slider is logarithmic: the schema allows ×0.05 to ×20, and a linear slider would spend
  * almost all its travel above ×1. Position p (0 to STEPS) maps to min × (max / min)^(p / STEPS),
@@ -34,8 +39,21 @@ export function PerViewScaleField({
 }: FieldProps<PathFieldDef>) {
   const fields = record as typeof record & { baseType?: BaseType };
   if (!fields.baseType) return null;
-  const sizes = objectTypes[fields.baseType].size as Partial<Record<ViewLevel, number>>;
-  const views = VIEW_LEVELS.filter((view) => sizes[view] !== undefined);
+  const type: ObjectTypeDef = objectTypes[fields.baseType];
+  const sizes = type.size;
+  const drawn = new Set(viewsDrawnIn(fields.baseType));
+  const views = VIEW_LEVELS.filter((view) => sizes[view] !== undefined && drawn.has(view));
+  // In the view it opens itself, it's the subject: its size there is around its parent's.
+  const hintFor = (view: ViewLevel) => {
+    if (type.explorableAs !== view) return undefined;
+    const around = type.parents
+      .flatMap((parent) => {
+        const def = (objectTypes as Record<string, ObjectTypeDef | undefined>)[parent];
+        return def?.explorableAs === view ? [def.label.toLowerCase()] : [];
+      })
+      .join(' or ');
+    return `How big it’s drawn around its ${around}. In its own ${viewLevels[view].label.toLowerCase()}, everything is measured by it.`;
+  };
   if (views.length === 0) return null;
 
   // The per-view record's value schema holds the limits: perView(z.number().min(0.05).max(20)).
@@ -60,6 +78,7 @@ export function PerViewScaleField({
         <ScaleSlider
           key={view}
           label={`${field.label} · ${viewLevels[view].label.replace(' view', '')}`}
+          hint={hintFor(view)}
           value={saved[view]}
           fallback={inherited[view] ?? 1}
           min={min}
@@ -75,6 +94,7 @@ export function PerViewScaleField({
 
 function ScaleSlider({
   label,
+  hint,
   value,
   fallback,
   min,
@@ -82,6 +102,7 @@ function ScaleSlider({
   onCommit,
 }: {
   label: string;
+  hint?: string | undefined;
   value: number | undefined;
   fallback: number;
   min: number;
@@ -116,7 +137,12 @@ function ScaleSlider({
   }, [min, max]);
 
   return (
-    <FieldRow label={label} htmlFor={id} inherited={value === undefined && live === null}>
+    <FieldRow
+      label={label}
+      htmlFor={id}
+      hint={hint}
+      inherited={value === undefined && live === null}
+    >
       <input
         ref={slider}
         id={id}

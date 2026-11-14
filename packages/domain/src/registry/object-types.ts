@@ -1,6 +1,6 @@
 import type { HexColor } from '../colors.ts';
 import type { Appearance } from '../schemas/appearance.ts';
-import type { ViewLevel } from './view-levels.ts';
+import { VIEW_LEVELS, type ViewLevel } from './view-levels.ts';
 
 /**
  * Object base types (architecture.md §3.2). They decide how an object is drawn and where it
@@ -166,6 +166,26 @@ export const BASE_TYPES = Object.keys(objectTypes) as [BaseType, ...BaseType[]];
 export function isRegionType(baseType: BaseType): boolean {
   const type: ObjectTypeDef = objectTypes[baseType];
   return type.region === true;
+}
+
+/**
+ * The views a base type is drawn in as one of the view's objects, in registry order: the galaxy
+ * view if it may sit at the top level, and the view each of its allowed parents opens. A size
+ * for a view means something only there (U3). Not the view the type opens itself: there it's
+ * the subject, and the view is measured in its own radii (rendering.md §8), so a planet's size
+ * in its own orbit view could change nothing.
+ */
+export function viewsDrawnIn(baseType: BaseType): ViewLevel[] {
+  const views = new Set<ViewLevel>();
+  for (const parent of objectTypes[baseType].parents) {
+    if (parent === 'map') {
+      views.add('galaxy');
+      continue;
+    }
+    const opens = (objectTypes as Record<string, ObjectTypeDef | undefined>)[parent]?.explorableAs;
+    if (opens) views.add(opens);
+  }
+  return VIEW_LEVELS.filter((view) => views.has(view));
 }
 
 /**
