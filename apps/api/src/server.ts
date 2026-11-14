@@ -28,6 +28,7 @@ import { sharingRoutes } from './routes/sharing.ts';
 import { accountRoutes } from './routes/account.ts';
 import { adminRoutes } from './routes/admin.ts';
 import { authRoutes } from './routes/auth.ts';
+import { tokenRoutes } from './routes/tokens.ts';
 import { iconRoutes } from './routes/icons.ts';
 import { wikiRoutes } from './routes/wiki.ts';
 import { batchRoutes } from './routes/batch.ts';
@@ -130,6 +131,7 @@ export async function buildServer(config: Config) {
     async (v1) => {
       await v1.register(authRoutes, { auth });
       await v1.register(accountRoutes, { db, auth });
+      await v1.register(tokenRoutes, { db, auth });
       await v1.register(adminRoutes, { db, auth });
       await v1.register(containerRoutes, { db, auth });
       await v1.register(sharingRoutes, { db, auth });

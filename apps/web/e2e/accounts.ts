@@ -16,6 +16,8 @@ function fromEnv(name: string): string {
 
 /** The site with accounts, such as http://localhost:4174. */
 export const AUTH_URL = fromEnv('GE_E2E_AUTH_URL');
+/** The remote MCP server in front of it (M8-T2), such as http://127.0.0.1:3109/mcp. */
+export const MCP_URL = fromEnv('GE_E2E_MCP_URL');
 
 const REPO_ROOT = resolve(import.meta.dirname, '../../..');
 

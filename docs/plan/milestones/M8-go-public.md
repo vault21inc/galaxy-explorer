@@ -256,8 +256,25 @@
 - MCP: a Streamable HTTP transport mounted at `/mcp` on the API host, or as its own service behind Caddy, accepting the same bearer tokens. The stdio mode keeps working with `GE_API_TOKEN`.
 
 **Done when:**
-- [ ] Integration tests: a read token can't write; a revoked token gets 401; a universe-scoped token can't touch another universe; a token loses a universe when its account loses it; a token is refused on the account, sharing and admin routes.
-- [ ] A remote MCP smoke test creates an object, and the History panel shows it under the token's name.
+- [x] Integration tests: a read token can't write; a revoked token gets 401; a universe-scoped token can't touch another universe; a token loses a universe when its account loses it; a token is refused on the account, sharing and admin routes.
+- [x] A remote MCP smoke test creates an object, and the History panel shows it under the token's name.
+
+**As built (M8-T2), D-42:**
+- **The table:** `api_tokens` as data-model §3.8 has it, with a name of 1 to 60 characters and at least one scope. The API speaks of one `scope`, `read` or `write`; a write token's stored scopes are both. Revoking sets `revoked_at` and keeps the row, so History's `actor_id` still names something.
+- **The routes** (`routes/tokens.ts`): `GET /auth/tokens`, `POST /auth/tokens` and `DELETE /auth/tokens/{tokenId}`, with a session; making one also needs a current code in `X-GE-TOTP` (D-42). `GET /auth/token` is for a token itself: its name, scope, universe and username. Making and revoking are logged as `token.create` and `token.revoke`.
+- **The narrowing is in `universeAccess`** (services/access.ts): another universe is `none`, and a read token gets `read` at most, so it reads as a viewer would (no drafts, History or export). The guard words what it can:
+  - a read token's write: 403, "can only read";
+  - another universe of the same account: 403, "for another universe";
+  - one the account can't see: 404, as for anyone;
+  - `POST /universes` with a token for one universe: 403.
+- **Tokens never reach account, sharing or admin routes:** those routes declare `session: true` in `x-ge-access` (it replaces the `requireSession` pre-handlers), and the guard refuses a token with 403 there and on every `/auth/` route but `GET /auth/token`, whatever the path names. `requireFreshTotp` needs a session too. A token's requests read no cookies, so share links don't apply to them and the Origin check doesn't either.
+- **Remote MCP** is its own service, `pnpm mcp:http` (apps/mcp/src/http.ts, port 3110), since apps/api may not import apps/mcp. It's stateless, with plain JSON responses. Before each request it checks the token with `GET /auth/token`, and refuses with a 401 and `WWW-Authenticate: Bearer` otherwise. It answers only to its own host names. On a loopback address, in front of an API without accounts, it needs no token. M8-T4 puts it behind Caddy at `/mcp`.
+- **The account page's API tokens:** the list (what each may do, last use, Revoke) and a form (name, Read or Write, every universe or one, a code). The token is shown once with Copy; invite links share that box (`app/shown-once.tsx`). The admin Log names token events.
+- **Tests:**
+  - `apps/api/test/tokens.int.test.ts` (6 tests);
+  - the access contract suite, with four more requesters: the owner's read token, its write token, its token for another universe, and an admin's token. It checks each route's `session` flag against architecture §7, independently, and runs in about 3.5 seconds;
+  - `apps/mcp/test/http.test.ts` and an HTTP round trip in `mcp.int.test.ts`;
+  - `apps/web/e2e/remote-mcp.spec.ts`: a write token made on the account page, `objects_create` over remote MCP, History showing "token: smoke-agent, for …", and a 401 once it's revoked, with axe on the account page.
 
 ### M8-T3 Security hardening
 
@@ -285,11 +302,11 @@
   - `migrate`: a one-off container running `db:migrate`;
   - `backup`: see M8-T7.
 - `docker/compose.prod.yml` (architecture §14):
-  - `caddy`, `api`, `postgres:18` with the `pgdata` volume, `migrate` with `depends_on`, and `backup`;
+  - `caddy`, `api`, `mcp` (remote MCP, `pnpm mcp:http`, M8-T2), `postgres:18` with the `pgdata` volume, `migrate` with `depends_on`, and `backup`;
   - the `media` volume;
   - Postgres reachable only on the internal network;
   - healthchecks and `restart: unless-stopped`.
-- The `Caddyfile`: the domain, automatic HTTPS, the routes in architecture §14, compression, long cache headers for hashed assets and no-cache for `index.html`. `/media/*` is served from the volume after `forward_auth` to the API's `/api/v1/media-access` (T11), copying its `Cache-Control`.
+- The `Caddyfile`: the domain, automatic HTTPS, the routes in architecture §14 (`/mcp` to the `mcp` service, which listens on the internal network with `GE_MCP_HOST=0.0.0.0` and so needs a token for every request), compression, long cache headers for hashed assets and no-cache for `index.html`. `/media/*` is served from the volume after `forward_auth` to the API's `/api/v1/media-access` (T11), copying its `Cache-Control`.
 
 **Done when:**
 - [ ] `docker compose -f docker/compose.prod.yml up` on the owner's Mac (with a `localhost` Caddy site) serves the production build, and the golden-path e2e test passes against it.

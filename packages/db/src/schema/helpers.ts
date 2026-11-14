@@ -37,6 +37,14 @@ export function oneOf(column: AnyPgColumn, values: readonly string[]): SQL {
   return sql`${column} in (${sql.raw(values.map(literal).join(', '))})`;
 }
 
+/**
+ * `column <@ array['a', 'b', …] and cardinality(column) > 0`: a non-empty array holding only a
+ * registry's values, for check constraints on `text[]` columns.
+ */
+export function subsetOf(column: AnyPgColumn, values: readonly string[]): SQL {
+  return sql`${column} <@ array[${sql.raw(values.map(literal).join(', '))}]::text[] and cardinality(${column}) > 0`;
+}
+
 /** `column ~ 'pattern'`, for format checks shared with the Zod schemas (@ge/domain patterns). */
 export function matches(column: AnyPgColumn, pattern: string): SQL {
   return sql`${column} ~ ${sql.raw(literal(pattern))}`;

@@ -4,10 +4,11 @@ import { StatusPanel } from '@/app/status-panel.tsx';
 import { DevicesSection } from './account/devices-section.tsx';
 import { PasswordSection } from './account/password-section.tsx';
 import { StorageSection } from './account/storage-section.tsx';
+import { TokensSection } from './account/tokens-section.tsx';
 
 /**
- * `/account` (M8-T13, ux.md §13): the password, signed-in devices and storage. M8-T2 adds the
- * API tokens here.
+ * `/account` (M8-T13, ux.md §13): the password, signed-in devices, API tokens (M8-T2) and
+ * storage.
  */
 export function AccountPage() {
   const accounts = useAccountsEnabled();
@@ -29,6 +30,7 @@ export function AccountPage() {
       <h1 className="text-base font-medium">{account.data.username}</h1>
       <PasswordSection />
       <DevicesSection />
+      <TokensSection />
       <StorageSection />
     </main>
   );

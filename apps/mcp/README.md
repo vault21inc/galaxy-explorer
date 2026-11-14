@@ -25,8 +25,9 @@ pnpm dev
 ```
 
 Then point your MCP client at it. The server speaks MCP over stdio; `GE_API_URL` says where
-the API is (default `http://127.0.0.1:3100`). Once the API has accounts (M8), `GE_API_TOKEN`
-will carry the token.
+the API is (default `http://127.0.0.1:3100`). In front of an API with accounts (M8), set
+`GE_API_TOKEN` to an API token from your account page: the agent then acts for your account,
+narrowed by the token (read or write, every universe or one).
 
 ### Claude Code
 
@@ -57,6 +58,39 @@ repository's absolute path, and restart Claude Desktop:
 
 It needs Node 26 or later, which runs the TypeScript directly.
 
+## Remote MCP (M8-T2)
+
+For an agent that isn't on the machine running the API, the same server speaks MCP's
+Streamable HTTP transport:
+
+```bash
+pnpm mcp:http
+```
+
+It listens at `http://127.0.0.1:3110/mcp` (`GE_MCP_HOST`, `GE_MCP_PORT`) and calls the API at
+`GE_API_URL`. In production it runs behind Caddy at `https://<domain>/mcp` (M8-T4).
+
+- **Every request needs an API token,** sent as `Authorization: Bearer ge_…`. Make one on your
+  account page, under API tokens: a name, read or write, and optionally one universe. It's
+  shown once. The server checks the token with the API before each request, so a revoked
+  token, or one whose account is disabled, gets a 401 at its next message. On your own
+  machine, in front of an API with no accounts, and listening on a loopback address, it needs
+  none.
+- **A token can do what its account can, never more:** a read token reads as a viewer would;
+  one for a single universe reaches no other. Account, sharing and admin actions refuse tokens.
+- **The History panel names the token:** an agent's changes read "token: claude-code, for
+  aemos", each batch labelled "MCP: objects_create — Gudrun" as before.
+
+Add it to Claude Code:
+
+```bash
+claude mcp add --transport http galaxy-explorer https://<domain>/mcp --header "Authorization: Bearer ge_…"
+```
+
+It's stateless: each request gets a fresh server, and answers with plain JSON. It answers only
+to `127.0.0.1`, `localhost` and `[::1]` on its port, and to the host of `GE_PUBLIC_URL`, so a
+web page can't reach it through a name of its own pointed at your machine.
+
 ## Example prompts
 
 - "List the universes, then the maps of the first one."
@@ -76,10 +110,14 @@ It needs Node 26 or later, which runs the TypeScript directly.
 - `src/call-tool.ts`: a call goes through `@ge/api-client`, labels a write's batch, and returns
   JSON (or the API's problem as a tool error).
 - `src/import-tool.ts`: `import_dry_run`, which takes a file's content rather than an upload.
+- `src/http.ts` and `src/http-main.ts`: remote MCP (M8-T2), the token check in front of it,
+  and its entry.
 - `src/server.ts` and `src/main.ts`: the server and its stdio entry. The tools are served by
   the protocol server under the SDK's `McpServer`, since their schemas are JSON Schema
   already rather than Zod.
 
-The tests check the tool list against the registries (`test/tools.test.ts`), and run an MCP
-client against the real API (`test/mcp.int.test.ts`). The API runs as a separate process,
+The tests check the tool list against the registries (`test/tools.test.ts`), what remote MCP
+lets through (`test/http.test.ts`), and run an MCP client against the real API, in memory and
+over HTTP (`test/mcp.int.test.ts`). `apps/web/e2e/remote-mcp.spec.ts` makes a token on the
+account page and uses it. The API runs as a separate process,
 because this package may not import the API or the database (architecture.md §2).

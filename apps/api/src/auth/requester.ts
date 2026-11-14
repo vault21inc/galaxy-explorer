@@ -6,9 +6,10 @@ import { isEditor } from '../http/preview-roles.ts';
 import { problem } from '../http/problems.ts';
 import type { Requester } from '../services/access.ts';
 import type { AuthContext, SignedIn } from './context.ts';
-import { NotSignedIn } from './errors.ts';
+import { NotSignedIn, Refused } from './errors.ts';
 import { resolveSession } from './sessions.ts';
 import { checkFreshCode } from './sign-in.ts';
+import { bearerOf, resolveToken, tokenActorLabel } from './tokens.ts';
 
 /**
  * Who is asking (M8-T1, architecture.md §7), worked out once per request in an `onRequest`
@@ -16,7 +17,8 @@ import { checkFreshCode } from './sign-in.ts';
  *
  * - `GE_AUTH_MODE=none` (your own machine): every request is the local actor, who may edit,
  *   except readers of the private preview (http/preview-roles.ts).
- * - `GE_AUTH_MODE=required`: the account behind the session cookie, or nobody.
+ * - `GE_AUTH_MODE=required`: the account behind the session cookie, or behind an API token in
+ *   `Authorization: Bearer ge_…` (M8-T2), or nobody.
  *
  * What the requester may do in a universe is decided per route by the access guard
  * (http/access-guard.ts), from `request.requester` (services/access.ts).
@@ -25,7 +27,7 @@ declare module 'fastify' {
   interface FastifyRequest {
     /** The signed-in account; null when signed out, and always with GE_AUTH_MODE=none. */
     account: SignedIn | null;
-    /** The session making the request, if it's signed in. */
+    /** The session making the request, if it's signed in. Never set for an API token. */
     sessionId: string | null;
     /** Who a change is recorded as (History); null for an anonymous visitor. */
     actor: Actor | null;
@@ -128,6 +130,32 @@ export function registerRequester(
   app.addHook('onRequest', async (request, reply) => {
     // The API and the media files it guards (architecture.md §8) need to know who's asking.
     if (!request.url.startsWith('/api/') && !request.url.startsWith('/media/')) return;
+
+    // An API token (M8-T2) acts for its account, narrowed by the token (services/access.ts).
+    const bearer = bearerOf(request.headers.authorization);
+    if (bearer !== undefined) {
+      const resolved = bearer === '' ? null : await resolveToken(auth.db, bearer);
+      if (!resolved) {
+        // Revoked, its account disabled, or never a token: say so plainly, as OAuth's
+        // bearer-token scheme does (RFC 6750 §3), so a client knows to ask for a new one.
+        void reply.header('www-authenticate', 'Bearer error="invalid_token"');
+        return refuse(
+          reply,
+          401,
+          'This API token doesn’t work: it was revoked, its account is disabled, or it was never one. Make a new one on your account page.',
+        );
+      }
+      const { account, grant } = resolved;
+      request.account = account;
+      request.actor = { type: 'api_token', id: grant.id, label: tokenActorLabel(grant, account) };
+      request.canEdit = grant.scope === 'write';
+      // No cookies are read for a token: its access is its account's, never a browser's share
+      // links. And with no cookie in play there's no cross-site request to forge, so the
+      // Origin check below doesn't apply: a page can't make a browser send someone's token.
+      request.requester = { kind: 'account', account, token: grant, shareKeys: NO_SHARE_KEYS };
+      return;
+    }
+
     const token = request.cookies[SESSION_COOKIE];
     if (token) {
       const session = await resolveSession(auth.db, token);
@@ -165,19 +193,27 @@ export function registerRequester(
 }
 
 /**
- * A route guard for account, sharing and admin actions (architecture.md §7): they need someone
- * signed in, in a browser. An API token (M8-T2) acts for its account in content, never here.
+ * For account, sharing and admin actions (architecture.md §7): they need someone signed in, in
+ * a browser. An API token (M8-T2) acts for its account in content, never here. Most routes say
+ * so in their `x-ge-access` (`session: true`, http/access-guard.ts); this is for a handler that
+ * needs a session only for some requests, such as a PATCH that changes a universe's visibility.
  * With no accounts there's nobody to ask for, and nothing is checked.
  */
 export function requireSession(auth: AuthContext | null) {
   // A promise, without awaiting anything, so Fastify treats it as a finished hook.
   return (request: FastifyRequest): Promise<void> => {
-    if (auth && (!request.account || !request.sessionId)) {
-      return Promise.reject(new NotSignedIn('Sign in to change who can see this universe.'));
-    }
-    return Promise.resolve();
+    if (!auth || (request.account && request.sessionId)) return Promise.resolve();
+    return Promise.reject(
+      request.account
+        ? new Refused(TOKENS_REFUSED)
+        : new NotSignedIn('Sign in to change who can see this universe.'),
+    );
   };
 }
+
+/** Why an API token is refused on an account, sharing or admin route. */
+export const TOKENS_REFUSED =
+  'API tokens can’t do this: account and sharing changes need you signed in on the site.';
 
 /**
  * A route guard for destructive actions (M8-T12, T13): the request must carry a current
@@ -188,6 +224,8 @@ export function requireFreshTotp(auth: AuthContext | null) {
   return async (request: FastifyRequest): Promise<void> => {
     if (!auth) return;
     if (!request.account) throw new NotSignedIn();
+    // A code proves someone is at the screen; a token is a program, which has none to give.
+    if (!request.sessionId) throw new Refused(TOKENS_REFUSED);
     const code = request.headers[FRESH_TOTP_HEADER];
     await checkFreshCode(auth, request.account, typeof code === 'string' ? code : undefined);
   };

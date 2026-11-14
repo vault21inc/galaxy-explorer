@@ -7,9 +7,11 @@ import { authServer, ORIGIN } from '../auth/auth-world.ts';
 import {
   buildAccessWorld,
   ROLES,
+  TOKEN_ROLES,
   type AccessWorld,
   type Role,
   type RowSet,
+  type TokenRole,
 } from './access-world.ts';
 
 /**
@@ -21,6 +23,9 @@ import {
  *   writes; an editor writes and gets 403 on what only the owner may do; the owner may do it all.
  * - Any other route must say in its `x-ge-access` that it isn't about one universe.
  * - A route the suite can't classify, or can't fill in, fails it.
+ * - API tokens (M8-T2) get their account's access, narrowed: a read token reads as a viewer
+ *   does, a token for another universe gets 403, and every token gets 403 on the account and
+ *   sharing routes and 404 on the admin ones, whoever's it is.
  *
  * Writes are sent with an empty body. The access check comes before validation, so a refused
  * request is refused whatever it carries, and an allowed one usually stops at a 400. Those that
@@ -53,6 +58,8 @@ function operationsOf(app: ApiServer): Operation[] {
     ),
   );
 }
+
+const NOBODY = '00000000-0000-4000-8000-000000000000';
 
 /** The id a path parameter stands for, from a role's rows; undefined if the suite can't tell. */
 function valueFor(
@@ -95,6 +102,12 @@ function valueFor(
     externalKey: 'contract-key',
     role: 'gallery',
     username: world.memberUsername,
+    // Account and admin routes (M8-T2's token checks): any id will do, since a token is refused
+    // whatever the path names.
+    token: 'no-such-link',
+    sessionId: NOBODY,
+    tokenId: NOBODY,
+    userId: NOBODY,
   };
   return values[param];
 }
@@ -106,6 +119,8 @@ function fill(world: AccessWorld, rows: RowSet, path: string): string {
     return value;
   });
 }
+
+const isToken = (role: Role): role is TokenRole => (TOKEN_ROLES as readonly Role[]).includes(role);
 
 const ALLOWED = (status: number) => ![401, 403, 404].includes(status) && status < 500;
 
@@ -155,8 +170,48 @@ function specLevel(op: Operation): Level {
 }
 const OWN_FIELDS: Record<string, readonly string[]> = { [UNIVERSE]: ['slug', 'visibility'] };
 
-/** What each role should get from a route needing `level`. */
-function expected(role: Role, level: 'read' | 'edit' | 'own'): 'allowed' | 403 | 404 {
+/**
+ * Whether a route needs someone signed in on the site (architecture.md §7), so that an API
+ * token never reaches it, worked out apart from what the route declares: the account's own
+ * settings (its devices, password, storage and tokens), and sharing (who's in, the drafts
+ * count shown before making it public, the link, a transfer, leaving), and deleting a universe.
+ */
+const ACCOUNT_SETTINGS = /^\/api\/v1\/auth\/(sessions|password|storage|tokens)/;
+function specSession(op: Operation): boolean {
+  if (ACCOUNT_SETTINGS.test(op.path)) return true;
+  if (op.method === 'delete' && op.path === UNIVERSE) return true;
+  const sharing = ['/members', '/members/{username}', '/membership', '/drafts', '/share-key'];
+  return [...sharing, '/transfer'].some((tail) => op.path === `${UNIVERSE}${tail}`);
+}
+
+/** What each token should get from a universe route needing `level`. */
+function expectedOfToken(role: TokenRole, op: Operation, level: Level): 'allowed' | 403 | 404 {
+  // The same answer whatever the path names: it tells a token nothing about any universe.
+  if (op.access?.session) return 403;
+  // The admin isn't in the owner's private universe: its token sees what the admin sees.
+  if (role === 'adminToken') return 404;
+  // The owner can read it, so there's nothing to hide: the token is for another universe.
+  if (role === 'elsewhereToken') return 403;
+  if (role === 'readToken') return level === 'read' ? 'allowed' : 403;
+  return 'allowed';
+}
+
+/** What each token should get from a route about no one universe. */
+function unscopedOfToken(role: TokenRole, op: Operation): 'allowed' | 403 | 404 | 'unchecked' {
+  const access = op.access;
+  if (access?.scope === 'admin') return 404;
+  if (op.path === '/api/v1/auth/token') return 'allowed';
+  if (op.path.startsWith('/api/v1/auth/') || access?.session) return 403;
+  if (access?.scope === 'editor') {
+    if (role === 'readToken') return 403;
+    if (role === 'elsewhereToken' && access.newUniverse) return 403;
+    return 'allowed';
+  }
+  return 'unchecked';
+}
+
+/** What each person should get from a route needing `level`. */
+function expected(role: (typeof ROLES)[number], level: Level): 'allowed' | 403 | 404 {
   if (role === 'anonymous' || role === 'stranger') return 404;
   if (role === 'viewer') return level === 'read' ? 'allowed' : 403;
   if (role === 'editor') return level === 'own' ? 403 : 'allowed';
@@ -164,69 +219,94 @@ function expected(role: Role, level: 'read' | 'edit' | 'own'): 'allowed' | 403 |
 }
 
 describe('the access contract (M8-T11)', () => {
-  it('holds for every route in the OpenAPI document', () =>
-    withTestDb(async (db, url) => {
-      const app = await authServer(url);
-      try {
-        const world = await buildAccessWorld(db, app);
-        const failures: string[] = [];
-        let scoped = 0;
-        // Reads, then writes, then deletes, children before parents (the document lists parents
-        // first), so a delete never takes away a row a later request needs.
-        const all = operationsOf(app);
-        const ordered = [
-          ...all.filter((op) => op.method !== 'delete'),
-          ...all.filter((op) => op.method === 'delete').reverse(),
-        ];
-        for (const op of ordered) {
-          const params = paramsOf(op.path);
-          const unscoped = op.access !== undefined && op.access.scope !== 'universe';
-          if (unscoped) continue;
-          const unknown = params.filter((param) => !KNOWN_PARAMS.has(param));
-          if (unknown.length > 0 || !namesUniverse(op.path)) {
-            failures.push(
-              `${op.operationId}: can't classify (${unknown.length > 0 ? `unknown {${unknown.join('}, {')}}` : 'names no universe and declares no x-ge-access'})`,
-            );
-            continue;
-          }
-          scoped += 1;
-          const access = op.access?.scope === 'universe' ? op.access : undefined;
-          const declared = access?.level ?? (op.method === 'get' ? 'read' : 'edit');
-          const level = specLevel(op);
-          if (declared !== level) {
-            failures.push(`${op.operationId}: declares ${declared}, data-model §8 says ${level}`);
-          }
-          const ownFields = op.method === 'patch' ? (OWN_FIELDS[op.path] ?? []) : [];
-          const missing = ownFields.filter((field) => !access?.ownFields?.includes(field));
-          if (missing.length > 0) {
-            failures.push(`${op.operationId}: ${missing.join(', ')} should be the owner's alone`);
-          }
-          for (const role of ROLES) {
-            const { status, body } = await attempt(app, world, role, op);
-            const want = expected(role, level);
-            const ok = want === 'allowed' ? ALLOWED(status) : status === want;
-            if (!ok)
+  it(
+    'holds for every route in the OpenAPI document',
+    () =>
+      withTestDb(async (db, url) => {
+        const app = await authServer(url);
+        try {
+          const world = await buildAccessWorld(db, app);
+          const failures: string[] = [];
+          let scoped = 0;
+          // Reads, then writes, then deletes, children before parents (the document lists parents
+          // first), so a delete never takes away a row a later request needs.
+          const all = operationsOf(app);
+          const ordered = [
+            ...all.filter((op) => op.method !== 'delete'),
+            ...all.filter((op) => op.method === 'delete').reverse(),
+          ];
+          for (const op of ordered) {
+            const params = paramsOf(op.path);
+            if (Boolean(op.access?.session) !== specSession(op)) {
               failures.push(
-                `${op.operationId} as ${role}: ${String(status)}, wanted ${String(want)}: ${body.slice(0, 160)}`,
+                `${op.operationId}: ${op.access?.session ? 'needs' : 'doesn’t need'} a session, architecture.md §7 says the opposite`,
               );
-          }
-          // Fields only the owner may change, such as a universe's address.
-          for (const field of ownFields) {
-            const asEditor = await attempt(app, world, 'editor', op, { [field]: 'changed' });
-            if (asEditor.status !== 403)
+            }
+            const unscoped = op.access !== undefined && op.access.scope !== 'universe';
+            if (unscoped) {
+              // A route about no one universe: what tokens get from it.
+              for (const role of TOKEN_ROLES) {
+                const want = unscopedOfToken(role, op);
+                if (want === 'unchecked') continue;
+                const { status, body } = await attempt(app, world, role, op);
+                const ok = want === 'allowed' ? ALLOWED(status) : status === want;
+                if (!ok)
+                  failures.push(
+                    `${op.operationId} as ${role}: ${String(status)}, wanted ${String(want)}: ${body.slice(0, 160)}`,
+                  );
+              }
+              continue;
+            }
+            const unknown = params.filter((param) => !KNOWN_PARAMS.has(param));
+            if (unknown.length > 0 || !namesUniverse(op.path)) {
               failures.push(
-                `${op.operationId} {${field}} as editor: ${String(asEditor.status)}, wanted 403`,
+                `${op.operationId}: can't classify (${unknown.length > 0 ? `unknown {${unknown.join('}, {')}}` : 'names no universe and declares no x-ge-access'})`,
               );
-            const asOwner = await attempt(app, world, 'owner', op, { [field]: 'changed' });
-            if (!ALLOWED(asOwner.status))
-              failures.push(`${op.operationId} {${field}} as owner: ${String(asOwner.status)}`);
+              continue;
+            }
+            scoped += 1;
+            const access = op.access?.scope === 'universe' ? op.access : undefined;
+            const declared = access?.level ?? (op.method === 'get' ? 'read' : 'edit');
+            const level = specLevel(op);
+            if (declared !== level) {
+              failures.push(`${op.operationId}: declares ${declared}, data-model §8 says ${level}`);
+            }
+            const ownFields = op.method === 'patch' ? (OWN_FIELDS[op.path] ?? []) : [];
+            const missing = ownFields.filter((field) => !access?.ownFields?.includes(field));
+            if (missing.length > 0) {
+              failures.push(`${op.operationId}: ${missing.join(', ')} should be the owner's alone`);
+            }
+            // Tokens before the owner, whose allowed deletes take away rows they name too.
+            const roles: Role[] = [...ROLES.filter((r) => r !== 'owner'), ...TOKEN_ROLES, 'owner'];
+            for (const role of roles) {
+              const { status, body } = await attempt(app, world, role, op);
+              const want = isToken(role) ? expectedOfToken(role, op, level) : expected(role, level);
+              const ok = want === 'allowed' ? ALLOWED(status) : status === want;
+              if (!ok)
+                failures.push(
+                  `${op.operationId} as ${role}: ${String(status)}, wanted ${String(want)}: ${body.slice(0, 160)}`,
+                );
+            }
+            // Fields only the owner may change, such as a universe's address.
+            for (const field of ownFields) {
+              const asEditor = await attempt(app, world, 'editor', op, { [field]: 'changed' });
+              if (asEditor.status !== 403)
+                failures.push(
+                  `${op.operationId} {${field}} as editor: ${String(asEditor.status)}, wanted 403`,
+                );
+              const asOwner = await attempt(app, world, 'owner', op, { [field]: 'changed' });
+              if (!ALLOWED(asOwner.status))
+                failures.push(`${op.operationId} {${field}} as owner: ${String(asOwner.status)}`);
+            }
           }
+          expect(failures).toEqual([]);
+          // The registries' routes are all here: every kind's and settings resource's, and more.
+          expect(scoped).toBeGreaterThan(100);
+        } finally {
+          await app.close();
         }
-        expect(failures).toEqual([]);
-        // The registries' routes are all here: every kind's and settings resource's, and more.
-        expect(scoped).toBeGreaterThan(100);
-      } finally {
-        await app.close();
-      }
-    }));
+      }),
+    // Every route as nine requesters: a few seconds alone, more beside the other suites.
+    60_000,
+  );
 });

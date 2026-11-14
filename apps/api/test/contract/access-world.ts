@@ -1,6 +1,7 @@
 import { schema, withBatch, type Database } from '@ge/db';
 import { rt } from '@ge/domain';
 import { sql } from 'drizzle-orm';
+import { createToken } from '../../src/auth/tokens.ts';
 import type { ApiServer } from '../../src/server.ts';
 import { codeFor, makeAccount, ORIGIN, sessionOf, signIn } from '../auth/auth-world.ts';
 
@@ -12,10 +13,15 @@ import { codeFor, makeAccount, ORIGIN, sessionOf, signIn } from '../auth/auth-wo
  * The editor and the owner each get their own set of rows (a map with one entity of every kind,
  * settings rows, an asset, links and so on): the suite's allowed requests may change or delete
  * what they name, and with separate sets one role's requests never disturb the other's.
+ *
+ * API tokens (M8-T2) are roles too: the owner's read token, its write token (with a set of rows
+ * of its own), its token for another universe, and an admin's write token.
  */
 
 export const ROLES = ['anonymous', 'stranger', 'viewer', 'editor', 'owner'] as const;
-export type Role = (typeof ROLES)[number];
+export const TOKEN_ROLES = ['readToken', 'writeToken', 'elsewhereToken', 'adminToken'] as const;
+export type TokenRole = (typeof TOKEN_ROLES)[number];
+export type Role = (typeof ROLES)[number] | TokenRole;
 
 /** The ids one role's requests name, by path parameter. */
 export interface RowSet {
@@ -47,7 +53,7 @@ export interface AccessWorld {
    * remove a member or leave (M8-T12); the suite calls this after every write.
    */
   restoreMembers: () => Promise<void>;
-  /** Each role's `cookie` header (none for anonymous). */
+  /** Each role's `cookie` header (none for anonymous), or a token's `authorization`. */
   headers: Record<Role, Record<string, string>>;
   /** The rows each role's requests name: the editor's own set, the owner's for everyone else. */
   rows: Record<Role, RowSet>;
@@ -250,6 +256,23 @@ export async function buildAccessWorld(db: Database, app: ApiServer): Promise<Ac
   await restoreMembers();
   const ownerRows = await rowSet(db, call, universeId, 'owner');
   const editorRows = await rowSet(db, call, universeId, 'editor');
+  const tokenRows = await rowSet(db, call, universeId, 'token');
+
+  // Tokens straight in the database: what they may do is the subject here, not making them.
+  const elsewhere = await call('POST', '/universes', { slug: 'other', name: rt.plain('Other') });
+  const admin = await makeAccount(db, 'admin', { role: 'admin' });
+  const bearer = async (
+    userId: string,
+    scope: 'read' | 'write',
+    only: string | null = null,
+  ): Promise<Record<string, string>> => {
+    const { secret } = await createToken(db, userId, { name: scope, scope, universeId: only });
+    return { authorization: `Bearer ${secret}` };
+  };
+  headers.readToken = await bearer(accounts.owner.id, 'read');
+  headers.writeToken = await bearer(accounts.owner.id, 'write');
+  headers.elsewhereToken = await bearer(accounts.owner.id, 'write', elsewhere.data.id as string);
+  headers.adminToken = await bearer(admin.id, 'write');
   return {
     universeId,
     memberUsername: accounts.viewer.username,
@@ -261,6 +284,10 @@ export async function buildAccessWorld(db: Database, app: ApiServer): Promise<Ac
       viewer: ownerRows,
       editor: editorRows,
       owner: ownerRows,
+      readToken: ownerRows,
+      writeToken: tokenRows,
+      elsewhereToken: ownerRows,
+      adminToken: ownerRows,
     },
   };
 }

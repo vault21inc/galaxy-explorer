@@ -11,6 +11,7 @@ import {
   MEMBER_ROLES,
   RELATION_TYPES,
   SITE_ROLES,
+  TOKEN_SCOPES,
   VISIBILITIES,
 } from '@ge/domain';
 import { sql } from 'drizzle-orm';
@@ -54,6 +55,7 @@ describe('registry ↔ database consistency', () => {
     ['account_links_role_check', SITE_ROLES],
     ['universes_visibility_check', VISIBILITIES],
     ['universe_members_role_check', MEMBER_ROLES],
+    ['api_tokens_scopes_check', TOKEN_SCOPES],
   ])('%s lists exactly the registry values', (constraint, values) =>
     withTestDb(async (db) => {
       expect((await checkValues(db, constraint)).sort()).toEqual([...values].sort());

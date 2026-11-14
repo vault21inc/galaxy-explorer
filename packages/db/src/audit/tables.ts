@@ -3,6 +3,7 @@ import { getTableConfig, type PgTable } from 'drizzle-orm/pg-core';
 import {
   accessEvents,
   accountLinks,
+  apiTokens,
   assets,
   celestialObjects,
   citations,
@@ -37,7 +38,7 @@ import {
  * missing here, or if a listed table lacks the trigger.
  */
 /**
- * The account and access tables (M8-T1, T11, data-model §3.8): not content, so not audited.
+ * The account and access tables (M8-T1, T2, T11, data-model §3.8): not content, so not audited.
  * Signing in, sessions, links and sharing are never undone through History, and password hashes
  * stay out of `change_log`.
  */
@@ -45,6 +46,7 @@ export const ACCOUNT_TABLES: readonly PgTable[] = [
   users,
   sessions,
   accountLinks,
+  apiTokens,
   universeMembers,
   accessEvents,
 ];

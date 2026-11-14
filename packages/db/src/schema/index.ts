@@ -6,7 +6,14 @@
  * Foreign keys are in SQL at the end of each migration, not here: see migrations/README.md.
  * The account tables (M8-T1) are in accounts.ts; they aren't audited.
  */
-export { accessEvents, accountLinks, sessions, universeMembers, users } from './accounts.ts';
+export {
+  accessEvents,
+  accountLinks,
+  apiTokens,
+  sessions,
+  universeMembers,
+  users,
+} from './accounts.ts';
 export { citations, entityImages, entityLinks, entityRelations, fieldValues } from './aspects.ts';
 export { assets } from './assets.ts';
 export { maps, universes } from './containers.ts';

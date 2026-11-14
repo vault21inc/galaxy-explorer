@@ -28,6 +28,7 @@
     "check": "prettier --check . && turbo run lint typecheck test",
     "perf": "pnpm --filter @ge/perf perf",
     "mcp": "pnpm --silent --filter @ge/mcp start",
+    "mcp:http": "pnpm --silent --filter @ge/mcp start:http",
     "admin:create-user": "pnpm --silent --filter @ge/api admin create-user",
     "admin:invite": "pnpm --silent --filter @ge/api admin invite",
     "admin:reset-link": "pnpm --silent --filter @ge/api admin reset-link"

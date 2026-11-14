@@ -88,13 +88,15 @@ export async function getUniverseBySlug(ex: Executor, slug: string): Promise<Uni
  * The universes a requester can read, which is what lists show (data-model §8): public ones,
  * plus the account's own and those shared with it, plus, for an admin, the installation's own.
  * A link-only universe is never listed for someone who only has its key.
+ *
+ * This is `universeAccess`'s rule as SQL, for a list's filter: the two must agree.
  */
 function readableBy(requester: Requester): SQL | undefined {
   if (requester.kind === 'local') return undefined;
   const isPublic = eq(universes.visibility, 'public');
   if (requester.kind === 'anonymous') return isPublic;
   const { id, role } = requester.account;
-  return or(
+  const readable = or(
     isPublic,
     eq(universes.ownerId, id),
     exists(
@@ -103,6 +105,9 @@ function readableBy(requester: Requester): SQL | undefined {
     ),
     role === 'admin' ? isNull(universes.ownerId) : undefined,
   );
+  // A token for one universe lists that one alone (M8-T2), as `universeAccess` has it.
+  const only = requester.token?.universeId;
+  return only ? and(readable, eq(universes.id, only)) : readable;
 }
 
 export async function listUniverses(

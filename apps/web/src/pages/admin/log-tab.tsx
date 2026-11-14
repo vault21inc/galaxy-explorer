@@ -22,14 +22,20 @@ const ACTION_NAMES: Record<AccessEvent['action'], string> = {
   'user.quota': 'changed a media quota',
   'user.delete': 'deleted an account',
   'user.password': 'changed their password',
+  'token.create': 'made an API token',
+  'token.revoke': 'revoked an API token',
 };
 
 /** To whom or what: the account and the universe, by their names now, or as logged. */
 function subjectOf(event: AccessEvent): string {
   const text = (key: string) => (typeof event.detail[key] === 'string' ? event.detail[key] : null);
   const user = event.user ?? text('username') ?? text('to');
-  const universe = event.universe ?? text('slug');
-  return [user, universe && `/u/${universe}`].filter(Boolean).join(' · ') || '—';
+  const universe = event.universe ?? text('slug') ?? text('universe');
+  // An API token's events (M8-T2) name the token too.
+  const token = event.action.startsWith('token.') ? text('name') : null;
+  return (
+    [token && `“${token}”`, user, universe && `/u/${universe}`].filter(Boolean).join(' · ') || '—'
+  );
 }
 
 /** The Log screen (M8-T13): account and access changes, newest first, 50 at a time. */

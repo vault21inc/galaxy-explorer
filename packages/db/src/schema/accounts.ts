@@ -1,4 +1,10 @@
-import { ACCOUNT_LINK_PURPOSES, MEMBER_ROLES, SITE_ROLES, USERNAME_PATTERN } from '@ge/domain';
+import {
+  ACCOUNT_LINK_PURPOSES,
+  MEMBER_ROLES,
+  SITE_ROLES,
+  TOKEN_SCOPES,
+  USERNAME_PATTERN,
+} from '@ge/domain';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -12,7 +18,7 @@ import {
   unique,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { bytea, idColumn, matches, oneOf } from './helpers.ts';
+import { bytea, idColumn, matches, oneOf, subsetOf } from './helpers.ts';
 
 /**
  * Accounts and signing in (M8-T1, data-model §3.8, D-34). These tables are **not** audited:
@@ -72,6 +78,37 @@ export const sessions = pgTable(
   (t) => [
     unique('sessions_token_hash_uq').on(t.tokenHash),
     index('sessions_user_idx').on(t.userId),
+  ],
+);
+
+/**
+ * API tokens (M8-T2, D-34): an agent's way in, acting for the account that made it, never more
+ * than that account may do at the moment of each request, and narrowed by its scopes and, if
+ * set, to one universe. Only the token's SHA-256 is stored, as for sessions; the token itself
+ * is shown once, when it's made. Revoking one sets `revokedAt`: it stops at once.
+ */
+export const apiTokens = pgTable(
+  'api_tokens',
+  {
+    id: idColumn(),
+    userId: uuid().notNull(),
+    /** What its account calls it, such as 'claude-code on laptop': shown in History. */
+    name: text().notNull(),
+    tokenHash: bytea().notNull(),
+    /** `TOKEN_SCOPES` in @ge/domain: a read token's are `{read}`, a write token's `{read,write}`. */
+    scopes: text().array().notNull(),
+    /** The one universe it may reach; null for every universe its account can. */
+    universeId: uuid(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    /** Noted at most every few minutes, so that using a token doesn't mean writing each time. */
+    lastUsedAt: timestamp({ withTimezone: true }),
+    revokedAt: timestamp({ withTimezone: true }),
+  },
+  (t) => [
+    unique('api_tokens_token_hash_uq').on(t.tokenHash),
+    index('api_tokens_user_idx').on(t.userId),
+    check('api_tokens_scopes_check', subsetOf(t.scopes, TOKEN_SCOPES)),
+    check('api_tokens_name_check', sql`length(${t.name}) between 1 and 60`),
   ],
 );
 

@@ -10,12 +10,7 @@ import {
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import type { AuthContext } from '../auth/context.ts';
-import {
-  requireFreshTotp,
-  requireSession,
-  SHARE_COOKIE_TTL_MS,
-  shareCookieName,
-} from '../auth/requester.ts';
+import { requireFreshTotp, SHARE_COOKIE_TTL_MS, shareCookieName } from '../auth/requester.ts';
 import { routeAccess } from '../http/access-guard.ts';
 import { problem } from '../http/problems.ts';
 import { envelope, problemResponses } from '../http/schemas.ts';
@@ -38,8 +33,9 @@ import {
  *
  * The access guard checks the level each route declares: listing members needs `edit` (editors
  * see the Sharing section, read-only), changing them `own`, and leaving `read` (a viewer may
- * leave too). Changes need a signed-in session, never an API token, and a transfer also needs a
- * current two-factor code. Every change is recorded in `access_events`.
+ * leave too). Every route but opening a share link needs a signed-in session (`session: true`),
+ * so an API token reaches none of them (M8-T2), and a transfer also needs a current two-factor
+ * code. Every change is recorded in `access_events`.
  */
 
 const tags = ['sharing'];
@@ -53,8 +49,6 @@ export const sharingRoutes: FastifyPluginCallbackZod<{
   db: Database;
   auth: AuthContext | null;
 }> = (app, { db, auth }, done) => {
-  const session = requireSession(auth);
-
   /** The universe as this requester now sees it. */
   const readFor = async (requester: Requester, universeId: string) => {
     const [data] = await universeReads(db, requester, [await getUniverse(db, universeId)]);
@@ -70,7 +64,7 @@ export const sharingRoutes: FastifyPluginCallbackZod<{
         summary: 'List the accounts a universe is shared with',
         description: `${SHARING_DOC} Its owner isn’t listed: that’s the universe’s \`owner\`. For its owner and editors.`,
         operationId: 'universes.members.list',
-        ...routeAccess({ scope: 'universe', level: 'edit' }),
+        ...routeAccess({ scope: 'universe', level: 'edit', session: true }),
         params: universeParams,
         response: { 200: envelope(z.array(UniverseMemberRead)), ...problemResponses },
       },
@@ -86,7 +80,7 @@ export const sharingRoutes: FastifyPluginCallbackZod<{
         summary: 'Count a universe’s drafts',
         description: `${SHARING_DOC} How many maps and entries are drafts, which readers never see: what making the universe public leaves hidden. For its owner and editors.`,
         operationId: 'universes.drafts.count',
-        ...routeAccess({ scope: 'universe', level: 'edit' }),
+        ...routeAccess({ scope: 'universe', level: 'edit', session: true }),
         params: universeParams,
         response: {
           200: envelope(z.object({ maps: z.int().nonnegative(), entries: z.int().nonnegative() })),
@@ -105,12 +99,11 @@ export const sharingRoutes: FastifyPluginCallbackZod<{
         summary: 'Share a universe with an account, or change its role',
         description: `${SHARING_DOC} Takes an exact username: one that doesn’t exist is a 404 that says so, and nothing lists or suggests accounts.`,
         operationId: 'universes.members.put',
-        ...routeAccess({ scope: 'universe', level: 'own' }),
+        ...routeAccess({ scope: 'universe', level: 'own', session: true }),
         params: memberParams,
         body: UniverseMemberWrite,
         response: { 200: envelope(UniverseMemberRead), ...problemResponses },
       },
-      preHandler: session,
     },
     async (request) => {
       const { universeId, username } = request.params;
@@ -129,11 +122,10 @@ export const sharingRoutes: FastifyPluginCallbackZod<{
         summary: 'Stop sharing a universe with an account',
         description: `${SHARING_DOC} A member leaving uses \`DELETE /universes/{universeId}/membership\` instead.`,
         operationId: 'universes.members.delete',
-        ...routeAccess({ scope: 'universe', level: 'own' }),
+        ...routeAccess({ scope: 'universe', level: 'own', session: true }),
         params: memberParams,
         response: { 204: z.null(), ...problemResponses },
       },
-      preHandler: session,
     },
     async (request, reply) => {
       const { universeId, username } = request.params;
@@ -150,11 +142,10 @@ export const sharingRoutes: FastifyPluginCallbackZod<{
         summary: 'Leave a universe shared with you',
         description: `${SHARING_DOC} The signed-in account stops being a member. Its owner can’t leave: they transfer or delete it instead.`,
         operationId: 'universes.leave',
-        ...routeAccess({ scope: 'universe', level: 'read' }),
+        ...routeAccess({ scope: 'universe', level: 'read', session: true }),
         params: universeParams,
         response: { 204: z.null(), ...problemResponses },
       },
-      preHandler: session,
     },
     async (request, reply) => {
       await db.transaction((tx) => leaveUniverse(tx, request.requester, request.params.universeId));
@@ -170,11 +161,10 @@ export const sharingRoutes: FastifyPluginCallbackZod<{
         summary: 'Make a new share link',
         description: `${SHARING_DOC} Replaces a link-only universe’s key, so the old link stops working for everyone who had it, at once. The new link is \`/u/{slug}?k={shareKey}\`.`,
         operationId: 'universes.shareKey.replace',
-        ...routeAccess({ scope: 'universe', level: 'own' }),
+        ...routeAccess({ scope: 'universe', level: 'own', session: true }),
         params: universeParams,
         response: { 200: envelope(UniverseRead), ...problemResponses },
       },
-      preHandler: session,
     },
     async (request) => {
       const { universeId } = request.params;
@@ -191,12 +181,12 @@ export const sharingRoutes: FastifyPluginCallbackZod<{
         summary: 'Hand a universe to another account',
         description: `${SHARING_DOC} Makes that account the owner, if its media quota has room for the universe’s images; the previous owner stays on as an editor. Needs a current two-factor code in \`X-GE-TOTP\`.`,
         operationId: 'universes.transfer',
-        ...routeAccess({ scope: 'universe', level: 'own' }),
+        ...routeAccess({ scope: 'universe', level: 'own', session: true }),
         params: universeParams,
         body: UniverseTransfer,
         response: { 200: envelope(UniverseRead), ...problemResponses },
       },
-      preHandler: [session, requireFreshTotp(auth)],
+      preHandler: requireFreshTotp(auth),
     },
     async (request) => {
       const { universeId } = request.params;

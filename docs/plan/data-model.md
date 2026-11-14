@@ -473,6 +473,7 @@ create table api_tokens (
 - **As built in M8-T12:** `access_events` has an index on `universe_id` too, and its actions are `ACCESS_EVENT_ACTIONS` in `@ge/domain` (no check constraint, since M8-T13 adds more). A deleted universe's events keep its slug and name in `detail`.
 - **As built in M8-T1:** `sessions` has an `id` and `last_seen_at`, and `users` has `totp_last_step`. The link steps keep nothing in `account_links` between them: `start` returns the chosen username, the password's hash and the new two-factor secret sealed by the API, and `finish` opens them (M8-T1's as-built notes).
 - **A token** can do what its account can at the moment of each request, no more: narrowed by its scopes and, if set, to one universe. There is no admin scope: account and admin actions need a session.
+- **As built in M8-T2:** `api_tokens` checks a name of 1 to 60 characters and a non-empty set of scopes, from `TOKEN_SCOPES` in `@ge/domain`; a write token's are `{read,write}`. A revoked token's row stays, with `revoked_at` set. A read token reads as a viewer would (D-42).
 - **Media quota:** the sum of `assets.byte_size` over the universes an account owns. An upload that would pass it is refused with a 413 that says how much is used. Uploads by an editor count against the universe's owner.
 
 ## 4. Documents stored as jsonb

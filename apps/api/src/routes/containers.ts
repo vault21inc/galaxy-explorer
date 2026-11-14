@@ -153,7 +153,7 @@ export const containerRoutes: FastifyPluginCallbackZod<{
         summary: 'Create a universe',
         description: `${UNIVERSE_DOC} With accounts, the new universe belongs to the account that makes it and starts private.`,
         operationId: 'universes.create',
-        ...routeAccess({ scope: 'editor' }),
+        ...routeAccess({ scope: 'editor', newUniverse: true }),
         body: UniverseCreate,
         response: { 201: envelope(UniverseRead), ...problemResponses },
       },
@@ -240,12 +240,12 @@ export const containerRoutes: FastifyPluginCallbackZod<{
         summary: 'Delete a universe and everything in it',
         description: `${UNIVERSE_DOC} Only its owner may, signed in, with a current two-factor code in \`X-GE-TOTP\` (M8-T12). It can't be undone.`,
         operationId: 'universes.delete',
-        ...routeAccess({ scope: 'universe', level: 'own' }),
+        ...routeAccess({ scope: 'universe', level: 'own', session: true }),
         params: universeParams,
         body: versionBody,
         response: { 204: z.null(), ...problemResponses },
       },
-      preHandler: [requireSession(auth), requireFreshTotp(auth)],
+      preHandler: requireFreshTotp(auth),
     },
     async (request, reply) => {
       const { universeId } = request.params;

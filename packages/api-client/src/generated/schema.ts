@@ -222,6 +222,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The account’s API tokens
+         * @description An API token acts for the account that made it, never doing more than that account may at the moment of each request: `read` reads as a viewer would, `write` changes content too, and a token for one universe reaches no other. Account, sharing and admin routes refuse tokens. Lists the tokens that still work, newest first, with when each was last used.
+         */
+        get: operations["auth.tokens.list"];
+        put?: never;
+        /**
+         * Make an API token
+         * @description An API token acts for the account that made it, never doing more than that account may at the moment of each request: `read` reads as a viewer would, `write` changes content too, and a token for one universe reaches no other. Account, sharing and admin routes refuse tokens. Needs a current two-factor code in `X-GE-TOTP`. The response holds the token itself (`secret`), which is never shown again.
+         */
+        post: operations["auth.tokens.create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/tokens/{tokenId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke an API token
+         * @description An API token acts for the account that made it, never doing more than that account may at the moment of each request: `read` reads as a viewer would, `write` changes content too, and a token for one universe reaches no other. Account, sharing and admin routes refuse tokens. It stops working at once.
+         */
+        delete: operations["auth.tokens.revoke"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The API token this request is made with
+         * @description An API token acts for the account that made it, never doing more than that account may at the moment of each request: `read` reads as a viewer would, `write` changes content too, and a token for one universe reaches no other. Account, sharing and admin routes refuse tokens. Its name, scope and universe, and its account's username: what the MCP server checks before it serves anyone. Only for requests made with a token.
+         */
+        get: operations["auth.token.current"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/users": {
         parameters: {
             query?: never;
@@ -2950,7 +3014,7 @@ export interface components {
             id: string;
             actor: string;
             /** @enum {string} */
-            action: "member.add" | "member.role" | "member.remove" | "member.leave" | "universe.visibility" | "universe.link" | "universe.transfer" | "universe.delete" | "universe.takedown" | "invite.create" | "user.reset" | "user.disable" | "user.enable" | "user.role" | "user.quota" | "user.delete" | "user.password";
+            action: "member.add" | "member.role" | "member.remove" | "member.leave" | "universe.visibility" | "universe.link" | "universe.transfer" | "universe.delete" | "universe.takedown" | "invite.create" | "user.reset" | "user.disable" | "user.enable" | "user.role" | "user.quota" | "user.delete" | "user.password" | "token.create" | "token.revoke";
             user: string | null;
             universe: string | null;
             detail: {
@@ -2958,6 +3022,43 @@ export interface components {
             };
             /** Format: date-time */
             createdAt: string;
+        };
+        ApiTokenReadInput: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @enum {string} */
+            scope: "read" | "write";
+            universe: {
+                /** Format: uuid */
+                id: string;
+                slug: string;
+                name: string;
+            } | null;
+            /** Format: date-time */
+            createdAt: string;
+            lastUsedAt: string | null;
+        };
+        ApiTokenCreatedInput: {
+            token: components["schemas"]["ApiTokenReadInput"];
+            secret: string;
+        };
+        CurrentTokenReadInput: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @enum {string} */
+            scope: "read" | "write";
+            universe: {
+                /** Format: uuid */
+                id: string;
+                slug: string;
+                name: string;
+            } | null;
+            /** Format: date-time */
+            createdAt: string;
+            lastUsedAt: string | null;
+            username: string;
         };
         UniverseMemberReadInput: {
             username: string;
@@ -5065,7 +5166,7 @@ export interface components {
             id: string;
             actor: string;
             /** @enum {string} */
-            action: "member.add" | "member.role" | "member.remove" | "member.leave" | "universe.visibility" | "universe.link" | "universe.transfer" | "universe.delete" | "universe.takedown" | "invite.create" | "user.reset" | "user.disable" | "user.enable" | "user.role" | "user.quota" | "user.delete" | "user.password";
+            action: "member.add" | "member.role" | "member.remove" | "member.leave" | "universe.visibility" | "universe.link" | "universe.transfer" | "universe.delete" | "universe.takedown" | "invite.create" | "user.reset" | "user.disable" | "user.enable" | "user.role" | "user.quota" | "user.delete" | "user.password" | "token.create" | "token.revoke";
             user: string | null;
             universe: string | null;
             detail: {
@@ -5073,6 +5174,43 @@ export interface components {
             };
             /** Format: date-time */
             createdAt: string;
+        };
+        ApiTokenRead: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @enum {string} */
+            scope: "read" | "write";
+            universe: {
+                /** Format: uuid */
+                id: string;
+                slug: string;
+                name: string;
+            } | null;
+            /** Format: date-time */
+            createdAt: string;
+            lastUsedAt: string | null;
+        };
+        ApiTokenCreated: {
+            token: components["schemas"]["ApiTokenRead"];
+            secret: string;
+        };
+        CurrentTokenRead: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @enum {string} */
+            scope: "read" | "write";
+            universe: {
+                /** Format: uuid */
+                id: string;
+                slug: string;
+                name: string;
+            } | null;
+            /** Format: date-time */
+            createdAt: string;
+            lastUsedAt: string | null;
+            username: string;
         };
         UniverseMemberRead: {
             username: string;
@@ -6849,6 +6987,317 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["StorageRead"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "auth.tokens.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ApiTokenRead"][];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "auth.tokens.create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    /** @enum {string} */
+                    scope: "read" | "write";
+                    universeId?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ApiTokenCreated"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "auth.tokens.revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tokenId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "auth.token.current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CurrentTokenRead"];
                     };
                 };
             };

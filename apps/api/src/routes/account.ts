@@ -6,7 +6,6 @@ import { z } from 'zod';
 import type { AuthContext } from '../auth/context.ts';
 import { NotSignedIn, Refused, TooManyAttempts } from '../auth/errors.ts';
 import { checkPassword, hashPassword } from '../auth/passwords.ts';
-import { requireSession } from '../auth/requester.ts';
 import { endSessionsOf } from '../auth/sessions.ts';
 import { checkFreshCode } from '../auth/sign-in.ts';
 import { routeAccess } from '../http/access-guard.ts';
@@ -16,8 +15,9 @@ import { recordAccessEvent } from '../services/access-events.ts';
 
 /**
  * The account page's own routes (M8-T13, ux.md §13): changing the password, and the media each
- * of the account's universes holds. Signed-in devices are `/auth/sessions` (M8-T1). Both need a
- * session; with no accounts they answer 404, like the other account routes.
+ * of the account's universes holds. Signed-in devices are `/auth/sessions` (M8-T1), API tokens
+ * `/auth/tokens` (M8-T2). Both need a session (`session: true`), so API tokens never reach
+ * them; with no accounts they answer 404, like the other account routes.
  */
 
 const tags = ['auth'];
@@ -35,7 +35,6 @@ export const accountRoutes: FastifyPluginCallbackZod<{
         .send(problem(404, 'This server has no accounts: it runs with GE_AUTH_MODE=none.')),
     );
   }
-  const session = requireSession(auth);
   const authOf = (): AuthContext => {
     if (!auth) throw new NotSignedIn();
     return auth;
@@ -50,11 +49,10 @@ export const accountRoutes: FastifyPluginCallbackZod<{
         summary: 'Change the password',
         description:
           'Needs the current password and a current code from the authenticator app. Every other device is signed out; this one stays signed in. Failures count against the same limits as signing in.',
-        ...routeAccess({ scope: 'open' }),
+        ...routeAccess({ scope: 'open', session: true }),
         body: PasswordChange,
         response: { 204: z.null(), ...problemResponses },
       },
-      preHandler: session,
     },
     async (request, reply) => {
       const context = authOf();
@@ -93,10 +91,9 @@ export const accountRoutes: FastifyPluginCallbackZod<{
         summary: 'Media used, by universe',
         description:
           'How much of the account’s media quota its universes use, universe by universe. Images count against the universe’s owner, whoever uploaded them.',
-        ...routeAccess({ scope: 'open' }),
+        ...routeAccess({ scope: 'open', session: true }),
         response: { 200: envelope(StorageRead), ...problemResponses },
       },
-      preHandler: session,
     },
     async (request) => {
       const account = request.account;

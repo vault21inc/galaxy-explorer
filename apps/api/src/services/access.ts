@@ -2,6 +2,7 @@ import { schema, type Executor } from '@ge/db';
 import type { MemberRole, UniverseAccess, Visibility } from '@ge/domain';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { SignedIn } from '../auth/context.ts';
+import type { TokenGrant } from '../auth/tokens.ts';
 
 /**
  * Who may do what in a universe (M8-T11, D-34, data-model §8). `universeAccess` is the only
@@ -12,16 +13,23 @@ import type { SignedIn } from '../auth/context.ts';
  * Who is asking, worked out once per request (auth/requester.ts):
  * - `local`: GE_AUTH_MODE=none, on your own machine, where everyone owns everything, except
  *   the private preview's readers (`mayEdit: false`), who only read;
- * - `account`: someone signed in;
+ * - `account`: someone signed in, or an API token acting for its account (M8-T2), which then
+ *   carries the token's grant;
  * - `anonymous`: nobody signed in.
  *
- * `shareKeys` are the share links' keys this browser has unlocked, by universe (M8-T12).
+ * `shareKeys` are the share links' keys this browser has unlocked, by universe (M8-T12). A
+ * request made with a token reads no cookies, so it has none.
  */
 export type Requester = { shareKeys: ReadonlyMap<string, string> } & (
   | { kind: 'local'; mayEdit: boolean }
-  | { kind: 'account'; account: SignedIn }
+  | { kind: 'account'; account: SignedIn; token?: TokenGrant }
   | { kind: 'anonymous' }
 );
+
+/** The grant of the API token making the request, if one is. */
+export function tokenOf(requester: Requester): TokenGrant | null {
+  return requester.kind === 'account' ? (requester.token ?? null) : null;
+}
 
 /** What `universeAccess` needs to know about a universe. */
 export interface AccessFacts {
@@ -48,8 +56,34 @@ export function atLeast(access: UniverseAccess, needed: UniverseAccess): boolean
  * - `none`: everyone else, who get a 404 as if it didn't exist.
  *
  * Being an admin gives nothing else: admins manage accounts, not other people's content.
+ *
+ * An API token (M8-T2) gets its account's access, narrowed (`tokenNarrowed`): it never does
+ * more than its account may at that moment, so a token loses a universe the moment its account
+ * does.
  */
 export function universeAccess(requester: Requester, universe: AccessFacts): UniverseAccess {
+  const access = accountAccess(requester, universe);
+  const token = tokenOf(requester);
+  return token ? tokenNarrowed(token, universe.id, access) : access;
+}
+
+/**
+ * A token's narrowing of its account's access:
+ * - a token for one universe reaches no other (`none`);
+ * - a `read` token reads as a viewer would, at most: no changes, and no drafts.
+ */
+export function tokenNarrowed(
+  token: TokenGrant,
+  universeId: string,
+  access: UniverseAccess,
+): UniverseAccess {
+  if (token.universeId !== null && token.universeId !== universeId) return 'none';
+  if (token.scope === 'read' && atLeast(access, 'read')) return 'read';
+  return access;
+}
+
+/** What the requester's account may do in the universe, before any token narrows it. */
+export function accountAccess(requester: Requester, universe: AccessFacts): UniverseAccess {
   if (requester.kind === 'local') return requester.mayEdit ? 'own' : 'read';
   if (requester.kind === 'account') {
     const { account } = requester;

@@ -253,7 +253,7 @@ D-34 has the reasoning; data-model §8 has the access rule. None of this exists 
 - **Account page** (`/account`):
   - **Password:** change it, with the current one and a code.
   - **Signed-in devices:** each session with its browser and last use, and "Sign out" for each or for all others.
-  - **API tokens** (M8-T2): create one (name, read or write, optionally one universe), shown once; list with last use; revoke.
+  - **API tokens** (M8-T2): create one (name, read or write, optionally one universe) with a current code, shown once with Copy; list each with what it may do and its last use; revoke, which stops it at once.
   - **Storage:** how much of the media quota is used, by universe.
 - **Sharing a universe:** a **Sharing** section on its settings page, shown to its owner.
   - **Who can see it:** three choices, each with one line saying what it means: Private, Anyone with the link, Public. Making it public asks to confirm, and says how many drafts stay hidden.

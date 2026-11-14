@@ -35,6 +35,9 @@ const authDatabaseUrl = new URL(testServerUrl);
 authDatabaseUrl.pathname = '/ge_e2e_auth';
 process.env.GE_E2E_AUTH_DATABASE_URL = authDatabaseUrl.toString();
 process.env.GE_E2E_AUTH_URL = `http://localhost:${AUTH_WEB_PORT}`;
+/** Remote MCP (M8-T2), in front of the API with accounts, for e2e/remote-mcp.spec.ts. */
+const MCP_PORT = '3109';
+process.env.GE_E2E_MCP_URL = `http://127.0.0.1:${MCP_PORT}/mcp`;
 /** The fixture wiki, so neither API ever reads the real one. */
 const wikiSources = JSON.stringify([
   {
@@ -143,6 +146,15 @@ export default defineConfig({
       },
       reuseExistingServer: false,
       timeout: 60_000,
+    },
+    {
+      // Remote MCP (M8-T2), in front of the API with accounts: agents bring a token from the
+      // account page.
+      command: 'pnpm --filter @ge/mcp start:http',
+      url: `http://127.0.0.1:${MCP_PORT}/health`,
+      env: { GE_API_URL: `http://127.0.0.1:${AUTH_API_PORT}`, GE_MCP_PORT: MCP_PORT },
+      reuseExistingServer: false,
+      timeout: 30_000,
     },
     {
       // The same build, served again in front of the API with accounts, once the first preview

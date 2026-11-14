@@ -1,8 +1,10 @@
+import type { AddressInfo } from 'node:net';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
-import { createMcpServer } from '../src/index.ts';
+import { createMcpHttpServer, createMcpServer } from '../src/index.ts';
 
 /**
  * The MCP server against the real API (M7-T7): an agent builds a system with a batch and
@@ -174,5 +176,41 @@ describe('the MCP server', () => {
       blocked: false,
       counts: { objects: { create: 1 } },
     });
+  });
+});
+
+describe('remote MCP (M8-T2)', () => {
+  it('creates an object over Streamable HTTP, as one labelled batch', async () => {
+    // The API here has no accounts, so on a loopback address the door needs no token; with
+    // accounts, e2e/remote-mcp.spec.ts makes one on the account page and uses it.
+    const probe = createMcpHttpServer({ apiUrl, allowedHosts: [], requireToken: false });
+    await new Promise<void>((resolve) => probe.listen(0, '127.0.0.1', resolve));
+    const { port } = probe.address() as AddressInfo;
+    await new Promise((resolve) => probe.close(resolve));
+    const http = createMcpHttpServer({
+      apiUrl,
+      allowedHosts: [`127.0.0.1:${String(port)}`],
+      requireToken: false,
+    });
+    await new Promise<void>((resolve) => http.listen(port, '127.0.0.1', resolve));
+    const remote = new Client({ name: 'galaxy-explorer-http-test', version: '1' });
+    try {
+      await remote.connect(
+        new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${String(port)}/mcp`)),
+      );
+      const result = (await remote.callTool({
+        name: 'objects_create',
+        arguments: { mapId, name: plain('Vigilus'), baseType: 'system' },
+      })) as { content: { text: string }[]; isError?: boolean };
+      expect(result.isError ?? false, result.content[0]?.text).toBe(false);
+      const { batchId } = JSON.parse(result.content[0]?.text ?? '{}') as { batchId: string };
+      const batch = await database.query('select description from change_batches where id = $1', [
+        batchId,
+      ]);
+      expect(batch.rows[0]).toEqual({ description: 'MCP: objects_create — Vigilus' });
+    } finally {
+      await remote.close();
+      await new Promise((resolve) => http.close(resolve));
+    }
   });
 });

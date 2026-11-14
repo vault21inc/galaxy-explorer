@@ -125,7 +125,7 @@ export const authRoutes: FastifyPluginCallbackZod<{ auth: AuthContext | null }> 
       schema: {
         tags,
         operationId: 'auth.sessions.list',
-        ...routeAccess({ scope: 'open' }),
+        ...routeAccess({ scope: 'open', session: true }),
         summary: 'The account’s signed-in devices',
         response: { 200: z.object({ data: z.array(SessionRead) }) },
       },
@@ -142,7 +142,7 @@ export const authRoutes: FastifyPluginCallbackZod<{ auth: AuthContext | null }> 
       schema: {
         tags,
         operationId: 'auth.sessions.endOthers',
-        ...routeAccess({ scope: 'open' }),
+        ...routeAccess({ scope: 'open', session: true }),
         summary: 'Sign out every other device',
         description: 'Ends all of the account’s sessions except this one.',
       },
@@ -160,7 +160,7 @@ export const authRoutes: FastifyPluginCallbackZod<{ auth: AuthContext | null }> 
       schema: {
         tags,
         operationId: 'auth.sessions.end',
-        ...routeAccess({ scope: 'open' }),
+        ...routeAccess({ scope: 'open', session: true }),
         summary: 'Sign out one device',
         params: z.object({ sessionId: z.uuid() }),
       },

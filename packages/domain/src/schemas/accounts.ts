@@ -159,6 +159,8 @@ export const ACCESS_EVENT_ACTIONS = [
   'user.quota',
   'user.delete',
   'user.password',
+  'token.create',
+  'token.revoke',
 ] as const;
 export type AccessEventAction = (typeof ACCESS_EVENT_ACTIONS)[number];
 
@@ -249,3 +251,45 @@ export const AccessEventRead = z.object({
   detail: z.record(z.string(), z.unknown()),
   createdAt: timestamp,
 });
+
+// ---- API tokens (M8-T2, data-model §3.8, ux.md §13) ----------------------------------------
+
+/**
+ * What a token may do, on top of whatever its account may do at the moment of each request:
+ * `read` reads as a viewer would; `write` also changes content. Stored as `scopes` (a `write`
+ * token's are `read` and `write`); the API speaks of one scope, the larger.
+ */
+export const TOKEN_SCOPES = ['read', 'write'] as const;
+export type TokenScope = (typeof TOKEN_SCOPES)[number];
+export const TokenScope = z.enum(TOKEN_SCOPES);
+
+/**
+ * A token's text: `ge_` and 32 random bytes in URL-safe base64. The prefix lets people (and
+ * secret scanners) tell a Galaxy Explorer token when they see one.
+ */
+export const API_TOKEN_PATTERN = '^ge_[A-Za-z0-9_-]{43}$';
+
+/** Making a token: its name, its scope and, optionally, the one universe it's for. */
+export const ApiTokenCreate = z.strictObject({
+  name: z.string().trim().min(1, 'Give the token a name.').max(60),
+  scope: TokenScope,
+  /** Null or left out: every universe the account can reach. */
+  universeId: z.uuid().nullable().optional(),
+});
+
+/** A token as the account page lists it. The token itself is shown only once, when it's made. */
+export const ApiTokenRead = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  scope: TokenScope,
+  /** The one universe it's for, by id and address; null for every universe. */
+  universe: z.object({ id: z.uuid(), slug: z.string(), name: z.string() }).nullable(),
+  createdAt: timestamp,
+  lastUsedAt: timestamp.nullable(),
+});
+
+/** A token just made: its record, and the token itself, which is never shown again. */
+export const ApiTokenCreated = z.object({ token: ApiTokenRead, secret: z.string() });
+
+/** The token a request is made with, and its account (`GET /auth/token`). */
+export const CurrentTokenRead = ApiTokenRead.extend({ username: Username });
