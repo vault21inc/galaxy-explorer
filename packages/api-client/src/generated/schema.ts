@@ -2552,6 +2552,7 @@ export interface components {
             sourceUrl: string;
             sourceTitle: string | null;
             license: string | null;
+            /** Format: date-time */
             retrievedAt: string;
         };
         CounterpartInput: {
@@ -4704,6 +4705,7 @@ export interface components {
             sourceUrl: string;
             sourceTitle: string | null;
             license: string | null;
+            /** Format: date-time */
             retrievedAt: string;
         };
         Counterpart: {

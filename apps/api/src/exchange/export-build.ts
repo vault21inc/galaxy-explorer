@@ -234,7 +234,8 @@ export function buildExport(data: UniverseData, onlyMapIds?: readonly string[]):
         citations: (data.citations.get(id) ?? []).map((citation) =>
           recordOf(
             { shape: { target: 1, sourceUrl: 1, sourceTitle: 1, license: 1, retrievedAt: 1 } },
-            citation,
+            // The row's Date, written as the ISO 8601 the import reads (CitationWrite).
+            { ...citation, retrievedAt: (citation.retrievedAt as Date).toISOString() },
           ),
         ),
         location:

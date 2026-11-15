@@ -187,6 +187,7 @@
   - `packages/domain/test/export-format.test.ts`: references, the schemas and CSV parsing;
   - `apps/api/test/exchange/exchange.int.test.ts`: the "Done when" items, entries without keys, image files, CSV, blocked imports, the preview's roles;
   - `apps/web/e2e/import-export.spec.ts`: export from the settings page and import into another universe, and a CSV.
+- **Later (2026-11-15, found restoring the owner's Eisenhorn universe from the old preview):** an export with citations couldn't be imported. Citations' `retrievedAt` was the only timestamp column read as text (`mode: 'string'`), so the API and exports gave it as Postgres prints it, `2026-11-14 00:07:56.818+00`, which the import's ISO 8601 check refused. The demo has no citations, so the round-trip test never had one. The column is now a Date like every other, the services write it as ISO 8601, and `CitationRead` says so. The import also reads the old form in zips exported before the fix (`exchange/legacy-dates.ts`). The round-trip test now carries a citation, and an old-form date.
 
 ### M7-T5 Cloning a map
 

@@ -139,9 +139,9 @@ const cases: Record<string, TableCase> = {
       entityId: w.systemId,
       target: 'description',
       sourceUrl: 'https://wiki.example/Gudrun',
-      retrievedAt: '2026-11-13T12:00:00.000Z',
+      retrievedAt: new Date('2026-11-13T12:00:00.000Z'),
     }),
-    change: { license: 'CC-BY-SA', retrievedAt: '2026-11-14T12:00:00.000Z' },
+    change: { license: 'CC-BY-SA', retrievedAt: new Date('2026-11-14T12:00:00.000Z') },
   },
   entity_images: {
     row: (w) => ({ entityId: w.placeId, assetId: w.assetId, role: 'cover' }),

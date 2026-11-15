@@ -229,6 +229,73 @@ describe('export and import', () => {
         await api.app.close();
       }
     }));
+
+  it('carries citations across with ISO dates, and reads older exports’ dates', () =>
+    withTestDb(async (_db, url) => {
+      const api = await apiOn(url, { mediaDir });
+      try {
+        const universeId = await newUniverse(api, 'cited');
+        const map = (
+          await api.expect(201, 'POST', `/universes/${universeId}/maps`, {
+            slug: 'main',
+            name: rt.plain('Main'),
+          })
+        ).body.data as Json;
+        const cadia = (
+          await api.expect(201, 'POST', `/maps/${String(map.id)}/objects`, {
+            name: rt.plain('Cadia'),
+            baseType: 'planet',
+          })
+        ).body.data as Json;
+        const added = await api.expect(201, 'POST', `/entities/${String(cadia.id)}/citations`, {
+          target: 'description',
+          sourceUrl: 'https://warhammer40k.fandom.com/wiki/Cadia',
+          sourceTitle: 'Cadia',
+          license: 'CC-BY-SA',
+          retrievedAt: '2026-11-13T23:28:45.496+00:00',
+        });
+        // The API answers in ISO 8601, as it was sent (in UTC).
+        expect(added.body.data.retrievedAt).toBe('2026-11-13T23:28:45.496Z');
+
+        const files = await exported(api, `/universes/${universeId}/export`);
+        const main = json(files, 'maps/main.json');
+        expect(main.objects[0].citations).toEqual([
+          {
+            target: 'description',
+            sourceUrl: 'https://warhammer40k.fandom.com/wiki/Cadia',
+            sourceTitle: 'Cadia',
+            license: 'CC-BY-SA',
+            retrievedAt: '2026-11-13T23:28:45.496Z',
+          },
+        ]);
+
+        const citedIn = async (copy: string) => {
+          const maps = (await api.expect(200, 'GET', `/universes/${copy}/maps`)).body
+            .data as Json[];
+          const [object] = (
+            await api.expect(200, 'GET', `/maps/${String(maps[0]?.id)}/objects?limit=10`)
+          ).body.data as Json[];
+          const citations = (
+            await api.expect(200, 'GET', `/entities/${String(object?.id)}/citations`)
+          ).body.data as Json[];
+          return citations.map((citation) => citation.retrievedAt as string);
+        };
+        const copy = await newUniverse(api, 'copy');
+        const result = await imported(api, copy, zipOf(files), 'mode=create');
+        expect(result.status, JSON.stringify(result.body)).toBe(200);
+        expect(await citedIn(copy)).toEqual(['2026-11-13T23:28:45.496Z']);
+
+        // Exports made before 2026-11-15 wrote the date as Postgres prints it.
+        main.objects[0].citations[0].retrievedAt = '2026-11-13 23:28:45.496+00';
+        files.set('maps/main.json', encode(main));
+        const older = await newUniverse(api, 'older');
+        const fromOlder = await imported(api, older, zipOf(files), 'mode=create');
+        expect(fromOlder.status, JSON.stringify(fromOlder.body)).toBe(200);
+        expect(await citedIn(older)).toEqual(['2026-11-13T23:28:45.496Z']);
+      } finally {
+        await api.app.close();
+      }
+    }));
 });
 
 describe('entries without keys', () => {

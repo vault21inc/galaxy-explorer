@@ -13,6 +13,7 @@ import {
 } from '@ge/domain';
 import type { z } from 'zod';
 import { InvalidRequest } from '../services/errors.ts';
+import { upgradeCitationDates } from './legacy-dates.ts';
 import { readZip } from './zip.ts';
 
 /**
@@ -80,6 +81,8 @@ function parsed<S extends z.ZodType>(
     problems.push({ path: file, message: `Not valid JSON: ${(error as Error).message}` });
     return null;
   }
+  // Older exports' citation dates aren't ISO 8601; read them as the instants they name.
+  upgradeCitationDates(json);
   const result = schema.safeParse(json);
   if (result.success) return result.data;
   for (const issue of result.error.issues.slice(0, 50)) {

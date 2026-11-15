@@ -90,7 +90,7 @@ export const CitationRead = z.object({
   sourceUrl: z.string(),
   sourceTitle: z.string().nullable(),
   license: z.string().nullable(),
-  retrievedAt: z.string(),
+  retrievedAt: z.iso.datetime({ offset: true }),
 });
 
 export const AssetMetadata = z.strictObject({

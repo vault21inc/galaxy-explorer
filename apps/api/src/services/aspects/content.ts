@@ -5,7 +5,7 @@ import type { z } from 'zod';
 import { NotFound, requireChanges } from '../errors.ts';
 import { checkAspectAllowed, checkFact, checkImage, checkRelation } from '../rules/aspects.ts';
 import { sanitizeRichTextFields } from '../sanitize.ts';
-import { withAssets } from './read.ts';
+import { citationRecord, withAssets } from './read.ts';
 import { requireOwner } from './owner.ts';
 
 /**
@@ -116,19 +116,21 @@ export async function addCitation(
 ) {
   const citation = CitationWrite.parse(input);
   await requireOwner(tx, entityId);
+  const retrievedAt = new Date(citation.retrievedAt);
   const [row] = await tx
     .insert(citations)
-    .values({ ...citation, entityId })
+    .values({ ...citation, retrievedAt, entityId })
     .onConflictDoUpdate({
       target: [citations.entityId, citations.target, citations.sourceUrl],
       set: {
         sourceTitle: citation.sourceTitle ?? null,
         license: citation.license ?? null,
-        retrievedAt: citation.retrievedAt,
+        retrievedAt,
       },
     })
     .returning();
-  return row;
+  if (!row) throw new Error('Insert returned no row.');
+  return citationRecord(row);
 }
 
 export async function removeCitation(tx: Executor, entityId: string, citationId: string) {

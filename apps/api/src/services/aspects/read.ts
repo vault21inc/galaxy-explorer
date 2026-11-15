@@ -63,13 +63,20 @@ export function listLinks(ex: Executor, entityId: string) {
     .orderBy(asc(entityLinks.sortKey));
 }
 
+/** A citation as the API returns it: its time in ISO 8601 (CitationRead). */
+export const citationRecord = (row: typeof citations.$inferSelect) => ({
+  ...row,
+  retrievedAt: row.retrievedAt.toISOString(),
+});
+
 /** Where the entity's filled-in content came from (M7-T3), by target. */
-export function listCitations(ex: Executor, entityId: string) {
-  return ex
+export async function listCitations(ex: Executor, entityId: string) {
+  const rows = await ex
     .select()
     .from(citations)
     .where(eq(citations.entityId, entityId))
     .orderBy(asc(citations.target), asc(citations.sourceUrl));
+  return rows.map(citationRecord);
 }
 
 /** Relations from or to the entity: a character's events, an event's people. */

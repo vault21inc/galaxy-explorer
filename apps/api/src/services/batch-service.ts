@@ -203,7 +203,7 @@ async function runOne(tx: Executor, operation: BatchOperation): Promise<RunResul
     }
     case 'addCitation': {
       const citation = await addCitation(tx, operation.id, operation.data as never);
-      return { op: 'addCitation', id: citation?.id ?? null, data: citation };
+      return { op: 'addCitation', id: citation.id, data: citation };
     }
     case 'addRelation': {
       const relation = await addRelation(tx, operation.id, operation.data as never);

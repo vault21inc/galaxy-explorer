@@ -116,7 +116,10 @@ export const citations = pgTable(
     sourceTitle: text(),
     /** As the source states it, such as "CC-BY-SA". */
     license: text(),
-    retrievedAt: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
+    // A Date, as every other timestamp, which the services write out as ISO 8601. Read as text
+    // (`mode: 'string'`, until 2026-11-15) it came back as Postgres prints it,
+    // `2026-11-14 00:07:56.818+00`, which the API returned and exports wrote as it was.
+    retrievedAt: timestamp({ withTimezone: true }).notNull(),
   },
   (t) => [
     unique('citations_target_source_uq').on(t.entityId, t.target, t.sourceUrl),
