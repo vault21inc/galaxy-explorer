@@ -170,6 +170,37 @@ describe('export and import', () => {
       expect(await history()).toEqual(historyBefore);
     }));
 
+  it('fills an empty map of the same slug, as a new universe’s first map is', () =>
+    withDemo(async (api, demoId) => {
+      const files = await exported(api, `/universes/${demoId}/export`);
+      // As the home page makes a universe: with an empty "main" map (found in the M7 demo).
+      const universeId = await newUniverse(api, 'fresh');
+      const first = (
+        await api.expect(201, 'POST', `/universes/${universeId}/maps`, {
+          slug: 'main',
+          name: rt.plain('Main'),
+        })
+      ).body.data as Json;
+      const result = await imported(api, universeId, zipOf(files), 'mode=create');
+      expect(result.status, JSON.stringify(result.body)).toBe(200);
+      expect(result.body.data).toMatchObject({ blocked: false, conflicts: [] });
+      expect(result.body.data.counts.maps).toMatchObject({ create: 1, update: 1 });
+      const maps = (await api.expect(200, 'GET', `/universes/${universeId}/maps`)).body
+        .data as Json[];
+      const main = maps.find((map) => map.slug === 'main');
+      // The same map, now the file's, with the file's entries.
+      expect(main?.id).toBe(first.id);
+      expect(main?.namePlain).toBe('The Present Era');
+      const objects = (
+        await api.expect(
+          200,
+          'GET',
+          `/maps/${String(first.id)}/objects?limit=1000&includeDrafts=true`,
+        )
+      ).body.data as Json[];
+      expect(objects.length).toBe((json(files, 'maps/main.json').objects as Json[]).length);
+    }));
+
   it('refuses to add what is already there, writing nothing, and says why', () =>
     withDemo(async (api, demoId) => {
       const files = await exported(api, `/universes/${demoId}/export`);

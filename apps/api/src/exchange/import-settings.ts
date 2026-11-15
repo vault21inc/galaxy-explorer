@@ -11,7 +11,7 @@ import {
   type ConfigResource,
   type ExportAsset,
 } from '@ge/domain';
-import { sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import sharp from 'sharp';
 import { createConfig, updateConfig } from '../services/config-service.ts';
 import {
@@ -214,6 +214,16 @@ export async function importConfig(
  * A map file's own fields: a new map, or (a merge) the map with that slug updated. Adding a
  * map whose slug is taken is a conflict. Returns the map's id, or null if it isn't imported.
  */
+/** Whether nothing is on the map yet: no entry of any kind, drafts included. */
+async function isEmptyMap(tx: Executor, mapId: string): Promise<boolean> {
+  const [entry] = await tx
+    .select({ id: schema.entities.id })
+    .from(schema.entities)
+    .where(eq(schema.entities.mapId, mapId))
+    .limit(1);
+  return entry === undefined;
+}
+
 export async function importMap(
   tx: Executor,
   run: ImportRun,
@@ -229,10 +239,14 @@ export async function importMap(
     return null;
   }
   const match = existing.find((map) => map.slug === content.slug);
-  if (match && run.mode === 'create') {
+  // Adding as new, a map of the same slug that holds nothing yet is filled, as the file's: a
+  // universe made on the home page starts with an empty "main" map, which is also the slug of
+  // most exports' map, so importing into a new universe would otherwise always conflict (found
+  // in the owner's M7 demo). A map with entries is someone's work: that's a conflict.
+  if (match && run.mode === 'create' && !(await isEmptyMap(tx, match.id))) {
     run.conflict(
       content.source,
-      `A map with the slug “${String(content.slug)}” is already in this universe. Import with “Update by key” to update it, or change its slug in the file.`,
+      `A map with the slug “${String(content.slug)}” is already in this universe, with entries on it. Import with “Update by key” to update it, or change its slug in the file.`,
     );
     return null;
   }

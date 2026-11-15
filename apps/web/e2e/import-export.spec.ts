@@ -66,7 +66,13 @@ test('a universe exported from its settings imports into another, checked first'
   );
   const zip = await download.path();
 
+  // The target as the home page makes a universe: with an empty "main" map, the same slug as
+  // the export's map, which the import fills rather than calling a conflict (the M7 demo).
   const target = await newUniverse(page.request, 'import');
+  const firstMap = await post(page.request, `/api/v1/universes/${target.id}/maps`, {
+    slug: 'main',
+    name: plain('Main'),
+  });
   await page.goto(`/u/${target.slug}/settings`);
   // The saved download keeps no name; the API knows a zip by its first bytes.
   await page.getByLabel('File to import').setInputFiles(zip);
@@ -79,10 +85,7 @@ test('a universe exported from its settings imports into another, checked first'
   await expect(counts.getByRole('row', { name: /Objects/ })).toContainText('2');
   await expect(counts.getByRole('row', { name: /Group types/ })).toContainText('1');
   // Checking wrote nothing.
-  expect(
-    ((await getJson(page.request, `/api/v1/universes/${target.id}/maps`)) as { data: unknown[] })
-      .data,
-  ).toEqual([]);
+  expect(await objectsOn(page, firstMap.id)).toEqual([]);
 
   await importButton.click();
   await expect(report).toContainText('Imported, as one change');
@@ -91,8 +94,8 @@ test('a universe exported from its settings imports into another, checked first'
       data: { id: string; slug: string }[];
     }
   ).data;
-  expect(maps.map((item) => item.slug)).toEqual(['main']);
-  const objects = await objectsOn(page, maps[0]?.id ?? '');
+  expect(maps.map((item) => item.id)).toEqual([firstMap.id]);
+  const objects = await objectsOn(page, firstMap.id);
   expect(objects.map((object) => object.namePlain).sort()).toEqual(['Gudrun', 'Gudrun System']);
   const copied = objects.find((object) => object.externalKey === 'gudrun-system');
   expect(objects.find((object) => object.namePlain === 'Gudrun')?.parentId).toBe(copied?.id);

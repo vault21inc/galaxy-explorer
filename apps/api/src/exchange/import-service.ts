@@ -29,7 +29,8 @@ import { importAssets, importConfig, importMap, importUniverseFields } from './i
  * `POST /universes/{id}/import` (M7-T4): an export's zip or a CSV of objects, imported as one
  * change batch, so one undo takes it all back.
  *
- * - **create** adds everything as new entries. A key or map slug already used is a conflict.
+ * - **create** adds everything as new entries. A key already used, or the slug of a map with
+ *   entries on it, is a conflict; an empty map of the slug is filled.
  * - **merge** updates entries by their external key and adds the rest; entries without a key
  *   are left out (they can't be matched).
  *

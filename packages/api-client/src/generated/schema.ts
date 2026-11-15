@@ -2215,7 +2215,7 @@ export interface paths {
          * Import an export’s zip, or a CSV of objects
          * @description Send `multipart/form-data` with one file in a field named `file`: an export's zip, or a CSV of objects with the columns name, base_type, x, y, z, parent_key, group_key, external_key (a CSV needs `mapId`). At most 200 MB.
          *
-         *     `mode=create` adds everything as new entries; a key or map slug already used is a conflict. `mode=merge` updates entries by their externalKey and adds the rest, leaving out entries without a key. Settings rows, assets and maps are matched by name, hash and slug in both modes. For an entry a merge updates, each aspect the file lists (facts, images, links…) replaces the entry's; an aspect the file leaves out stays.
+         *     `mode=create` adds everything as new entries; a key already used, or the slug of a map that has entries, is a conflict (an empty map with the slug is filled, as a new universe's first map is). `mode=merge` updates entries by their externalKey and adds the rest, leaving out entries without a key. Settings rows, assets and maps are matched by name, hash and slug in both modes. For an entry a merge updates, each aspect the file lists (facts, images, links…) replaces the entry's; an aspect the file leaves out stays.
          *
          *     `dryRun=true` does everything, reports it and rolls back: use it first. A real import is one change batch (one undo). If the report has conflicts or unresolved references, nothing is written and the answer is 409 with `report`.
          */

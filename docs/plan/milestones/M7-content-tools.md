@@ -173,7 +173,7 @@
 - **Export:** `GET /universes/{id}/export` and `GET /maps/{id}/export`. A map export carries the universe's settings, assets and characters too. Drafts and spoilers are included, so on the private preview only the editor may export. An image file the media folder lacks (the demo seed's placeholders) is left out, and the import recreates the asset without it, noting so.
 - **Import** (`POST /universes/{id}/import?mode&dryRun&mapId`, multipart): the zip, or a CSV of objects (the plan's columns; `mapId` names its map).
   - **Matching:** assets by hash, settings rows by name, maps by slug.
-  - **create:** what matches is used as it is; a map slug or entry key already used is a conflict.
+  - **create:** what matches is used as it is; a map slug or entry key already used is a conflict (since 2026-11-15, an empty map of the slug is filled instead: see "Later" below).
   - **merge:** matches are updated; entries are upserted by key, and those without a key are left out. For an entry it updates, each aspect the file lists replaces the entry's, and an aspect left out stays.
   - **One batch,** through the entity, aspect, config and container services, so every rule applies. Each record runs in a savepoint: one the services refuse becomes a conflict in the report, and the import goes on to find the rest.
   - **The report:** creates, updates, kept and left out per kind of record; conflicts and references to nothing (either blocks the import: a blocked real import writes nothing and answers 409 with the report); entries left out; notes. A dry run does everything and rolls back.
@@ -188,6 +188,7 @@
   - `packages/domain/test/export-format.test.ts`: references, the schemas and CSV parsing;
   - `apps/api/test/exchange/exchange.int.test.ts`: the "Done when" items, entries without keys, image files, CSV, blocked imports, the preview's roles;
   - `apps/web/e2e/import-export.spec.ts`: export from the settings page and import into another universe, and a CSV.
+- **Later (2026-11-15, the owner's M7 demo):** "Add as new" into a universe made on the home page always conflicted: the home page starts a universe with an empty `main` map, the slug most exports' map has, and the site has no way to delete a map. Now a map of the file's slug that holds no entries (drafts included) is filled as the file's map; one with entries is still a conflict. Tests: `exchange.int.test.ts` imports the demo into a universe with an empty `main`; `import-export.spec.ts` starts its target universe the way the home page does.
 - **Later (2026-11-15, found restoring the owner's Eisenhorn universe from the old preview):** an export with citations couldn't be imported. Citations' `retrievedAt` was the only timestamp column read as text (`mode: 'string'`), so the API and exports gave it as Postgres prints it, `2026-11-14 00:07:56.818+00`, which the import's ISO 8601 check refused. The demo has no citations, so the round-trip test never had one. The column is now a Date like every other, the services write it as ISO 8601, and `CitationRead` says so. The import also reads the old form in zips exported before the fix (`exchange/legacy-dates.ts`). The round-trip test now carries a citation, and an old-form date.
 
 ### M7-T5 Cloning a map

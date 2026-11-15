@@ -18,7 +18,7 @@ const MODES: { mode: ImportMode; label: string; hint: string }[] = [
   {
     mode: 'create',
     label: 'Add as new',
-    hint: 'Everything in the file becomes a new entry. A key or map already here is a conflict.',
+    hint: 'Everything in the file becomes a new entry. A key, or a map with entries, already here is a conflict; an empty map of the same name is filled.',
   },
   {
     mode: 'merge',
