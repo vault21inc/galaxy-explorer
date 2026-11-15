@@ -70,7 +70,12 @@ prune() {
 PREVIOUS=$(cat "$CURRENT_FILE" 2>/dev/null || true)
 echo "== Release $TAG (live now: ${PREVIOUS:-none})"
 
-compose "$TAG" pull api caddy
+# A release already here (a rollback by hand, a second try) needs no registry login.
+if docker image inspect "$GE_IMAGE_PREFIX-api:$TAG" "$GE_IMAGE_PREFIX-web:$TAG" >/dev/null 2>&1; then
+  echo "   Its images are here already."
+else
+  compose "$TAG" pull api caddy
+fi
 if compose "$TAG" up -d --wait --remove-orphans && healthy "$TAG"; then
   echo "$TAG" >"$CURRENT_FILE"
   prune
