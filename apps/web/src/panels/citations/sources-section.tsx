@@ -2,10 +2,12 @@ import { RICH_TEXT_POLICY } from '@ge/domain';
 import { ExternalLink } from 'lucide-react';
 import type { SectionProps } from '../types.ts';
 import { SectionHeading } from '../sections/section-heading.tsx';
+import { latestRead } from './citation-note.tsx';
 
 /**
  * Sources (M7-T3): every page this entity's content was filled from, with its licence and when
- * it was read, one line per page. Under each cited text and fact, a note names its own source.
+ * it was last read, one line per page. Under each cited text and fact, a note names its own
+ * source.
  */
 export function SourcesSection({ entity, fieldDefinitions }: SectionProps) {
   const citations = entity.citations ?? [];
@@ -25,6 +27,9 @@ export function SourcesSection({ entity, fieldDefinitions }: SectionProps) {
       <ul className="flex flex-col gap-1.5 text-sm">
         {[...byPage.entries()].map(([url, cited]) => {
           const [first] = cited;
+          // The latest read, not the first citation's: a later fill from the same page (more
+          // facts, say) read it again (from the owner's M7 demo).
+          const read = latestRead(cited);
           return (
             <li key={url}>
               <a
@@ -38,8 +43,8 @@ export function SourcesSection({ entity, fieldDefinitions }: SectionProps) {
               </a>
               {first?.license && <span className="text-muted-foreground"> · {first.license}</span>}
               <span className="block text-xs text-muted-foreground">
-                {cited.map((citation) => targetName(citation.target)).join(', ')} · read{' '}
-                {new Date(first?.retrievedAt ?? '').toLocaleDateString()}
+                {cited.map((citation) => targetName(citation.target)).join(', ')}
+                {read && ` · read ${new Date(read).toLocaleDateString()}`}
               </span>
             </li>
           );

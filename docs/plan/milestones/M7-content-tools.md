@@ -134,6 +134,7 @@
   - `apps/api/test/wiki/wiki.int.test.ts` runs against the fixture wiki server (`test/fixtures/wiki/server.ts`): the User-Agent, a second between requests, the cache, redirects, the routes, and a fill batch that reverts as one;
   - `packages/domain/test/wiki-mapping.test.ts` and `apps/web/test/fill-plan.test.ts` cover the mapping and the dialog's logic;
   - `apps/web/e2e/wiki-fill.spec.ts` covers the "Done when" flow. The e2e run starts the fixture wiki on port 3102 and points its API there.
+- **Later (2026-11-15, from the owner's M7 demo):** the Sources line showed when the page's first citation was read, so facts filled today from a page cited two days ago said "read" two days ago. It shows the latest read now (`latestRead`, `apps/web/test/sources.test.tsx`).
 
 ### M7-T4 Import and export
 
