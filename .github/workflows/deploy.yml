@@ -77,6 +77,10 @@ jobs:
           file: docker/web.Dockerfile
           push: true
           tags: ${{ steps.tags.outputs.web }}
+          # The site's first-visit defaults (D-38): every label shown, as the preview had them.
+          # Spoilers stay hidden until a reader shows them. A reader's own choice still wins.
+          build-args: |
+            VITE_DEFAULT_LABEL_MODE=all
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha,scope=web
           cache-to: type=gha,scope=web,mode=max

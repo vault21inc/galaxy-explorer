@@ -19,7 +19,7 @@ gh workflow run deploy.yml --ref main
 
 The workflow (`.github/workflows/deploy.yml`):
 
-1. builds the API's and the web's images and pushes them to GHCR, named by the commit (`ghcr.io/vault21inc/galaxy-explorer-api:<commit>`), and by the version on a tag;
+1. builds the API's and the web's images and pushes them to GHCR, named by the commit (`ghcr.io/vault21inc/galaxy-explorer-api:<commit>`), and by the version on a tag. The web's build sets the site's first-visit defaults (D-38): every label shown, spoilers hidden;
 2. copies the release's `docker/compose.prod.yml` and `scripts/ops/deploy-release.sh` to `/srv/galaxy-explorer/releases/<commit>/` on the droplet;
 3. logs the droplet in to GHCR with the run's own token (logged out again at the end, whatever happened), and runs the script.
 
