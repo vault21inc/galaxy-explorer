@@ -345,7 +345,18 @@
 - Monitoring: DigitalOcean's monitoring agent, plus an uptime check on `/api/health` with email alerts.
 
 **Done when:**
-- [ ] The runbook has been followed once from scratch, and corrected wherever reality differed.
+- [x] The runbook has been followed once from scratch, and corrected wherever reality differed.
+
+**As built (M8-T5), D-45:**
+- **`scripts/ops/provision.sh`** (safe to run again; tested twice in an Ubuntu 24.04 container, then twice on the droplet):
+  - the `deploy` login with root's SSH key, and SSH with keys only and no root login, in `sshd_config.d/01-…`, named to come before cloud-init's `50-…`. It checks `sshd -T` afterwards;
+  - `ufw` (22, 80, 443/tcp, 443/udp), `fail2ban`, automatic security updates;
+  - Docker and Compose with log rotation (5 × 10 MB per container), and 2 GB of swap;
+  - DigitalOcean's monitoring agent (installed if the droplet was made without it);
+  - `/srv/galaxy-explorer` (750) with `.env.production` (600), both `deploy`'s;
+  - it waits for cloud-init and apt's lock on a new droplet.
+- **[docs/ops/droplet.md](../../ops/droplet.md)**, followed on 2026-11-15: `galaxy-explorer-prod` in NYC3 (2 vCPU, 4 GB, Ubuntu 24.04), 159.203.101.110. The secrets were made on the droplet. IPv6 wasn't ticked at creation, so there's no AAAA record until it's turned on.
+- **The site's name is `galaxyexplorer.perturbatory.com`,** the preview's (D-45). DNS moves to the droplet at go-live, with the uptime check on `/api/health`, in M8-T6; the preview goes dark then.
 
 ### M8-T6 Deploy pipeline
 
