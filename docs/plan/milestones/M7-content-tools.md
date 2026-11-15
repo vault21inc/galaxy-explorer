@@ -43,6 +43,7 @@
   - `apps/api/test/contract/facts.contract.int.test.ts` runs the facts aspect for every kind with facts, derived from the registry: set, replace, list, read with `include=facts`, remove, the 422s (wrong value type, a field for another kind), spoilers=exclude and reverting batches. The contract suites now share `created` from the harness.
   - `apps/web/e2e/facts.spec.ts` covers the "Done when" flow through the settings table and the form.
   - `apps/web/test/facts-editor.test.ts` covers `definitionsFor` and `parseList`.
+- **Later (2026-11-15, from the owner's M7 demo):** a new field definition's **Key** fills in from its **Label** when the label is left ("Tithe grade" is `tithe_grade`, `fieldKeyFrom` in `@ge/domain`), until a key is typed by hand. The settings registry declares it (`derived` on `field_definitions`), and only new rows follow it: an existing key is how imports and facts refer to the field. The key's error now says it must start with a letter. Tests: `packages/domain/test/settings-forms.test.ts`; `facts.spec.ts` relies on the filled-in key.
 
 ### M7-T2 Object subtypes
 

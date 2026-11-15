@@ -49,7 +49,9 @@ test('a Population fact: defined in settings, set on a planet, read and hidden (
     .getByRole('table', { name: 'Field definitions' })
     .getByRole('row', { name: 'New field definition' });
   await row.getByLabel('Label', { exact: true }).fill('Population');
-  await row.getByLabel('Key', { exact: true }).fill('population');
+  // Leaving the label fills in the key from it (from the M7 demo).
+  await row.getByLabel('Label', { exact: true }).press('Tab');
+  await expect(row.getByLabel('Key', { exact: true })).toHaveValue('population');
   await row.getByLabel('Value type', { exact: true }).selectOption({ label: 'Number' });
   await row.getByLabel('Unit', { exact: true }).fill('billion');
   await row.getByLabel('Base type', { exact: true }).selectOption({ label: 'Planet' });

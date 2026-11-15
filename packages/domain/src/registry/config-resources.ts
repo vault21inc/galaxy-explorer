@@ -2,7 +2,7 @@ import { IconKey } from '../icons.ts';
 import { z } from 'zod';
 import { HexColor } from '../colors.ts';
 import { Uuid } from '../ids.ts';
-import { FIELD_KEY_PATTERN } from '../patterns.ts';
+import { FIELD_KEY_MAX_LENGTH, FIELD_KEY_PATTERN, fieldKeyFrom } from '../patterns.ts';
 import { RichText } from '../richtext/schema.ts';
 import { Appearance } from '../schemas/appearance.ts';
 import { FIELD_VALUE_TYPES } from '../schemas/field-value.ts';
@@ -40,6 +40,12 @@ export interface ConfigResourceDef {
   columns: readonly FormFieldDef[];
   /** What a new row starts with, for required fields that have a sensible default. */
   defaults?: Record<string, unknown>;
+  /**
+   * Fields a new row fills in from another as it's typed, until the field is typed in itself:
+   * a field definition's key from its label. Only new rows: an existing row's key is how
+   * imports and facts refer to it, so it never changes on its own.
+   */
+  derived?: readonly { path: string; from: string; derive: (text: string) => string }[];
 }
 
 export function defineConfigResources<const T extends Record<string, ConfigResourceDef>>(
@@ -96,8 +102,11 @@ export const fieldDefinitionSchema = z.object({
   /** Stable key, such as 'population'. */
   key: z
     .string()
-    .regex(new RegExp(FIELD_KEY_PATTERN), 'Use lower-case letters, digits and underscores.')
-    .max(64),
+    .regex(
+      new RegExp(FIELD_KEY_PATTERN),
+      'Use lower-case letters, digits and underscores, starting with a letter.',
+    )
+    .max(FIELD_KEY_MAX_LENGTH),
   label: name,
   valueType: z.enum(FIELD_VALUE_TYPES),
   /** Such as 'billion' or 'km'. */
@@ -226,6 +235,8 @@ export const configResources = defineConfigResources({
       { path: 'wikiAliases', widget: 'list', label: 'Wiki aliases' },
     ],
     defaults: { valueType: 'text', appliesToKind: 'celestial_object' },
+    // "Tithe grade" fills in `tithe_grade`, so the key needn't be typed (from the M7 demo).
+    derived: [{ path: 'key', from: 'label', derive: fieldKeyFrom }],
   },
 });
 

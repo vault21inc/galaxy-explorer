@@ -8,6 +8,7 @@ import {
   universeForm,
   unwrapField,
 } from '../src/registry/index.ts';
+import { fieldKeyFrom } from '../src/patterns.ts';
 import { UniverseUpdate } from '../src/schemas/containers.ts';
 import { z } from 'zod';
 
@@ -65,5 +66,38 @@ describe('reserved map slugs', () => {
     const plain = { format: 'plain', source: 'Settings', spoiler: false };
     expect(MapCreate.safeParse({ slug: 'settings', name: plain }).success).toBe(false);
     expect(MapCreate.safeParse({ slug: 'settings-era', name: plain }).success).toBe(true);
+  });
+});
+
+describe('fields a new row fills in (derived)', () => {
+  it.each(CONFIG_RESOURCES)('%s: each rule names two columns of its own', (resource) => {
+    const def = configResources[resource];
+    const columns = def.columns.flatMap((column) => fieldPaths(column));
+    for (const rule of 'derived' in def ? def.derived : []) {
+      expect(columns).toContain(rule.path);
+      expect(columns).toContain(rule.from);
+    }
+  });
+
+  it('a field definition’s key, from its label, is a valid key', () => {
+    const cases: [string, string][] = [
+      ['Population', 'population'],
+      ['Tithe grade', 'tithe_grade'],
+      ['Sub-sector', 'sub_sector'],
+      ['  Population (billions)  ', 'population_billions'],
+      ['Größe der Welt', 'grosse_der_welt'],
+      ['Café', 'cafe'],
+      ['2nd moon', 'field_2nd_moon'],
+      ['Tithe -- grade!', 'tithe_grade'],
+    ];
+    const { create } = configSchemasFor('field_definitions');
+    for (const [label, key] of cases) {
+      expect(fieldKeyFrom(label)).toBe(key);
+      expect(create.shape.key.safeParse(key).success).toBe(true);
+    }
+    expect(fieldKeyFrom('— !')).toBe('');
+    const long = fieldKeyFrom('a '.repeat(80));
+    expect(long.length).toBeLessThanOrEqual(64);
+    expect(create.shape.key.safeParse(long).success).toBe(true);
   });
 });

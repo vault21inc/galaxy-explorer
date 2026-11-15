@@ -12,6 +12,9 @@ import { recordTitle } from './record-title.ts';
  * The row for a new setting (M4-T1): the same column widgets, saving into a local draft that
  * starts from the registry's `defaults`. Create checks the draft against the resource's create
  * schema and posts it; without a sort key the server puts it last.
+ *
+ * The registry's `derived` fields fill in from another as it's saved (a field definition's key
+ * from its label, as the label's input is left), until they're typed in themselves.
  */
 export function NewConfigRow({
   resource,
@@ -36,9 +39,21 @@ export function NewConfigRow({
     row.current?.querySelector<HTMLElement>('input, select')?.focus();
   }, []);
 
+  // Derived fields typed in by hand: they no longer follow their source.
+  const typed = useRef(new Set<string>());
+
   const record: FormRecord = { id: `new-${resource}`, universeId, ...draft };
   const save: SaveFields = (changes) => {
-    latest.current = { ...latest.current, ...changes };
+    const filled: Record<string, unknown> = {};
+    for (const rule of 'derived' in def ? def.derived : []) {
+      if (rule.path in changes) typed.current.add(rule.path);
+      else if (rule.from in changes && !typed.current.has(rule.path)) {
+        const source = changes[rule.from];
+        filled[rule.path] =
+          typeof source === 'string' ? rule.derive(source) || undefined : undefined;
+      }
+    }
+    latest.current = { ...latest.current, ...changes, ...filled };
     setDraft(latest.current);
     return Promise.resolve({ ...record, ...latest.current });
   };
