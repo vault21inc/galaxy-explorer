@@ -358,3 +358,9 @@ To change a decision, edit its entry, keep the old text on a `Superseded:` line,
   - **Its own project name,** `galaxy-explorer-prod`: sharing `galaxy-explorer` with the development databases made each stack's containers the other's "orphans", which `down --remove-orphans` would delete.
 - **D-45 Production takes the preview's name** (2026-11-15, M8-T5, the owner's choice). The public site is `galaxyexplorer.perturbatory.com`, on a new droplet (`galaxy-explorer-prod`, NYC3); the preview droplet stays as it is until go-live.
   - **Go-live order (M8-T6):** deploy the stack to the new droplet and check it by its address; move the A record (and AAAA, once the droplet has IPv6) from the preview to it; Caddy gets the certificate; add the uptime check; then retire the preview droplet. The preview's content isn't carried over: the owner's own content comes from local (M8-T8).
+- **D-46 How production is deployed, as built** (2026-11-15, M8-T6).
+  - **Releases deploy from a version tag, or by hand;** `main` doesn't deploy itself. So D-22 holds: work still goes straight to `main`, and a release is a decision of its own.
+  - **No stored registry credential:** each run logs the droplet in to GHCR with its own short-lived token and out again at the end; a rollback by hand uses images already on the droplet.
+  - **The workflow's SSH key can only run commands** as `deploy` (`restrict`: no terminal, no forwarding), and the droplet's host keys are pinned in the environment.
+  - **"Healthy" means what a visitor gets:** every container's health check, then `/api/health` through Caddy at the site's address, certificate included. Before DNS points at the droplet, the check falls back to Caddy's container.
+  - **The preview (D-31) ended at go-live,** when its name moved to production.

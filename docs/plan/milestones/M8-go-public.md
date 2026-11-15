@@ -370,8 +370,19 @@
 - `docs/ops/deploy.md` covers how to deploy, roll back and read the logs.
 
 **Done when:**
-- [ ] A tagged release deploys without manual steps.
-- [ ] A deliberately broken release (health check failing) rolls back on its own.
+- [x] A tagged release deploys without manual steps.
+- [x] A deliberately broken release (health check failing) rolls back on its own.
+
+**As built (M8-T6), D-46:**
+- **`.github/workflows/deploy.yml`** (on a `v*` tag, or by hand): builds both images, pushes them to GHCR as `ghcr.io/vault21inc/galaxy-explorer-{api,web}:<commit>` (and `:<version>`), copies the release's compose file and `scripts/ops/deploy-release.sh` to `/srv/galaxy-explorer/releases/<commit>/`, logs the droplet in to GHCR with the run's own token (out again at the end), and runs the script. `migrate` runs as part of `up`, before the API.
+- **`scripts/ops/deploy-release.sh`:** pulls (unless the images are there already), `up --wait` (every container healthy), then `/api/health` through Caddy at the site's address once DNS points at the droplet (else from Caddy's container). Healthy: recorded in `current`, the last 5 releases kept. Not: the previous release is started again and the run fails. An earlier release's script, run by hand, rolls back to it.
+- **Access:** the `production` environment holds the droplet's address, `deploy`, an SSH key marked `restrict` in `authorized_keys`, and the droplet's pinned host keys.
+- **The runs, 2026-11-15:**
+  - by hand on `main` (b078548): live on the new droplet;
+  - **go-live** (D-45): the owner moved `galaxyexplorer.perturbatory.com` (A and AAAA) to it, Caddy got a Let's Encrypt certificate, and the owner made the first admin with `create-user --admin`;
+  - **a broken release** (5325833, on the throwaway branch `deploy-test/broken-health`, its health route always 503): its API was unhealthy, b078548 came back healthy within the run, and the run failed. The branch and the release were removed after;
+  - **`v0.2.0`** (48f4fa5): pushing the tag deployed it, with no manual step.
+- **[docs/ops/deploy.md](../../ops/deploy.md)** covers releasing, rolling back, logs and access.
 
 ### M8-T7 Backups and restore
 

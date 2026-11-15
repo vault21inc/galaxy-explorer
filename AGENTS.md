@@ -10,6 +10,7 @@ Galaxy Explorer is a universe-agnostic 3D galaxy builder. The owner builds galax
    - Commit messages start with the task ID, for example `M2-T4: resolve bindings per platform`.
    - The message body says what changed and how you verified it. Anything the plan asks to "report" (performance numbers, manual checks, new dependencies) goes there too.
    - Run `pnpm check` and the relevant integration and e2e suites before every commit: `main` must always pass. Then push, and check that CI passes.
+   - Pushing to `main` doesn't deploy. A release to the production site is a `v*` tag on a commit whose CI has passed, or a deploy by hand ([docs/ops/deploy.md](docs/ops/deploy.md), D-46).
    - Use the commit message checklist below.
 4. Commits use the email `24880568+vault21inc@users.noreply.github.com`, set in the repository's local git config. In a fresh clone, run `git config user.email 24880568+vault21inc@users.noreply.github.com` before your first commit.
 

@@ -1,5 +1,7 @@
 # The private preview
 
+**Retired on 2026-11-15** (D-45, D-46): its name, `galaxyexplorer.perturbatory.com`, now serves the production site ([production.md](production.md), [deploy.md](deploy.md)). Its droplet (201.79.43.42) no longer answers at that name and can be deleted. The rest of this page is kept as a record.
+
 A password-protected copy of the app on one server, so invited people can explore your galaxy and give feedback before M8 builds the real public site. You edit; testers read.
 
 **What it is:**
