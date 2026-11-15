@@ -12,6 +12,9 @@ dist/
 # Local data: database dumps, uploaded media in development
 .data/
 
+# Private notes (server access and the like): docs/ops/access.local.md
+*.local.md
+
 # Test output
 coverage/
 playwright-report/
