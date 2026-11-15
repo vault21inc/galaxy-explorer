@@ -355,7 +355,7 @@
   - DigitalOcean's monitoring agent (installed if the droplet was made without it);
   - `/srv/galaxy-explorer` (750) with `.env.production` (600), both `deploy`'s;
   - it waits for cloud-init and apt's lock on a new droplet.
-- **[docs/ops/droplet.md](../../ops/droplet.md)**, followed on 2026-11-15: `galaxy-explorer-prod` in NYC3 (2 vCPU, 4 GB, Ubuntu 24.04), 159.203.101.110. The secrets were made on the droplet. IPv6 wasn't ticked at creation, so there's no AAAA record until it's turned on.
+- **[docs/ops/droplet.md](../../ops/droplet.md)**, followed on 2026-11-15: `galaxy-explorer-prod` in NYC3 (2 vCPU, 4 GB, Ubuntu 24.04), 159.203.101.110. The secrets were made on the droplet. IPv6 wasn't ticked at creation: the owner turned it on afterwards (2604:a880:800:14:0:3:dc59:0), and a netplan file of its own added it in Ubuntu (the runbook's step 1). It works from the droplet out; inbound is checked at go-live, from somewhere with IPv6.
 - **The site's name is `galaxyexplorer.perturbatory.com`,** the preview's (D-45). DNS moves to the droplet at go-live, with the uptime check on `/api/health`, in M8-T6; the preview goes dark then.
 
 ### M8-T6 Deploy pipeline

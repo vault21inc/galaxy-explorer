@@ -18,7 +18,26 @@ In DigitalOcean: **Create › Droplets**.
 | Monitoring | **Improved metrics and monitoring** on (installs DigitalOcean's agent) |
 | Name | `galaxy-explorer-prod` |
 
-Note its IPv4 and IPv6 addresses. A droplet made without IPv6 can have it turned on later on its **Networking** tab, following DigitalOcean's steps for an existing droplet; until then, leave out the AAAA record in step 3.
+Note its IPv4 and IPv6 addresses.
+
+**IPv6 turned on later.** A droplet made without IPv6 gets it on its **Networking** tab (DigitalOcean powers it off for that; turn it back on). Ubuntu doesn't pick it up by itself: cloud-init wrote the network settings at first boot. Add them in a file of their own, with the address and gateway from the droplet's metadata, and check the merged result still has the IPv4 address before applying:
+
+```bash
+ssh deploy@<ipv4>
+m=http://169.254.169.254/metadata/v1/interfaces/public/0/ipv6
+sudo tee /etc/netplan/60-ipv6.yaml >/dev/null <<YAML
+network:
+  version: 2
+  ethernets:
+    eth0:
+      addresses: ["$(curl -s $m/address)/$(curl -s $m/cidr)"]
+      routes: [{ to: "::/0", via: "$(curl -s $m/gateway)" }]
+YAML
+sudo chmod 600 /etc/netplan/60-ipv6.yaml
+sudo netplan get ethernets.eth0   # both addresses, both routes?
+sudo netplan apply
+ping -6 -c 2 2001:4860:4860::8888
+```
 
 ## 2. Provision it
 
@@ -91,4 +110,4 @@ The deploy pipeline (M8-T6) takes it from here.
 
 | Date | What | Notes |
 |---|---|---|
-| 2026-11-15 | Followed from scratch (M8-T5): `galaxy-explorer-prod`, NYC3, 159.203.101.110 | Steps 1, 2, 4 and 6 done. The second run changed nothing; root logins are refused; fail2ban was counting bots' failed logins within minutes. Corrections: the script now waits for cloud-init and apt's lock; IPv6 wasn't ticked, so the droplet has none yet (step 1 now says it's off unless ticked). Step 3 (DNS) and the uptime check wait for go-live (M8-T6); the alert policy is the owner's to add. |
+| 2026-11-15 | Followed from scratch (M8-T5): `galaxy-explorer-prod`, NYC3, 159.203.101.110 | Steps 1, 2, 4 and 6 done. The second run changed nothing; root logins are refused; fail2ban was counting bots' failed logins within minutes. Corrections: the script now waits for cloud-init and apt's lock; IPv6 wasn't ticked; the owner turned it on afterwards, and Ubuntu needed it added by hand (step 1 now covers both). It works from the droplet out; nothing here had IPv6 to test it from outside. Step 3 (DNS) and the uptime check wait for go-live (M8-T6); the alert policy is the owner's to add. |
