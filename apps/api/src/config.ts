@@ -19,6 +19,12 @@ export type WikiSourceConfig = z.infer<typeof WikiSourceConfig>;
 /** An optional setting where a blank value (`GE_PUBLIC_URL=` in a .env file) means unset. */
 const optional = <T extends z.ZodType>(schema: T) =>
   z.preprocess((value) => (value === '' ? undefined : value), schema.optional());
+/**
+ * A setting with a default, where a blank value means unset too: docker compose passes
+ * `GE_WIKI_USER_AGENT: ${GE_WIKI_USER_AGENT:-}` as an empty string when it isn't set (M8-T4).
+ */
+const withDefault = <T extends z.ZodType>(schema: T) =>
+  z.preprocess((value) => (value === '' ? undefined : value), schema);
 
 /** The wikis offered unless GE_WIKI_SOURCES says otherwise. */
 export const DEFAULT_WIKI_SOURCES: readonly WikiSourceConfig[] = [
@@ -76,10 +82,12 @@ const configSchema = z
      * How the API introduces itself to wikis (M7-T3). Wikis ask for a name and a way to reach
      * whoever runs the client; set it to include yours.
      */
-    GE_WIKI_USER_AGENT: z
-      .string()
-      .min(1)
-      .default('GalaxyExplorer/0.1 (self-hosted; set GE_WIKI_USER_AGENT to add contact details)'),
+    GE_WIKI_USER_AGENT: withDefault(
+      z
+        .string()
+        .min(1)
+        .default('GalaxyExplorer/0.1 (self-hosted; set GE_WIKI_USER_AGENT to add contact details)'),
+    ),
     /**
      * The wikis "Fill from wiki" may read, as JSON: [{ "id", "label", "apiUrl" }]. Only these:
      * the API never fetches a URL a request sends it. Tests point it at a local fixture server.

@@ -1,0 +1,65 @@
+# The production site (M8-T4, architecture.md §14), in the `caddy` service of
+# docker/compose.prod.yml. Caddy gets the site's certificate itself (automatic HTTPS), and
+# keeps it in the caddy_data volume.
+#
+# From the environment:
+#   GE_SITE_ADDRESS   the site's name, such as galaxy.example.com; 127.0.0.1 to try the stack
+#                     on your own machine, with a certificate from Caddy's own authority
+#                     (an IP address, so the HSTS header can't stick to localhost in your
+#                     browser and send `pnpm dev` to HTTPS for a year)
+{
+	# A client that names no server (one connecting to an IP address) gets the site's own
+	# certificate.
+	default_sni {$GE_SITE_ADDRESS}
+}
+
+# The security headers (M8-T3), generated from packages/domain/src/security/headers.ts.
+import security-headers.caddy
+
+{$GE_SITE_ADDRESS} {
+	encode zstd gzip
+	import security-headers
+
+	# The API, which also serves its docs (/api/docs) and the LLM guide.
+	handle /api/* {
+		reverse_proxy api:3000
+	}
+
+	# Remote MCP (M8-T2). Listening on the internal network, it asks every request for a token.
+	handle /mcp {
+		reverse_proxy mcp:3110
+	}
+
+	# Uploaded images, from the media volume, each only to a browser that may read its
+	# universe (M8-T11): the API decides from the cookies, and answers 404 otherwise. In a
+	# route, so everything runs in the order written.
+	handle /media/* {
+		route {
+			forward_auth api:3000 {
+				uri /api/v1/media-access
+				# Copied onto the request; the next lines put them on the response.
+				copy_headers Cache-Control X-Robots-Tag
+			}
+			header Cache-Control {http.request.header.Cache-Control}
+			@notPublic header X-Robots-Tag *
+			header @notPublic X-Robots-Tag {http.request.header.X-Robots-Tag}
+			# Shown in the page, never downloaded, as the API's own /media/* sends them.
+			header Content-Disposition inline
+			uri strip_prefix /media
+			root * /srv/media
+			file_server
+		}
+	}
+
+	# The web app. Built files have a content hash in their names, so they never change.
+	handle {
+		root * /srv/web
+		@hashed path /assets/*
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+		@page not path /assets/*
+		header @page Cache-Control "no-cache"
+		# Addresses like /u/example/main/view/… are the app's own: they all get index.html.
+		try_files {path} /index.html
+		file_server
+	}
+}

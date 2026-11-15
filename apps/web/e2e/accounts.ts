@@ -97,9 +97,16 @@ export interface Account {
   lastStep: number;
 }
 
-/** An API client for the site with accounts, sending writes from its own origin. */
+/**
+ * An API client for the site with accounts, sending writes from its own origin. It accepts the
+ * stack's certificate, which Caddy's own authority signs when it runs locally (M8-T4).
+ */
 export function siteApi(): Promise<APIRequestContext> {
-  return request.newContext({ baseURL: AUTH_URL, extraHTTPHeaders: { origin: AUTH_URL } });
+  return request.newContext({
+    baseURL: AUTH_URL,
+    extraHTTPHeaders: { origin: AUTH_URL },
+    ignoreHTTPSErrors: true,
+  });
 }
 
 /**
@@ -107,7 +114,11 @@ export function siteApi(): Promise<APIRequestContext> {
  * here: the next one is `nextCode(account)`.
  */
 export async function accountFromInvite(options: { admin?: boolean } = {}): Promise<Account> {
-  const token = inviteLink(options).slice('/link/'.length);
+  return accountFromLink(inviteLink(options).slice('/link/'.length));
+}
+
+/** An account made through an invite link's two steps, from the link's token. */
+export async function accountFromLink(token: string): Promise<Account> {
   const api = await siteApi();
   try {
     const account = { username: uniqueName('e2e'), password: 'a long e2e test password' };

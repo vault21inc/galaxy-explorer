@@ -14,6 +14,7 @@
     "test": "turbo run test",
     "test:integration": "turbo run test:integration",
     "test:e2e": "turbo run test:e2e",
+    "test:stack": "pnpm --filter @ge/web exec playwright test -c playwright.stack.config.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:up": "docker compose -f docker/compose.dev.yml up -d --wait",

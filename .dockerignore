@@ -1,0 +1,19 @@
+# What the production images (docker/*.Dockerfile, M8-T4) never need from the repository:
+# installed packages (each image installs its own, for Linux), build output, local data and
+# secrets, test output, and the docs (the API copies the one it serves, docs/api).
+**/node_modules
+**/dist
+**/.turbo
+**/test-results
+**/playwright-report
+.data
+.git
+.github
+.claude
+.env
+.env.*
+!.env.example
+**/*.local
+docs
+!docs/api
+scripts/perf

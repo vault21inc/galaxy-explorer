@@ -23,6 +23,12 @@ describe('loadConfig', () => {
     });
   });
 
+  it('takes a blank wiki user agent as unset, as docker compose passes it (M8-T4)', () => {
+    expect(loadConfig({ DATABASE_URL, GE_WIKI_USER_AGENT: '' }).wikiUserAgent).toMatch(
+      /^GalaxyExplorer\//,
+    );
+  });
+
   it('turns the rate limits off only when told to (M8-T3)', () => {
     expect(loadConfig({ DATABASE_URL, GE_RATE_LIMITS: 'off' }).rateLimits).toBe(false);
     expect(loadConfig({ DATABASE_URL, GE_RATE_LIMITS: 'on' }).rateLimits).toBe(true);

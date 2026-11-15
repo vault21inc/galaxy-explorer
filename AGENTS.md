@@ -45,6 +45,7 @@ Added by later tasks; update this file when you add one:
 | `pnpm admin:invite [--admin]` | print an invite link (7 days, single use) to `/link/{token}`. Needs `GE_PUBLIC_URL` | M8-T1 |
 | `pnpm admin:reset-link <username>` | print a reset link (24 hours, single use) for a new password and two-factor codes. Needs `GE_PUBLIC_URL` | M8-T1 |
 | `pnpm headers:caddy` | write `ops/caddy/security-headers.caddy` from `packages/domain/src/security/headers.ts`; run it after changing the headers and commit the result (a unit test fails while it's stale) | M8-T3 |
+| `pnpm test:stack` | the golden path and the stack's own checks (`e2e/stack.spec.ts`) against the production stack, in Chromium and WebKit: `docker/compose.prod.yml` started apart with `VITE_TEST_HOOKS=1`, and `GE_STACK_ENV_FILE` naming its env file ([docs/ops/production.md](docs/ops/production.md)) | M8-T4 |
 
 ## Non-negotiables
 

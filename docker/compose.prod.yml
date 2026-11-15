@@ -1,0 +1,171 @@
+# The production stack on one machine (M8-T4, architecture.md §14):
+#
+#   caddy ──443──▶ the web app, /media (after asking the API), /mcp ─▶ mcp, /api ─▶ api
+#   api ─▶ postgres (internal network only), the media volume
+#   migrate: a one-off run of the database migrations before the API starts
+#
+# Settings come from an env file (docker/production.env.example lists them):
+#
+#   docker compose -f docker/compose.prod.yml --env-file .env.production up -d
+#
+# Images are built here (`--build`), or pulled by tag once the deploy pipeline pushes them
+# (M8-T6): GE_IMAGE_PREFIX and GE_IMAGE_TAG name them. The nightly backups join in M8-T7.
+#
+# Its own project name: docker/compose.dev.yml is `galaxy-explorer`, and sharing it would make
+# each stack's containers the other's "orphans".
+name: galaxy-explorer-prod
+
+# One image for the API, the MCP server and the migrations. The `api` service builds it; the
+# others use it as it is, and never try to pull it on their own.
+x-api-image: &api-image
+  image: ${GE_IMAGE_PREFIX:-galaxy-explorer}-api:${GE_IMAGE_TAG:-local}
+  pull_policy: never
+
+x-database-url: &database-url postgres://ge:${GE_DB_PASSWORD:?set GE_DB_PASSWORD}@postgres:5432/ge
+
+services:
+  postgres:
+    image: postgres:18.6
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ge
+      POSTGRES_PASSWORD: ${GE_DB_PASSWORD:?set GE_DB_PASSWORD}
+      POSTGRES_DB: ge
+    volumes:
+      # Postgres 18 images keep their data under /var/lib/postgresql/18/, so mount the parent.
+      - pgdata:/var/lib/postgresql
+    # The internal network only: no published port, and no way out.
+    networks: [internal]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ge -d ge']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    <<: *api-image
+    command: ['node', 'packages/db/src/cli.ts', 'migrate']
+    environment:
+      DATABASE_URL: *database-url
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [internal]
+    read_only: true
+    restart: 'no'
+
+  api:
+    image: ${GE_IMAGE_PREFIX:-galaxy-explorer}-api:${GE_IMAGE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: docker/api.Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: *database-url
+      GE_AUTH_MODE: required
+      GE_HOST: 0.0.0.0
+      GE_PORT: '3000'
+      GE_PUBLIC_URL: ${GE_PUBLIC_URL:?set GE_PUBLIC_URL, such as https://galaxy.example.com}
+      GE_SESSION_SECRET: ${GE_SESSION_SECRET:?set GE_SESSION_SECRET (openssl rand -base64 48)}
+      GE_MEDIA_DIR: /var/lib/galaxy-explorer/media
+      GE_LOG_LEVEL: ${GE_LOG_LEVEL:-info}
+      # Only Caddy and the MCP server can reach the API, both from private addresses on the
+      # internal network: believe their X-Forwarded-For, so the rate limits count visitors.
+      GE_TRUST_PROXY: uniquelocal
+      GE_WIKI_USER_AGENT: ${GE_WIKI_USER_AGENT:-}
+    volumes:
+      - media:/var/lib/galaxy-explorer/media
+    read_only: true
+    tmpfs: [/tmp]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    # The internal network for Caddy, the MCP server and Postgres; the edge network to reach
+    # the wikis "Fill from wiki" reads (M7-T3).
+    networks: [internal, edge]
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+  mcp:
+    <<: *api-image
+    restart: unless-stopped
+    command: ['node', 'apps/mcp/src/http-main.ts']
+    environment:
+      GE_API_URL: http://api:3000
+      # On the internal network, every request needs an API token (M8-T2).
+      GE_MCP_HOST: 0.0.0.0
+      GE_MCP_PORT: '3110'
+      # Caddy passes the site's host along; the MCP server answers only to known hosts.
+      GE_PUBLIC_URL: ${GE_PUBLIC_URL:?set GE_PUBLIC_URL}
+    read_only: true
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [internal]
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3110/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  caddy:
+    image: ${GE_IMAGE_PREFIX:-galaxy-explorer}-web:${GE_IMAGE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: docker/web.Dockerfile
+      args:
+        VITE_TEST_HOOKS: ${VITE_TEST_HOOKS:-}
+        VITE_DEFAULT_LABEL_MODE: ${VITE_DEFAULT_LABEL_MODE:-}
+        VITE_DEFAULT_SPOILERS: ${VITE_DEFAULT_SPOILERS:-}
+    restart: unless-stopped
+    environment:
+      GE_SITE_ADDRESS: ${GE_SITE_ADDRESS:?set GE_SITE_ADDRESS, such as galaxy.example.com}
+    ports:
+      - '${GE_HTTP_PORT:-80}:80'
+      - '${GE_HTTPS_PORT:-443}:443'
+      - '${GE_HTTPS_PORT:-443}:443/udp'
+    volumes:
+      - media:/srv/media:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      mcp:
+        condition: service_healthy
+    networks: [internal, edge]
+    healthcheck:
+      # Caddy's admin endpoint, inside the container only.
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:2019/config/']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  # No way in or out: Postgres, and the services' talk to each other.
+  internal:
+    internal: true
+  # The published ports, and the API's way out to the wikis.
+  edge:
+
+volumes:
+  pgdata:
+  media:
+  caddy_data:
+  caddy_config:

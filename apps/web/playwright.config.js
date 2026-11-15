@@ -56,7 +56,8 @@ export default defineConfig({
   testDir: './e2e',
   // GPU memory over 20 round trips: too slow and timing-sensitive with software rendering.
   // `pnpm perf` checks it on the reference Mac (scripts/perf/system-path.ts).
-  testIgnore: isCI ? ['**/leaks.spec.ts'] : [],
+  // stack.spec.ts needs the production stack (playwright.stack.config.js, M8-T4).
+  testIgnore: isCI ? ['**/leaks.spec.ts', '**/stack.spec.ts'] : ['**/stack.spec.ts'],
   // Read by tests whose numbers depend on the machine's speed (test.info().config.metadata).
   metadata: { softwareRendering: isCI },
   fullyParallel: true,
