@@ -1,7 +1,8 @@
 /**
  * Account commands for whoever runs the server (M8-T1), from the repository root:
  *
- *   pnpm admin:create-user [--admin]   make an account here: username, password, two-factor setup
+ *   pnpm admin:create-user [--admin]   make an account here: username, password, and two-factor
+ *                                      codes if wanted (D-47: yes by default for an admin)
  *   pnpm admin:invite [--admin]        print an invite link (7 days, single use)
  *   pnpm admin:reset-link <username>   print a reset link (24 hours, single use)
  *
@@ -24,7 +25,7 @@ import { normalUsername } from './sign-in.ts';
 import { acceptedStep, newTotpSecret, otpauthUri, qrCodeForTerminal } from './totp.ts';
 
 const USAGE = `Usage:
-  pnpm admin:create-user [--admin]   make an account: username, password, two-factor setup
+  pnpm admin:create-user [--admin]   make an account: username, password, two-factor codes if wanted
   pnpm admin:invite [--admin]        print an invite link (7 days, single use)
   pnpm admin:reset-link <username>   print a reset link (24 hours, single use)`;
 
@@ -108,25 +109,37 @@ async function createUser(db: Database, config: Config, admin: boolean): Promise
       console.log('Those didn’t match. Try again.');
     }
 
-    const secret = newTotpSecret();
-    const uri = otpauthUri(secret, username, publicUrl);
-    console.log('\nScan this with an authenticator app, or type in the secret below it:\n');
-    console.log(await qrCodeForTerminal(uri));
-    console.log(`Secret: ${secret}\n${uri}\n`);
-    let step: number | null = null;
-    for (let tries = 0; step === null; tries += 1) {
-      if (tries === 3) throw new UsageError('No account made: the codes didn’t match.');
-      step = await acceptedStep(secret, await prompt.ask('A code from the app: '), null);
-      if (step === null)
-        console.log('That code didn’t work. Check the device’s clock, then try the next one.');
+    // Two-factor codes are optional (D-47), but an admin can manage every account: for one,
+    // they're the default answer.
+    const wanted = (
+      await prompt.ask(
+        admin
+          ? 'Set up two-factor codes now? Recommended for an admin. [Y/n] '
+          : 'Set up two-factor codes now? They can be turned on later. [y/N] ',
+      )
+    ).toLowerCase();
+    let codes: { totpSecretEnc: Buffer; totpLastStep: number } | null = null;
+    if (wanted.startsWith('y') || (wanted === '' && admin)) {
+      const secret = newTotpSecret();
+      const uri = otpauthUri(secret, username, publicUrl);
+      console.log('\nScan this with an authenticator app, or type in the secret below it:\n');
+      console.log(await qrCodeForTerminal(uri));
+      console.log(`Secret: ${secret}\n${uri}\n`);
+      let step: number | null = null;
+      for (let tries = 0; step === null; tries += 1) {
+        if (tries === 3) throw new UsageError('No account made: the codes didn’t match.');
+        step = await acceptedStep(secret, await prompt.ask('A code from the app: '), null);
+        if (step === null)
+          console.log('That code didn’t work. Check the device’s clock, then try the next one.');
+      }
+      codes = { totpSecretEnc: sealer.seal(Buffer.from(secret)), totpLastStep: step };
     }
 
     await db.insert(schema.users).values({
       username,
       role: admin ? 'admin' : 'member',
       passwordHash: await hashPassword(password),
-      totpSecretEnc: sealer.seal(Buffer.from(secret)),
-      totpLastStep: step,
+      ...codes,
     });
     console.log(
       `\nMade ${admin ? 'the admin' : 'the account'} ${username}. Sign in at ${publicUrl}/login.`,

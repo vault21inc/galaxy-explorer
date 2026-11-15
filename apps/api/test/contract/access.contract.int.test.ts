@@ -173,10 +173,10 @@ const OWN_FIELDS: Record<string, readonly string[]> = { [UNIVERSE]: ['slug', 'vi
 /**
  * Whether a route needs someone signed in on the site (architecture.md §7), so that an API
  * token never reaches it, worked out apart from what the route declares: the account's own
- * settings (its devices, password, storage and tokens), and sharing (who's in, the drafts
+ * settings (its devices, password, two-factor codes, storage and tokens), and sharing (who's in, the drafts
  * count shown before making it public, the link, a transfer, leaving), and deleting a universe.
  */
-const ACCOUNT_SETTINGS = /^\/api\/v1\/auth\/(sessions|password|storage|tokens)/;
+const ACCOUNT_SETTINGS = /^\/api\/v1\/auth\/(sessions|password|two-factor|storage|tokens)/;
 function specSession(op: Operation): boolean {
   if (ACCOUNT_SETTINGS.test(op.path)) return true;
   if (op.method === 'delete' && op.path === UNIVERSE) return true;

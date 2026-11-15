@@ -23,12 +23,13 @@ import { acceptedStep, newTotpSecret, otpauthUri, qrCodeDataUrl } from './totp.t
  * screens in M8-T13) and passes it on; the person opens `/link/{token}` and goes through two
  * steps:
  *
- * 1. **start:** choose a username (an invite) and a password. Nothing is saved: the API hashes
- *    the password, makes a two-factor secret, and returns both sealed as `setup`, with the
- *    secret as a QR code.
- * 2. **finish:** send `setup` back with one code from the authenticator app. Only now, once the
- *    app is known to work, is the account made (or its password and codes replaced) and the
- *    link used up, in one transaction.
+ * 1. **start:** choose a username (an invite) and a password, and whether to set up two-factor
+ *    codes now (D-47). Nothing is saved: the API hashes the password, makes a two-factor secret
+ *    if asked to, and returns both sealed as `setup`, with the secret as a QR code.
+ * 2. **finish:** send `setup` back, with one code from the authenticator app if it has a secret.
+ *    Only now, once the app is known to work, is the account made (or its password and codes
+ *    replaced) and the link used up, in one transaction. Without a secret the account has codes
+ *    off; a reset without one turns them off, since it's for someone who lost them.
  *
  * Keeping the setup in the client between the steps means half-finished links leave nothing in
  * the database, and starting again just makes a new secret.
@@ -43,7 +44,8 @@ const SetupPayload = z.object({
   linkId: z.uuid(),
   username: Username,
   passwordHash: z.string(),
-  secret: z.string(),
+  /** Null: no two-factor codes (D-47). */
+  secret: z.string().nullable(),
   expiresAtMs: z.number(),
 });
 
@@ -135,7 +137,7 @@ export async function describeLink(
   };
 }
 
-/** Step 1: checks the username and password, and returns a new two-factor setup. */
+/** Step 1: checks the username and password, and returns the setup, with a new secret if asked. */
 export async function startLink(
   auth: AuthContext,
   token: string,
@@ -156,7 +158,7 @@ export async function startLink(
       .where(eq(users.username, username));
     if (taken) throw new UsernameTaken();
   }
-  const secret = newTotpSecret();
+  const secret = input.twoFactor ? newTotpSecret() : null;
   const payload: z.infer<typeof SetupPayload> = {
     linkId: found.link.id,
     username,
@@ -164,13 +166,10 @@ export async function startLink(
     secret,
     expiresAtMs: Date.now() + SETUP_TTL_MS,
   };
+  const setup = auth.setups.seal(Buffer.from(JSON.stringify(payload))).toString('base64url');
+  if (secret === null) return { setup, secret: null, otpauthUri: null, qrCode: null };
   const uri = otpauthUri(secret, username, auth.publicUrl);
-  return {
-    setup: auth.setups.seal(Buffer.from(JSON.stringify(payload))).toString('base64url'),
-    secret,
-    otpauthUri: uri,
-    qrCode: await qrCodeDataUrl(uri),
-  };
+  return { setup, secret, otpauthUri: uri, qrCode: await qrCodeDataUrl(uri) };
 }
 
 /** The setup from step 1, if it's genuine, for this link, and not too old. */
@@ -189,9 +188,9 @@ function openSetup(auth: AuthContext, found: FoundLink, setup: string) {
 }
 
 /**
- * Step 2: checks one code from the app, then makes the account (an invite) or replaces its
- * password and codes and signs out all its sessions (a reset), uses up the link, and signs the
- * person in, all in one transaction.
+ * Step 2: checks one code from the app (if the setup has a secret), then makes the account (an
+ * invite) or replaces its password and codes and signs out all its sessions (a reset), uses up
+ * the link, and signs the person in, all in one transaction.
  */
 export async function finishLink(
   auth: AuthContext,
@@ -202,15 +201,22 @@ export async function finishLink(
   const found = await findLink(auth, token, client.ip);
   requireUsable(auth, found);
   const setup = openSetup(auth, found, input.setup);
-  const step = await acceptedStep(setup.secret, input.totp, null);
-  if (step === null) {
-    auth.limiter.fail(found.keys);
-    throw new RuleViolation(
-      'That code didn’t work. Check that your device’s clock is right, then type the next code.',
-      '/totp',
-    );
+  let step: number | null = null;
+  if (setup.secret !== null) {
+    if (input.totp === undefined) {
+      throw new RuleViolation('Type a code from your authenticator app.', '/totp');
+    }
+    step = await acceptedStep(setup.secret, input.totp, null);
+    if (step === null) {
+      auth.limiter.fail(found.keys);
+      throw new RuleViolation(
+        'That code didn’t work. Check that your device’s clock is right, then type the next code.',
+        '/totp',
+      );
+    }
   }
-  const totpSecretEnc = auth.totpSecrets.seal(Buffer.from(setup.secret));
+  const totpSecretEnc =
+    setup.secret === null ? null : auth.totpSecrets.seal(Buffer.from(setup.secret));
   try {
     return await auth.db.transaction(async (tx) => {
       // Used up first, on the condition that nobody else did: a link works exactly once.

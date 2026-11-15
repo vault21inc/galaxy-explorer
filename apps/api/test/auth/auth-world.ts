@@ -61,6 +61,25 @@ export async function makeAccount(
   return { id: user.id, username, password, secret };
 }
 
+/** An account with two-factor codes off (D-47): it signs in with its password alone. */
+export async function makeAccountWithoutCodes(
+  db: Database,
+  username: string,
+  options: { role?: 'admin' | 'member' } = {},
+): Promise<Omit<TestAccount, 'secret'>> {
+  const password = `${username} has a long password`;
+  const [user] = await db
+    .insert(schema.users)
+    .values({
+      username,
+      role: options.role ?? 'member',
+      passwordHash: await hashPassword(password),
+    })
+    .returning({ id: schema.users.id });
+  if (!user) throw new Error('No user was made.');
+  return { id: user.id, username, password };
+}
+
 /** The session cookie a response set, as a `cookie` header for the next request. */
 export function sessionOf(response: { cookies: { name: string; value: string }[] }): {
   cookie: string;

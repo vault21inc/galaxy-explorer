@@ -16,8 +16,9 @@ import { formatWhen } from './format-when.ts';
 const GIB = 1024 ** 3;
 
 /**
- * The Accounts screen (M8-T13, ux.md §13): every account with its role, last sign-in, universes
- * owned, media used of its quota, and status; inviting an account, and each account's actions.
+ * The Accounts screen (M8-T13, ux.md §13): every account with its role, last sign-in, whether it
+ * has two-factor codes on (D-47), universes owned, media used of its quota, and status; inviting
+ * an account, and each account's actions.
  */
 export function AccountsTab() {
   const users = useAdminUsers();
@@ -34,7 +35,7 @@ export function AccountsTab() {
         ? 'A link that makes one new admin account, within 7 days. Admins manage accounts, not other people’s universes.'
         : 'A link that makes one new account, within 7 days. The person chooses a username and password, and sets up two-factor codes.',
     confirmLabel: 'Make the link',
-    askCode: false,
+    askConfirmation: false,
     run: async () => (await invite.mutateAsync(role)).url,
   });
 
@@ -45,10 +46,11 @@ export function AccountsTab() {
         label: 'Reset link',
         action: {
           title: `A reset link for ${name}`,
-          description: `For a forgotten password or lost codes: within 24 hours, the link sets a new password and new codes, and signs ${name} out everywhere.`,
+          description: `For a forgotten password or lost codes: within 24 hours, the link sets a new password, with new two-factor codes if ${name} wants them, and signs ${name} out everywhere.`,
           confirmLabel: 'Make the link',
-          askCode: true,
-          run: async ({ totp }) => (await resetLink.mutateAsync({ userId: user.id, totp })).url,
+          askConfirmation: true,
+          run: async ({ confirmation }) =>
+            (await resetLink.mutateAsync({ userId: user.id, confirmation })).url,
         } satisfies AdminAction,
       },
       {
@@ -60,9 +62,9 @@ export function AccountsTab() {
             : `${name} is signed out at once and can’t sign in until enabled again. Their universes stay as they are.`,
           confirmLabel: user.disabledAt ? 'Enable' : 'Disable',
           destructive: !user.disabledAt,
-          askCode: true,
-          run: async ({ totp }) => {
-            await update.mutateAsync({ userId: user.id, disabled: !user.disabledAt, totp });
+          askConfirmation: true,
+          run: async ({ confirmation }) => {
+            await update.mutateAsync({ userId: user.id, disabled: !user.disabledAt, confirmation });
           },
         } satisfies AdminAction,
       },
@@ -75,12 +77,12 @@ export function AccountsTab() {
               ? `${name} stops managing accounts.`
               : `${name} can manage accounts, but not open other people’s universes.`,
           confirmLabel: 'Change the role',
-          askCode: true,
-          run: async ({ totp }) => {
+          askConfirmation: true,
+          run: async ({ confirmation }) => {
             await update.mutateAsync({
               userId: user.id,
               role: user.role === 'admin' ? 'member' : 'admin',
-              totp,
+              confirmation,
             });
           },
         } satisfies AdminAction,
@@ -96,7 +98,7 @@ export function AccountsTab() {
             numeric: true,
             initial: String(user.mediaQuotaBytes / GIB),
           },
-          askCode: false,
+          askConfirmation: false,
           run: async ({ input }) => {
             const gb = Number(input.replace(',', '.'));
             if (!Number.isFinite(gb) || gb < 0) throw new Error('Type a number of GB, such as 2.');
@@ -113,9 +115,9 @@ export function AccountsTab() {
           confirmLabel: 'Delete the account',
           destructive: true,
           confirmText: name,
-          askCode: true,
-          run: async ({ totp }) => {
-            await remove.mutateAsync({ userId: user.id, totp });
+          askConfirmation: true,
+          run: async ({ confirmation }) => {
+            await remove.mutateAsync({ userId: user.id, confirmation });
           },
         } satisfies AdminAction,
       },
@@ -162,6 +164,9 @@ export function AccountsTab() {
               Last sign-in
             </th>
             <th scope="col" className="py-1 pr-3 font-medium">
+              Two-factor
+            </th>
+            <th scope="col" className="py-1 pr-3 font-medium">
               Universes
             </th>
             <th scope="col" className="py-1 pr-3 font-medium">
@@ -185,6 +190,7 @@ export function AccountsTab() {
               <td className="py-1.5 pr-3">
                 {user.lastLoginAt ? formatWhen(user.lastLoginAt) : 'Never'}
               </td>
+              <td className="py-1.5 pr-3">{user.twoFactor ? 'On' : 'Off'}</td>
               <td className="py-1.5 pr-3">{user.universesOwned}</td>
               <td className="py-1.5 pr-3">
                 {formatBytes(user.mediaUsedBytes)} of {formatBytes(user.mediaQuotaBytes)}

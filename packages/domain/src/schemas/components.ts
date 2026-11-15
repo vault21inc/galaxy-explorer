@@ -71,6 +71,7 @@ export function openApiComponents(): Record<string, z.ZodType> {
     SessionRead: accounts.SessionRead,
     AccountLinkRead: accounts.AccountLinkRead,
     AccountLinkSetup: accounts.AccountLinkSetup,
+    TwoFactorSetup: accounts.TwoFactorSetup,
     StorageRead: accounts.StorageRead,
     AdminUserRead: accounts.AdminUserRead,
     AdminUniverseRead: accounts.AdminUniverseRead,

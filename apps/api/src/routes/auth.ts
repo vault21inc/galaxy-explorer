@@ -74,7 +74,7 @@ export const authRoutes: FastifyPluginCallbackZod<{ auth: AuthContext | null }> 
         ...routeAccess({ scope: 'open' }),
         summary: 'Sign in',
         description:
-          'Signs in with a username, password and a current two-factor code, and sets the session cookie (30 days, renewed as it’s used). Any mistake gets the same 401. Five failures in 15 minutes from one address, or for one username, get 429s until the window passes.',
+          'Signs in with a username, a password and, for an account with two-factor codes on, a current code (D-47), and sets the session cookie (30 days, renewed as it’s used). Any mistake gets the same 401; the right password without a needed code gets a 401 whose `errors` name `/totp`. Five failures in 15 minutes from one address, or for one username, get 429s until the window passes.',
         body: LoginRequest,
         response: { 200: account },
       },
@@ -212,7 +212,7 @@ export const authRoutes: FastifyPluginCallbackZod<{ auth: AuthContext | null }> 
         ...routeAccess({ scope: 'open' }),
         summary: 'Step 1 of a link: username and password',
         description:
-          'Checks the username (an invite only; 409 if it’s taken) and the password, and returns a new two-factor secret, as text and as a QR code, with the sealed `setup` to send back to `finish`. Nothing is saved yet.',
+          'Checks the username (an invite only; 409 if it’s taken) and the password, and returns the sealed `setup` to send back to `finish`. With `twoFactor` (the default) it also returns a new two-factor secret, as text and as a QR code; with `twoFactor: false` the account will have codes off (D-47), and those are null. Nothing is saved yet.',
         params: linkToken,
         body: AccountLinkStart,
         response: { 200: z.object({ data: AccountLinkSetup }) },
@@ -231,9 +231,9 @@ export const authRoutes: FastifyPluginCallbackZod<{ auth: AuthContext | null }> 
         operationId: 'auth.links.finish',
         ...rateLimit('links'),
         ...routeAccess({ scope: 'open' }),
-        summary: 'Step 2 of a link: the first code',
+        summary: 'Step 2 of a link: the first code, if any',
         description:
-          'Checks one code from the authenticator app against the setup from `start`. Then the account is made (an invite) or its password and two-factor codes are replaced and its sessions ended (a reset), the link is used up, and this browser is signed in.',
+          'Checks one code from the authenticator app against the setup from `start`, if it set up two-factor codes. Then the account is made (an invite) or its password and two-factor codes are replaced and its sessions ended (a reset), the link is used up, and this browser is signed in.',
         params: linkToken,
         body: AccountLinkFinish,
         response: { 200: account },

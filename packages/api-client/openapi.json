@@ -2974,6 +2974,9 @@
             "minimum": 0,
             "maximum": 9007199254740991
           },
+          "twoFactor": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -2986,6 +2989,7 @@
           "role",
           "mediaQuotaBytes",
           "mediaUsedBytes",
+          "twoFactor",
           "createdAt"
         ]
       },
@@ -3074,6 +3078,38 @@
         ]
       },
       "AccountLinkSetupInput": {
+        "type": "object",
+        "properties": {
+          "setup": {
+            "type": "string"
+          },
+          "secret": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "otpauthUri": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "qrCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "setup",
+          "secret",
+          "otpauthUri",
+          "qrCode"
+        ]
+      },
+      "TwoFactorSetupInput": {
         "type": "object",
         "properties": {
           "setup": {
@@ -3194,6 +3230,9 @@
               }
             ]
           },
+          "twoFactor": {
+            "type": "boolean"
+          },
           "universesOwned": {
             "type": "integer",
             "minimum": 0,
@@ -3217,6 +3256,7 @@
           "createdAt",
           "lastLoginAt",
           "disabledAt",
+          "twoFactor",
           "universesOwned",
           "mediaUsedBytes",
           "mediaQuotaBytes"
@@ -3330,6 +3370,8 @@
               "user.quota",
               "user.delete",
               "user.password",
+              "user.two-factor.on",
+              "user.two-factor.off",
               "token.create",
               "token.revoke"
             ]
@@ -13428,6 +13470,9 @@
             "minimum": 0,
             "maximum": 9007199254740991
           },
+          "twoFactor": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -13440,6 +13485,7 @@
           "role",
           "mediaQuotaBytes",
           "mediaUsedBytes",
+          "twoFactor",
           "createdAt"
         ],
         "additionalProperties": false
@@ -13531,6 +13577,39 @@
         "additionalProperties": false
       },
       "AccountLinkSetup": {
+        "type": "object",
+        "properties": {
+          "setup": {
+            "type": "string"
+          },
+          "secret": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "otpauthUri": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "qrCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "setup",
+          "secret",
+          "otpauthUri",
+          "qrCode"
+        ],
+        "additionalProperties": false
+      },
+      "TwoFactorSetup": {
         "type": "object",
         "properties": {
           "setup": {
@@ -13654,6 +13733,9 @@
               }
             ]
           },
+          "twoFactor": {
+            "type": "boolean"
+          },
           "universesOwned": {
             "type": "integer",
             "minimum": 0,
@@ -13677,6 +13759,7 @@
           "createdAt",
           "lastLoginAt",
           "disabledAt",
+          "twoFactor",
           "universesOwned",
           "mediaUsedBytes",
           "mediaQuotaBytes"
@@ -13793,6 +13876,8 @@
               "user.quota",
               "user.delete",
               "user.password",
+              "user.two-factor.on",
+              "user.two-factor.off",
               "token.create",
               "token.revoke"
             ]
@@ -21071,7 +21156,7 @@
         "tags": [
           "auth"
         ],
-        "description": "Signs in with a username, password and a current two-factor code, and sets the session cookie (30 days, renewed as it’s used). Any mistake gets the same 401. Five failures in 15 minutes from one address, or for one username, get 429s until the window passes.",
+        "description": "Signs in with a username, a password and, for an account with two-factor codes on, a current code (D-47), and sets the session cookie (30 days, renewed as it’s used). Any mistake gets the same 401; the right password without a needed code gets a 401 whose `errors` name `/totp`. Five failures in 15 minutes from one address, or for one username, get 429s until the window passes.",
         "requestBody": {
           "required": true,
           "content": {
@@ -21097,8 +21182,7 @@
                 },
                 "required": [
                   "username",
-                  "password",
-                  "totp"
+                  "password"
                 ],
                 "additionalProperties": false
               }
@@ -21329,7 +21413,7 @@
         "tags": [
           "auth"
         ],
-        "description": "Checks the username (an invite only; 409 if it’s taken) and the password, and returns a new two-factor secret, as text and as a QR code, with the sealed `setup` to send back to `finish`. Nothing is saved yet.",
+        "description": "Checks the username (an invite only; 409 if it’s taken) and the password, and returns the sealed `setup` to send back to `finish`. With `twoFactor` (the default) it also returns a new two-factor secret, as text and as a QR code; with `twoFactor: false` the account will have codes off (D-47), and those are null. Nothing is saved yet.",
         "requestBody": {
           "required": true,
           "content": {
@@ -21345,6 +21429,10 @@
                     "type": "string",
                     "minLength": 12,
                     "maxLength": 256
+                  },
+                  "twoFactor": {
+                    "default": true,
+                    "type": "boolean"
                   }
                 },
                 "required": [
@@ -21397,11 +21485,11 @@
     "/api/v1/auth/links/{token}/finish": {
       "post": {
         "operationId": "auth.links.finish",
-        "summary": "Step 2 of a link: the first code",
+        "summary": "Step 2 of a link: the first code, if any",
         "tags": [
           "auth"
         ],
-        "description": "Checks one code from the authenticator app against the setup from `start`. Then the account is made (an invite) or its password and two-factor codes are replaced and its sessions ended (a reset), the link is used up, and this browser is signed in.",
+        "description": "Checks one code from the authenticator app against the setup from `start`, if it set up two-factor codes. Then the account is made (an invite) or its password and two-factor codes are replaced and its sessions ended (a reset), the link is used up, and this browser is signed in.",
         "requestBody": {
           "required": true,
           "content": {
@@ -21420,8 +21508,7 @@
                   }
                 },
                 "required": [
-                  "setup",
-                  "totp"
+                  "setup"
                 ],
                 "additionalProperties": false
               }
@@ -21474,7 +21561,7 @@
         "tags": [
           "auth"
         ],
-        "description": "Needs the current password and a current code from the authenticator app. Every other device is signed out; this one stays signed in. Failures count against the same limits as signing in.",
+        "description": "Needs the current password, and a current code from the authenticator app if the account has two-factor codes on. Every other device is signed out; this one stays signed in. Failures count against the same limits as signing in.",
         "requestBody": {
           "required": true,
           "content": {
@@ -21499,8 +21586,7 @@
                 },
                 "required": [
                   "currentPassword",
-                  "newPassword",
-                  "totp"
+                  "newPassword"
                 ],
                 "additionalProperties": false
               }
@@ -21601,6 +21687,345 @@
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/StorageRead"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/two-factor/setup": {
+      "post": {
+        "operationId": "auth.twoFactor.setup",
+        "summary": "Step 1 of turning two-factor codes on: a new secret",
+        "tags": [
+          "auth"
+        ],
+        "description": "Returns a new two-factor secret, as text and as a QR code, with the sealed `setup` to send back to `enable` with one code. Nothing is saved yet. A 422 if the account has codes on already.",
+        "x-ge-access": {
+          "scope": "open",
+          "session": true
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TwoFactorSetup"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/two-factor/enable": {
+      "post": {
+        "operationId": "auth.twoFactor.enable",
+        "summary": "Step 2: turn two-factor codes on",
+        "tags": [
+          "auth"
+        ],
+        "description": "Checks one code from the authenticator app against the setup from `setup`, then saves the secret: from now on, signing in and the confirmations ask for a code. Returns the account.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "setup": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  },
+                  "totp": {
+                    "type": "string",
+                    "pattern": "^\\d{6}$"
+                  }
+                },
+                "required": [
+                  "setup",
+                  "totp"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "x-ge-rate-limit": "auth",
+        "x-ge-access": {
+          "scope": "open",
+          "session": true
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AccountRead"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/two-factor/disable": {
+      "post": {
+        "operationId": "auth.twoFactor.disable",
+        "summary": "Turn two-factor codes off",
+        "tags": [
+          "auth"
+        ],
+        "description": "Needs the current password and a current code. From then on the account signs in with its password alone, and the confirmations ask for the password. Failures count against the same limits as signing in. Returns the account.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentPassword": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "totp": {
+                    "type": "string",
+                    "pattern": "^\\d{6}$"
+                  }
+                },
+                "required": [
+                  "currentPassword",
+                  "totp"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "x-ge-rate-limit": "auth",
+        "x-ge-access": {
+          "scope": "open",
+          "session": true
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AccountRead"
                     }
                   },
                   "required": [
@@ -21777,7 +22202,7 @@
         "tags": [
           "auth"
         ],
-        "description": "An API token acts for the account that made it, never doing more than that account may at the moment of each request: `read` reads as a viewer would, `write` changes content too, and a token for one universe reaches no other. Account, sharing and admin routes refuse tokens. Needs a current two-factor code in `X-GE-TOTP`. The response holds the token itself (`secret`), which is never shown again.",
+        "description": "An API token acts for the account that made it, never doing more than that account may at the moment of each request: `read` reads as a viewer would, `write` changes content too, and a token for one universe reaches no other. Account, sharing and admin routes refuse tokens. Needs a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). The response holds the token itself (`secret`), which is never shown again.",
         "requestBody": {
           "required": true,
           "content": {
@@ -22098,7 +22523,7 @@
         "tags": [
           "admin"
         ],
-        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. Each with its role, last sign-in, universes owned, media used of its quota, and whether it's disabled.",
+        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). Each with its role, last sign-in, universes owned, media used of its quota, and whether it's disabled.",
         "x-ge-access": {
           "scope": "admin"
         },
@@ -22195,7 +22620,7 @@
         "tags": [
           "admin"
         ],
-        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. The link makes one account of the role given, within 7 days. It's returned once and never stored: pass it on.",
+        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). The link makes one account of the role given, within 7 days. It's returned once and never stored: pass it on.",
         "requestBody": {
           "required": true,
           "content": {
@@ -22312,7 +22737,7 @@
         "tags": [
           "admin"
         ],
-        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. For someone who forgot their password or lost their codes: within 24 hours, the link sets a new password and new codes, and signs out the account's sessions. Returned once.",
+        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). For someone who forgot their password or lost their codes: within 24 hours, the link sets a new password and new codes, and signs out the account's sessions. Returned once.",
         "parameters": [
           {
             "schema": {
@@ -22418,7 +22843,7 @@
         "tags": [
           "admin"
         ],
-        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. Disabling signs the account out at once. The last admin who can sign in can't be demoted or disabled. Changing the role or the status needs a code; the quota doesn't.",
+        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). Disabling signs the account out at once. The last admin who can sign in can't be demoted or disabled. Changing the role or the status needs a code; the quota doesn't.",
         "requestBody": {
           "required": true,
           "content": {
@@ -22550,7 +22975,7 @@
         "tags": [
           "admin"
         ],
-        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. Only once it owns no universes: transfer or delete them first, so deleting an account never deletes content.",
+        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). Only once it owns no universes: transfer or delete them first, so deleting an account never deletes content.",
         "parameters": [
           {
             "schema": {
@@ -22640,7 +23065,7 @@
         "tags": [
           "admin"
         ],
-        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. Name, owner, visibility, object count, media and last change: enough to manage them, nothing of what's in them.",
+        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). Name, owner, visibility, object count, media and last change: enough to manage them, nothing of what's in them.",
         "x-ge-access": {
           "scope": "admin"
         },
@@ -22737,7 +23162,7 @@
         "tags": [
           "admin"
         ],
-        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. `{ \"owner\": username }` hands it to that account, whose quota must have room; the previous owner keeps no access (needs a code). `{ \"visibility\": \"private\" }` takes it down: only its owner and members can reach it, and its share link stops.",
+        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). `{ \"owner\": username }` hands it to that account, whose quota must have room; the previous owner keeps no access (needs a code). `{ \"visibility\": \"private\" }` takes it down: only its owner and members can reach it, and its share link stops.",
         "requestBody": {
           "required": true,
           "content": {
@@ -22880,7 +23305,7 @@
         "tags": [
           "admin"
         ],
-        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. As its owner could, without opening it.",
+        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). As its owner could, without opening it.",
         "parameters": [
           {
             "schema": {
@@ -22970,7 +23395,7 @@
         "tags": [
           "admin"
         ],
-        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. Every account and sharing change, newest first: who did it, what, and to which account or universe.",
+        "description": "Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). Every account and sharing change, newest first: who did it, what, and to which account or universe.",
         "parameters": [
           {
             "schema": {
@@ -23749,7 +24174,7 @@
         "tags": [
           "universes"
         ],
-        "description": "A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions). Only its owner may, signed in, with a current two-factor code in `X-GE-TOTP` (M8-T12). It can't be undone.",
+        "description": "A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions). Only its owner may, signed in, with a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47) (M8-T12). It can't be undone.",
         "requestBody": {
           "required": true,
           "content": {
@@ -25286,7 +25711,7 @@
         "tags": [
           "sharing"
         ],
-        "description": "Sharing (M8-T12): a universe is private to its owner and the accounts it’s shared with, link-only (anyone with its share link reads it), or public. Editors change its content; viewers read it. Only its owner changes who has access. Makes that account the owner, if its media quota has room for the universe’s images; the previous owner stays on as an editor. Needs a current two-factor code in `X-GE-TOTP`.",
+        "description": "Sharing (M8-T12): a universe is private to its owner and the accounts it’s shared with, link-only (anyone with its share link reads it), or public. Editors change its content; viewers read it. Only its owner changes who has access. Makes that account the owner, if its media quota has room for the universe’s images; the previous owner stays on as an editor. Needs a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47).",
         "requestBody": {
           "required": true,
           "content": {
@@ -38892,7 +39317,7 @@
     },
     {
       "name": "auth",
-      "description": "Signing in with a password and two-factor code, sessions, and invite and reset links (M8-T1). Only with GE_AUTH_MODE=required."
+      "description": "Signing in with a password and, if the account has them on, two-factor codes (D-47); sessions; invite and reset links (M8-T1); turning codes on and off. Only with GE_AUTH_MODE=required."
     },
     {
       "name": "admin",

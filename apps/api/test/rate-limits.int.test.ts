@@ -27,7 +27,15 @@ function expectedTier(method: string, path: string, operation: OpenAPIV3_1.Opera
   if (operation.description?.includes('multipart/form-data')) return 'uploads';
   if (path.startsWith('/api/v1/auth/links/')) return 'links';
   if (method === 'post' && path === '/api/v1/universes/unlock') return 'links';
-  if (method === 'post' && ['/api/v1/auth/login', '/api/v1/auth/password'].includes(path))
+  if (
+    method === 'post' &&
+    [
+      '/api/v1/auth/login',
+      '/api/v1/auth/password',
+      '/api/v1/auth/two-factor/enable',
+      '/api/v1/auth/two-factor/disable',
+    ].includes(path)
+  )
     return 'auth';
   if (method === 'put' && path === '/api/v1/universes/{universeId}/members/{username}')
     return 'members';

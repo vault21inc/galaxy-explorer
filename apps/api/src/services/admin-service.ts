@@ -55,6 +55,7 @@ export async function listAdminUsers(
     createdAt: user.createdAt.toISOString(),
     lastLoginAt: iso(user.lastLoginAt),
     disabledAt: iso(user.disabledAt),
+    twoFactor: user.totpSecretEnc !== null,
     universesOwned: Number(owned),
     mediaUsedBytes: Number(used),
     mediaQuotaBytes: user.mediaQuotaBytes,

@@ -35,7 +35,7 @@ export interface paths {
         put?: never;
         /**
          * Sign in
-         * @description Signs in with a username, password and a current two-factor code, and sets the session cookie (30 days, renewed as it’s used). Any mistake gets the same 401. Five failures in 15 minutes from one address, or for one username, get 429s until the window passes.
+         * @description Signs in with a username, a password and, for an account with two-factor codes on, a current code (D-47), and sets the session cookie (30 days, renewed as it’s used). Any mistake gets the same 401; the right password without a needed code gets a 401 whose `errors` name `/totp`. Five failures in 15 minutes from one address, or for one username, get 429s until the window passes.
          */
         post: operations["auth.login"];
         delete?: never;
@@ -153,7 +153,7 @@ export interface paths {
         put?: never;
         /**
          * Step 1 of a link: username and password
-         * @description Checks the username (an invite only; 409 if it’s taken) and the password, and returns a new two-factor secret, as text and as a QR code, with the sealed `setup` to send back to `finish`. Nothing is saved yet.
+         * @description Checks the username (an invite only; 409 if it’s taken) and the password, and returns the sealed `setup` to send back to `finish`. With `twoFactor` (the default) it also returns a new two-factor secret, as text and as a QR code; with `twoFactor: false` the account will have codes off (D-47), and those are null. Nothing is saved yet.
          */
         post: operations["auth.links.start"];
         delete?: never;
@@ -172,8 +172,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Step 2 of a link: the first code
-         * @description Checks one code from the authenticator app against the setup from `start`. Then the account is made (an invite) or its password and two-factor codes are replaced and its sessions ended (a reset), the link is used up, and this browser is signed in.
+         * Step 2 of a link: the first code, if any
+         * @description Checks one code from the authenticator app against the setup from `start`, if it set up two-factor codes. Then the account is made (an invite) or its password and two-factor codes are replaced and its sessions ended (a reset), the link is used up, and this browser is signed in.
          */
         post: operations["auth.links.finish"];
         delete?: never;
@@ -193,7 +193,7 @@ export interface paths {
         put?: never;
         /**
          * Change the password
-         * @description Needs the current password and a current code from the authenticator app. Every other device is signed out; this one stays signed in. Failures count against the same limits as signing in.
+         * @description Needs the current password, and a current code from the authenticator app if the account has two-factor codes on. Every other device is signed out; this one stays signed in. Failures count against the same limits as signing in.
          */
         post: operations["auth.password.change"];
         delete?: never;
@@ -222,6 +222,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/two-factor/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Step 1 of turning two-factor codes on: a new secret
+         * @description Returns a new two-factor secret, as text and as a QR code, with the sealed `setup` to send back to `enable` with one code. Nothing is saved yet. A 422 if the account has codes on already.
+         */
+        post: operations["auth.twoFactor.setup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/two-factor/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Step 2: turn two-factor codes on
+         * @description Checks one code from the authenticator app against the setup from `setup`, then saves the secret: from now on, signing in and the confirmations ask for a code. Returns the account.
+         */
+        post: operations["auth.twoFactor.enable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/two-factor/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Turn two-factor codes off
+         * @description Needs the current password and a current code. From then on the account signs in with its password alone, and the confirmations ask for the password. Failures count against the same limits as signing in. Returns the account.
+         */
+        post: operations["auth.twoFactor.disable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/tokens": {
         parameters: {
             query?: never;
@@ -237,7 +297,7 @@ export interface paths {
         put?: never;
         /**
          * Make an API token
-         * @description An API token acts for the account that made it, never doing more than that account may at the moment of each request: `read` reads as a viewer would, `write` changes content too, and a token for one universe reaches no other. Account, sharing and admin routes refuse tokens. Needs a current two-factor code in `X-GE-TOTP`. The response holds the token itself (`secret`), which is never shown again.
+         * @description An API token acts for the account that made it, never doing more than that account may at the moment of each request: `read` reads as a viewer would, `write` changes content too, and a token for one universe reaches no other. Account, sharing and admin routes refuse tokens. Needs a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). The response holds the token itself (`secret`), which is never shown again.
          */
         post: operations["auth.tokens.create"];
         delete?: never;
@@ -295,7 +355,7 @@ export interface paths {
         };
         /**
          * Every account
-         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. Each with its role, last sign-in, universes owned, media used of its quota, and whether it's disabled.
+         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). Each with its role, last sign-in, universes owned, media used of its quota, and whether it's disabled.
          */
         get: operations["admin.users.list"];
         put?: never;
@@ -317,7 +377,7 @@ export interface paths {
         put?: never;
         /**
          * Make an invite link
-         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. The link makes one account of the role given, within 7 days. It's returned once and never stored: pass it on.
+         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). The link makes one account of the role given, within 7 days. It's returned once and never stored: pass it on.
          */
         post: operations["admin.invites.create"];
         delete?: never;
@@ -337,7 +397,7 @@ export interface paths {
         put?: never;
         /**
          * Make a reset link for an account
-         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. For someone who forgot their password or lost their codes: within 24 hours, the link sets a new password and new codes, and signs out the account's sessions. Returned once.
+         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). For someone who forgot their password or lost their codes: within 24 hours, the link sets a new password and new codes, and signs out the account's sessions. Returned once.
          */
         post: operations["admin.users.resetLink"];
         delete?: never;
@@ -358,14 +418,14 @@ export interface paths {
         post?: never;
         /**
          * Delete an account
-         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. Only once it owns no universes: transfer or delete them first, so deleting an account never deletes content.
+         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). Only once it owns no universes: transfer or delete them first, so deleting an account never deletes content.
          */
         delete: operations["admin.users.delete"];
         options?: never;
         head?: never;
         /**
          * Change an account’s role, status or quota
-         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. Disabling signs the account out at once. The last admin who can sign in can't be demoted or disabled. Changing the role or the status needs a code; the quota doesn't.
+         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). Disabling signs the account out at once. The last admin who can sign in can't be demoted or disabled. Changing the role or the status needs a code; the quota doesn't.
          */
         patch: operations["admin.users.update"];
         trace?: never;
@@ -379,7 +439,7 @@ export interface paths {
         };
         /**
          * Every universe, without its content
-         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. Name, owner, visibility, object count, media and last change: enough to manage them, nothing of what's in them.
+         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). Name, owner, visibility, object count, media and last change: enough to manage them, nothing of what's in them.
          */
         get: operations["admin.universes.list"];
         put?: never;
@@ -402,14 +462,14 @@ export interface paths {
         post?: never;
         /**
          * Delete a universe and everything in it
-         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. As its owner could, without opening it.
+         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). As its owner could, without opening it.
          */
         delete: operations["admin.universes.delete"];
         options?: never;
         head?: never;
         /**
          * Transfer a universe, or take it down
-         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. `{ "owner": username }` hands it to that account, whose quota must have room; the previous owner keeps no access (needs a code). `{ "visibility": "private" }` takes it down: only its owner and members can reach it, and its share link stops.
+         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). `{ "owner": username }` hands it to that account, whose quota must have room; the previous owner keeps no access (needs a code). `{ "visibility": "private" }` takes it down: only its owner and members can reach it, and its share link stops.
          */
         patch: operations["admin.universes.update"];
         trace?: never;
@@ -423,7 +483,7 @@ export interface paths {
         };
         /**
          * The account and access log
-         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`. Every account and sharing change, newest first: who did it, what, and to which account or universe.
+         * @description Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47). Every account and sharing change, newest first: who did it, what, and to which account or universe.
          */
         get: operations["admin.events.list"];
         put?: never;
@@ -494,7 +554,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a universe and everything in it
-         * @description A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions). Only its owner may, signed in, with a current two-factor code in `X-GE-TOTP` (M8-T12). It can't be undone.
+         * @description A fictional setting, such as Warhammer 40,000. It owns its maps, characters and settings (group types, event categories, object subtypes, field definitions). Only its owner may, signed in, with a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47) (M8-T12). It can't be undone.
          */
         delete: operations["universes.delete"];
         options?: never;
@@ -693,7 +753,7 @@ export interface paths {
         put?: never;
         /**
          * Hand a universe to another account
-         * @description Sharing (M8-T12): a universe is private to its owner and the accounts it’s shared with, link-only (anyone with its share link reads it), or public. Editors change its content; viewers read it. Only its owner changes who has access. Makes that account the owner, if its media quota has room for the universe’s images; the previous owner stays on as an editor. Needs a current two-factor code in `X-GE-TOTP`.
+         * @description Sharing (M8-T12): a universe is private to its owner and the accounts it’s shared with, link-only (anyone with its share link reads it), or public. Editors change its content; viewers read it. Only its owner changes who has access. Makes that account the owner, if its media quota has room for the universe’s images; the previous owner stays on as an editor. Needs a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47).
          */
         post: operations["universes.transfer"];
         delete?: never;
@@ -2937,6 +2997,7 @@ export interface components {
             role: "admin" | "member";
             mediaQuotaBytes: number;
             mediaUsedBytes: number;
+            twoFactor: boolean;
             /** Format: date-time */
             createdAt: string;
         };
@@ -2963,6 +3024,12 @@ export interface components {
         };
         AccountLinkSetupInput: {
             setup: string;
+            secret: string | null;
+            otpauthUri: string | null;
+            qrCode: string | null;
+        };
+        TwoFactorSetupInput: {
+            setup: string;
             secret: string;
             otpauthUri: string;
             qrCode: string;
@@ -2988,6 +3055,7 @@ export interface components {
             createdAt: string;
             lastLoginAt: string | null;
             disabledAt: string | null;
+            twoFactor: boolean;
             universesOwned: number;
             mediaUsedBytes: number;
             mediaQuotaBytes: number;
@@ -3015,7 +3083,7 @@ export interface components {
             id: string;
             actor: string;
             /** @enum {string} */
-            action: "member.add" | "member.role" | "member.remove" | "member.leave" | "universe.visibility" | "universe.link" | "universe.transfer" | "universe.delete" | "universe.takedown" | "invite.create" | "user.reset" | "user.disable" | "user.enable" | "user.role" | "user.quota" | "user.delete" | "user.password" | "token.create" | "token.revoke";
+            action: "member.add" | "member.role" | "member.remove" | "member.leave" | "universe.visibility" | "universe.link" | "universe.transfer" | "universe.delete" | "universe.takedown" | "invite.create" | "user.reset" | "user.disable" | "user.enable" | "user.role" | "user.quota" | "user.delete" | "user.password" | "user.two-factor.on" | "user.two-factor.off" | "token.create" | "token.revoke";
             user: string | null;
             universe: string | null;
             detail: {
@@ -5090,6 +5158,7 @@ export interface components {
             role: "admin" | "member";
             mediaQuotaBytes: number;
             mediaUsedBytes: number;
+            twoFactor: boolean;
             /** Format: date-time */
             createdAt: string;
         };
@@ -5116,6 +5185,12 @@ export interface components {
         };
         AccountLinkSetup: {
             setup: string;
+            secret: string | null;
+            otpauthUri: string | null;
+            qrCode: string | null;
+        };
+        TwoFactorSetup: {
+            setup: string;
             secret: string;
             otpauthUri: string;
             qrCode: string;
@@ -5141,6 +5216,7 @@ export interface components {
             createdAt: string;
             lastLoginAt: string | null;
             disabledAt: string | null;
+            twoFactor: boolean;
             universesOwned: number;
             mediaUsedBytes: number;
             mediaQuotaBytes: number;
@@ -5168,7 +5244,7 @@ export interface components {
             id: string;
             actor: string;
             /** @enum {string} */
-            action: "member.add" | "member.role" | "member.remove" | "member.leave" | "universe.visibility" | "universe.link" | "universe.transfer" | "universe.delete" | "universe.takedown" | "invite.create" | "user.reset" | "user.disable" | "user.enable" | "user.role" | "user.quota" | "user.delete" | "user.password" | "token.create" | "token.revoke";
+            action: "member.add" | "member.role" | "member.remove" | "member.leave" | "universe.visibility" | "universe.link" | "universe.transfer" | "universe.delete" | "universe.takedown" | "invite.create" | "user.reset" | "user.disable" | "user.enable" | "user.role" | "user.quota" | "user.delete" | "user.password" | "user.two-factor.on" | "user.two-factor.off" | "token.create" | "token.revoke";
             user: string | null;
             universe: string | null;
             detail: {
@@ -6688,7 +6764,7 @@ export interface operations {
                 "application/json": {
                     username: string;
                     password: string;
-                    totp: string;
+                    totp?: string;
                 };
             };
         };
@@ -6844,6 +6920,8 @@ export interface operations {
                 "application/json": {
                     username?: string;
                     password: string;
+                    /** @default true */
+                    twoFactor?: boolean;
                 };
             };
         };
@@ -6874,7 +6952,7 @@ export interface operations {
             content: {
                 "application/json": {
                     setup: string;
-                    totp: string;
+                    totp?: string;
                 };
             };
         };
@@ -6904,7 +6982,7 @@ export interface operations {
                 "application/json": {
                     currentPassword: string;
                     newPassword: string;
-                    totp: string;
+                    totp?: string;
                 };
             };
         };
@@ -6989,6 +7067,248 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["StorageRead"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "auth.twoFactor.setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TwoFactorSetup"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "auth.twoFactor.enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    setup: string;
+                    totp: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AccountRead"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "auth.twoFactor.disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    currentPassword: string;
+                    totp: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AccountRead"];
                     };
                 };
             };

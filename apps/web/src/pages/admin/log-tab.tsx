@@ -22,6 +22,8 @@ const ACTION_NAMES: Record<AccessEvent['action'], string> = {
   'user.quota': 'changed a media quota',
   'user.delete': 'deleted an account',
   'user.password': 'changed their password',
+  'user.two-factor.on': 'turned two-factor codes on',
+  'user.two-factor.off': 'turned two-factor codes off',
   'token.create': 'made an API token',
   'token.revoke': 'revoked an API token',
 };

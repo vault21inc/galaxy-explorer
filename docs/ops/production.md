@@ -50,7 +50,7 @@ The first admin is made in the API's container, where nobody else can watch:
 docker compose -f docker/compose.prod.yml --env-file .env.production exec api node apps/api/src/auth/cli.ts create-user --admin
 ```
 
-It asks for a username and password, prints the two-factor QR code and secret, and saves the account after one valid code. After that, invite people from the admin screen (`/admin`). The same command line prints invite and reset links (`invite [--admin]`, `reset-link <username>`), like `pnpm admin:*` locally.
+It asks for a username and password, and whether to set up two-factor codes (yes by default for an admin; optional per account, D-47). With codes, it prints the QR code and secret, and saves the account after one valid code. After that, invite people from the admin screen (`/admin`). The same command line prints invite and reset links (`invite [--admin]`, `reset-link <username>`), like `pnpm admin:*` locally.
 
 ## Testing it
 

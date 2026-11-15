@@ -38,9 +38,9 @@ export function UniversesTab() {
         description: `It becomes the new owner’s, if their quota has room for its ${formatBytes(universe.mediaBytes)} of media. ${universe.owner ?? 'The installation'} keeps no access.`,
         confirmLabel: 'Transfer',
         input: { label: 'Username of the new owner' },
-        askCode: true,
-        run: async ({ input, totp }) => {
-          await update.mutateAsync({ universeId: universe.id, owner: input, totp });
+        askConfirmation: true,
+        run: async ({ input, confirmation }) => {
+          await update.mutateAsync({ universeId: universe.id, owner: input, confirmation });
         },
       },
     },
@@ -53,7 +53,7 @@ export function UniversesTab() {
           'It becomes private: only its owner and the people it’s shared with can open it, and its share link stops working.',
         confirmLabel: 'Make it private',
         destructive: true,
-        askCode: false,
+        askConfirmation: false,
         run: async () => {
           await update.mutateAsync({ universeId: universe.id, visibility: 'private' });
         },
@@ -67,9 +67,9 @@ export function UniversesTab() {
         confirmLabel: 'Delete the universe',
         destructive: true,
         confirmText: universe.slug,
-        askCode: true,
-        run: async ({ totp }) => {
-          await remove.mutateAsync({ universeId: universe.id, totp });
+        askConfirmation: true,
+        run: async ({ confirmation }) => {
+          await remove.mutateAsync({ universeId: universe.id, confirmation });
         },
       },
     },

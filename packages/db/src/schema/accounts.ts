@@ -38,8 +38,11 @@ export const users = pgTable(
     role: text().notNull().default('member'),
     /** argon2id, in its PHC string form (algorithm, parameters, salt and hash together). */
     passwordHash: text().notNull(),
-    /** The TOTP secret, sealed with a key derived from GE_SESSION_SECRET (auth/crypto.ts). */
-    totpSecretEnc: bytea().notNull(),
+    /**
+     * The TOTP secret, sealed with a key derived from GE_SESSION_SECRET (auth/crypto.ts). Null:
+     * the account has two-factor codes off (D-47), and signs in with its password alone.
+     */
+    totpSecretEnc: bytea(),
     /**
      * The time step (30-second window) of the last code accepted, so a code can't be used
      * twice (RFC 6238 §5.2): someone who watched it being typed can't replay it.

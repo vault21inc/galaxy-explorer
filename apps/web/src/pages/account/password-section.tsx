@@ -1,15 +1,20 @@
 import { PASSWORD_MIN_LENGTH } from '@ge/domain';
 import { useId, useState, type SyntheticEvent } from 'react';
 import { useChangePassword } from '@/api/account.ts';
+import { useAccount } from '@/api/auth.ts';
 import { errorMessage } from '@/app/route-states.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { Label } from '@/components/ui/label.tsx';
 
-/** The account page's Password (ux.md §13): the current one, the new one twice, and a code. */
+/**
+ * The account page's Password (ux.md §13): the current one, the new one twice, and a code if
+ * the account has two-factor codes on (D-47).
+ */
 export function PasswordSection() {
   const id = useId();
   const change = useChangePassword();
+  const twoFactor = useAccount().data?.twoFactor ?? true;
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [again, setAgain] = useState('');
@@ -19,7 +24,7 @@ export function PasswordSection() {
     current !== '' &&
     next.length >= PASSWORD_MIN_LENGTH &&
     next === again &&
-    /^\d{6}$/.test(totp) &&
+    (!twoFactor || /^\d{6}$/.test(totp)) &&
     !change.isPending;
 
   const onSubmit = (event: SyntheticEvent) => {
@@ -27,7 +32,7 @@ export function PasswordSection() {
     if (!ready) return;
     setDone(false);
     change.mutate(
-      { currentPassword: current, newPassword: next, totp },
+      { currentPassword: current, newPassword: next, ...(twoFactor ? { totp } : {}) },
       {
         onSuccess: () => {
           setCurrent('');
@@ -84,11 +89,12 @@ export function PasswordSection() {
           type: 'password',
           autoComplete: 'new-password',
         })}
-        {field('totp', 'Code from your authenticator app', totp, setTotp, {
-          inputMode: 'numeric',
-          autoComplete: 'one-time-code',
-          maxLength: 6,
-        })}
+        {twoFactor &&
+          field('totp', 'Code from your authenticator app', totp, setTotp, {
+            inputMode: 'numeric',
+            autoComplete: 'one-time-code',
+            maxLength: 6,
+          })}
         {change.error && (
           <p role="alert" className="text-destructive">
             {errorMessage(change.error)}

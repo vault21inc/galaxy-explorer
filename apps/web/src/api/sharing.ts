@@ -2,6 +2,7 @@ import { unwrap, type components } from '@ge/api-client';
 import type { MemberRole, Visibility } from '@ge/domain';
 import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './client.ts';
+import { confirmationHeaders, type Confirmation } from './confirmation.ts';
 import { refreshAfterWrite } from './refresh.ts';
 
 /**
@@ -18,7 +19,6 @@ const membersKey = (universeId: string) => ['universe', 'members', universeId] a
 const UNIVERSE_KEYS = [['universe']] as const;
 
 /** The header a destructive action carries its fresh two-factor code in (M8-T1). */
-const freshCode = (totp: string | undefined) => (totp ? { 'x-ge-totp': totp } : {});
 
 export function useMembers(universeId: string | undefined) {
   return useQuery({
@@ -125,12 +125,12 @@ export function useNewShareKey(universeId: string) {
 export function useTransferUniverse(universeId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ username, totp }: { username: string; totp?: string }) =>
+    mutationFn: ({ username, confirmation }: { username: string; confirmation?: Confirmation }) =>
       unwrap(
         api.POST('/api/v1/universes/{universeId}/transfer', {
           params: { path: { universeId } },
           body: { username },
-          headers: freshCode(totp),
+          headers: confirmationHeaders(confirmation),
         }),
       ),
     onSuccess: () => refreshAfterWrite(queryClient, [...UNIVERSE_KEYS, membersKey(universeId)]),
@@ -140,12 +140,12 @@ export function useTransferUniverse(universeId: string) {
 export function useDeleteUniverse(universe: { id: string; version: number }) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ totp }: { totp?: string }) =>
+    mutationFn: ({ confirmation }: { confirmation?: Confirmation }) =>
       unwrap(
         api.DELETE('/api/v1/universes/{universeId}', {
           params: { path: { universeId: universe.id } },
           body: { version: universe.version },
-          headers: freshCode(totp),
+          headers: confirmationHeaders(confirmation),
         }),
       ),
     // The page navigates away; only the lists need to forget it.

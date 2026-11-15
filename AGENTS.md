@@ -42,9 +42,9 @@ Added by later tasks; update this file when you add one:
 |---|---|---|
 | `pnpm mcp` | the MCP server over stdio, for LLM agents: tools generated from the registries, calling the API at `GE_API_URL` (default http://127.0.0.1:3100, so run `pnpm dev` too). How to add it to Claude Code and Claude Desktop: [apps/mcp/README.md](apps/mcp/README.md) | M7-T7 |
 | `pnpm mcp:http` | the same MCP server over Streamable HTTP, at http://127.0.0.1:3110/mcp (`GE_MCP_HOST`, `GE_MCP_PORT`), for agents elsewhere. Each request needs an API token from the account page, unless the API has no accounts and it listens on a loopback address ([apps/mcp/README.md](apps/mcp/README.md)) | M8-T2 |
-| `pnpm admin:create-user [--admin]` | make an account on the command line: asks for a username and password, prints the two-factor QR code and secret, and saves the account only after one valid code. The first admin is made this way. Needs `GE_PUBLIC_URL` and `GE_SESSION_SECRET` | M8-T1 |
+| `pnpm admin:create-user [--admin]` | make an account on the command line: asks for a username and password, and whether to set up two-factor codes (yes by default for an admin, D-47); with codes, it prints the QR code and secret and saves the account only after one valid code. The first admin is made this way. Needs `GE_PUBLIC_URL` and `GE_SESSION_SECRET` | M8-T1 |
 | `pnpm admin:invite [--admin]` | print an invite link (7 days, single use) to `/link/{token}`. Needs `GE_PUBLIC_URL` | M8-T1 |
-| `pnpm admin:reset-link <username>` | print a reset link (24 hours, single use) for a new password and two-factor codes. Needs `GE_PUBLIC_URL` | M8-T1 |
+| `pnpm admin:reset-link <username>` | print a reset link (24 hours, single use) for a new password, with new two-factor codes or none. Needs `GE_PUBLIC_URL` | M8-T1 |
 | `pnpm headers:caddy` | write `ops/caddy/security-headers.caddy` from `packages/domain/src/security/headers.ts`; run it after changing the headers and commit the result (a unit test fails while it's stale) | M8-T3 |
 | `pnpm test:stack` | the golden path and the stack's own checks (`e2e/stack.spec.ts`) against the production stack, in Chromium and WebKit: `docker/compose.prod.yml` started apart with `VITE_TEST_HOOKS=1`, and `GE_STACK_ENV_FILE` naming its env file ([docs/ops/production.md](docs/ops/production.md)) | M8-T4 |
 

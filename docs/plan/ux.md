@@ -239,10 +239,10 @@ D-30 has the reasoning.
 
 D-34 has the reasoning; data-model §8 has the access rule. None of this exists locally, where there is no login.
 
-- **Signing in:** `/login` asks for the username, the password and a two-factor code. A wrong try says only that it didn't work. "Forgot your password or lost your codes? Ask an admin for a reset link."
+- **Signing in:** `/login` asks for the username and the password, then, for an account with two-factor codes on (D-47), a code: the field appears once the right password is given. A wrong try says only that it didn't work. "Forgot your password or lost your codes? Ask an admin for a reset link."
 - **An invite or reset link** (`/link/{token}`) opens a short form:
-  1. Choose a username (an invite) and a password, with its rules shown as they're met.
-  2. Scan the QR code with an authenticator app (the secret is also shown as text), then type one code to prove it works.
+  1. Choose a username (an invite) and a password, with its rules shown as they're met, and whether to set up two-factor codes now (a switch, off by default, D-47). Without codes this is the only step.
+  2. With codes: scan the QR code with an authenticator app (the secret is also shown as text), then type one code to prove it works.
 
   Only then is the account made, or changed, and the link used up. An expired or used link says so and what to do.
 - **The account menu,** at the top bar's right end, shows the username and opens: Account, Admin (admins only) and Sign out. Signed out, it's a "Sign in" link.
@@ -252,15 +252,16 @@ D-34 has the reasoning; data-model §8 has the access rule. None of this exists 
 
   Each card shows a small badge for Private or Link-only, and "by {owner}" for universes that aren't yours. "New universe" needs an account, and the new universe starts private.
 - **Account page** (`/account`):
-  - **Password:** change it, with the current one and a code.
+  - **Password:** change it, with the current one and, if codes are on, a code.
+  - **Two-factor codes** (D-47): says whether they're on. **Turn on…** shows a new secret to scan and takes one code; **Turn off…** takes the password and a current code.
   - **Signed-in devices:** each session with its browser and last use, and "Sign out" for each or for all others.
-  - **API tokens** (M8-T2): create one (name, read or write, optionally one universe) with a current code, shown once with Copy; list each with what it may do and its last use; revoke, which stops it at once.
+  - **API tokens** (M8-T2): create one (name, read or write, optionally one universe) with a current code, or the password without codes, shown once with Copy; list each with what it may do and its last use; revoke, which stops it at once.
   - **Storage:** how much of the media quota is used, by universe.
 - **Sharing a universe:** a **Sharing** section on its settings page, shown to its owner.
   - **Who can see it:** three choices, each with one line saying what it means: Private, Anyone with the link, Public. Making it public asks to confirm, and says how many drafts stay hidden.
   - **The link** (when link-only): the address with its key, a Copy button, and "Make a new link", which stops the old one working.
   - **People:** a list of accounts with their role (Editor or Viewer) and a remove button; "Add" takes an exact username. A name that doesn't exist says so; nothing suggests or lists other accounts.
-  - **Transfer** to another account, and **Delete**, each behind a confirmation that asks for the universe's name and a current two-factor code.
+  - **Transfer** to another account, and **Delete**, each behind a confirmation that asks for the universe's name and a current two-factor code, or the password for an account with codes off (D-47).
   - **On your own machine** (no accounts) the section offers only Delete, asking for the name alone (M8-T12).
 - **What the others see:**
   - an **editor** gets edit mode and everything in it; the Sharing section is read-only for them, with "Leave this universe";
@@ -269,9 +270,9 @@ D-34 has the reasoning; data-model §8 has the access rule. None of this exists 
 - **A shared link** (`/u/{slug}?k={key}`) opens the universe for anyone. The key stays in the address while they move around, so the address bar can be passed on.
 - **Who did what:** History shows each change's account (or "token: name, for account"), as it showed "local" before.
 - **Admin screens** (`/admin`), for admins:
-  - **Accounts:** a table of username, role, last sign-in, universes owned, storage used of quota, and status. Actions: Invite (member or admin; shows the link once, to copy), Reset link, Disable or Enable, Change role, Set quota, Delete (only once it owns nothing).
+  - **Accounts:** a table of username, role, last sign-in, two-factor codes (on or off), universes owned, storage used of quota, and status. Actions: Invite (member or admin; shows the link once, to copy), Reset link, Disable or Enable, Change role, Set quota, Delete (only once it owns nothing).
   - **Universes:** a table of name, owner, visibility, objects, storage and last change. Actions: Transfer, Make private, Delete. It doesn't open a universe the admin couldn't open anyway.
   - **Log:** the account and access changes, newest first: who, what, to whom or what, when.
 
-  Disabling, deleting, transferring, a role change and a reset link each ask for a current two-factor code.
+  Disabling, deleting, transferring, a role change and a reset link each ask for a current two-factor code, or the admin's password if their codes are off (D-47).
 - **Accessible like the rest** (§10): these are ordinary pages and tables with labelled controls, keyboard paths and focus kept on dialogs; the QR code has the secret as text beside it.

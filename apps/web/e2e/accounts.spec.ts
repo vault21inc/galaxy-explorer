@@ -1,6 +1,15 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from './test.ts';
-import { accountFromInvite, AUTH_URL, inviteLink, nextCode, totp, uniqueName } from './accounts.ts';
+import {
+  accountFromInvite,
+  AUTH_URL,
+  inviteLink,
+  nextCode,
+  stepAt,
+  totp,
+  totpAt,
+  uniqueName,
+} from './accounts.ts';
 import { waitForFirstFrame } from './test-hooks.ts';
 
 /**
@@ -26,9 +35,13 @@ test.describe('accounts (M8-T1)', () => {
     await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
     expect((await new AxeBuilder({ page }).withTags(axeTags).analyze()).violations).toEqual([]);
 
-    // A wrong code says only that it didn't work.
+    // The right password asks for the code (D-47); a wrong code says only that it didn't work.
     await page.getByLabel('Username').fill(admin.username);
     await page.getByLabel('Password').fill(admin.password);
+    await expect(page.getByLabel('Code from your authenticator app')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.getByLabel('Code from your authenticator app')).toBeFocused();
+    await expect(page.getByRole('alert')).toHaveCount(0);
     await page.getByLabel('Code from your authenticator app').fill('000000');
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page.getByRole('alert')).toContainText('That didn’t work');
@@ -80,6 +93,7 @@ test.describe('accounts (M8-T1)', () => {
     await page.getByLabel('Password', { exact: true }).fill(password);
     await page.getByLabel('The same password again').fill(password);
     await expect(page.getByRole('listitem').filter({ hasText: '(not yet)' })).toHaveCount(0);
+    await page.getByRole('switch', { name: 'Set up two-factor codes now' }).click();
     expect((await new AxeBuilder({ page }).withTags(axeTags).analyze()).violations).toEqual([]);
     await page.getByRole('button', { name: 'Next: two-factor codes' }).click();
 
@@ -98,5 +112,55 @@ test.describe('accounts (M8-T1)', () => {
     // The link worked once.
     await page.goto(link);
     await expect(page.getByRole('heading', { name: 'This link was used' })).toBeVisible();
+  });
+
+  test('without codes, the password signs in and confirms; codes go on from the account page (D-47)', async ({
+    page,
+  }) => {
+    // Signing in again after turning codes on waits for the next 30-second code.
+    test.slow();
+    await page.goto(inviteLink());
+    const username = uniqueName('nocodes');
+    const password = 'my own long password';
+    await page.getByLabel('Username').fill(username);
+    await page.getByLabel('Password', { exact: true }).fill(password);
+    await page.getByLabel('The same password again').fill(password);
+    await expect(page.getByText('Step 1 of 2')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Make the account' }).click();
+    await expect(page).toHaveURL(`${AUTH_URL}/`);
+    await expect(page.getByRole('button', { name: `Account: ${username}` })).toBeVisible();
+
+    // A token is confirmed with the password.
+    await page.goto('/account');
+    const codes = page.getByRole('region', { name: 'Two-factor codes' });
+    await expect(codes).toContainText('Off');
+    const tokenForm = page.getByRole('form', { name: 'Make an API token' });
+    await tokenForm.getByLabel('Name').fill('agent');
+    await expect(tokenForm.getByLabel('Code from your authenticator app')).toHaveCount(0);
+    await tokenForm.getByLabel('Your password').fill(password);
+    await tokenForm.getByRole('button', { name: 'Make token' }).click();
+    await expect(page.getByTestId('token-once')).toBeVisible();
+    await page.getByRole('button', { name: 'Done' }).click();
+
+    // Codes on: scan, then one code.
+    await codes.getByRole('button', { name: 'Turn on…' }).click();
+    const secret = (await codes.getByTestId('totp-secret').textContent()) ?? '';
+    expect((await new AxeBuilder({ page }).withTags(axeTags).analyze()).violations).toEqual([]);
+    const lastStep = stepAt();
+    await codes.getByLabel('A code from the app').fill(totpAt(secret, lastStep));
+    await codes.getByRole('button', { name: 'Turn on', exact: true }).click();
+    await expect(codes).toContainText('On:');
+
+    // Signing in now asks for a code too.
+    await page.getByRole('button', { name: `Account: ${username}` }).click();
+    await page.getByRole('menuitem', { name: 'Sign out' }).click();
+    await page.goto('/login');
+    await page.getByLabel('Username').fill(username);
+    await page.getByLabel('Password').fill(password);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    const account = { username, password, secret, lastStep };
+    await page.getByLabel('Code from your authenticator app').fill(await nextCode(account));
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.getByRole('button', { name: `Account: ${username}` })).toBeVisible();
   });
 });

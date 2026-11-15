@@ -46,11 +46,13 @@ export const TotpCode = z.string().regex(/^\d{6}$/, 'Type the 6-digit code from 
 /**
  * Signing in. The fields are checked only for size here: a malformed username or code fails
  * like a wrong one, with the same message, so the response says nothing about which was wrong.
+ * `totp` is for an account with two-factor codes on (D-47): without it, the right password gets
+ * a 401 whose `errors` name `/totp`, asking for the code.
  */
 export const LoginRequest = z.strictObject({
   username: z.string().min(1).max(64),
   password: z.string().min(1).max(PASSWORD_MAX_LENGTH),
-  totp: z.string().min(1).max(16),
+  totp: z.string().min(1).max(16).optional(),
 });
 
 /** The signed-in account (`GET /auth/me`). */
@@ -61,6 +63,11 @@ export const AccountRead = z.object({
   /** How much media the universes it owns may hold together, and how much they do (M8-T11). */
   mediaQuotaBytes: z.int().nonnegative(),
   mediaUsedBytes: z.int().nonnegative(),
+  /**
+   * Whether the account has two-factor codes on (D-47). With them, signing in and the
+   * confirmations ask for a code; without, the confirmations ask for the password.
+   */
+  twoFactor: z.boolean(),
   createdAt: timestamp,
 });
 
@@ -85,29 +92,48 @@ export const AccountLinkRead = z.object({
   expiresAt: timestamp,
 });
 
-/** The first step of an account link: the username (an invite only) and the password. */
+/**
+ * The first step of an account link: the username (an invite only), the password, and whether to
+ * set up two-factor codes now (D-47). They can be turned on later from the account page; a
+ * client that doesn't say gets them, as before they were optional.
+ */
 export const AccountLinkStart = z.strictObject({
   username: Username.optional(),
   password: Password,
+  twoFactor: z.boolean().default(true),
 });
 
 /**
- * The two-factor setup the first step returns. Nothing is saved yet: `setup` carries the chosen
- * username, the password's hash and the new secret, sealed by the API, and comes back with the
- * first code. `qrCode` is the otpauth URI as an SVG image (a data URL), for an authenticator
- * app to scan; `secret` is the same, to type in instead.
+ * A new two-factor secret, for an authenticator app. Nothing is saved yet: `setup` carries it,
+ * sealed by the API, and comes back with the first code, which proves the app has it. `qrCode`
+ * is the otpauth URI as an SVG image (a data URL), for the app to scan; `secret` is the same,
+ * to type in instead.
  */
-export const AccountLinkSetup = z.object({
+export const TwoFactorSetup = z.object({
   setup: z.string(),
   secret: z.string(),
   otpauthUri: z.string(),
   qrCode: z.string(),
 });
 
-/** The second step: the sealed setup and one code from the app, proving it was set up. */
+/**
+ * What the first step returns. `setup` also carries the chosen username and the password's hash.
+ * Without two-factor codes the rest is null, and `finish` takes the setup alone.
+ */
+export const AccountLinkSetup = z.object({
+  setup: z.string(),
+  secret: z.string().nullable(),
+  otpauthUri: z.string().nullable(),
+  qrCode: z.string().nullable(),
+});
+
+/**
+ * The second step: the sealed setup, and one code from the app if the first step set up
+ * two-factor codes.
+ */
 export const AccountLinkFinish = z.strictObject({
   setup: z.string().min(1).max(4096),
-  totp: TotpCode,
+  totp: TotpCode.optional(),
 });
 
 // ---- sharing a universe (M8-T12, ux.md §13) -------------------------------------------------
@@ -159,6 +185,8 @@ export const ACCESS_EVENT_ACTIONS = [
   'user.quota',
   'user.delete',
   'user.password',
+  'user.two-factor.on',
+  'user.two-factor.off',
   'token.create',
   'token.revoke',
 ] as const;
@@ -166,10 +194,22 @@ export type AccessEventAction = (typeof ACCESS_EVENT_ACTIONS)[number];
 
 // ---- the account page (M8-T13, ux.md §13) --------------------------------------------------
 
-/** Changing one's password: the current one, the new one, and a current code. */
+/** Changing one's password: the current one, the new one, and a current code if two-factor is on. */
 export const PasswordChange = z.strictObject({
   currentPassword: z.string().min(1).max(PASSWORD_MAX_LENGTH),
   newPassword: Password,
+  totp: TotpCode.optional(),
+});
+
+/** Turning two-factor codes on (D-47): the setup from `POST /auth/two-factor/setup`, and a code. */
+export const TwoFactorEnable = z.strictObject({
+  setup: z.string().min(1).max(4096),
+  totp: TotpCode,
+});
+
+/** Turning them off: the password and a current code, so a browser left signed in can't. */
+export const TwoFactorDisable = z.strictObject({
+  currentPassword: z.string().min(1).max(PASSWORD_MAX_LENGTH),
   totp: TotpCode,
 });
 
@@ -193,6 +233,8 @@ export const AdminUserRead = z.object({
   lastLoginAt: timestamp.nullable(),
   /** Set: the account can't sign in. */
   disabledAt: timestamp.nullable(),
+  /** Whether the account has two-factor codes on (D-47). */
+  twoFactor: z.boolean(),
   universesOwned: z.int().nonnegative(),
   mediaUsedBytes: z.int().nonnegative(),
   mediaQuotaBytes: z.int().nonnegative(),

@@ -4,7 +4,7 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import type { AuthContext } from '../auth/context.ts';
 import { NotSignedIn } from '../auth/errors.ts';
-import { requireFreshTotp } from '../auth/requester.ts';
+import { requireConfirmation } from '../auth/requester.ts';
 import { createToken, listTokens, readToken, revokeToken } from '../auth/tokens.ts';
 import { routeAccess } from '../http/access-guard.ts';
 import { problem } from '../http/problems.ts';
@@ -19,7 +19,7 @@ import { NotFound } from '../services/errors.ts';
  * a session; an agent sends one as `Authorization: Bearer ge_…` and acts for the account. The
  * token itself is shown once, when it's made; the database keeps only its hash.
  *
- * Making one asks for a current two-factor code: a token outlives the session that made it, so
+ * Making one asks for a confirmation (a current code, or the password, D-47): a token outlives the session that made it, so
  * whoever holds a session for a moment shouldn't be able to leave one behind. Revoking one
  * doesn't: it only takes access away.
  */
@@ -67,12 +67,12 @@ export const tokenRoutes: FastifyPluginCallbackZod<{
         tags,
         operationId: 'auth.tokens.create',
         summary: 'Make an API token',
-        description: `${TOKENS_DOC} Needs a current two-factor code in \`X-GE-TOTP\`. The response holds the token itself (\`secret\`), which is never shown again.`,
+        description: `${TOKENS_DOC} Needs a confirmation: a current two-factor code in \`X-GE-TOTP\`, or, for an account with codes off, its password in \`X-GE-Password\`, percent-encoded (D-47). The response holds the token itself (\`secret\`), which is never shown again.`,
         ...routeAccess({ scope: 'open', session: true }),
         body: ApiTokenCreate,
         response: { 201: envelope(ApiTokenCreated), ...problemResponses },
       },
-      preHandler: requireFreshTotp(auth),
+      preHandler: requireConfirmation(auth),
     },
     async (request, reply) => {
       const account = accountOf(request.account);

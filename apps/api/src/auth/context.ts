@@ -43,6 +43,8 @@ export interface SignedIn {
   username: string;
   role: SiteRole;
   mediaQuotaBytes: number;
+  /** Whether the account has two-factor codes on (D-47). */
+  twoFactor: boolean;
   createdAt: Date;
 }
 
@@ -55,6 +57,7 @@ export function signedIn(user: UserRow): SignedIn {
     // The database's check constraint allows only the site roles.
     role: user.role as SiteRole,
     mediaQuotaBytes: user.mediaQuotaBytes,
+    twoFactor: user.totpSecretEnc !== null,
     createdAt: user.createdAt,
   };
 }
@@ -67,8 +70,9 @@ export function accountRead(
   return { ...account, mediaUsedBytes, createdAt: account.createdAt.toISOString() };
 }
 
-/** The account's two-factor secret, opened. */
-export function totpSecretOf(auth: AuthContext, user: UserRow): string {
+/** The account's two-factor secret, opened; null when it has codes off (D-47). */
+export function totpSecretOf(auth: AuthContext, user: UserRow): string | null {
+  if (user.totpSecretEnc === null) return null;
   const secret = auth.totpSecrets.open(user.totpSecretEnc);
   // Only a changed GE_SESSION_SECRET does this, and every account is affected: say so loudly.
   if (!secret) {

@@ -88,6 +88,12 @@
   - **Integration:** `apps/api/test/auth/sign-in.int.test.ts` and `links.int.test.ts` (16 tests), plus a config test. They cover every item above, and also: each code used once, the devices list and signing devices out, a forged or crossed setup refused, History recording the account, and 404s with `GE_AUTH_MODE=none`.
   - **E2E:** `apps/web/e2e/accounts.spec.ts` runs against a second API with `GE_AUTH_MODE=required` (port 3108, database `ge_e2e_auth`), behind a second preview server (4174) of the same build. It also checks the login and link pages with axe.
   - **Typing:** `e2e/tsconfig.json` gives only the tests Node's types, for `pnpm admin:invite` and a hand-written RFC 6238 code generator.
+- **Later (2026-11-15, the owner's choice, D-47): two-factor codes are optional, per account.**
+  - `users.totp_secret_enc` may be null (migration 0011): codes off, and the account signs in with its password alone. With codes on, the right password without a code gets a 401 naming `/totp`, and `/login` shows the code field only then.
+  - An invite or reset link's first step has a switch, "Set up two-factor codes now", off by default; without codes it's the only step. `start` takes `twoFactor` (an API client that doesn't say gets codes), and `finish` takes no code when there's no secret. A reset without codes turns them off. `pnpm admin:create-user` asks, yes by default for an admin.
+  - The destructive actions' confirmation (`requireConfirmation`, formerly `requireFreshTotp`) takes a code in `X-GE-TOTP`, or, for an account with codes off, the password in `X-GE-Password`, percent-encoded and redacted from the API's log. The web dialogs ask for whichever the account needs (`components/confirmation-field.tsx`). Changing the password needs a code only with codes on.
+  - The account page's Two-factor codes section turns them on (`POST /auth/two-factor/setup`, then `enable` with one code) and off (`disable`, with the password and a code), logged as `user.two-factor.on` and `.off`. The admin Accounts table shows each account's codes.
+  - Tests: `apps/api/test/auth/two-factor.int.test.ts` (7); `accounts.spec.ts` gains an account without codes that confirms with its password and turns codes on; `admin.spec.ts`'s invitee joins without codes.
 
 ### M8-T11 Ownership, visibility and the access check
 

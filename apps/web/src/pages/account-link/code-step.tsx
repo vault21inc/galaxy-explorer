@@ -1,20 +1,16 @@
 import { useId, useState, type SyntheticEvent } from 'react';
 import { useNavigate } from 'react-router';
-import { useFinishLink, type AccountLinkSetup } from '@/api/auth.ts';
+import { useFinishLink, type TwoFactorSetup } from '@/api/auth.ts';
 import { errorMessage } from '@/app/route-states.tsx';
+import { TotpScan } from '@/components/totp-scan.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { Label } from '@/components/ui/label.tsx';
 
 interface CodeStepProps {
   token: string;
-  setup: AccountLinkSetup;
+  setup: TwoFactorSetup;
   onRestart: () => void;
-}
-
-/** The secret in groups of four, as authenticator apps show it, so it's easier to type. */
-function grouped(secret: string): string {
-  return secret.replace(/(.{4})(?=.)/g, '$1 ');
 }
 
 /**
@@ -47,24 +43,7 @@ export function CodeStep({ token, setup, onRestart }: CodeStepProps) {
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-3">
-      <p>
-        Scan this with an authenticator app, such as 1Password, Google Authenticator or the iPhone’s
-        Passwords app. Each time you sign in, it gives you a new code.
-      </p>
-      <img
-        src={setup.qrCode}
-        alt="A QR code for your authenticator app. The same secret is written below it."
-        className="size-48 self-center rounded-md bg-white p-1"
-      />
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground">Or type in this secret:</span>
-        <code
-          data-testid="totp-secret"
-          className="rounded-md bg-muted px-2 py-1 font-mono text-xs break-all select-all"
-        >
-          {grouped(setup.secret)}
-        </code>
-      </div>
+      <TotpScan qrCode={setup.qrCode} secret={setup.secret} />
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={`${id}-totp`}>A code from the app</Label>
         <Input

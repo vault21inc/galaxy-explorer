@@ -7,7 +7,7 @@ export function openApiTags(): { name: string; description: string }[] {
     {
       name: 'auth',
       description:
-        'Signing in with a password and two-factor code, sessions, and invite and reset links (M8-T1). Only with GE_AUTH_MODE=required.',
+        'Signing in with a password and, if the account has them on, two-factor codes (D-47); sessions; invite and reset links (M8-T1); turning codes on and off. Only with GE_AUTH_MODE=required.',
     },
     {
       name: 'admin',

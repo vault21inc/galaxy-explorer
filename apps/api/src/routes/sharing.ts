@@ -10,7 +10,7 @@ import {
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import type { AuthContext } from '../auth/context.ts';
-import { requireFreshTotp, SHARE_COOKIE_TTL_MS, shareCookieName } from '../auth/requester.ts';
+import { requireConfirmation, SHARE_COOKIE_TTL_MS, shareCookieName } from '../auth/requester.ts';
 import { routeAccess } from '../http/access-guard.ts';
 import { rateLimit } from '../http/rate-limits.ts';
 import { problem } from '../http/problems.ts';
@@ -181,14 +181,14 @@ export const sharingRoutes: FastifyPluginCallbackZod<{
       schema: {
         tags,
         summary: 'Hand a universe to another account',
-        description: `${SHARING_DOC} Makes that account the owner, if its media quota has room for the universe’s images; the previous owner stays on as an editor. Needs a current two-factor code in \`X-GE-TOTP\`.`,
+        description: `${SHARING_DOC} Makes that account the owner, if its media quota has room for the universe’s images; the previous owner stays on as an editor. Needs a confirmation: a current two-factor code in \`X-GE-TOTP\`, or, for an account with codes off, its password in \`X-GE-Password\`, percent-encoded (D-47).`,
         operationId: 'universes.transfer',
         ...routeAccess({ scope: 'universe', level: 'own', session: true }),
         params: universeParams,
         body: UniverseTransfer,
         response: { 200: envelope(UniverseRead), ...problemResponses },
       },
-      preHandler: requireFreshTotp(auth),
+      preHandler: requireConfirmation(auth),
     },
     async (request) => {
       const { universeId } = request.params;

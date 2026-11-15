@@ -22,6 +22,18 @@ export class SignInFailed extends Error {
   }
 }
 
+/**
+ * The right password for an account with two-factor codes on (D-47), sent without a code: 401,
+ * with `/totp` in `errors`, so the sign-in page asks for one. Only the right password gets this,
+ * so it says nothing to someone guessing.
+ */
+export class CodeNeeded extends Error {
+  override readonly name = 'CodeNeeded';
+  constructor() {
+    super('Type the code from your authenticator app.');
+  }
+}
+
 /** "1 minute", "40 seconds": a wait in words. */
 function waitText(seconds: number): string {
   const [count, unit] =

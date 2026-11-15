@@ -3,6 +3,7 @@ import { useCreateToken, type TokenScope } from '@/api/account.ts';
 import { useUniverses } from '@/api/containers.ts';
 import { errorMessage } from '@/app/route-states.tsx';
 import { ShownOnce } from '@/app/shown-once.tsx';
+import { ConfirmationField, useConfirmationInput } from '@/components/confirmation-field.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { Label } from '@/components/ui/label.tsx';
@@ -15,7 +16,8 @@ const SCOPES: { value: TokenScope; label: string; hint: string }[] = [
 
 /**
  * Making an API token (M8-T2, ux.md §13): a name, read or write, optionally one universe, and a
- * current code. The token is shown once, here, then never again.
+ * confirmation (a current code, or the password, D-47). The token is shown once, here, then
+ * never again.
  */
 export function TokenForm() {
   const id = useId();
@@ -24,9 +26,9 @@ export function TokenForm() {
   const [name, setName] = useState('');
   const [scope, setScope] = useState<TokenScope>('read');
   const [universeId, setUniverseId] = useState('');
-  const [totp, setTotp] = useState('');
+  const confirm = useConfirmationInput();
   const [secret, setSecret] = useState<string | null>(null);
-  const ready = name.trim() !== '' && /^\d{6}$/.test(totp) && !create.isPending;
+  const ready = name.trim() !== '' && confirm.confirmation !== undefined && !create.isPending;
 
   if (secret !== null) {
     return (
@@ -58,18 +60,23 @@ export function TokenForm() {
 
   const onSubmit = (event: SyntheticEvent) => {
     event.preventDefault();
-    if (!ready) return;
+    if (!ready || !confirm.confirmation) return;
     create.mutate(
-      { name: name.trim(), scope, universeId: universeId || null, totp },
+      {
+        name: name.trim(),
+        scope,
+        universeId: universeId || null,
+        confirmation: confirm.confirmation,
+      },
       {
         onSuccess: (made) => {
           setName('');
-          setTotp('');
+          confirm.setValue('');
           setSecret(made.secret);
         },
         onError: () => {
           // A code works once: the next try needs the next one.
-          setTotp('');
+          confirm.setValue('');
         },
       },
     );
@@ -129,19 +136,7 @@ export function TokenForm() {
           ))}
         </select>
       </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor={`${id}-code`}>Code from your authenticator app</Label>
-        <Input
-          id={`${id}-code`}
-          value={totp}
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          maxLength={6}
-          onChange={(event) => {
-            setTotp(event.target.value.replace(/\D/g, ''));
-          }}
-        />
-      </div>
+      <ConfirmationField id={`${id}-code`} input={confirm} />
       {create.error && (
         <p role="alert" className="text-destructive">
           {errorMessage(create.error)}

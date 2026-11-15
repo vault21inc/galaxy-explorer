@@ -2,10 +2,12 @@ import { unwrap, type components } from '@ge/api-client';
 import type { SiteRole } from '@ge/domain';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './client.ts';
+import { confirmationHeaders, type Confirmation } from './confirmation.ts';
 
 /**
  * The admin screens (M8-T13, ux.md §13): accounts, universes (facts about them, never their
- * content) and the access log. Destructive actions carry a current two-factor code.
+ * content) and the access log. Destructive actions carry a confirmation: a current two-factor
+ * code, or the password for an account with codes off (api/confirmation.ts, D-47).
  */
 
 export type AdminUser = components['schemas']['AdminUserRead'];
@@ -13,7 +15,6 @@ export type AdminUniverse = components['schemas']['AdminUniverseRead'];
 export type AccessEvent = components['schemas']['AccessEventRead'];
 
 const ADMIN_KEY = ['admin'] as const;
-const freshCode = (totp: string | undefined) => (totp ? { 'x-ge-totp': totp } : {});
 
 export function useAdminUsers() {
   return useQuery({
@@ -61,13 +62,14 @@ export function useInvite() {
 }
 
 export function useResetLink() {
-  return useAdminWrite(({ userId, totp }: { userId: string; totp?: string }) =>
-    unwrap(
-      api.POST('/api/v1/admin/users/{userId}/reset-link', {
-        params: { path: { userId } },
-        headers: freshCode(totp),
-      }),
-    ),
+  return useAdminWrite(
+    ({ userId, confirmation }: { userId: string; confirmation?: Confirmation }) =>
+      unwrap(
+        api.POST('/api/v1/admin/users/{userId}/reset-link', {
+          params: { path: { userId } },
+          headers: confirmationHeaders(confirmation),
+        }),
+      ),
   );
 }
 
@@ -76,29 +78,30 @@ export interface AccountChange {
   role?: SiteRole;
   disabled?: boolean;
   mediaQuotaBytes?: number;
-  totp?: string;
+  confirmation?: Confirmation;
 }
 
 export function useUpdateAccount() {
-  return useAdminWrite(({ userId, totp, ...body }: AccountChange) =>
+  return useAdminWrite(({ userId, confirmation, ...body }: AccountChange) =>
     unwrap(
       api.PATCH('/api/v1/admin/users/{userId}', {
         params: { path: { userId } },
         body,
-        headers: freshCode(totp),
+        headers: confirmationHeaders(confirmation),
       }),
     ),
   );
 }
 
 export function useDeleteAccount() {
-  return useAdminWrite(({ userId, totp }: { userId: string; totp?: string }) =>
-    unwrap(
-      api.DELETE('/api/v1/admin/users/{userId}', {
-        params: { path: { userId } },
-        headers: freshCode(totp),
-      }),
-    ),
+  return useAdminWrite(
+    ({ userId, confirmation }: { userId: string; confirmation?: Confirmation }) =>
+      unwrap(
+        api.DELETE('/api/v1/admin/users/{userId}', {
+          params: { path: { userId } },
+          headers: confirmationHeaders(confirmation),
+        }),
+      ),
   );
 }
 
@@ -107,14 +110,16 @@ export function useUpdateAdminUniverse() {
   return useMutation({
     mutationFn: ({
       universeId,
-      totp,
+      confirmation,
       ...body
-    }: { universeId: string; totp?: string } & ({ owner: string } | { visibility: 'private' })) =>
+    }: { universeId: string; confirmation?: Confirmation } & (
+      { owner: string } | { visibility: 'private' }
+    )) =>
       unwrap(
         api.PATCH('/api/v1/admin/universes/{universeId}', {
           params: { path: { universeId } },
           body,
-          headers: freshCode(totp),
+          headers: confirmationHeaders(confirmation),
         }),
       ),
     // The universe's owner or visibility changed: the admin's own lists too.
@@ -125,11 +130,17 @@ export function useUpdateAdminUniverse() {
 export function useDeleteAdminUniverse() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ universeId, totp }: { universeId: string; totp?: string }) =>
+    mutationFn: ({
+      universeId,
+      confirmation,
+    }: {
+      universeId: string;
+      confirmation?: Confirmation;
+    }) =>
       unwrap(
         api.DELETE('/api/v1/admin/universes/{universeId}', {
           params: { path: { universeId } },
-          headers: freshCode(totp),
+          headers: confirmationHeaders(confirmation),
         }),
       ),
     onSuccess: () => queryClient.invalidateQueries(),

@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { createAuthContext } from '../../src/auth/context.ts';
 import { Refused } from '../../src/auth/errors.ts';
 import { createSession } from '../../src/auth/sessions.ts';
-import { checkFreshCode } from '../../src/auth/sign-in.ts';
+import { checkConfirmation } from '../../src/auth/sign-in.ts';
 import { buildServer } from '../../src/server.ts';
 import { testConfig } from '../helpers.ts';
 import {
@@ -326,8 +326,8 @@ describe('the rate limit', () => {
     }));
 });
 
-describe('a fresh code (requireFreshTotp)', () => {
-  it('is checked like a sign-in’s, once per code', () =>
+describe('a confirmation (requireConfirmation)', () => {
+  it('takes a code, checked like a sign-in’s, once per code', () =>
     withTestDb(async (db) => {
       const auth = createAuthContext(db, { sessionSecret: SESSION_SECRET, publicUrl: PUBLIC_URL });
       const aemos = await makeAccount(db, 'aemos');
@@ -336,13 +336,20 @@ describe('a fresh code (requireFreshTotp)', () => {
         username: 'aemos',
         role: 'member' as const,
         mediaQuotaBytes: 0,
+        twoFactor: true,
         createdAt: new Date(),
       };
-      await expect(checkFreshCode(auth, account, undefined)).rejects.toThrow(Refused);
-      await expect(checkFreshCode(auth, account, '000000')).rejects.toThrow(Refused);
+      await expect(checkConfirmation(auth, account, {})).rejects.toThrow(Refused);
+      await expect(checkConfirmation(auth, account, { totp: '000000' })).rejects.toThrow(Refused);
+      // With codes on, the password isn't enough.
+      await expect(checkConfirmation(auth, account, { password: aemos.password })).rejects.toThrow(
+        'This needs a current code',
+      );
       const code = await codeFor(aemos.secret);
-      await expect(checkFreshCode(auth, account, code)).resolves.toBeUndefined();
-      await expect(checkFreshCode(auth, account, code)).rejects.toThrow('That code didn’t work');
+      await expect(checkConfirmation(auth, account, { totp: code })).resolves.toBeUndefined();
+      await expect(checkConfirmation(auth, account, { totp: code })).rejects.toThrow(
+        'That code didn’t work',
+      );
     }));
 });
 

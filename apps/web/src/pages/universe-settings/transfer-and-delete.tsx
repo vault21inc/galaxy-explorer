@@ -33,9 +33,9 @@ export function TransferAndDelete({
     confirmLabel: 'Transfer it',
     universeName: name,
     askUsername: true,
-    askCode: accounts,
-    run: async ({ username, totp }) => {
-      await transfer.mutateAsync({ username, totp });
+    askConfirmation: accounts,
+    run: async ({ username, confirmation }) => {
+      await transfer.mutateAsync({ username, confirmation });
       toasts.show(`${name} now belongs to ${username}. You’re an editor.`, 'info');
     },
   };
@@ -45,9 +45,9 @@ export function TransferAndDelete({
       'Its maps, everything on them, its people, settings and images are deleted for good. This can’t be undone, not even from History.',
     confirmLabel: 'Delete it',
     universeName: name,
-    askCode: accounts,
-    run: async ({ totp }) => {
-      await remove.mutateAsync({ totp });
+    askConfirmation: accounts,
+    run: async ({ confirmation }) => {
+      await remove.mutateAsync({ confirmation });
       toasts.show(`Deleted ${name}`, 'info');
       void navigate('/');
     },

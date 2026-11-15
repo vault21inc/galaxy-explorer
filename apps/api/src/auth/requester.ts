@@ -8,7 +8,7 @@ import type { Requester } from '../services/access.ts';
 import type { AuthContext, SignedIn } from './context.ts';
 import { NotSignedIn, Refused } from './errors.ts';
 import { resolveSession } from './sessions.ts';
-import { checkFreshCode } from './sign-in.ts';
+import { checkConfirmation, type Confirmation } from './sign-in.ts';
 import { bearerOf, resolveToken, tokenActorLabel } from './tokens.ts';
 
 /**
@@ -70,8 +70,30 @@ function shareKeysOf(cookies: Record<string, string | undefined>): ReadonlyMap<s
   }
   return keys.size === 0 ? NO_SHARE_KEYS : keys;
 }
-/** The header a request carries a current two-factor code in, for `requireFreshTotp`. */
+/**
+ * The headers a request confirms a destructive action with (`requireConfirmation`, D-47): a
+ * current two-factor code, or, for an account with codes off, its password. The password is
+ * percent-encoded (UTF-8, `encodeURIComponent`), since header values are limited to Latin-1, and
+ * the API's log leaves it out (server.ts).
+ */
 export const FRESH_TOTP_HEADER = 'x-ge-totp';
+export const CONFIRM_PASSWORD_HEADER = 'x-ge-password';
+
+/** What the request's headers offer to confirm an action with. */
+export function confirmationOf(request: FastifyRequest): Confirmation {
+  const totp = request.headers[FRESH_TOTP_HEADER];
+  const encoded = request.headers[CONFIRM_PASSWORD_HEADER];
+  let password: string | undefined;
+  if (typeof encoded === 'string') {
+    try {
+      password = decodeURIComponent(encoded);
+    } catch {
+      // Not valid percent-encoding: taken as typed, and so as a wrong password.
+      password = encoded;
+    }
+  }
+  return { totp: typeof totp === 'string' ? totp : undefined, password };
+}
 
 const MUTATIONS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
@@ -216,17 +238,17 @@ export const TOKENS_REFUSED =
   'API tokens can’t do this: account and sharing changes need you signed in on the site.';
 
 /**
- * A route guard for destructive actions (M8-T12, T13): the request must carry a current
- * two-factor code in `X-GE-TOTP`, checked like a sign-in's. With no accounts there is no code
- * to ask for, and nothing is checked.
+ * A route guard for destructive actions (M8-T12, T13, D-47): the request must carry a current
+ * two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in
+ * `X-GE-Password` (`checkConfirmation`). With no accounts there is nobody to ask, and nothing is
+ * checked.
  */
-export function requireFreshTotp(auth: AuthContext | null) {
+export function requireConfirmation(auth: AuthContext | null) {
   return async (request: FastifyRequest): Promise<void> => {
     if (!auth) return;
     if (!request.account) throw new NotSignedIn();
-    // A code proves someone is at the screen; a token is a program, which has none to give.
+    // A code or a password proves someone is at the screen; a token is a program.
     if (!request.sessionId) throw new Refused(TOKENS_REFUSED);
-    const code = request.headers[FRESH_TOTP_HEADER];
-    await checkFreshCode(auth, request.account, typeof code === 'string' ? code : undefined);
+    await checkConfirmation(auth, request.account, confirmationOf(request));
   };
 }

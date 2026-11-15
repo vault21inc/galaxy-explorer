@@ -28,6 +28,7 @@ import { handleError, handleNotFound, problemSchema } from './http/problems.ts';
 import { assetRoutes, mediaAccessRoutes, mediaRoutes } from './routes/assets.ts';
 import { sharingRoutes } from './routes/sharing.ts';
 import { accountRoutes } from './routes/account.ts';
+import { twoFactorRoutes } from './routes/two-factor.ts';
 import { adminRoutes } from './routes/admin.ts';
 import { authRoutes } from './routes/auth.ts';
 import { tokenRoutes } from './routes/tokens.ts';
@@ -69,7 +70,13 @@ export async function buildServer(config: Config) {
     trustProxy: config.trustProxy ?? false,
     logger: {
       level: config.logLevel,
-      redact: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'],
+      // The password a destructive action may be confirmed with (D-47) included.
+      redact: [
+        'req.headers.authorization',
+        'req.headers.cookie',
+        'req.headers["x-ge-password"]',
+        'res.headers["set-cookie"]',
+      ],
     },
   }).withTypeProvider<ZodTypeProvider>();
 
@@ -155,6 +162,7 @@ export async function buildServer(config: Config) {
     async (v1) => {
       await v1.register(authRoutes, { auth });
       await v1.register(accountRoutes, { db, auth });
+      await v1.register(twoFactorRoutes, { db, auth });
       await v1.register(tokenRoutes, { db, auth });
       await v1.register(adminRoutes, { db, auth });
       await v1.register(containerRoutes, { db, auth });

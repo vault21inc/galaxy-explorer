@@ -47,7 +47,7 @@ import { problem } from '../http/problems.ts';
 import { viewerFor } from '../services/visibility.ts';
 import { routeAccess } from '../http/access-guard.ts';
 import type { AuthContext } from '../auth/context.ts';
-import { requireFreshTotp, requireSession } from '../auth/requester.ts';
+import { requireConfirmation, requireSession } from '../auth/requester.ts';
 import { recordAccessEvent } from '../services/access-events.ts';
 import { setVisibility } from '../services/sharing-service.ts';
 
@@ -238,14 +238,14 @@ export const containerRoutes: FastifyPluginCallbackZod<{
       schema: {
         ...universeTag,
         summary: 'Delete a universe and everything in it',
-        description: `${UNIVERSE_DOC} Only its owner may, signed in, with a current two-factor code in \`X-GE-TOTP\` (M8-T12). It can't be undone.`,
+        description: `${UNIVERSE_DOC} Only its owner may, signed in, with a confirmation: a current two-factor code in \`X-GE-TOTP\`, or, for an account with codes off, its password in \`X-GE-Password\`, percent-encoded (D-47) (M8-T12). It can't be undone.`,
         operationId: 'universes.delete',
         ...routeAccess({ scope: 'universe', level: 'own', session: true }),
         params: universeParams,
         body: versionBody,
         response: { 204: z.null(), ...problemResponses },
       },
-      preHandler: requireFreshTotp(auth),
+      preHandler: requireConfirmation(auth),
     },
     async (request, reply) => {
       const { universeId } = request.params;

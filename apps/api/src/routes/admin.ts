@@ -12,8 +12,8 @@ import type { FastifyRequest } from 'fastify';
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import type { AuthContext } from '../auth/context.ts';
-import { FRESH_TOTP_HEADER, requireFreshTotp } from '../auth/requester.ts';
-import { checkFreshCode } from '../auth/sign-in.ts';
+import { confirmationOf, requireConfirmation } from '../auth/requester.ts';
+import { checkConfirmation } from '../auth/sign-in.ts';
 import { routeAccess } from '../http/access-guard.ts';
 import { actorOf } from '../http/batch.ts';
 import { envelope, listQuery, page, problemResponses } from '../http/schemas.ts';
@@ -39,7 +39,8 @@ import { transferUniverse } from '../services/sharing-service.ts';
  * no content, and opening a universe goes through `universeAccess` like anyone's request.
  *
  * Disabling, deleting, changing a role, a reset link, a transfer and deleting a universe each
- * need a current two-factor code (`X-GE-TOTP`); every action is recorded in `access_events`.
+ * need a confirmation: a current two-factor code (`X-GE-TOTP`), or the password for an account
+ * with codes off (`X-GE-Password`, D-47). Every action is recorded in `access_events`.
  */
 
 const tags = ['admin'];
@@ -47,23 +48,22 @@ const admin = routeAccess({ scope: 'admin' });
 const userParams = z.object({ userId: z.uuid() });
 const universeParams = z.object({ universeId: z.uuid() });
 const ADMIN_DOC =
-  'Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a current two-factor code in `X-GE-TOTP`.';
+  'Admins only (M8-T13): everyone else gets a 404. Disabling, deleting, a role change, a reset link, a transfer and deleting a universe need a confirmation: a current two-factor code in `X-GE-TOTP`, or, for an account with codes off, its password in `X-GE-Password`, percent-encoded (D-47).';
 
 export const adminRoutes: FastifyPluginCallbackZod<{
   db: Database;
   auth: AuthContext | null;
 }> = (app, { db, auth }, done) => {
-  const fresh = requireFreshTotp(auth);
+  const fresh = requireConfirmation(auth);
   /** The site's address, for links: the admin scope means there are accounts, hence a URL. */
   const publicUrl = (): string => {
     if (!auth) throw new Error('Admin routes ran without accounts.');
     return auth.publicUrl;
   };
-  /** A current code, for a change that needs one. */
+  /** A confirmation (a current code, or the password, D-47), for a change that needs one. */
   const freshCode = async (request: FastifyRequest) => {
     if (!auth || !request.account) return;
-    const code = request.headers[FRESH_TOTP_HEADER];
-    await checkFreshCode(auth, request.account, typeof code === 'string' ? code : undefined);
+    await checkConfirmation(auth, request.account, confirmationOf(request));
   };
 
   app.get(

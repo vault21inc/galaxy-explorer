@@ -7,7 +7,7 @@ import type { AuthContext } from '../auth/context.ts';
 import { NotSignedIn, Refused, TooManyAttempts } from '../auth/errors.ts';
 import { checkPassword, hashPassword } from '../auth/passwords.ts';
 import { endSessionsOf } from '../auth/sessions.ts';
-import { checkFreshCode } from '../auth/sign-in.ts';
+import { checkConfirmation } from '../auth/sign-in.ts';
 import { routeAccess } from '../http/access-guard.ts';
 import { rateLimit } from '../http/rate-limits.ts';
 import { problem } from '../http/problems.ts';
@@ -50,7 +50,7 @@ export const accountRoutes: FastifyPluginCallbackZod<{
         ...rateLimit('auth'),
         summary: 'Change the password',
         description:
-          'Needs the current password and a current code from the authenticator app. Every other device is signed out; this one stays signed in. Failures count against the same limits as signing in.',
+          'Needs the current password, and a current code from the authenticator app if the account has two-factor codes on. Every other device is signed out; this one stays signed in. Failures count against the same limits as signing in.',
         ...routeAccess({ scope: 'open', session: true }),
         body: PasswordChange,
         response: { 204: z.null(), ...problemResponses },
@@ -68,7 +68,10 @@ export const accountRoutes: FastifyPluginCallbackZod<{
         context.limiter.fail(keys);
         throw new Refused('That isn’t your current password.');
       }
-      await checkFreshCode(context, account, request.body.totp);
+      // Without two-factor codes (D-47), the current password is the confirmation.
+      if (user.totpSecretEnc !== null) {
+        await checkConfirmation(context, account, { totp: request.body.totp });
+      }
       const passwordHash = await hashPassword(request.body.newPassword);
       await db.transaction(async (tx) => {
         await tx.update(users).set({ passwordHash }).where(eq(users.id, account.id));

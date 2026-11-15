@@ -12,8 +12,9 @@ import { useHealth } from './health.ts';
 export type Account = components['schemas']['AccountRead'];
 export type AccountLink = components['schemas']['AccountLinkRead'];
 export type AccountLinkSetup = components['schemas']['AccountLinkSetup'];
+export type TwoFactorSetup = components['schemas']['TwoFactorSetup'];
 
-const ACCOUNT_KEY = ['auth', 'me'] as const;
+export const ACCOUNT_KEY = ['auth', 'me'] as const;
 
 /** Whether this server has accounts at all. */
 export function useAccountsEnabled(): boolean {
@@ -56,7 +57,7 @@ function useSignedInAs() {
 export function useSignIn() {
   const signedInAs = useSignedInAs();
   return useMutation({
-    mutationFn: (body: { username: string; password: string; totp: string }) =>
+    mutationFn: (body: { username: string; password: string; totp?: string }) =>
       unwrap(api.POST('/api/v1/auth/login', { body })),
     onSuccess: signedInAs,
   });
@@ -85,19 +86,25 @@ export function useAccountLink(token: string) {
   });
 }
 
-/** Step 1 of a link: the username (an invite) and password, for a two-factor setup. */
+/**
+ * Step 1 of a link: the username (an invite) and password, and whether to set up two-factor
+ * codes now (D-47).
+ */
 export function useStartLink(token: string) {
   return useMutation({
-    mutationFn: (body: { username?: string; password: string }) =>
+    mutationFn: (body: { username?: string; password: string; twoFactor: boolean }) =>
       unwrap(api.POST('/api/v1/auth/links/{token}/start', { params: { path: { token } }, body })),
   });
 }
 
-/** Step 2: the first code. The account is made (or reset) and this browser signed in. */
+/**
+ * Step 2: the first code, if step 1 set codes up. The account is made (or reset) and this
+ * browser signed in.
+ */
 export function useFinishLink(token: string) {
   const signedInAs = useSignedInAs();
   return useMutation({
-    mutationFn: (body: { setup: string; totp: string }) =>
+    mutationFn: (body: { setup: string; totp?: string }) =>
       unwrap(api.POST('/api/v1/auth/links/{token}/finish', { params: { path: { token } }, body })),
     onSuccess: signedInAs,
   });

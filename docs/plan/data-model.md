@@ -396,7 +396,7 @@ create table users (
   username           text not null unique check (username ~ '^[a-z0-9][a-z0-9_-]{2,31}$'),
   role               text not null default 'member' check (role in ('admin', 'member')),
   password_hash      text not null,                    -- argon2id
-  totp_secret_enc    bytea not null,                   -- encrypted with a key derived from GE_SESSION_SECRET
+  totp_secret_enc    bytea,                            -- encrypted with a key derived from GE_SESSION_SECRET; null: codes off (D-47)
   totp_last_step     bigint,                           -- the 30-second step of the last code accepted: each code works once (M8-T1)
   media_quota_bytes  bigint not null default 2147483648,  -- 2 GiB across the universes it owns; admins change it
   disabled_at        timestamptz,                      -- set: can't sign in, sessions and tokens stop
@@ -405,7 +405,7 @@ create table users (
 );
 
 -- Single-use links an admin hands over: an invite makes an account; a reset sets a new password
--- and new two-factor codes for an existing one.
+-- for an existing one, with new two-factor codes or none (D-47).
 create table account_links (
   id          uuid primary key default uuidv7(),
   token_hash  bytea not null unique,                   -- sha256 of the link's token; the link is shown once
@@ -728,7 +728,7 @@ Deletes are hard deletes: the change log keeps everything needed to revert them.
 
 | Deleting | Effect |
 |---|---|
-| Universe | Cascades to everything in it. The UI requires typing the universe's name. From M8, only its owner or an admin may, with a current two-factor code. |
+| Universe | Cascades to everything in it. The UI requires typing the universe's name. From M8, only its owner or an admin may, with a current two-factor code (or, for an account with codes off, its password, D-47). |
 | Account (M8) | Blocked while it owns universes: transfer or delete them first. Removes its sessions, tokens and memberships; history keeps its name (`actor_label`). Disabling an account is the usual way to stop it. |
 | Map | Cascades to all map-scoped entities. |
 | Object | Cascades to child objects, its group memberships and route waypoints, and **locations** pointing at it. Places and events located there survive but become unplaced; they're listed under "Unplaced" in the outliner. The database cascade removes child `celestial_objects` rows only, so the entity service deletes the whole subtree's `entities` rows in one statement. |

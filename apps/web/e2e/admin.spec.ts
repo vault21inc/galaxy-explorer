@@ -1,13 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from './test.ts';
-import {
-  accountFromInvite,
-  AUTH_URL,
-  nextCode,
-  signInThrough,
-  totp,
-  uniqueName,
-} from './accounts.ts';
+import { accountFromInvite, AUTH_URL, nextCode, signInThrough, uniqueName } from './accounts.ts';
 
 /**
  * The account page and the admin screens (M8-T13, ux.md §13), against the API with accounts:
@@ -48,13 +41,8 @@ test('an admin invites an account, sees its universe but can’t open it, and di
   await invitee.getByLabel('Username').fill(username);
   await invitee.getByLabel('Password', { exact: true }).fill(password);
   await invitee.getByLabel('The same password again').fill(password);
-  await invitee.getByRole('button', { name: 'Next: two-factor codes' }).click();
-  const secret = ((await invitee.getByTestId('totp-secret').textContent()) ?? '').replace(
-    /\s/g,
-    '',
-  );
-  await invitee.getByLabel('A code from the app').fill(totp(secret));
-  await invitee.getByRole('button', { name: 'Finish' }).click();
+  // Without two-factor codes (D-47): the account is made at once.
+  await invitee.getByRole('button', { name: 'Make the account' }).click();
   await expect(invitee.getByRole('button', { name: `Account: ${username}` })).toBeVisible();
   const slug = uniqueName('theirs');
   await invitee.getByLabel('Name').fill(slug);
@@ -79,7 +67,10 @@ test('an admin invites an account, sees its universe but can’t open it, and di
   await page.getByRole('button', { name: `Disable: ${username}` }).click();
   await page.getByLabel('Code from your authenticator app').fill(await nextCode(admin));
   await page.getByRole('dialog').getByRole('button', { name: 'Disable' }).click();
-  await expect(page.getByRole('row').filter({ hasText: username })).toContainText('Disabled');
+  const inviteeRow = page.getByRole('row').filter({ hasText: username });
+  await expect(inviteeRow).toContainText('Disabled');
+  // The Accounts table says who has two-factor codes on: not the invitee.
+  await expect(inviteeRow.getByRole('cell').nth(2)).toHaveText('Off');
 
   await invitee.reload();
   await expect(invitee.getByRole('banner').getByRole('link', { name: 'Sign in' })).toBeVisible();

@@ -7,6 +7,7 @@ import {
 import { BatchNotFoundError, databaseErrorOf, RevertConflictError } from '@ge/db';
 import { z } from 'zod';
 import {
+  CodeNeeded,
   LinkGone,
   LinkNotFound,
   NotSignedIn,
@@ -229,6 +230,9 @@ function problemForOperation(error: BatchOperationError): Problem {
 function problemForAuthError(error: unknown): Problem | undefined {
   if (error instanceof NotSignedIn || error instanceof SignInFailed) {
     return problem(401, error.message);
+  }
+  if (error instanceof CodeNeeded) {
+    return problem(401, error.message, [{ path: '/totp', message: error.message }]);
   }
   if (error instanceof Refused) return problem(403, error.message);
   if (error instanceof LinkNotFound) return problem(404, error.message);

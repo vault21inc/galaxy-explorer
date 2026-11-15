@@ -1,5 +1,7 @@
 import { useId, useState, type ReactNode, type SyntheticEvent } from 'react';
+import type { Confirmation } from '@/api/confirmation.ts';
 import { errorMessage } from '@/app/route-states.tsx';
+import { ConfirmationField, useConfirmationInput } from '@/components/confirmation-field.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import {
   Dialog,
@@ -14,9 +16,9 @@ import { Label } from '@/components/ui/label.tsx';
 
 /**
  * The confirmation for what can't be undone: transferring or deleting a universe (M8-T12, ux.md
- * §13). It asks for the universe's name, typed exactly, and, with accounts, a current code from
- * the authenticator app, which the API checks (`X-GE-TOTP`). A transfer also asks for the
- * account to hand it to.
+ * §13). It asks for the universe's name, typed exactly, and, with accounts, a confirmation: a
+ * current code from the authenticator app, or the password for an account with codes off
+ * (D-47), which the API checks. A transfer also asks for the account to hand it to.
  */
 export interface GuardedAction {
   title: string;
@@ -26,10 +28,10 @@ export interface GuardedAction {
   universeName: string;
   /** Ask for the account to act on (a transfer). */
   askUsername?: boolean;
-  /** Ask for a two-factor code: only where there are accounts. */
-  askCode: boolean;
+  /** Ask for a confirmation (a code or the password): only where there are accounts. */
+  askConfirmation: boolean;
   /** Does it; a thrown error is shown in the dialog. */
-  run: (input: { username: string; totp: string | undefined }) => Promise<void>;
+  run: (input: { username: string; confirmation: Confirmation | undefined }) => Promise<void>;
 }
 
 export function GuardedActionDialog({
@@ -59,13 +61,13 @@ function GuardedForm({ action, onClose }: { action: GuardedAction; onClose: () =
   const id = useId();
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
-  const [code, setCode] = useState('');
+  const confirm = useConfirmationInput();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const ready =
     name === action.universeName &&
     (!action.askUsername || username.trim() !== '') &&
-    (!action.askCode || /^\d{6}$/.test(code)) &&
+    (!action.askConfirmation || confirm.ready) &&
     !busy;
 
   const onSubmit = async (event: SyntheticEvent) => {
@@ -74,12 +76,15 @@ function GuardedForm({ action, onClose }: { action: GuardedAction; onClose: () =
     setBusy(true);
     setError(null);
     try {
-      await action.run({ username: username.trim(), totp: action.askCode ? code : undefined });
+      await action.run({
+        username: username.trim(),
+        confirmation: action.askConfirmation ? confirm.confirmation : undefined,
+      });
       onClose();
     } catch (caught) {
       setError(caught instanceof Error ? errorMessage(caught) : String(caught));
       // A code works once: the next try needs the next one.
-      setCode('');
+      confirm.setValue('');
       setBusy(false);
     }
   };
@@ -119,21 +124,7 @@ function GuardedForm({ action, onClose }: { action: GuardedAction; onClose: () =
           {action.universeName}
         </p>
       </div>
-      {action.askCode && (
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor={`${id}-code`}>Code from your authenticator app</Label>
-          <Input
-            id={`${id}-code`}
-            value={code}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={6}
-            onChange={(event) => {
-              setCode(event.target.value.replace(/\D/g, ''));
-            }}
-          />
-        </div>
-      )}
+      {action.askConfirmation && <ConfirmationField id={`${id}-code`} input={confirm} />}
       {error && (
         <p role="alert" className="text-sm text-destructive">
           {error}
