@@ -51,10 +51,13 @@ async function expectStep(page: Page, id: string, target?: { control: string } |
 }
 
 /**
- * The middle of the ring around an object, where the object is drawn, once the ring has
- * stopped moving: it eases from the previous step's target over 150 ms.
+ * The middle of the ring around an object, where the object is drawn, once the view and the
+ * ring have stopped moving. The canvas must have drawn nothing for a while: on a slow
+ * software-rendered machine (CI) two quick reads can match while the camera is still flying in.
+ * The ring then eases to its place over 150 ms.
  */
 async function ringCenter(page: Page) {
+  await waitForIdle(page, 500);
   let last = '';
   await expect
     .poll(async () => {
