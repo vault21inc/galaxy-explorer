@@ -24,7 +24,7 @@
 
 **Before starting:** the owner picks a domain name and creates a DigitalOcean account and a Spaces bucket. Budget is not a constraint (X5).
 
-**Order:** T1, T11, T12, T13, then T2 to T10. T11 to T13 were added by D-34 after T2 to T10 were numbered; the numbers stay, so other documents' references still hold.
+**Order:** T1, T11, T12, T13, then T2 to T10. T11 to T13 were added by D-34 after T2 to T10 were numbered; the numbers stay, so other documents' references still hold. T7 waits on a Spaces bucket from the owner, so T8 and T9 went first (2026-11-15), and T7 comes in when the bucket is ready. T10 stays last.
 
 ---
 
@@ -408,7 +408,13 @@
 - Check object counts, spot-check pins and images, and run the golden path read-only against production.
 
 **Done when:**
-- [ ] Production holds the owner's content, and a sampled set of 20 entities matches the local copy.
+- [x] Production holds the owner's content, and a sampled set of 20 entities matches the local copy.
+
+**How it went (2026-11-15):**
+- **The owner's content was on the preview, not this Mac.** Eisenhorn was built on the private preview (D-31), and the local copy is an older one, with 9 entries to the preview's 43. The Mac's other universes are left over from tests and screenshots. So the source was the preview's export (`.data/restore/`, gitignored), imported into production that morning, signed in as the owner. The demo universe was seeded on production, rather than carried over.
+- **The import found a bug,** fixed in 5b41915 and released in v0.2.1: an export with wiki citations couldn't be imported, because their dates were in Postgres's text form, not ISO 8601.
+- **The check** compared production's export of Eisenhorn with the preview's, entry by entry, rather than 20 sampled. All 43 entries (objects, groups and events), their relations, the universe's settings rows and characters, and the 27 image files (by SHA-256) match. There are two differences. Two events have a category that the owner set on production that afternoon, as History shows. Citation dates are the same instants, written as `+00:00` in the preview's file and `Z` on production.
+- **Read anonymously,** through the public API, Eisenhorn's galaxy view has its 9 systems and its group. The golden path writes and needs the test hooks, which production's build leaves out. Instead, the owner's M7 demo, run on production the same day, went through every view and editing tool there.
 
 ### M8-T9 Public polish
 
