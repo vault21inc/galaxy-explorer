@@ -332,6 +332,6 @@
 
 ## Milestone acceptance
 
-- [ ] All tasks are checked off; CI is green.
-- [ ] The demo works end to end.
-- [ ] decisions.md and data-model.md are updated with any changes, such as the export format version.
+- [x] All tasks are checked off; CI is green.
+- [x] The demo works end to end. The owner ran it on production on 2026-11-15, in a scratch universe ("M7 demo", map M41 and its clone M42), and every step passed. It found four things, fixed before it finished: a field definition's key now fills in from its label, an import fills an empty map with the same slug, the Sources section shows when a page was last read, and an export with citations imports again (ISO 8601 dates). Step 5 ran through production's remote MCP with an API token.
+- [x] decisions.md and data-model.md are updated with any changes, such as the export format version (D-35 to D-37; the format version is in D-36).
