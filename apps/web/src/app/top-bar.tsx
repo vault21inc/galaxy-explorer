@@ -7,6 +7,7 @@ import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { EventsPopover } from '@/panels/events-list/events-popover.tsx';
 import { LayersPopover } from '@/panels/layers/layers-popover.tsx';
 import { ShortcutHelp } from '@/panels/shortcut-help/shortcut-help.tsx';
+import { HelpMenu } from '@/help/help-menu.tsx';
 import { CommandPalette } from '@/palette/command-palette.tsx';
 import { PaletteButton } from '@/palette/palette-button.tsx';
 import { useCanEdit } from '@/editor/use-can-edit.ts';
@@ -23,7 +24,8 @@ import { useNoIndex } from './use-no-index.ts';
 
 /**
  * The top bar (ux.md §1): the app's name, the universe and map switchers, the breadcrumbs and
- * the edit toggle, the events list (M6-T7) and the layers (on a map), the spoiler toggle, the shortcut help (M4-T9) and the settings,
+ * the edit toggle, the events list (M6-T7) and the layers (on a map), the spoiler toggle, the Help
+ * menu (shortcuts, M4-T9; tours, M8-T10) and the settings,
  * search with the command palette (M7-T6), and the account menu (M8-T1).
  */
 export function TopBar() {
@@ -46,6 +48,7 @@ export function TopBar() {
         {mapSlug !== undefined && <EventsPopover />}
         {mapSlug !== undefined && <LayersPopover />}
         <SpoilerToggle />
+        <HelpMenu />
         <ShortcutHelp />
         <QualityPopover />
         <AccountMenu />
@@ -75,6 +78,7 @@ function UniverseControls({ universeSlug }: { universeSlug: string }) {
     <>
       <Switcher
         label="Universe"
+        tourName="universe-switcher"
         value={route.universe.slug}
         current={containerName(route.universe, policy)}
         options={(universes.data ?? []).map((item) => ({

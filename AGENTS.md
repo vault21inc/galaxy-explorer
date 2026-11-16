@@ -130,4 +130,5 @@ End with the `Co-Authored-By:` line if an agent wrote the change.
 - [ ] The task's "Done when" items are met and checked off in the milestone file.
 - [ ] Tests are added or updated; `pnpm check` and the relevant integration and e2e suites pass.
 - [ ] Docs (`docs/plan/*`, `AGENTS.md`) are updated if behavior, commands or decisions changed.
+- [ ] A feature that readers or editors see adds or updates its guided-tour step (`apps/web/src/help/tours.ts`, M8-T10), and marks any control the step points at with `data-tour`.
 - [ ] No performance budget regressed. For rendering tasks, the numbers are in the commit message.

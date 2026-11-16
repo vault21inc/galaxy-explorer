@@ -19,7 +19,37 @@ interface Violation {
   sample: string;
 }
 
-export const test = base.extend<{ cspGuard: undefined }>({
+/**
+ * The guided tours' first-visit offers (M8-T10) stay away unless a spec asks for them with
+ * `test.use({ tourOffers: true })`: elsewhere they'd sit over the page every test looks at.
+ * They're marked as already turned down, as a reader's browser would remember it.
+ */
+const TOURS_DISMISSED = JSON.stringify({
+  state: { dismissed: { reader: true, editor: true } },
+  version: 1,
+});
+
+export const test = base.extend<{
+  cspGuard: undefined;
+  tourOffers: boolean;
+  quietTours: undefined;
+}>({
+  tourOffers: [false, { option: true }],
+  quietTours: [
+    async ({ context, tourOffers }, use) => {
+      if (!tourOffers) {
+        await context.addInitScript((stored) => {
+          try {
+            if (localStorage.getItem('ge.tours') === null) localStorage.setItem('ge.tours', stored);
+          } catch {
+            // Storage blocked: the offers would show, as they would for such a reader.
+          }
+        }, TOURS_DISMISSED);
+      }
+      await use(undefined);
+    },
+    { auto: true },
+  ],
   cspGuard: [
     async ({ context }, use) => {
       const violations: Violation[] = [];

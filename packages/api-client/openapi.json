@@ -39059,6 +39059,117 @@
         }
       }
     },
+    "/api/v1/practice-universe": {
+      "post": {
+        "operationId": "universes.practice",
+        "summary": "Make a practice universe for the editor tour",
+        "tags": [
+          "universes"
+        ],
+        "description": "A new universe named “Practice” with the demo’s content (two maps, systems to enter, groups, regions, a route, places, events and characters), made as one change. With accounts it belongs to the account and is private, as any universe it makes. Answers with the universe and the map the tour opens. Delete it as any universe.",
+        "x-ge-access": {
+          "scope": "editor",
+          "newUniverse": true
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "universe": {
+                          "$ref": "#/components/schemas/UniverseRead"
+                        },
+                        "mapSlug": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100,
+                          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                        }
+                      },
+                      "required": [
+                        "universe",
+                        "mapSlug"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/universes/{universeId}/search": {
       "get": {
         "operationId": "universes.search",

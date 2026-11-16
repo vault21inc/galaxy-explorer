@@ -95,6 +95,7 @@ export function OutlinerSlot({
       variant="outline"
       size="sm"
       className="absolute top-16 left-4"
+      data-tour="list"
       title="Every object in this view, as a list (keyboard and screen readers)"
       onClick={() => {
         setListOpen(true);

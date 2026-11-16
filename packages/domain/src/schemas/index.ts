@@ -57,6 +57,7 @@ export {
   UNIVERSE_ACCESS,
   UniverseCreate,
   UniverseRead,
+  PracticeUniverse,
   UniverseUpdate,
   VISIBILITIES,
   Visibility,

@@ -60,6 +60,7 @@ export default function InfoPanel({
     <SpoilerProvider>
       <aside
         aria-label="Details"
+        data-tour="info-panel"
         className={
           'absolute inset-x-0 bottom-0 flex max-h-[50vh] flex-col rounded-t-lg border bg-card ' +
           'md:inset-x-auto md:top-16 md:right-4 md:bottom-auto md:max-h-[calc(100%-5rem)] md:w-[380px] md:rounded-lg'

@@ -129,7 +129,14 @@ test.describe('public polish (M8-T9)', () => {
       .click();
     await expect(page).toHaveTitle('Privacy · Galaxy Explorer');
     const kept = page.getByRole('list', { name: 'What the browser keeps' });
-    for (const key of ['ge.labels', 'ge.spoilers', 'ge.quality', 'ge.stars', 'ge.layers']) {
+    for (const key of [
+      'ge.labels',
+      'ge.spoilers',
+      'ge.quality',
+      'ge.stars',
+      'ge.layers',
+      'ge.tours',
+    ]) {
       await expect(kept.getByText(key)).toBeVisible();
     }
     // There are no accounts here, so nothing about them.

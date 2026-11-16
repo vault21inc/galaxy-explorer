@@ -10,4 +10,5 @@ export const STORAGE_KEYS = {
   quality: { key: 'ge.quality', what: 'the quality setting, and whether ambient motion runs' },
   stars: { key: 'ge.stars', what: 'how many background stars to draw, and how bright' },
   layers: { key: 'ge.layers', what: 'which layers and group types are hidden' },
+  tours: { key: 'ge.tours', what: 'which guided tours were offered, so each is offered once' },
 } as const satisfies Record<string, { key: `ge.${string}`; what: string }>;

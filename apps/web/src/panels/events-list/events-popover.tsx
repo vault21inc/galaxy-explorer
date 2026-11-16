@@ -54,7 +54,12 @@ export function EventsPopover() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="pointer-events-auto gap-1.5">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="pointer-events-auto gap-1.5"
+          data-tour="events"
+        >
           <CalendarDays aria-hidden />
           Events
         </Button>

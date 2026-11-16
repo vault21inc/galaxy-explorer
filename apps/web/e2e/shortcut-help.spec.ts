@@ -50,10 +50,11 @@ test.describe('shortcut help (M4-T9)', () => {
     );
   });
 
-  test('the Help button opens it, and closing returns focus to the button', async ({ page }) => {
+  test('the Help menu opens it, and closing returns focus to the button', async ({ page }) => {
     await open(page);
-    const button = page.getByRole('button', { name: 'Keyboard shortcuts' });
+    const button = page.getByRole('button', { name: 'Help' });
     await button.click();
+    await page.getByRole('menuitem', { name: /Keyboard shortcuts/ }).click();
     await expect(help(page)).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(help(page)).toHaveCount(0);

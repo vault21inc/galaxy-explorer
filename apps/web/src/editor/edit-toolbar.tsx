@@ -118,6 +118,7 @@ export function EditToolbar() {
     <div
       role="toolbar"
       aria-label="Edit tools"
+      data-tour="edit-toolbar"
       className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-lg border bg-card p-1"
     >
       {TOOLS.map(({ label, icon: Icon, arrives, active, keys }) => {
@@ -135,6 +136,7 @@ export function EditToolbar() {
                 (arrives ? `${label}: arrives in ${arrives}` : keys ? `${label} (${keys})` : label)
               }
               className="gap-1.5"
+              data-tour={`tool-${label.toLowerCase()}`}
               onClick={onClick}
             >
               <Icon aria-hidden />

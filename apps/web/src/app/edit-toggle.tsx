@@ -28,6 +28,7 @@ export function EditToggle() {
       size="sm"
       aria-pressed={editing}
       title="Edit mode (E)"
+      data-tour="edit-toggle"
       className="pointer-events-auto gap-1.5"
       onClick={toggle}
     >

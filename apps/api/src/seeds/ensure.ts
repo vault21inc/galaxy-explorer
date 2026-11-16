@@ -25,6 +25,7 @@ import {
   INSTALLATION_OWN,
   updateMap,
   updateUniverse,
+  type Placement,
 } from '../services/container-service.ts';
 import { upsertEntityByKey, type EntityScope } from '../services/entity-service.ts';
 
@@ -36,10 +37,15 @@ import { upsertEntityByKey, type EntityScope } from '../services/entity-service.
 
 const { universes, maps, entityLinks, entityRelations, entityImages, assets } = schema;
 
-export async function ensureUniverse(tx: Executor, values: z.input<typeof UniverseCreate>) {
+export async function ensureUniverse(
+  tx: Executor,
+  values: z.input<typeof UniverseCreate>,
+  // The seeds' universes are the installation's own: no owner, public (D-34). A practice
+  // universe is its account's, private (M8-T10).
+  placement: Placement = INSTALLATION_OWN,
+) {
   const [existing] = await tx.select().from(universes).where(eq(universes.slug, values.slug));
-  // The seeds' universes are the installation's own: no owner, public (D-34).
-  if (!existing) return createUniverse(tx, values, INSTALLATION_OWN);
+  if (!existing) return createUniverse(tx, values, placement);
   const { slug: _slug, ...rest } = values;
   return updateUniverse(tx, existing.id, { ...rest, version: existing.version });
 }

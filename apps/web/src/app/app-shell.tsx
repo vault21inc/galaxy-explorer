@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Outlet, useSearchParams } from 'react-router';
+import { TourLayer } from '@/help/tour-layer.tsx';
 import { LabelLayer } from '@/render/labels/label-layer.tsx';
 import { Stage } from '@/render/stage.tsx';
 import { ProgressRing } from '@/render/transition/progress-ring.tsx';
@@ -33,6 +34,8 @@ export function AppShell() {
       <TransitionOverlay />
       <TopBar />
       <Outlet />
+      {/* The guided tours and their offers (M8-T10), over the page's panels. */}
+      <TourLayer />
       <QualityNotice />
       <Toaster />
       {showPerfHud && (

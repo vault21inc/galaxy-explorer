@@ -54,7 +54,12 @@ export function LayersPopover() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="pointer-events-auto gap-1.5">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="pointer-events-auto gap-1.5"
+          data-tour="layers"
+        >
           <Layers aria-hidden />
           Layers
         </Button>

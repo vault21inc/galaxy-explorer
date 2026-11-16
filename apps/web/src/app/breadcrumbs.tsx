@@ -41,7 +41,11 @@ export function Breadcrumbs({ universeSlug, mapSlug, mapId }: BreadcrumbsProps) 
   const crumbs = entries.length > 0 ? entries : [{ level: 'galaxy', subjectId: mapId }];
 
   return (
-    <nav aria-label="Breadcrumbs" className="ml-2 text-sm text-muted-foreground">
+    <nav
+      aria-label="Breadcrumbs"
+      data-tour="breadcrumbs"
+      className="ml-2 text-sm text-muted-foreground"
+    >
       <ol className="flex items-center gap-1.5">
         {crumbs.map((entry, index) => {
           const name = names.get(entry.subjectId);

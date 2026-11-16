@@ -46,7 +46,13 @@ export function AddMenu() {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-1.5" title="Add an object (N)">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1.5"
+          title="Add an object (N)"
+          data-tour="add-menu"
+        >
           <Plus aria-hidden />
           Add
           <ChevronDown aria-hidden className="size-3.5 text-muted-foreground" />

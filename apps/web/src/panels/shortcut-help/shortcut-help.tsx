@@ -1,5 +1,5 @@
 import { ICON_CREDITS, ICON_SETS } from '@ge/domain';
-import { CircleHelp, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button.tsx';
 import {
@@ -15,9 +15,9 @@ import { useHelp } from '@/state/help.ts';
 import { helpSections } from './help-sections.ts';
 
 /**
- * The top bar's Help button and the shortcut help it opens (M4-T9, ux.md §12): every key and
- * gesture that works here, generated from the binding tables (help-sections.ts). `?` opens it
- * too. It's a Radix dialog, so Esc closes it and focus returns to where it was.
+ * The shortcut help (M4-T9, ux.md §12): every key and gesture that works here, generated from
+ * the binding tables (help-sections.ts). `?` opens it, and so does the Help menu
+ * (help/help-menu.tsx). It's a Radix dialog, so Esc closes it and focus returns to where it was.
  */
 export function ShortcutHelp() {
   const open = useHelp((state) => state.open);
@@ -34,20 +34,6 @@ export function ShortcutHelp() {
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        aria-label="Keyboard shortcuts"
-        title="Keyboard shortcuts (?)"
-        className="pointer-events-auto"
-        onClick={(event) => {
-          // Safari doesn't focus a clicked button; focus then has somewhere to come back to.
-          event.currentTarget.focus();
-          setOpen(true);
-        }}
-      >
-        <CircleHelp aria-hidden />
-      </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className="max-h-[85vh] overflow-y-auto sm:max-w-2xl"

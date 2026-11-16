@@ -40,6 +40,25 @@ export default defineConfig({
   reporter: [['list']],
   use: {
     baseURL: `http://localhost:${WEB_PORT}`,
+    // The guided tours' first-visit offer (M8-T10) as already turned down, as a returning
+    // reader's browser has it: the measured path drags across the whole canvas.
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: `http://localhost:${WEB_PORT}`,
+          localStorage: [
+            {
+              name: 'ge.tours',
+              value: JSON.stringify({
+                state: { dismissed: { reader: true, editor: true } },
+                version: 1,
+              }),
+            },
+          ],
+        },
+      ],
+    },
     headless: false,
     ...window,
   },

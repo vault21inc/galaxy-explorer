@@ -11,6 +11,7 @@ export function PaletteButton() {
       variant="ghost"
       size="sm"
       className="pointer-events-auto gap-1.5 text-muted-foreground"
+      data-tour="search"
       onClick={() => {
         usePalette.getState().setOpen(true);
       }}

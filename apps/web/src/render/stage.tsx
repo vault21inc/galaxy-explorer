@@ -7,6 +7,7 @@ import { useQuality, useQualityPreset } from '@/state/quality.ts';
 import { attachCanvas, DIAGNOSTICS_ENABLED, loadTestHooks } from './diagnostics.ts';
 import { FrameProbe } from './frame-probe.tsx';
 import { LabelDriver } from './labels/label-driver.tsx';
+import { TourAnchorDriver } from './tour-anchor-driver.tsx';
 import { QualityGuard } from './quality-guard.tsx';
 import { Sky } from './sky.tsx';
 import { TransitionRig } from './transition/transition-rig.tsx';
@@ -77,6 +78,8 @@ export function Stage() {
       <ViewHost />
       {/* Places the DOM labels (labels/label-layer.tsx) after every rendered frame. */}
       <LabelDriver />
+      {/* Tells the guided tours where a step's object is, after frames drawn anyway (M8-T10). */}
+      <TourAnchorDriver />
       {DIAGNOSTICS_ENABLED && <FrameProbe />}
     </Canvas>
   );

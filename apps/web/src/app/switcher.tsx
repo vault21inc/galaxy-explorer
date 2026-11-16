@@ -25,17 +25,32 @@ interface SwitcherProps {
   onSelect: (value: string) => void;
   /** Extra items under a separator, such as a link to every universe. */
   footer?: ReactNode;
+  /** The name a guided tour points at it by (`data-tour`, M8-T10). */
+  tourName?: string;
 }
 
 /**
  * A top-bar menu that picks one of several (ux.md §1): the universe and map switchers. Radix
  * gives it arrow-key navigation, type-ahead and focus return.
  */
-export function Switcher({ label, value, current, options, onSelect, footer }: SwitcherProps) {
+export function Switcher({
+  label,
+  value,
+  current,
+  options,
+  onSelect,
+  footer,
+  tourName,
+}: SwitcherProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="pointer-events-auto gap-1 px-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="pointer-events-auto gap-1 px-2"
+          data-tour={tourName}
+        >
           {/* The visible text stays part of the name, so speech input can say what it sees. */}
           <span className="sr-only">{label}: </span>
           {current}

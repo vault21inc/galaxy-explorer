@@ -70,6 +70,12 @@ export const UniverseRead = z
   });
 
 /**
+ * A practice universe for the editor tour (M8-T10): the demo's content in a new universe named
+ * "Practice", and the map the tour opens.
+ */
+export const PracticeUniverse = z.object({ universe: UniverseRead, mapSlug: Slug });
+
+/**
  * `/u/:universeSlug/settings` is the universe's settings page (M4-T1), and the router ranks it
  * above `/u/:universeSlug/:mapSlug`, so a map with this slug could never be opened.
  */

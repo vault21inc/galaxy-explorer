@@ -18,6 +18,7 @@ export function SpoilerToggle() {
       size="sm"
       aria-pressed={editing || showAll}
       disabled={editing}
+      data-tour="spoilers"
       title={
         editing ? 'Edit mode shows every spoiler, marked' : 'Show potential spoilers (Shift + S)'
       }

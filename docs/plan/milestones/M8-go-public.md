@@ -470,11 +470,18 @@ The details are in D-30 and ux.md §12. This is M8's last task, because the tour
 - **AGENTS.md:** the definition of done gains "a user-facing feature adds or updates its tour step".
 
 **Done when:**
-- [ ] Unit tests: every step names a target kind, a completion and a need the registry knows, and steps whose need isn't met are skipped.
-- [ ] E2E, in both browsers: each tour runs from start to end, and every step finds its target on screen. Esc ends a tour, and the Help menu starts it again.
-- [ ] The editor tour creates the practice universe, writes only inside it, and deletes it at the end. The account's other universes and their history are unchanged, and neither an anonymous reader nor another account ever sees "Practice".
-- [ ] The first-visit prompt shows once, and dismissing it survives a reload.
-- [ ] axe finds no violations with a step open, and idle stays at 0 frames while a step waits.
+- [x] Unit tests: every step names a target kind, a completion and a need the registry knows, and steps whose need isn't met are skipped.
+- [x] E2E, in both browsers: each tour runs from start to end, and every step finds its target on screen. Esc ends a tour, and the Help menu starts it again.
+- [x] The editor tour creates the practice universe, writes only inside it, and deletes it at the end. The account's other universes and their history are unchanged, and neither an anonymous reader nor another account ever sees "Practice".
+- [x] The first-visit prompt shows once, and dismissing it survives a reload.
+- [x] axe finds no violations with a step open, and idle stays at 0 frames while a step waits.
+
+**As built (2026-11-16, D-49):**
+- **The reader tour** has 12 steps: moving around (done by moving the view), selecting a system (done by selecting one; the ring is on a system near the middle), labels (L), spoilers, the List (done by opening it), groups and Layers, entering a system, a planet's globe, going back (done back at the galaxy view), events, search, and `?`. Entering a planet is passed over in a system without one to visit.
+- **The editor tour** has 15: edit mode (E), the toolbar, adding an object (done by placing one), moving it, its form, grouping, undo and History, universe settings (the universe menu), map settings, regions and routes, entering a system, adding a planet, a planet's globe, places and events, and deleting. Then "That's the editor tour": **Delete the practice universe**, focused first, or **Keep it**.
+- **The Help button is a menu:** Keyboard shortcuts (`?` still opens them directly), Take the tour (on a map), Editor tour (for anyone who may make universes) and About this site.
+- **The practice universe** is `POST /api/v1/practice-universe` (apps/api/src/routes/practice.ts), the demo's content in a new private universe of the account's, made as one change. It's deleted through the usual route and its confirmation. Locally the editor tour is offered too (D-49 changes D-30 there).
+- **Tests:** `apps/web/test/tours.test.ts` (6), `apps/api/test/practice.int.test.ts` (2: the account's private universe as one change that nobody else sees, deleted with a code; the installation's locally), `e2e/tours.spec.ts` (6, in Chromium and WebKit: each tour start to end with every target checked, Esc and the Help menu, 0 frames and axe while a step waits, the offer shown once and taken). `e2e/shortcut-help.spec.ts` opens the shortcuts from the Help menu.
 
 ---
 
