@@ -68,8 +68,9 @@ function AccountsSection() {
       <AboutSection title="Who sees a private universe">
         <p>
           Its owner and the people it’s shared with, as editors or viewers, and anyone with its link
-          if it’s shared by link. Admins can manage it without opening it. As with any website,
-          whoever runs the server can read its database.
+          if it’s shared by link. This site’s admins can open and edit it too, and their changes
+          show in its History under their names. As with any website, whoever runs the server can
+          read its database.
         </p>
       </AboutSection>
       <AboutSection title="Removing an account">

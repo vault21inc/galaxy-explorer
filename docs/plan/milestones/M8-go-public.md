@@ -15,7 +15,7 @@
 1. `https://<domain>` serves the galaxy with an A+ TLS rating.
 2. Anonymous visitors see public universes' published content only.
 3. The owner, as the first admin, logs in with password and TOTP and edits.
-4. The admin invites a second account from the admin screen. It signs up through the link, sets up TOTP, and creates a universe that nobody else can see or find.
+4. The admin invites a second account from the admin screen. It signs up through the link, sets up TOTP, and creates a universe that nobody else can see or find, but the admins (D-50).
 5. That account shares its universe: a viewer can read it, an editor can change it, and a link opens it in a signed-out browser until the link is replaced.
 6. The admin disables the second account: its session and tokens stop at once.
 7. An agent with a write token creates an object over remote MCP; revoking the token stops it.
@@ -149,7 +149,7 @@
   - `/media/*` is served only with `read`, with `Cache-Control: public` for public universes and `private` otherwise.
   - `GET /api/v1/media-access` answers the same for Caddy, from `X-Forwarded-Uri`, with 204 and the `Cache-Control` to send.
   - Uploads past the owner's quota get a 413, and `GET /auth/me` reports `mediaUsedBytes`.
-- **Admins** own the installation's own universes (no owner), and nothing else.
+- **Admins** own the installation's own universes (no owner), and nothing else. (D-50, later: they also edit every other universe.)
 - **Every route documents 401 and 403,** which is most of the regenerated client's growth.
 - **The web app:**
   - **Edit mode** follows the universe's `access` (`useCanEdit`). `useCanCreate` (health's `canEdit`) decides "New universe".
@@ -221,7 +221,7 @@
   - `PATCH /admin/universes/{universeId}`: transfer to an account (the previous owner keeps no access), or make it private (a takedown); `DELETE` removes it;
   - `GET /admin/events`: the `access_events` log, newest first, paged.
 - Disabling, deleting, a role change, a reset link, a transfer and deleting a universe each need a current two-factor code, and each is recorded in `access_events`.
-- **An admin gets no access to other accounts' private universes** from these routes: the universes list has no content, and opening one goes through `universeAccess` like anyone's request.
+- **An admin gets no access to other accounts' private universes** from these routes: the universes list has no content, and opening one goes through `universeAccess` like anyone's request. (D-50, later: `universeAccess` gives admins `edit` everywhere, and the Universes screen has Open.)
 - **Admin screens** (`/admin`, ux.md §13): Accounts, Universes and Log, as tables with their actions; links are shown once with a Copy button.
 
 **Done when:**

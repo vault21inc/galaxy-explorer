@@ -35,8 +35,8 @@ import { transferUniverse } from '../services/sharing-service.ts';
 /**
  * The admin routes (M8-T13, D-34, ux.md §13), for accounts with the `admin` role signed in with
  * a session. Anyone else, an API token included, gets a 404, as if they weren't there (the
- * access guard's `admin` scope). Admins manage accounts, not content: the universes list holds
- * no content, and opening a universe goes through `universeAccess` like anyone's request.
+ * access guard's `admin` scope). The universes list holds no content; opening a universe goes
+ * through `universeAccess` like anyone's request, which lets an admin edit it (D-50).
  *
  * Disabling, deleting, changing a role, a reset link, a transfer and deleting a universe each
  * need a confirmation: a current two-factor code (`X-GE-TOTP`), or the password for an account

@@ -20,12 +20,14 @@ import {
  *
  * - A route whose path names a universe (through a universe, map, entity, settings row, asset
  *   or batch): a stranger and an anonymous visitor get 404; a viewer reads and gets 403 on
- *   writes; an editor writes and gets 403 on what only the owner may do; the owner may do it all.
+ *   writes; an editor, and an admin it isn't shared with (D-50), write and get 403 on what only
+ *   the owner may do; the owner may do it all.
  * - Any other route must say in its `x-ge-access` that it isn't about one universe.
  * - A route the suite can't classify, or can't fill in, fails it.
  * - API tokens (M8-T2) get their account's access, narrowed: a read token reads as a viewer
- *   does, a token for another universe gets 403, and every token gets 403 on the account and
- *   sharing routes and 404 on the admin ones, whoever's it is.
+ *   does, a token for another universe gets 403, an admin's write token writes as its admin
+ *   does, and every token gets 403 on the account and sharing routes and 404 on the admin ones,
+ *   whoever's it is.
  *
  * Writes are sent with an empty body. The access check comes before validation, so a refused
  * request is refused whatever it carries, and an allowed one usually stops at a 400. Those that
@@ -188,8 +190,8 @@ function specSession(op: Operation): boolean {
 function expectedOfToken(role: TokenRole, op: Operation, level: Level): 'allowed' | 403 | 404 {
   // The same answer whatever the path names: it tells a token nothing about any universe.
   if (op.access?.session) return 403;
-  // The admin isn't in the owner's private universe: its token sees what the admin sees.
-  if (role === 'adminToken') return 404;
+  // The admin edits the owner's private universe (D-50): its token does what the admin does.
+  if (role === 'adminToken') return level === 'own' ? 403 : 'allowed';
   // The owner can read it, so there's nothing to hide: the token is for another universe.
   if (role === 'elsewhereToken') return 403;
   if (role === 'readToken') return level === 'read' ? 'allowed' : 403;
@@ -214,7 +216,7 @@ function unscopedOfToken(role: TokenRole, op: Operation): 'allowed' | 403 | 404 
 function expected(role: (typeof ROLES)[number], level: Level): 'allowed' | 403 | 404 {
   if (role === 'anonymous' || role === 'stranger') return 404;
   if (role === 'viewer') return level === 'read' ? 'allowed' : 403;
-  if (role === 'editor') return level === 'own' ? 403 : 'allowed';
+  if (role === 'editor' || role === 'admin') return level === 'own' ? 403 : 'allowed';
   return 'allowed';
 }
 
@@ -289,11 +291,13 @@ describe('the access contract (M8-T11)', () => {
             }
             // Fields only the owner may change, such as a universe's address.
             for (const field of ownFields) {
-              const asEditor = await attempt(app, world, 'editor', op, { [field]: 'changed' });
-              if (asEditor.status !== 403)
-                failures.push(
-                  `${op.operationId} {${field}} as editor: ${String(asEditor.status)}, wanted 403`,
-                );
+              for (const role of ['editor', 'admin'] as const) {
+                const refused = await attempt(app, world, role, op, { [field]: 'changed' });
+                if (refused.status !== 403)
+                  failures.push(
+                    `${op.operationId} {${field}} as ${role}: ${String(refused.status)}, wanted 403`,
+                  );
+              }
               const asOwner = await attempt(app, world, 'owner', op, { [field]: 'changed' });
               if (!ALLOWED(asOwner.status))
                 failures.push(`${op.operationId} {${field}} as owner: ${String(asOwner.status)}`);
@@ -306,7 +310,7 @@ describe('the access contract (M8-T11)', () => {
           await app.close();
         }
       }),
-    // Every route as nine requesters: a few seconds alone, more beside the other suites.
+    // Every route as ten requesters: a few seconds alone, more beside the other suites.
     60_000,
   );
 });

@@ -248,7 +248,7 @@ D-34 has the reasoning; data-model §8 has the access rule. None of this exists 
 - **The account menu,** at the top bar's right end, shows the username and opens: Account, Admin (admins only) and Sign out. Signed out, it's a "Sign in" link.
 - **The home page:**
   - signed out: the public universes;
-  - signed in: **Your universes**, then **Shared with you** (each with the role), then the public ones.
+  - signed in: **Your universes**, then **Shared with you** (each with the role), then, for an admin, **Other accounts' universes** (the private and link-only ones nobody shared with them, D-50), then the public ones.
 
   Each card shows a small badge for Private or Link-only, and "by {owner}" for universes that aren't yours. "New universe" needs an account, and the new universe starts private.
 - **Account page** (`/account`):
@@ -271,7 +271,7 @@ D-34 has the reasoning; data-model §8 has the access rule. None of this exists 
 - **Who did what:** History shows each change's account (or "token: name, for account"), as it showed "local" before.
 - **Admin screens** (`/admin`), for admins:
   - **Accounts:** a table of username, role, last sign-in, two-factor codes (on or off), universes owned, storage used of quota, and status. Actions: Invite (member or admin; shows the link once, to copy), Reset link, Disable or Enable, Change role, Set quota, Delete (only once it owns nothing).
-  - **Universes:** a table of name, owner, visibility, objects, storage and last change. Actions: Transfer, Make private, Delete. It doesn't open a universe the admin couldn't open anyway.
+  - **Universes:** a table of name, owner, visibility, objects, storage and last change. Actions: Open (to read and edit it, as an editor would, D-50), Transfer, Make private, Delete.
   - **Log:** the account and access changes, newest first: who, what, to whom or what, when.
 
   Disabling, deleting, transferring, a role change and a reset link each ask for a current two-factor code, or the admin's password if their codes are off (D-47).

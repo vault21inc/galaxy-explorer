@@ -24,8 +24,9 @@ export const universes = pgTable(
     dateFormatNotes: jsonb().$type<RichText>(),
     settings: jsonb().$type<UniverseSettings>().notNull().default({}),
     /**
-     * Its owner (M8-T11, D-34), who alone changes its address, visibility and members. Null:
-     * the installation's own, which admins own (and, with GE_AUTH_MODE=none, everyone).
+     * Its owner (M8-T11, D-34), who alone changes its address, visibility and members (admins
+     * edit its content, D-50). Null: the installation's own, which admins own (and, with
+     * GE_AUTH_MODE=none, everyone).
      */
     ownerId: uuid(),
     /** Who may read it: 'private', 'link' (anyone with the share link) or 'public'. */

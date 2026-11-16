@@ -32,7 +32,7 @@ export function AccountsTab() {
     title: role === 'admin' ? 'Invite an admin' : 'Invite someone',
     description:
       role === 'admin'
-        ? 'A link that makes one new admin account, within 7 days. Admins manage accounts, not other people’s universes.'
+        ? 'A link that makes one new admin account, within 7 days. Admins manage accounts, and can open and edit every universe.'
         : 'A link that makes one new account, within 7 days. The person chooses a username and password, and sets up two-factor codes.',
     confirmLabel: 'Make the link',
     askConfirmation: false,

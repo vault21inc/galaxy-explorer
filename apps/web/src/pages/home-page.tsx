@@ -34,7 +34,7 @@ export function HomePage() {
   const sections =
     accounts && username !== null
       ? homeSections(universes.data, username)
-      : { yours: [], shared: [], rest: universes.data };
+      : { yours: [], shared: [], others: [], rest: universes.data };
 
   return (
     <main className="absolute top-16 left-4 flex max-h-[calc(100%-5rem)] w-80 flex-col gap-4 overflow-y-auto rounded-lg border bg-card p-4 text-sm">
@@ -47,6 +47,14 @@ export function HomePage() {
           universes={sections.shared}
           username={username}
           roles
+        />
+      )}
+      {/* Only an admin has these (D-50): private and link-only universes nobody shared with them. */}
+      {sections.others.length > 0 && (
+        <UniverseList
+          title="Other accounts’ universes"
+          universes={sections.others}
+          username={username}
         />
       )}
       <UniverseList

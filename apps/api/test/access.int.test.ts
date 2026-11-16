@@ -117,7 +117,10 @@ describe('a new universe', () => {
       expect(editor.body.data).toMatchObject({ access: 'edit' });
       const viewer = await world.as('viewer', 'GET', `/universes/${id}`);
       expect(viewer.body.data).toMatchObject({ access: 'read' });
-      for (const who of ['stranger', 'anonymous', 'admin'] as const) {
+      // An admin edits it, though it isn't shared with them (D-50), and isn't sent its key.
+      const admin = await world.as('admin', 'GET', `/universes/${id}`);
+      expect(admin.body.data).toMatchObject({ access: 'edit', role: null, shareKey: null });
+      for (const who of ['stranger', 'anonymous'] as const) {
         const hidden = await world.as(who, 'GET', `/universes/${id}`);
         expect(hidden.status, who).toBe(404);
         expect(hidden.body.detail).toBe(`No universe with id ${id}.`);
@@ -218,18 +221,76 @@ describe('GET /universes', () => {
       // Shared with them, the link-only one included: they're members.
       expect(await listed('viewer')).toEqual(['link-one', 'private-one', 'public-one']);
       expect(await listed('owner')).toEqual(['link-one', 'private-one', 'public-one']);
-      // An admin sees no more of other accounts' universes, but owns the installation's.
-      expect(await listed('admin')).toEqual(['installation', 'public-one']);
+      // An admin lists every universe (D-50): editing other accounts', owning the installation's.
+      expect(await listed('admin')).toEqual([
+        'installation',
+        'link-one',
+        'private-one',
+        'public-one',
+      ]);
       const adminList = (await world.as('admin', 'GET', '/universes')).body.data as {
         slug: string;
         access: string;
         owner: string | null;
       }[];
-      expect(adminList.find((universe) => universe.slug === 'installation')).toMatchObject({
-        owner: null,
+      const accessOf = (slug: string) => adminList.find((universe) => universe.slug === slug);
+      expect(accessOf('installation')).toMatchObject({ owner: null, access: 'own' });
+      expect(accessOf('private-one')).toMatchObject({ owner: 'owner', access: 'edit' });
+      expect(accessOf('link-one')).toMatchObject({ access: 'edit' });
+      expect((await world.as('admin', 'GET', `/universes/${privateOne.id}`)).status).toBe(200);
+    }));
+});
+
+describe('an admin (D-50)', () => {
+  it('edits another account’s private universe as an editor would, and owns none of it', () =>
+    run(async (world) => {
+      const { id, mapId } = await world.universe('theirs');
+      // Content, drafts included.
+      const draft = await world.as('admin', 'POST', `/maps/${mapId}/objects`, {
+        name: rt.plain('Admin’s base'),
+        baseType: 'station',
+        status: 'draft',
+      });
+      expect(draft.status).toBe(201);
+      const drafts = await world.as('admin', 'GET', `/maps/${mapId}/objects?includeDrafts=true`);
+      expect((drafts.body.data as { namePlain: string }[]).map((o) => o.namePlain)).toEqual([
+        'Admin’s base',
+      ]);
+      // History, which an admin may read, says it was the admin, so the owner can see it too.
+      const history = await world.as('owner', 'GET', `/universes/${id}/history`);
+      expect((history.body.data as { actorLabel: string }[])[0]).toMatchObject({
+        actorLabel: 'admin',
+      });
+      expect((await world.as('admin', 'GET', `/universes/${id}/history`)).status).toBe(200);
+      // The members list is readable, as for an editor; who's in isn't the admin's to change.
+      expect((await world.as('admin', 'GET', `/universes/${id}/members`)).status).toBe(200);
+      const share = await world.as('admin', 'PUT', `/universes/${id}/members/stranger`, {
+        role: 'viewer',
+      });
+      expect(share.status).toBe(403);
+      const current = await world.as('admin', 'GET', `/universes/${id}`);
+      for (const change of [{ visibility: 'public' }, { slug: 'taken-over' }]) {
+        const refused = await world.as('admin', 'PATCH', `/universes/${id}`, {
+          ...change,
+          version: current.body.data.version,
+        });
+        expect(refused.status, JSON.stringify(change)).toBe(403);
+      }
+      expect(
+        (
+          await world.as('admin', 'DELETE', `/universes/${id}`, {
+            version: current.body.data.version,
+          })
+        ).status,
+      ).toBe(403);
+      // Its owner still owns it, and the admin isn't made a member.
+      expect((await world.as('owner', 'GET', `/universes/${id}`)).body.data).toMatchObject({
         access: 'own',
       });
-      expect((await world.as('admin', 'GET', `/universes/${privateOne.id}`)).status).toBe(404);
+      const members = (await world.as('owner', 'GET', `/universes/${id}/members`)).body.data as {
+        username: string;
+      }[];
+      expect(members.map((member) => member.username).sort()).toEqual(['editor', 'viewer']);
     }));
 });
 
@@ -371,12 +432,14 @@ describe('media', () => {
       const path = uploaded.body.data.urls.display as string;
       expect(path).toMatch(/^\/media\/u\//);
 
-      for (const who of ['stranger', 'anonymous', 'admin'] as const) {
+      for (const who of ['stranger', 'anonymous'] as const) {
         expect((await world.media(who, path)).statusCode, who).toBe(404);
       }
-      const served = await world.media('viewer', path);
-      expect(served.statusCode).toBe(200);
-      expect(served.headers['cache-control']).toBe('private, max-age=31536000, immutable');
+      for (const who of ['viewer', 'admin'] as const) {
+        const served = await world.media(who, path);
+        expect(served.statusCode, who).toBe(200);
+        expect(served.headers['cache-control']).toBe('private, max-age=31536000, immutable');
+      }
 
       // The same question, as Caddy's forward_auth asks it in production (M8-T4).
       const ask = (who: Who) =>

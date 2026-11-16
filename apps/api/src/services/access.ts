@@ -51,11 +51,13 @@ export function atLeast(access: UniverseAccess, needed: UniverseAccess): boolean
 /**
  * The access table of data-model §8:
  * - `own`: its owner; an admin, for an unowned universe; everyone locally;
- * - `edit`: its editors;
+ * - `edit`: its editors; an admin, for every other account's universe (D-50);
  * - `read`: its viewers; anyone, for a public universe; anyone with its key, for a link one;
  * - `none`: everyone else, who get a 404 as if it didn't exist.
  *
- * Being an admin gives nothing else: admins manage accounts, not other people's content.
+ * An admin edits other accounts' universes as an editor would, but doesn't own them: who may
+ * reach a universe stays its owner's (D-41), and the admin routes cover transfer, takedown and
+ * deletion. History records the admin's changes under their name, like anyone's.
  *
  * An API token (M8-T2) gets its account's access, narrowed (`tokenNarrowed`): it never does
  * more than its account may at that moment, so a token loses a universe the moment its account
@@ -89,7 +91,8 @@ export function accountAccess(requester: Requester, universe: AccessFacts): Univ
     const { account } = requester;
     if (universe.ownerId === account.id) return 'own';
     if (universe.ownerId === null && account.role === 'admin') return 'own';
-    if (universe.memberRole === 'editor') return 'edit';
+    // Before the viewer check: an admin it's shared with as a viewer still edits.
+    if (universe.memberRole === 'editor' || account.role === 'admin') return 'edit';
     if (universe.memberRole === 'viewer') return 'read';
   }
   if (universe.visibility === 'public') return 'read';

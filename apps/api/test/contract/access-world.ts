@@ -10,15 +10,17 @@ import { codeFor, makeAccount, ORIGIN, sessionOf, signIn } from '../auth/auth-wo
  * editor and a viewer it's shared with, a stranger, and everything a route can name, made
  * through the API as the owner.
  *
- * The editor and the owner each get their own set of rows (a map with one entity of every kind,
- * settings rows, an asset, links and so on): the suite's allowed requests may change or delete
- * what they name, and with separate sets one role's requests never disturb the other's.
+ * An admin it isn't shared with is a role too: admins edit every universe (D-50).
  *
- * API tokens (M8-T2) are roles too: the owner's read token, its write token (with a set of rows
- * of its own), its token for another universe, and an admin's write token.
+ * The editor, the admin and the owner each get their own set of rows (a map with one entity of
+ * every kind, settings rows, an asset, links and so on): the suite's allowed requests may change
+ * or delete what they name, and with separate sets one role's requests never disturb another's.
+ *
+ * API tokens (M8-T2) are roles too: the owner's read token, its write token, its token for
+ * another universe, and the admin's write token, the two write tokens with rows of their own.
  */
 
-export const ROLES = ['anonymous', 'stranger', 'viewer', 'editor', 'owner'] as const;
+export const ROLES = ['anonymous', 'stranger', 'viewer', 'editor', 'admin', 'owner'] as const;
 export const TOKEN_ROLES = ['readToken', 'writeToken', 'elsewhereToken', 'adminToken'] as const;
 export type TokenRole = (typeof TOKEN_ROLES)[number];
 export type Role = (typeof ROLES)[number] | TokenRole;
@@ -55,7 +57,7 @@ export interface AccessWorld {
   restoreMembers: () => Promise<void>;
   /** Each role's `cookie` header (none for anonymous), or a token's `authorization`. */
   headers: Record<Role, Record<string, string>>;
-  /** The rows each role's requests name: the editor's own set, the owner's for everyone else. */
+  /** The rows each role's requests name: their own set for those who may write, else the owner's. */
   rows: Record<Role, RowSet>;
 }
 
@@ -218,6 +220,7 @@ export async function buildAccessWorld(db: Database, app: ApiServer): Promise<Ac
     editor: await makeAccount(db, 'editor'),
     viewer: await makeAccount(db, 'viewer'),
     stranger: await makeAccount(db, 'stranger'),
+    admin: await makeAccount(db, 'admin', { role: 'admin' }),
   };
   const headers = { anonymous: {} } as Record<Role, Record<string, string>>;
   for (const [role, account] of Object.entries(accounts) as [
@@ -257,10 +260,11 @@ export async function buildAccessWorld(db: Database, app: ApiServer): Promise<Ac
   const ownerRows = await rowSet(db, call, universeId, 'owner');
   const editorRows = await rowSet(db, call, universeId, 'editor');
   const tokenRows = await rowSet(db, call, universeId, 'token');
+  const adminRows = await rowSet(db, call, universeId, 'admin');
+  const adminTokenRows = await rowSet(db, call, universeId, 'admintoken');
 
   // Tokens straight in the database: what they may do is the subject here, not making them.
   const elsewhere = await call('POST', '/universes', { slug: 'other', name: rt.plain('Other') });
-  const admin = await makeAccount(db, 'admin', { role: 'admin' });
   const bearer = async (
     userId: string,
     scope: 'read' | 'write',
@@ -272,7 +276,7 @@ export async function buildAccessWorld(db: Database, app: ApiServer): Promise<Ac
   headers.readToken = await bearer(accounts.owner.id, 'read');
   headers.writeToken = await bearer(accounts.owner.id, 'write');
   headers.elsewhereToken = await bearer(accounts.owner.id, 'write', elsewhere.data.id as string);
-  headers.adminToken = await bearer(admin.id, 'write');
+  headers.adminToken = await bearer(accounts.admin.id, 'write');
   return {
     universeId,
     memberUsername: accounts.viewer.username,
@@ -283,11 +287,12 @@ export async function buildAccessWorld(db: Database, app: ApiServer): Promise<Ac
       stranger: ownerRows,
       viewer: ownerRows,
       editor: editorRows,
+      admin: adminRows,
       owner: ownerRows,
       readToken: ownerRows,
       writeToken: tokenRows,
       elsewhereToken: ownerRows,
-      adminToken: ownerRows,
+      adminToken: adminTokenRows,
     },
   };
 }

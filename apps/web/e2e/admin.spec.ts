@@ -5,7 +5,7 @@ import { accountFromInvite, AUTH_URL, nextCode, signInThrough, uniqueName } from
 /**
  * The account page and the admin screens (M8-T13, ux.md §13), against the API with accounts:
  * the admin invites an account from the Accounts screen, sees its private universe in Universes
- * without being able to open it, and disables it, which signs it out.
+ * and on the home page, opens it to edit (D-50), and disables the account, which signs it out.
  */
 test.use({ baseURL: AUTH_URL });
 
@@ -14,7 +14,7 @@ const noViolations = async (page: Page) => {
   expect((await new AxeBuilder({ page }).withTags(axeTags).analyze()).violations).toEqual([]);
 };
 
-test('an admin invites an account, sees its universe but can’t open it, and disables it', async ({
+test('an admin invites an account, opens its private universe to edit, and disables it', async ({
   page,
   browser,
 }) => {
@@ -49,7 +49,7 @@ test('an admin invites an account, sees its universe but can’t open it, and di
   await invitee.getByRole('button', { name: 'Create universe' }).click();
   await expect(invitee).toHaveURL(new RegExp(`/u/${slug}/main`));
 
-  // The admin sees it in Universes, as facts about it, and can't open it.
+  // The admin sees it in Universes, as facts about it.
   await page.reload();
   await page.getByRole('tab', { name: 'Universes' }).click();
   const row = page.getByRole('row').filter({ hasText: `/u/${slug}` });
@@ -59,8 +59,21 @@ test('an admin invites an account, sees its universe but can’t open it, and di
   await page.getByRole('tab', { name: 'Log' }).click();
   await expect(page.getByRole('cell', { name: 'made an invite' }).first()).toBeVisible();
   await noViolations(page);
-  await page.goto(`/u/${slug}`);
-  await expect(page.getByText(`No universe called “${slug}”`)).toBeVisible();
+  // And opens it from there, to edit as an editor would (D-50).
+  await page.getByRole('tab', { name: 'Universes' }).click();
+  await row.getByRole('link', { name: `Open: ${slug}` }).click();
+  await expect(page).toHaveURL(new RegExp(`/u/${slug}/main`));
+  await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeVisible();
+  // On the home page it's listed apart, not as shared with the admin.
+  await page.goto('/');
+  const others = page.getByRole('region', { name: 'Other accounts’ universes' });
+  await expect(others.getByRole('link', { name: new RegExp(slug) })).toBeVisible();
+  // (Shared with you holds the installation's own universes, which an admin owns.)
+  await expect(
+    page
+      .getByRole('region', { name: 'Shared with you' })
+      .getByRole('link', { name: new RegExp(slug) }),
+  ).toHaveCount(0);
 
   // Disabling it, with a code, signs the invitee out at their next request.
   await page.goto('/admin');

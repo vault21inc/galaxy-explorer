@@ -288,10 +288,9 @@ describe('the admin routes', () => {
 });
 
 describe('the admin universe routes', () => {
-  it('list universes without opening them', () =>
+  it('list every universe, which an admin may then open as an editor (D-50)', () =>
     run(async (world) => {
       const id = await world.universe('member', 'secret');
-      expect((await world.as('admin', 'GET', `/universes/${id}`)).status).toBe(404);
       const listed = (await world.as('admin', 'GET', '/admin/universes')).body.data as Record<
         string,
         unknown
@@ -307,9 +306,17 @@ describe('the admin universe routes', () => {
           mediaBytes: 0,
         }),
       ]);
-      // Listing it gave the admin no more access than before.
-      expect((await world.as('admin', 'GET', `/universes/${id}`)).status).toBe(404);
-      expect((await world.as('admin', 'GET', `/universes/by-slug/secret`)).status).toBe(404);
+      // Its address opens for the admin, to edit but not to own: a non-admin still gets 404.
+      expect((await world.as('admin', 'GET', `/universes/${id}`)).body.data).toMatchObject({
+        access: 'edit',
+      });
+      expect((await world.as('admin', 'GET', `/universes/by-slug/secret`)).body.data).toMatchObject(
+        {
+          id,
+          access: 'edit',
+        },
+      );
+      expect((await world.as('other', 'GET', `/universes/${id}`)).status).toBe(404);
     }));
 
   it('transfer a universe, leaving the previous owner no access, and take one down', () =>

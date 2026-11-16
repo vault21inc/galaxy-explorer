@@ -64,12 +64,12 @@ test.describe('accounts (M8-T1)', () => {
     await expect(page).toHaveURL(new RegExp(`/u/${slug}/`));
     await expect(editButton(page)).toBeVisible();
     // History records the account.
-    const universes = (await (await page.request.get('/api/v1/universes')).json()) as {
-      data: { id: string; slug: string }[];
+    // By its address: an admin's list holds every account's universes (D-50), a page at a time.
+    const mine = (await (await page.request.get(`/api/v1/universes/by-slug/${slug}`)).json()) as {
+      data: { id: string };
     };
-    const mine = universes.data.find((universe) => universe.slug === slug);
     const history = (await (
-      await page.request.get(`/api/v1/universes/${mine?.id ?? ''}/history`)
+      await page.request.get(`/api/v1/universes/${mine.data.id}/history`)
     ).json()) as { data: { actorLabel: string }[] };
     expect(history.data.map((batch) => batch.actorLabel)).toContain(admin.username);
 

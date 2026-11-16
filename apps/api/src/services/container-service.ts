@@ -8,7 +8,7 @@ import {
   UniverseUpdate,
   type Visibility,
 } from '@ge/domain';
-import { and, asc, eq, exists, gt, inArray, isNull, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, eq, exists, gt, inArray, or, sql, type SQL } from 'drizzle-orm';
 import { z } from 'zod';
 import { accessFactsOf, universeAccess, type Requester } from './access.ts';
 import { NotFound, VersionConflict } from './errors.ts';
@@ -86,8 +86,8 @@ export async function getUniverseBySlug(ex: Executor, slug: string): Promise<Uni
 
 /**
  * The universes a requester can read, which is what lists show (data-model §8): public ones,
- * plus the account's own and those shared with it, plus, for an admin, the installation's own.
- * A link-only universe is never listed for someone who only has its key.
+ * plus the account's own and those shared with it; for an admin, every universe (D-50). A
+ * link-only universe is never listed for someone who only has its key.
  *
  * This is `universeAccess`'s rule as SQL, for a list's filter: the two must agree.
  */
@@ -96,15 +96,18 @@ export function readableBy(requester: Requester): SQL | undefined {
   const isPublic = eq(universes.visibility, 'public');
   if (requester.kind === 'anonymous') return isPublic;
   const { id, role } = requester.account;
-  const readable = or(
-    isPublic,
-    eq(universes.ownerId, id),
-    exists(
-      sql`(select 1 from ${universeMembers} where ${universeMembers.universeId} = ${universes.id}
+  // An admin reads them all; `and` below drops the undefined, leaving only a token's narrowing.
+  const readable =
+    role === 'admin'
+      ? undefined
+      : or(
+          isPublic,
+          eq(universes.ownerId, id),
+          exists(
+            sql`(select 1 from ${universeMembers} where ${universeMembers.universeId} = ${universes.id}
            and ${universeMembers.userId} = ${id})`,
-    ),
-    role === 'admin' ? isNull(universes.ownerId) : undefined,
-  );
+          ),
+        );
   // A token for one universe lists that one alone (M8-T2), as `universeAccess` has it.
   const only = requester.token?.universeId;
   return only ? and(readable, eq(universes.id, only)) : readable;

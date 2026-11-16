@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import { useState } from 'react';
 import {
   useAdminUniverses,
@@ -19,8 +20,8 @@ const VISIBILITY_NAMES: Record<AdminUniverse['visibility'], string> = {
 
 /**
  * The Universes screen (M8-T13, ux.md §13): every universe as facts about it (owner, visibility,
- * objects, media, last change), never what's in it. An admin can transfer one, take it down
- * (make it private) or delete it, but doesn't open it: its address answers as for anyone.
+ * objects, media, last change). An admin can open one, to read and edit it as an editor would
+ * (D-50), transfer it, take it down (make it private) or delete it.
  */
 export function UniversesTab() {
   const universes = useAdminUniverses();
@@ -125,6 +126,11 @@ export function UniversesTab() {
               <td className="py-1.5 pr-3">{formatWhen(universe.lastChangeAt)}</td>
               <td className="py-1.5">
                 <div className="flex flex-wrap gap-1">
+                  <Button asChild size="sm" variant="ghost" className="h-7 px-2">
+                    <Link to={`/u/${universe.slug}`} aria-label={`Open: ${universe.name}`}>
+                      Open
+                    </Link>
+                  </Button>
                   {actionsFor(universe)
                     .filter((item) => !item.hidden)
                     .map((item) => (

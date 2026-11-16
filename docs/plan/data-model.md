@@ -635,12 +635,12 @@ When redaction removes content (`spoilers=exclude`), a hidden text keeps its sha
 |---|---|---|
 | `none` | everyone else | Nothing: every route answers 404, as if the universe didn't exist. |
 | `read` | anyone, for a `public` universe; anyone holding the share key, for a `link` one; its viewers | Published content. Never drafts. |
-| `edit` | its editors | All content, drafts included: entities, maps, the settings tables, uploads, History and revert. |
+| `edit` | its editors; an admin, for every universe they don't own (D-50) | All content, drafts included: entities, maps, the settings tables, uploads, History and revert. |
 | `own` | its owner; an admin, for an unowned universe; everyone with `GE_AUTH_MODE=none` | Also its address, visibility, share link, members, transfer and deletion. |
 
 - **Drafts and access combine:** the draft rules above apply to anyone with only `read`; `includeDrafts=true` is honored from `edit` up.
-- **Admins get no access from being admins,** except to unowned universes. The admin routes (transfer, takedown, delete) work on a universe without reading its content.
-- **Lists show only what the requester can read:** `GET /universes` returns public universes, plus the requester's own and those shared with them. A `link` universe is never listed for someone who only has its key.
+- **Admins edit every universe (D-50),** and own the unowned ones. They don't own other accounts' universes: their address, visibility, share link and members stay the owner's. The admin routes (transfer, takedown, delete) work on any universe, as before.
+- **Lists show only what the requester can read:** `GET /universes` returns public universes, plus the requester's own and those shared with them; for an admin, every universe. A `link` universe is never listed for someone who only has its key.
 - **Media follow their universe:** a file under `u/{universeId}/…` is served only to someone with at least `read` there (architecture §8).
 - **As built (M8-T11, D-40):** the API checks this in one hook in front of every route, from the rows the path names; the batch endpoint checks each operation's rows. The access contract suite tries every route in the OpenAPI document as each kind of requester.
 - **Sharing (M8-T12):** the members list and the drafts count need `edit`, since editors see the Sharing section read-only. Leaving (`DELETE …/membership`) needs only `read`, so a viewer can leave too. The owner's share key is in `UniverseRead.shareKey`, null for everyone else. Who may reach a universe isn't in History (D-41, §9).

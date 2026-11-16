@@ -18,8 +18,8 @@ import { requireUniverse } from './lookup.ts';
 
 /**
  * The admin screens' service (M8-T13, D-34): accounts, the universes as a list of facts about
- * them, and the access log. Admins manage accounts, not content: nothing here reads what's in a
- * universe, and every change is recorded in `access_events`.
+ * them, and the access log. Nothing here reads what's in a universe (an admin opens one through
+ * the ordinary routes, D-50), and every change is recorded in `access_events`.
  */
 
 const { accessEvents, assets, changeBatches, entities, universes, users } = schema;
