@@ -429,8 +429,15 @@
 - Friendly 404 and 500 pages. A link to a draft, or to a universe the visitor can't read, gets the same "not found" page, with "Sign in" for the signed-out.
 
 **Done when:**
-- [ ] Sharing a planet URL in a chat app shows its name and image with no spoilers.
-- [ ] The attributions page lists every citation.
+- [ ] Sharing a planet URL in a chat app shows its name and image with no spoilers. (The e2e tests fetch a planet's address as Slack's fetcher does and get its name, summary and image without its spoiler. The check in a real chat app waits for the release.)
+- [x] The attributions page lists every citation.
+
+**As built (2026-11-15, D-48):**
+- **Link previews.** `@ge/domain/link-preview` lists the fetchers by User-Agent (Slack, Discord, X, Facebook and Apple's Messages, LinkedIn, Telegram, WhatsApp and Signal, Reddit, Mastodon, Bluesky, Pinterest, VK, Embedly, Iframely and the main search engines) and the addresses with previews (`/u/{slug}`, `/u/{slug}/{map}`, `…/view/{id}`). `pnpm headers:caddy` writes them into `ops/caddy/link-previews.caddy`, which the Caddyfile imports, and `vite preview` applies them too. The API's `GET /api/v1/link-preview?path=…&select=…` writes Open Graph and Twitter tags: the object's name, its summary or description without spoilers, and its cover or first gallery image, else the map's or the universe's card. It reads as an anonymous visitor, so a universe that isn't public gets the site's card and `noindex`. Browser tabs get the same titles (`pageTitle`).
+- **The attributions page** (`/about/attributions`, `GET /api/v1/attributions`) has the fan-site disclaimer, the icon sets' credits and, per universe the reader can open, each source page once (title, site, licence as stated, last read) and each image credit once. Drafts are left out; a source only spoilers cite is hidden like a spoiler.
+- **The privacy page** (`/about/privacy`) lists what the browser keeps, from the stores' own key list (`apps/web/src/state/storage-keys.ts`), the two cookies, the server's logs and, with accounts, what an account stores, who sees a private universe and how to have an account removed (ask an admin). The home page links both pages, and the account page links the privacy note.
+- **Errors.** "Not found" was already one page for a missing or unreadable universe or map, with Sign in for the signed-out (M8-T11), and a missing or draft object has its own note in the map. A page that fails as it draws, or whose code is gone after a release, now gets "Something went wrong" with Retry and a link home, under the top bar, instead of React Router's developer page.
+- **Tests:** `apps/api/test/site.int.test.ts` (6: cards for an object, a selection, a map and a universe; drafts, spoilers and bad ids; private, link-only and missing; attributions, once per page and credit, drafts left out, spoilers marked, only readable universes), `link-preview.test.ts` (the committed snippet, escaping) in the API and domain, and `e2e/about.spec.ts` (5: a Slack fetch of a planet against a browser's, both pages with axe, the error page when a page's code fails to load, tab titles).
 
 ### M8-T10 Guided tours
 

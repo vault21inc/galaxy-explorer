@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import { safeStorage } from '@/lib/safe-storage.ts';
+import { STORAGE_KEYS } from './storage-keys.ts';
 import { useEditor } from './editor.ts';
 
 /**
@@ -43,7 +44,7 @@ export const useSpoilers = create<SpoilerState>()(
       },
     }),
     {
-      name: 'ge.spoilers',
+      name: STORAGE_KEYS.spoilers.key,
       version: 1,
       storage: createJSONStorage(() => safeStorage),
       partialize: (state) => ({ showAll: state.showAll }),

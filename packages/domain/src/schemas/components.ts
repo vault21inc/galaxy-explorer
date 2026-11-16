@@ -9,6 +9,7 @@ import { RichText } from '../richtext/schema.ts';
 import { Appearance, PlanetAppearance } from './appearance.ts';
 import * as accounts from './accounts.ts';
 import * as aspects from './aspects.ts';
+import { Attributions } from './attributions.ts';
 import { BatchOperation, BatchRequest } from './batch.ts';
 import * as containers from './containers.ts';
 import { FieldValue } from './field-value.ts';
@@ -48,6 +49,7 @@ export function openApiComponents(): Record<string, z.ZodType> {
     Counterpart: aspects.Counterpart,
     ImportReport,
     SearchResult,
+    Attributions,
     CitationWrite: aspects.CitationWrite,
     FactRead: aspects.FactRead,
     FactWrite: aspects.FactWrite,

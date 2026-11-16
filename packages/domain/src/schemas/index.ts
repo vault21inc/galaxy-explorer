@@ -136,3 +136,9 @@ export {
   type AccountLinkPurpose,
 } from './accounts.ts';
 export { openApiComponents } from './components.ts';
+export {
+  AttributionImage,
+  AttributionSource,
+  Attributions,
+  UniverseAttributions,
+} from './attributions.ts';

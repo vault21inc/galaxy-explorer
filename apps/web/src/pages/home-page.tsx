@@ -3,6 +3,7 @@ import { useAccount, useAccountsEnabled } from '@/api/auth.ts';
 import { useUniverses } from '@/api/containers.ts';
 import { homeSections } from '@/lib/home-sections.ts';
 import { useCanCreate } from '@/editor/use-can-edit.ts';
+import { AboutLinks } from '@/app/about-links.tsx';
 import { errorMessage } from '@/app/route-states.tsx';
 import { StatusPanel } from '@/app/status-panel.tsx';
 import { UniverseList } from './universe-list.tsx';
@@ -71,6 +72,7 @@ export function HomePage() {
       {/* Anyone may start a universe on a server without accounts; with them, a signed-in
           account, which owns it, private (M8-T11). */}
       {canCreate && <NewUniverseForm />}
+      <AboutLinks className="border-t pt-3 text-xs text-muted-foreground" />
     </main>
   );
 }

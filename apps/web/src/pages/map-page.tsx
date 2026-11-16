@@ -4,6 +4,7 @@ import { useViewPayload } from '@/api/hooks.ts';
 import { useReadOptions } from '@/api/read-options.ts';
 import { errorMessage, RouteStates } from '@/app/route-states.tsx';
 import { StatusPanel } from '@/app/status-panel.tsx';
+import { usePageTitle } from '@/app/use-page-title.ts';
 import { useUniverseRoute } from '@/app/use-universe-route.ts';
 import { useHistory } from '@/state/history.ts';
 import { topView, useNavigation } from '@/state/navigation.ts';
@@ -35,6 +36,12 @@ export function MapPage() {
   const top = useNavigation(topView);
   const universeId = route.status === 'ready' ? route.universe.id : undefined;
   useSelectionUrlSync();
+  // The tab's title (M8-T9): the map and universe. A system or orbit view adds its subject's
+  // name, once it has it (subject-view-panels.tsx).
+  const titleParts =
+    route.status === 'ready' ? [route.map?.namePlain, route.universe.namePlain] : [];
+  const subjectView = top !== undefined && top.level !== 'galaxy';
+  usePageTitle(subjectView && route.status === 'ready' ? null : titleParts);
 
   // Edits on this page are undo steps for this universe (M3-T6).
   useEffect(() => {
@@ -68,6 +75,7 @@ export function MapPage() {
   if (top && top.level !== 'galaxy') {
     return (
       <SubjectViewPanels
+        titleParts={titleParts}
         universeId={route.universe.id}
         universeSlug={universeSlug}
         mapId={mapId ?? ''}

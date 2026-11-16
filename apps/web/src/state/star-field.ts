@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { safeStorage } from '@/lib/safe-storage.ts';
+import { STORAGE_KEYS } from './storage-keys.ts';
 
 interface StarFieldState {
   /** The share of the depth stars drawn, 0 (none) to 1 (all the quality setting allows). */
@@ -32,7 +33,7 @@ export const useStarField = create<StarFieldState>()(
       },
     }),
     {
-      name: 'ge.stars',
+      name: STORAGE_KEYS.stars.key,
       version: 1,
       storage: createJSONStorage(() => safeStorage),
       partialize: ({ density, brightness }) => ({ density, brightness }),

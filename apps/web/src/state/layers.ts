@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { safeStorage } from '@/lib/safe-storage.ts';
+import { STORAGE_KEYS } from './storage-keys.ts';
 
 interface LayersState {
   /**
@@ -48,7 +49,7 @@ export const useLayers = create<LayersState>()(
       },
     }),
     {
-      name: 'ge.layers',
+      name: STORAGE_KEYS.layers.key,
       version: 1,
       storage: createJSONStorage(() => safeStorage),
       partialize: (state) => ({ hiddenLayers: state.hiddenLayers, hiddenTypes: state.hiddenTypes }),

@@ -1,0 +1,19 @@
+# Link previews (M8-T9, @ge/domain/link-preview). Generated from
+# packages/domain/src/link-preview.ts by `pnpm headers:caddy`: edit that, not this.
+#
+# Import this file at the top of a Caddyfile, then `import link-previews` in the site.
+
+(link-previews) {
+	# A chat app or search engine fetching an address that has a preview.
+	@linkPreview {
+		path_regexp ^/u/[a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*(?:/view/[0-9a-f-]+)?)?/?$
+		header_regexp User-Agent (?i)(?:slackbot|discordbot|twitterbot|facebookexternalhit|facebot|linkedinbot|telegrambot|whatsapp|skypeuripreview|redditbot|mastodon|cardyb|pinterestbot|vkshare|embedly|iframely|googlebot|google-inspectiontool|bingbot|applebot|duckduckbot|yandexbot)
+	}
+	# Gets the API’s page of tags for it, not the app, which it couldn’t run.
+	handle @linkPreview {
+		rewrite * /api/v1/link-preview?path={path}&{query}
+		# A share link’s key: never used for a preview, and kept out of the logs.
+		uri query -k
+		reverse_proxy api:3000
+	}
+}

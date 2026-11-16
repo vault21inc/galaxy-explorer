@@ -36,6 +36,11 @@ export function openApiTags(): { name: string; description: string }[] {
       description:
         'The bundled icon sets for event categories and pins: Lucide and game-icons.net (M6-T4).',
     },
+    {
+      name: 'site',
+      description:
+        'The public site’s own pages (M8-T9): what the attributions page lists, and the pages link-preview fetchers get.',
+    },
     { name: 'links', description: 'Web links attached to an entity.' },
     { name: 'citations', description: 'Where an entity’s filled-in content came from (M7-T3).' },
     {

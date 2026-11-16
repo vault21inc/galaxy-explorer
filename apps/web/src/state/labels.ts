@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { safeStorage } from '@/lib/safe-storage.ts';
+import { STORAGE_KEYS } from './storage-keys.ts';
 
 /**
  * Label modes (ux.md §7): `hover` shows the hovered and selected items only (the default);
@@ -44,7 +45,7 @@ export const useLabels = create<LabelState>()(
       },
     }),
     {
-      name: 'ge.labels',
+      name: STORAGE_KEYS.labels.key,
       version: 1,
       storage: createJSONStorage(() => safeStorage),
       partialize: (state) => ({ mode: state.mode }),

@@ -29,6 +29,11 @@ export function AccountPage() {
   return (
     <main className="absolute top-16 left-4 flex max-h-[calc(100%-5rem)] w-96 flex-col gap-6 overflow-y-auto rounded-lg border bg-card p-4 text-sm">
       <h1 className="text-base font-medium">{account.data.username}</h1>
+      <p className="-mt-4 text-xs text-muted-foreground">
+        <Link to="/about/privacy" className="underline underline-offset-2">
+          What your account stores, and who sees what
+        </Link>
+      </p>
       <PasswordSection />
       <TwoFactorSection />
       <DevicesSection />

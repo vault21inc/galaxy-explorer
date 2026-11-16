@@ -91,7 +91,7 @@ export async function getUniverseBySlug(ex: Executor, slug: string): Promise<Uni
  *
  * This is `universeAccess`'s rule as SQL, for a list's filter: the two must agree.
  */
-function readableBy(requester: Requester): SQL | undefined {
+export function readableBy(requester: Requester): SQL | undefined {
   if (requester.kind === 'local') return undefined;
   const isPublic = eq(universes.visibility, 'public');
   if (requester.kind === 'anonymous') return isPublic;

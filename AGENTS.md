@@ -45,7 +45,7 @@ Added by later tasks; update this file when you add one:
 | `pnpm admin:create-user [--admin]` | make an account on the command line: asks for a username and password, and whether to set up two-factor codes (yes by default for an admin, D-47); with codes, it prints the QR code and secret and saves the account only after one valid code. The first admin is made this way. Needs `GE_PUBLIC_URL` and `GE_SESSION_SECRET` | M8-T1 |
 | `pnpm admin:invite [--admin]` | print an invite link (7 days, single use) to `/link/{token}`. Needs `GE_PUBLIC_URL` | M8-T1 |
 | `pnpm admin:reset-link <username>` | print a reset link (24 hours, single use) for a new password, with new two-factor codes or none. Needs `GE_PUBLIC_URL` | M8-T1 |
-| `pnpm headers:caddy` | write `ops/caddy/security-headers.caddy` from `packages/domain/src/security/headers.ts`; run it after changing the headers and commit the result (a unit test fails while it's stale) | M8-T3 |
+| `pnpm headers:caddy` | write `ops/caddy/security-headers.caddy` from `packages/domain/src/security/headers.ts`, and `ops/caddy/link-previews.caddy` from `packages/domain/src/link-preview.ts` (M8-T9); run it after changing either and commit the result (a unit test fails while one is stale) | M8-T3 |
 | `pnpm test:stack` | the golden path and the stack's own checks (`e2e/stack.spec.ts`) against the production stack, in Chromium and WebKit: `docker/compose.prod.yml` started apart with `VITE_TEST_HOOKS=1`, and `GE_STACK_ENV_FILE` naming its env file ([docs/ops/production.md](docs/ops/production.md)) | M8-T4 |
 
 ## Non-negotiables

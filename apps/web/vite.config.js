@@ -1,10 +1,33 @@
 import { resolve } from 'node:path';
+import { LINK_PREVIEW_ROUTE, wantsLinkPreview } from '@ge/domain/link-preview';
 import { WEB_APP_HEADERS } from '@ge/domain/security';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
 
 const repoRoot = resolve(import.meta.dirname, '../..');
+
+/**
+ * Link previews (M8-T9) under `vite preview`, as Caddy has them on the site
+ * (ops/caddy/link-previews.caddy, from the same lists): a chat app's or search engine's fetcher
+ * asking for a universe's, map's or view's address gets the API's page of tags, through the
+ * `/api` proxy. Added before Vite's own middleware, so the proxy sees the rewritten address.
+ */
+const linkPreviews = {
+  name: 'ge-link-previews',
+  configurePreviewServer(server) {
+    server.middlewares.use((request, _response, next) => {
+      const url = new URL(request.url ?? '/', 'http://preview');
+      if (wantsLinkPreview(url.pathname, request.headers['user-agent'])) {
+        // Less a share link's key, as on the site: a preview never uses it.
+        url.searchParams.delete('k');
+        const query = url.search.slice(1);
+        request.url = `${LINK_PREVIEW_ROUTE}?path=${url.pathname}&${query}`;
+      }
+      next();
+    });
+  },
+};
 
 export default defineConfig(({ mode }) => {
   // The API's port comes from the same .env the API reads (GE_PORT, default 3100).
@@ -14,7 +37,7 @@ export default defineConfig(({ mode }) => {
   return {
     // VITE_* variables (such as VITE_TEST_HOOKS) come from the repository's .env files.
     envDir: repoRoot,
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), linkPreviews],
     resolve: {
       alias: [
         { find: '@', replacement: resolve(import.meta.dirname, 'src') },

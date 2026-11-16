@@ -1348,6 +1348,112 @@
           "snippet"
         ]
       },
+      "AttributionsInput": {
+        "type": "object",
+        "properties": {
+          "universes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "slug": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100,
+                  "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "sources": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "license": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "retrievedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      "uses": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "spoiler": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "url",
+                      "title",
+                      "license",
+                      "retrievedAt",
+                      "uses",
+                      "spoiler"
+                    ]
+                  }
+                },
+                "images": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "credit": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "sourceUrl": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "license": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "credit",
+                      "sourceUrl",
+                      "license"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "slug",
+                "name",
+                "sources",
+                "images"
+              ]
+            }
+          }
+        },
+        "required": [
+          "universes"
+        ]
+      },
       "CitationWriteInput": {
         "type": "object",
         "properties": {
@@ -11833,6 +11939,116 @@
           "name",
           "path",
           "snippet"
+        ],
+        "additionalProperties": false
+      },
+      "Attributions": {
+        "type": "object",
+        "properties": {
+          "universes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "slug": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100,
+                  "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "sources": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "license": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "retrievedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      "uses": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "spoiler": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "url",
+                      "title",
+                      "license",
+                      "retrievedAt",
+                      "uses",
+                      "spoiler"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "images": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "credit": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "sourceUrl": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "license": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "credit",
+                      "sourceUrl",
+                      "license"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "slug",
+                "name",
+                "sources",
+                "images"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "universes"
         ],
         "additionalProperties": false
       },
@@ -38709,6 +38925,140 @@
         }
       }
     },
+    "/api/v1/attributions": {
+      "get": {
+        "operationId": "site.attributions",
+        "summary": "Where readers’ text and images came from",
+        "tags": [
+          "site"
+        ],
+        "description": "For the attributions page: per universe the requester can read (as their lists show them), the pages that published entries’ text or facts were filled from (M7-T3), once per page, and the credits of the images those entries show. Drafts are never counted. A source whose every entry is a spoiler, or has a spoiler for a name, says `spoiler`, for the page to hide its title as it hides other spoilers.",
+        "x-ge-access": {
+          "scope": "open"
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Attributions"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/link-preview": {
+      "get": {
+        "operationId": "site.linkPreview",
+        "summary": "The page a link-preview fetcher gets",
+        "tags": [
+          "site"
+        ],
+        "description": "An HTML page of Open Graph and Twitter card tags for a site address: a universe (`/u/{slug}`), a map (`/u/{slug}/{map}`) or an object’s view (`…/view/{id}`), with `select` for a selected object. Caddy sends chat apps’ and search engines’ fetchers here (`@ge/domain/link-preview`), and people to the app. It reads as an anonymous visitor: a universe that isn’t public, or an address with nothing there, gets the site’s own card with `noindex`; drafts are never read; spoilers are left out.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 300
+            },
+            "in": "query",
+            "name": "path",
+            "required": true,
+            "description": "The address’s path, such as /u/eisenhorn/main."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "in": "query",
+            "name": "select",
+            "required": false,
+            "description": "The selected object’s id, if any."
+          }
+        ],
+        "x-ge-access": {
+          "scope": "open"
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/api/v1/universes/{universeId}/search": {
       "get": {
         "operationId": "universes.search",
@@ -39386,6 +39736,10 @@
     {
       "name": "icons",
       "description": "The bundled icon sets for event categories and pins: Lucide and game-icons.net (M6-T4)."
+    },
+    {
+      "name": "site",
+      "description": "The public site’s own pages (M8-T9): what the attributions page lists, and the pages link-preview fetchers get."
     },
     {
       "name": "links",

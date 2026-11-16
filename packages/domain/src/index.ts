@@ -59,6 +59,7 @@ export {
 export { gaussian, seededRandom } from './random.ts';
 export { Slug, Uuid } from './ids.ts';
 export * from './export/index.ts';
+export * from './link-preview.ts';
 export * from './patterns.ts';
 export * from './registry/index.ts';
 export * from './richtext/index.ts';

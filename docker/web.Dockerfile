@@ -32,4 +32,4 @@ RUN pnpm --filter @ge/web build
 
 FROM caddy:2.11.9-alpine
 COPY --from=build /app/apps/web/dist /srv/web
-COPY ops/caddy/Caddyfile ops/caddy/security-headers.caddy /etc/caddy/
+COPY ops/caddy/Caddyfile ops/caddy/security-headers.caddy ops/caddy/link-previews.caddy /etc/caddy/

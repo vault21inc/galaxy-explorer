@@ -15,6 +15,9 @@
 
 # The security headers (M8-T3), generated from packages/domain/src/security/headers.ts.
 import security-headers.caddy
+# Link previews for chat apps and search engines (M8-T9), generated from
+# packages/domain/src/link-preview.ts.
+import link-previews.caddy
 
 {$GE_SITE_ADDRESS} {
 	encode zstd gzip
@@ -50,6 +53,10 @@ import security-headers.caddy
 			file_server
 		}
 	}
+
+	# A chat app's or search engine's fetcher asking for a universe, map or view: the API's
+	# page of preview tags (M8-T9). People get the app, below.
+	import link-previews
 
 	# The web app. Built files have a content hash in their names, so they never change.
 	handle {

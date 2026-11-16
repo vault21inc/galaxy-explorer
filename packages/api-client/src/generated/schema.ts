@@ -2286,6 +2286,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/attributions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Where readers’ text and images came from
+         * @description For the attributions page: per universe the requester can read (as their lists show them), the pages that published entries’ text or facts were filled from (M7-T3), once per page, and the credits of the images those entries show. Drafts are never counted. A source whose every entry is a spoiler, or has a spoiler for a name, says `spoiler`, for the page to hide its title as it hides other spoilers.
+         */
+        get: operations["site.attributions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/link-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The page a link-preview fetcher gets
+         * @description An HTML page of Open Graph and Twitter card tags for a site address: a universe (`/u/{slug}`), a map (`/u/{slug}/{map}`) or an object’s view (`…/view/{id}`), with `select` for a selected object. Caddy sends chat apps’ and search engines’ fetchers here (`@ge/domain/link-preview`), and people to the app. It reads as an anonymous visitor: a universe that isn’t public, or an address with nothing there, gets the site’s own card with `noindex`; drafts are never read; spoilers are left out.
+         */
+        get: operations["site.linkPreview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/universes/{universeId}/search": {
         parameters: {
             query?: never;
@@ -2672,6 +2712,26 @@ export interface components {
             name: string;
             path: string[];
             snippet: string;
+        };
+        AttributionsInput: {
+            universes: {
+                slug: string;
+                name: string;
+                sources: {
+                    url: string;
+                    title: string | null;
+                    license: string | null;
+                    /** Format: date-time */
+                    retrievedAt: string;
+                    uses: number;
+                    spoiler: boolean;
+                }[];
+                images: {
+                    credit: string | null;
+                    sourceUrl: string | null;
+                    license: string | null;
+                }[];
+            }[];
         };
         CitationWriteInput: {
             target: string;
@@ -4833,6 +4893,26 @@ export interface components {
             name: string;
             path: string[];
             snippet: string;
+        };
+        Attributions: {
+            universes: {
+                slug: string;
+                name: string;
+                sources: {
+                    url: string;
+                    title: string | null;
+                    license: string | null;
+                    /** Format: date-time */
+                    retrievedAt: string;
+                    uses: number;
+                    spoiler: boolean;
+                }[];
+                images: {
+                    credit: string | null;
+                    sourceUrl: string | null;
+                    license: string | null;
+                }[];
+            }[];
         };
         CitationWrite: {
             target: string;
@@ -18371,6 +18451,105 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Problem"];
                 };
+            };
+        };
+    };
+    "site.attributions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Attributions"];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "site.linkPreview": {
+        parameters: {
+            query: {
+                /** @description The address’s path, such as /u/eisenhorn/main. */
+                path: string;
+                /** @description The selected object’s id, if any. */
+                select?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

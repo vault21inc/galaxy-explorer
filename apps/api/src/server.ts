@@ -37,6 +37,7 @@ import { wikiRoutes } from './routes/wiki.ts';
 import { batchRoutes } from './routes/batch.ts';
 import { exchangeRoutes } from './routes/exchange.ts';
 import { searchRoutes } from './routes/search.ts';
+import { siteRoutes } from './routes/site.ts';
 import { configRoutes } from './routes/config.ts';
 import { containerRoutes } from './routes/containers.ts';
 import { contentRoutes } from './routes/content-routes.ts';
@@ -179,6 +180,7 @@ export async function buildServer(config: Config) {
       await v1.register(mediaAccessRoutes, { db });
       await v1.register(exchangeRoutes, { db, store, version: packageJson.version });
       await v1.register(iconRoutes);
+      await v1.register(siteRoutes, { db, publicUrl: config.publicUrl });
       await v1.register(searchRoutes, { db });
       await v1.register(wikiRoutes, {
         sources: config.wikiSources,

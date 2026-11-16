@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { safeStorage } from '@/lib/safe-storage.ts';
+import { STORAGE_KEYS } from './storage-keys.ts';
 import {
   DEFAULT_QUALITY,
   QUALITY_LEVELS,
@@ -56,7 +57,7 @@ export const useQuality = create<QualityState>()(
       },
     }),
     {
-      name: 'ge.quality',
+      name: STORAGE_KEYS.quality.key,
       version: 1,
       storage: createJSONStorage(() => safeStorage),
       partialize: (state) => ({ level: state.level, ambientMotion: state.ambientMotion }),
