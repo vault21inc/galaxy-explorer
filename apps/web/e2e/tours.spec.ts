@@ -193,8 +193,14 @@ test.describe('guided tours (M8-T10)', () => {
     await expect(page.getByRole('menu')).toHaveCount(0);
     const canvas = await page.locator('canvas').boundingBox();
     if (!canvas) throw new Error('No canvas.');
-    const spot = { x: canvas.x + canvas.width * 0.35, y: canvas.y + canvas.height * 0.62 };
+    // High and right of the middle: clear of the step, which sits above the toolbar's Add
+    // button and is taller where fonts are wider (CI).
+    const spot = { x: canvas.x + canvas.width * 0.62, y: canvas.y + canvas.height * 0.35 };
     await page.mouse.move(spot.x, spot.y, { steps: 5 });
+    // The ghost follows the pointer once the plane is under it (create-object.spec.ts).
+    await expect
+      .poll(() => page.evaluate(() => window.__GE_TEST__?.placement()?.baseType))
+      .toBe('system');
     await page.mouse.click(spot.x, spot.y);
     await expectStep(page, 'move-object', 'object');
     // Its name field kept the focus the placement gave it.
