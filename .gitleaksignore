@@ -1,5 +1,0 @@
-# Findings the secret scan (secrets.yml) should pass, each checked by hand and named by its
-# fingerprint. Add one only after looking at the line: a real secret gets rotated, never listed.
-
-# `key: 'v404-cygni-star'`: a star's slug in the Milky Way catalogue, not a key.
-49184c45dca6f840fe9980c001a2ab1c7f292dc0:scripts/content/milky-way/catalog.ts:generic-api-key:1000

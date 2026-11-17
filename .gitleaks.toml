@@ -1,0 +1,12 @@
+# The secret scan's settings (.github/workflows/secrets.yml): gitleaks' own rules, plus
+# strings checked by hand that look like secrets and aren't. A real secret gets rotated and
+# removed from history, never listed here.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Checked by hand: not secrets"
+regexes = [
+  # A star's slug in the Milky Way catalogue (scripts/content/milky-way/catalog.ts).
+  '''^v404-cygni-star$''',
+]
