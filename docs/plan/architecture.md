@@ -337,6 +337,7 @@ All configuration comes from environment variables, validated by a Zod schema at
 | `VITE_TEST_HOOKS` | web build | unset; `1` exposes `window.__GE_TEST__` in a production build, for e2e tests (development builds always have it) |
 | `GE_SESSION_SECRET` | api (M8-T1) | with `GE_AUTH_MODE=required`: 32+ random characters (`openssl rand -base64 48`); seals two-factor secrets, so changing it locks every account out of its codes |
 | `GE_TRUST_PROXY` | api (M8-T1) | unset; behind a proxy, whose `X-Forwarded-For` to believe (Fastify's `trustProxy`, such as `loopback`), so rate limits see the visitor's address |
+| `GE_HOME_UNIVERSE` | api (D-51) | unset; a public universe's slug, such as `milky-way`, which signed-out visitors open at `/` instead of the list. Reported in `/api/health` |
 | `GE_RATE_LIMITS` | api (M8-T3) | `on`; `off` only for the e2e tests and `pnpm perf`, whose parallel browsers all come from one address (D-43) |
 | `GE_WIKI_USER_AGENT` | api (M7) | `GalaxyExplorer/0.1 (contact: …)`; wikis ask for a way to reach whoever runs the client |
 | `GE_WIKI_SOURCES` | api (M7) | the wikis "Fill from wiki" may read, as JSON `[{ "id", "label", "apiUrl" }]`; default: the Warhammer 40k Wiki (D-35) |

@@ -20,6 +20,11 @@ const healthResponse = z.object({
      * per universe).
      */
     canEdit: z.boolean(),
+    /**
+     * The universe a signed-out visitor opens at `/`, by slug (D-51, `GE_HOME_UNIVERSE`); null
+     * lists the public universes instead.
+     */
+    homeUniverse: z.string().nullable(),
   }),
 });
 
@@ -27,6 +32,7 @@ export interface HealthRouteOptions {
   db: Database;
   version: string;
   authMode: 'none' | 'required';
+  homeUniverse?: string | undefined;
 }
 
 /** `GET /api/health`: liveness for humans, uptime monitors and deploy scripts. */
@@ -53,6 +59,7 @@ export const healthRoutes: FastifyPluginCallbackZod<HealthRouteOptions> = (app, 
           version: options.version,
           authMode: options.authMode,
           canEdit: request.canEdit,
+          homeUniverse: options.homeUniverse ?? null,
         },
       });
     },

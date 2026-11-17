@@ -30,6 +30,8 @@ export const router = createBrowserRouter([
 function pages(): RouteObject[] {
   return [
     { path: '/', element: <HomePage /> },
+    // Every universe this reader can open, even where `/` opens the home universe (D-51).
+    { path: '/universes', element: <HomePage listOnly /> },
     // Signing in and account links (M8-T1): loaded on first visit, as most readers never need them.
     {
       path: '/login',

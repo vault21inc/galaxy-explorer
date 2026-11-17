@@ -1,6 +1,8 @@
-import { Link } from 'react-router';
+import { Link, Navigate } from 'react-router';
 import { useAccount, useAccountsEnabled } from '@/api/auth.ts';
 import { useUniverses } from '@/api/containers.ts';
+import { useHealth } from '@/api/health.ts';
+import { homeUniverseFor } from '@/lib/home-universe.ts';
 import { homeSections } from '@/lib/home-sections.ts';
 import { useCanCreate } from '@/editor/use-can-edit.ts';
 import { AboutLinks } from '@/app/about-links.tsx';
@@ -9,12 +11,18 @@ import { StatusPanel } from '@/app/status-panel.tsx';
 import { UniverseList } from './universe-list.tsx';
 import { NewUniverseForm } from './new-universe-form.tsx';
 
-/** `/`: the universes this reader can open, and a form to start a new one (ux.md §9, §13). */
-export function HomePage() {
+/**
+ * `/`: the universes this reader can open, and a form to start a new one (ux.md §9, §13). A
+ * signed-out visitor goes straight to the site's home universe instead, when it has one (D-51);
+ * `/universes` (`listOnly`) is the list for everyone.
+ */
+export function HomePage({ listOnly = false }: { listOnly?: boolean }) {
   const universes = useUniverses();
   const accounts = useAccountsEnabled();
   const account = useAccount();
   const canCreate = useCanCreate();
+  const health = useHealth();
+  const homeUniverse = listOnly ? null : health.data?.homeUniverse;
 
   if (universes.error) {
     return (
@@ -28,6 +36,19 @@ export function HomePage() {
     );
   }
   if (!universes.data) return <StatusPanel tone="loading" title="Loading universes…" />;
+
+  const home = homeUniverseFor({
+    homeUniverse,
+    accounts,
+    signedOut: account.data === null,
+    universes: universes.data,
+  });
+  // Replace, so Back from the home universe leaves the site rather than bouncing here again.
+  if (home !== null) return <Navigate to={`/u/${home}`} replace />;
+  // Whether the visitor is signed in isn't known yet: wait, rather than flash the list.
+  if (homeUniverse && accounts && account.data === undefined && !account.error) {
+    return <StatusPanel tone="loading" title="Loading universes…" />;
+  }
 
   const username = account.data?.username ?? null;
   // Without accounts, or signed out, there's one list: everything this reader can open.

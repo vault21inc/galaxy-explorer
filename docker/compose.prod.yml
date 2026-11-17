@@ -73,6 +73,7 @@ services:
       # internal network: believe their X-Forwarded-For, so the rate limits count visitors.
       GE_TRUST_PROXY: uniquelocal
       GE_WIKI_USER_AGENT: ${GE_WIKI_USER_AGENT:-}
+      GE_HOME_UNIVERSE: ${GE_HOME_UNIVERSE:-}
     volumes:
       - media:/var/lib/galaxy-explorer/media
     read_only: true

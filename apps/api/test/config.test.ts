@@ -51,6 +51,16 @@ describe('loadConfig', () => {
     expect(config).toMatchObject({ publicUrl: 'https://galaxy.example', trustProxy: 'loopback' });
   });
 
+  it('reads the home universe as a slug, and a blank one as unset (D-51)', () => {
+    expect(loadConfig({ DATABASE_URL, GE_HOME_UNIVERSE: 'milky-way' }).homeUniverse).toBe(
+      'milky-way',
+    );
+    expect(loadConfig({ DATABASE_URL, GE_HOME_UNIVERSE: '' }).homeUniverse).toBeUndefined();
+    expect(() => loadConfig({ DATABASE_URL, GE_HOME_UNIVERSE: 'Milky Way' })).toThrow(
+      /GE_HOME_UNIVERSE/,
+    );
+  });
+
   it('turns on the preview roles only when asked', () => {
     expect(loadConfig({ DATABASE_URL, GE_PREVIEW_ROLES: 'on' }).previewRoles).toBe(true);
     expect(() => loadConfig({ DATABASE_URL, GE_PREVIEW_ROLES: 'yes' })).toThrow(ConfigError);

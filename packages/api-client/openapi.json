@@ -21286,6 +21286,12 @@
                         },
                         "canEdit": {
                           "type": "boolean"
+                        },
+                        "homeUniverse": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
                         }
                       },
                       "required": [
@@ -21293,7 +21299,8 @@
                         "db",
                         "version",
                         "authMode",
-                        "canEdit"
+                        "canEdit",
+                        "homeUniverse"
                       ],
                       "additionalProperties": false
                     }
@@ -21342,6 +21349,12 @@
                         },
                         "canEdit": {
                           "type": "boolean"
+                        },
+                        "homeUniverse": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
                         }
                       },
                       "required": [
@@ -21349,7 +21362,8 @@
                         "db",
                         "version",
                         "authMode",
-                        "canEdit"
+                        "canEdit",
+                        "homeUniverse"
                       ],
                       "additionalProperties": false
                     }

@@ -182,6 +182,7 @@ How hidden content looks (P2, black out rather than remove):
 ## 9. Moving between views
 
 - **URLs:**
+  - `/` is the home page, and `/universes` the list of universes for everyone (D-51);
   - `/u/{universeSlug}/{mapSlug}` is the galaxy view;
   - `/u/{universeSlug}/{mapSlug}/view/{objectId}` is the system or orbit view of that object (the level comes from its type);
   - `?select={id},{id}` restores the selection;
@@ -247,7 +248,7 @@ D-34 has the reasoning; data-model §8 has the access rule. None of this exists 
   Only then is the account made, or changed, and the link used up. An expired or used link says so and what to do.
 - **The account menu,** at the top bar's right end, shows the username and opens: Account, Admin (admins only) and Sign out. Signed out, it's a "Sign in" link.
 - **The home page:**
-  - signed out: the public universes;
+  - signed out: the site's home universe, if it names one (`GE_HOME_UNIVERSE`, D-51) and it's public; otherwise the public universes. **All universes** (in the universe menu) and "see all universes" go to `/universes`, the list without that jump;
   - signed in: **Your universes**, then **Shared with you** (each with the role), then, for an admin, **Other accounts' universes** (the private and link-only ones nobody shared with them, D-50), then the public ones.
 
   Each card shows a small badge for Private or Link-only, and "by {owner}" for universes that aren't yours. "New universe" needs an account, and the new universe starts private.

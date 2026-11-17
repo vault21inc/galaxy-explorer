@@ -44,7 +44,7 @@ function Missing({ what, slug }: { what: 'universe' | 'map'; slug: string }) {
           if it was shared with you, or{' '}
         </>
       )}
-      <Link to="/" className="text-primary underline">
+      <Link to="/universes" className="text-primary underline">
         {signedOut ? 'see all universes' : 'See all universes'}
       </Link>
       .

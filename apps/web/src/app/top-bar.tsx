@@ -92,7 +92,7 @@ function UniverseControls({ universeSlug }: { universeSlug: string }) {
               <Link to={`/u/${route.universe.slug}/settings`}>Universe settings</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/">All universes</Link>
+              <Link to="/universes">All universes</Link>
             </DropdownMenuItem>
           </>
         }

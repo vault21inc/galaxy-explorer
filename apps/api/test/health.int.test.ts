@@ -20,7 +20,14 @@ describe('GET /api/health', () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.json()).toEqual({
-        data: { status: 'ok', db: 'ok', version: '0.0.0', authMode: 'none', canEdit: true },
+        data: {
+          status: 'ok',
+          db: 'ok',
+          version: '0.0.0',
+          authMode: 'none',
+          canEdit: true,
+          homeUniverse: null,
+        },
       });
     }));
 
@@ -35,7 +42,19 @@ describe('GET /api/health', () => {
         version: '0.0.0',
         authMode: 'none',
         canEdit: true,
+        homeUniverse: null,
       },
     });
   });
+
+  it('names the home universe for signed-out visitors when one is set (D-51)', () =>
+    withTestDb(async (_db, url) => {
+      const app = await buildServer(testConfig({ databaseUrl: url, homeUniverse: 'milky-way' }));
+      try {
+        const response = await app.inject({ method: 'GET', url: '/api/health' });
+        expect(response.json()).toMatchObject({ data: { homeUniverse: 'milky-way' } });
+      } finally {
+        await app.close();
+      }
+    }));
 });

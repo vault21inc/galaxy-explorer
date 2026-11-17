@@ -25,6 +25,7 @@ const app = await buildServer({
   sessionSecret: undefined,
   publicUrl: undefined,
   trustProxy: undefined,
+  homeUniverse: undefined,
   // Routes declare their tiers either way (`x-ge-rate-limit`); nothing is served here.
   rateLimits: false,
   wikiUserAgent: 'GalaxyExplorer/openapi',

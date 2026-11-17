@@ -159,7 +159,12 @@ export async function buildServer(config: Config) {
   app.get('/api/llm-guide.md', { schema: { hide: true } }, async (_request, reply) =>
     reply.type('text/markdown; charset=utf-8').send(await readFile(LLM_GUIDE, 'utf8')),
   );
-  await app.register(healthRoutes, { db, version: packageJson.version, authMode: config.authMode });
+  await app.register(healthRoutes, {
+    db,
+    version: packageJson.version,
+    authMode: config.authMode,
+    homeUniverse: config.homeUniverse,
+  });
   await app.register(
     async (v1) => {
       await v1.register(authRoutes, { auth });

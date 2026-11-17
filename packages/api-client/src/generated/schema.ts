@@ -6826,6 +6826,7 @@ export interface operations {
                             /** @enum {string} */
                             authMode: "none" | "required";
                             canEdit: boolean;
+                            homeUniverse: string | null;
                         };
                     };
                 };
@@ -6846,6 +6847,7 @@ export interface operations {
                             /** @enum {string} */
                             authMode: "none" | "required";
                             canEdit: boolean;
+                            homeUniverse: string | null;
                         };
                     };
                 };

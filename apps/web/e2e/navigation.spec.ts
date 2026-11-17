@@ -69,6 +69,31 @@ test.describe('routes and navigation', () => {
     await expect(page.getByText('Page not found')).toBeVisible();
   });
 
+  test('a signed-out visitor at / opens the home universe; /universes lists them all', async ({
+    page,
+  }) => {
+    // A site with accounts and a home universe (D-51, GE_HOME_UNIVERSE), seen signed out. The
+    // e2e API has no accounts, so its health answer and `/auth/me` are stood in for here.
+    await page.route('**/api/health', async (route) => {
+      const response = await route.fetch();
+      const body = (await response.json()) as { data: Record<string, unknown> };
+      await route.fulfill({
+        response,
+        json: { data: { ...body.data, authMode: 'required', homeUniverse: 'example-universe' } },
+      });
+    });
+    await page.route('**/api/v1/auth/me', (route) => route.fulfill({ json: { data: null } }));
+
+    await page.goto('/');
+    await expect(page).toHaveURL(`${DEMO}/${MAIN.slug}`);
+    await expect(mapButton(page, MAIN.name)).toBeVisible();
+
+    await page.getByRole('button', { name: /^Universe:/ }).click();
+    await page.getByRole('menuitem', { name: 'All universes' }).click();
+    await expect(page).toHaveURL('/universes');
+    await expect(page.getByRole('link', { name: 'Example Universe' })).toBeVisible();
+  });
+
   test('a failed request shows an error with a working Retry', async ({ page }) => {
     let fail = true;
     // The universe at the address, which the page looks up by its slug (M8-T11).

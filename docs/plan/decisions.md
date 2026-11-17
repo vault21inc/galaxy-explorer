@@ -393,3 +393,8 @@ To change a decision, edit its entry, keep the old text on a `Superseded:` line,
   - **Lists show it:** `GET /universes` gives an admin every universe. The home page lists other accounts' non-public ones apart, as "Other accounts' universes", so they don't pass for shared ones, and the admin Universes screen has Open beside each.
   - **API tokens follow,** as D-42 has it: an admin's write token edits every universe too, narrowed as any token is. An admin's token is worth more than before.
   - **The privacy page says so:** admins can open and edit a private universe.
+- **D-51 A home universe for signed-out visitors** (2026-11-16, the owner's call). A visitor who isn't signed in should land in the site's showcase universe, the real Milky Way, not a list.
+  - **The server names it:** `GE_HOME_UNIVERSE`, a slug, checked at boot and reported in `GET /api/health` as `homeUniverse` (null when unset). It's configuration, like the site's address, so it changes with a restart, not in the app.
+  - **The web app follows it only when it may:** at `/`, a signed-out visitor on a site with accounts goes to `/u/{slug}` (replacing the history entry, so Back leaves the site), but only when that universe is in their list: public. A private or missing one changes nothing. Anyone signed in, and a site without accounts, still gets the list.
+  - **The list moves to `/universes` as well,** for everyone, without the jump: the universe menu's **All universes** and the not-found page's "see all universes" go there. `/` stays the address the logo links to.
+  - **Making the universe public stays the owner's** (D-41): setting the variable doesn't publish anything.

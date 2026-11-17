@@ -1,5 +1,6 @@
 import { isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Slug } from '@ge/domain';
 import { z } from 'zod';
 
 /** The repository root: relative paths in the environment are read from here. */
@@ -79,6 +80,12 @@ const configSchema = z
      */
     GE_RATE_LIMITS: z.enum(['on', 'off']).default('on'),
     /**
+     * The universe a signed-out visitor opens at `/`, by slug (D-51), such as `milky-way`.
+     * Unset, `/` lists the public universes. Only a public universe is opened this way: the
+     * web app checks it's in the visitor's list, so a private one changes nothing.
+     */
+    GE_HOME_UNIVERSE: optional(Slug),
+    /**
      * How the API introduces itself to wikis (M7-T3). Wikis ask for a name and a way to reach
      * whoever runs the client; set it to include yours.
      */
@@ -135,6 +142,7 @@ const configSchema = z
     publicUrl: env.GE_PUBLIC_URL === undefined ? undefined : new URL(env.GE_PUBLIC_URL).origin,
     trustProxy: env.GE_TRUST_PROXY,
     rateLimits: env.GE_RATE_LIMITS === 'on',
+    homeUniverse: env.GE_HOME_UNIVERSE as string | undefined,
     wikiUserAgent: env.GE_WIKI_USER_AGENT,
     wikiSources: env.GE_WIKI_SOURCES,
     mediaDir: isAbsolute(env.GE_MEDIA_DIR)
