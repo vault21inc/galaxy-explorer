@@ -1,0 +1,21 @@
+{
+  "name": "@ge/content",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Content builders: real or sample universes, made through the API and the MCP server like any agent would.",
+  "scripts": {
+    "milky-way": "node milky-way/cli.ts",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ge/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@ge/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:"
+  }
+}

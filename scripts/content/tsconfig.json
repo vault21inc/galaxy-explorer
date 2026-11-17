@@ -1,0 +1,7 @@
+{
+  "extends": "@ge/config/tsconfig.base.json",
+  "include": ["*.ts", "milky-way/*.ts"],
+  "compilerOptions": {
+    "types": ["node"]
+  }
+}

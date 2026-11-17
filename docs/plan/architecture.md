@@ -33,7 +33,8 @@ galaxy-explorer/
 │  ├─ api-client/   generated from the API's OpenAPI document (openapi-typescript + openapi-fetch)
 │  └─ config/       shared tsconfig, ESLint and Prettier presets
 ├─ scripts/
-│  └─ perf/         `pnpm perf`: the scripted performance run (M2-T8)
+│  ├─ perf/         `pnpm perf`: the scripted performance run (M2-T8)
+│  └─ content/      content builders, such as the real Milky Way, made through the API and MCP
 ├─ docker/          compose files, Caddyfile (production, M8)
 └─ docs/            plan/, perf/ (measurement reports), api/ (LLM guide, M7), ops/ (runbooks, M8)
 ```
@@ -50,6 +51,7 @@ Dependency rules. `packages/config/workspace.js` holds this table as data. ESLin
 | `mcp` | domain, api-client | db, api, web |
 | `config` | ESLint, typescript-eslint, Prettier | every workspace package |
 | `perf` (`scripts/perf`) | Playwright; `config` for its lint setup | every other workspace package: it drives the built app in a browser |
+| `content` (`scripts/content`) | domain | db, api, web, mcp: it builds universes over HTTP, as an outside agent would |
 
 Packages are imported by name (`@ge/domain`), never by relative paths across package boundaries. The same lint rule rejects relative paths into `apps/` or `packages/`.
 

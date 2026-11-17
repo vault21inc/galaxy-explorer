@@ -62,4 +62,11 @@ export const WORKSPACE_PACKAGES = [
     // `pnpm perf` drives the built app in a browser, like a reader: no workspace code.
     mustNotImport: ['@ge/domain', '@ge/db', '@ge/api', '@ge/api-client', '@ge/web', '@ge/mcp'],
   },
+  {
+    name: '@ge/content',
+    dir: 'scripts/content',
+    // Builds universes as an outside agent would: over HTTP, through the API and the MCP server,
+    // with the domain's pure helpers. Never the database or the apps' code.
+    mustNotImport: ['@ge/db', '@ge/api', '@ge/web', '@ge/mcp'],
+  },
 ];
