@@ -39,12 +39,13 @@ export function HomePage({ listOnly = false }: { listOnly?: boolean }) {
 
   const home = homeUniverseFor({
     homeUniverse,
+    homePath: health.data?.homePath,
     accounts,
     signedOut: account.data === null,
     universes: universes.data,
   });
   // Replace, so Back from the home universe leaves the site rather than bouncing here again.
-  if (home !== null) return <Navigate to={`/u/${home}`} replace />;
+  if (home !== null) return <Navigate to={home} replace />;
   // Whether the visitor is signed in isn't known yet: wait, rather than flash the list.
   if (homeUniverse && accounts && account.data === undefined && !account.error) {
     return <StatusPanel tone="loading" title="Loading universes…" />;

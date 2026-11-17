@@ -15,7 +15,7 @@ export function testConfig(overrides: Partial<Config> = {}): Config {
     sessionSecret: undefined,
     publicUrl: undefined,
     trustProxy: undefined,
-    homeUniverse: undefined,
+    home: undefined,
     // Tests send far more requests from one address than anyone would; the rate limits'
     // own tests turn them on.
     rateLimits: false,

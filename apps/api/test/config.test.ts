@@ -51,14 +51,26 @@ describe('loadConfig', () => {
     expect(config).toMatchObject({ publicUrl: 'https://galaxy.example', trustProxy: 'loopback' });
   });
 
-  it('reads the home universe as a slug, and a blank one as unset (D-51)', () => {
-    expect(loadConfig({ DATABASE_URL, GE_HOME_UNIVERSE: 'milky-way' }).homeUniverse).toBe(
-      'milky-way',
-    );
-    expect(loadConfig({ DATABASE_URL, GE_HOME_UNIVERSE: '' }).homeUniverse).toBeUndefined();
-    expect(() => loadConfig({ DATABASE_URL, GE_HOME_UNIVERSE: 'Milky Way' })).toThrow(
-      /GE_HOME_UNIVERSE/,
-    );
+  it('reads the home universe as a slug or a path into it, and a blank one as unset (D-51)', () => {
+    const home = (value: string) => loadConfig({ DATABASE_URL, GE_HOME_UNIVERSE: value }).home;
+    expect(home('milky-way')).toEqual({ universe: 'milky-way', path: '/u/milky-way' });
+    const path = '/u/milky-way/present-day/view/01a1e745-e7a1?select=a,b&cam=1.5,-2e3,3,0,0,0';
+    expect(home(path)).toEqual({ universe: 'milky-way', path });
+    expect(home('')).toBeUndefined();
+    // Never somewhere else: no host, no `//`, nothing outside /u/.
+    for (const bad of [
+      'Milky Way',
+      '/u/Milky/x',
+      '//evil.example/u/a',
+      'https://evil.example',
+      '/admin',
+      '/u/a//b',
+      '/u/a#x',
+    ]) {
+      expect(() => loadConfig({ DATABASE_URL, GE_HOME_UNIVERSE: bad }), bad).toThrow(
+        /GE_HOME_UNIVERSE/,
+      );
+    }
   });
 
   it('turns on the preview roles only when asked', () => {

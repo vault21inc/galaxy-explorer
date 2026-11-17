@@ -21292,6 +21292,12 @@
                             "string",
                             "null"
                           ]
+                        },
+                        "homePath": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
                         }
                       },
                       "required": [
@@ -21300,7 +21306,8 @@
                         "version",
                         "authMode",
                         "canEdit",
-                        "homeUniverse"
+                        "homeUniverse",
+                        "homePath"
                       ],
                       "additionalProperties": false
                     }
@@ -21355,6 +21362,12 @@
                             "string",
                             "null"
                           ]
+                        },
+                        "homePath": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
                         }
                       },
                       "required": [
@@ -21363,7 +21376,8 @@
                         "version",
                         "authMode",
                         "canEdit",
-                        "homeUniverse"
+                        "homeUniverse",
+                        "homePath"
                       ],
                       "additionalProperties": false
                     }

@@ -186,6 +186,7 @@ How hidden content looks (P2, black out rather than remove):
   - `/u/{universeSlug}/{mapSlug}` is the galaxy view;
   - `/u/{universeSlug}/{mapSlug}/view/{objectId}` is the system or orbit view of that object (the level comes from its type);
   - `?select={id},{id}` restores the selection;
+  - `?cam={px},{py},{pz},{tx},{ty},{tz}` is the camera the view opens with: its position and the point it looks at, in the view's frame and unit (D-52). **Copy link to this view**, in the command palette, copies the address with the camera where it is now. Moving around doesn't rewrite it;
   - `/u/{universeSlug}/settings` is the universe's settings page (M4-T1), so no map may use the slug `settings`.
 
   Every state can be shared as a link, and the browser's Back and Forward move between views.

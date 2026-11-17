@@ -89,7 +89,7 @@ const READER: TourDef = {
     {
       id: 'search',
       title: 'Search',
-      text: 'Press ⌘/Ctrl + K, or click here, to find anything by name and fly to it.',
+      text: 'Press ⌘/Ctrl + K, or click here, to find anything by name and fly to it. “Copy link to this view” there shares exactly what you see.',
       target: { kind: 'control', name: 'search' },
       completes: 'next',
     },

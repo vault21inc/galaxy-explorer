@@ -2,6 +2,7 @@ import { CameraControlsImpl } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { useEffect } from 'react';
 import { Box3, PerspectiveCamera, Vector3 } from 'three';
+import { CAMERA_PARAM, parseCameraParam } from '@/lib/camera-param.ts';
 import { useNavigation, type CameraPose } from '@/state/navigation.ts';
 import { arrivalStart } from '../transition/transition-plan.ts';
 import { levelArrived } from '../transition/transition-controller.ts';
@@ -144,7 +145,8 @@ export function useViewCamera(config: ViewCameraConfig | null): void {
  * Where the camera goes when a view opens (rendering.md §4, steps 3 and "leaving"):
  * - its resting pose is the one saved when a child view was entered from here, so leaving
  *   returns to where the reader was; otherwise, after leaving a view opened from a link, a pose
- *   looking at the object just left; otherwise the view's default pose;
+ *   looking at the object just left; otherwise the pose the address names (`?cam=`, ux.md §9),
+ *   as a shared link or the site's home page opens it; otherwise the view's default pose;
  * - entering or leaving with motion, it starts farther or nearer on the same line of sight and
  *   eases to the resting pose while the fade clears (transition-plan.ts `arrivalStart`).
  */
@@ -153,8 +155,16 @@ function placeOnArrival(controls: CameraControlsImpl, config: ViewCameraConfig):
   const saved = stack.at(-1)?.cameraPose ?? null;
   const focus =
     !saved && arrival.move === 'exit' && arrival.from ? config.focusPose?.(arrival.from) : null;
+  // Read from the address the view was opened at. Moving between views builds addresses
+  // without `cam` (kept-params.ts), so it applies only to the view a link named. This hook runs
+  // inside the canvas, outside the router's context, hence `window.location`.
+  const linked =
+    !saved && !focus
+      ? parseCameraParam(new URLSearchParams(window.location.search).get(CAMERA_PARAM))
+      : null;
   const rest: CameraPose = saved ??
-    focus ?? { position: [...config.position], target: [...config.target] };
+    focus ??
+    linked ?? { position: [...config.position], target: [...config.target] };
   const start = arrival.ease ? arrivalStart(arrival.move, rest) : rest;
   // `false`: jump there, instead of easing in from wherever the last view left the camera.
   void controls.setLookAt(...start.position, ...start.target, false);

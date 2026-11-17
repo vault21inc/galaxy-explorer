@@ -79,14 +79,28 @@ test.describe('routes and navigation', () => {
       const body = (await response.json()) as { data: Record<string, unknown> };
       await route.fulfill({
         response,
-        json: { data: { ...body.data, authMode: 'required', homeUniverse: 'example-universe' } },
+        json: {
+          data: {
+            ...body.data,
+            authMode: 'required',
+            homeUniverse: 'example-universe',
+            // A path into it, with a camera (ux.md §9): where visitors start.
+            homePath: `${DEMO}/${MAIN.slug}?cam=1000,30000,20000,500,0,-200`,
+          },
+        },
       });
     });
     await page.route('**/api/v1/auth/me', (route) => route.fulfill({ json: { data: null } }));
 
     await page.goto('/');
-    await expect(page).toHaveURL(`${DEMO}/${MAIN.slug}`);
+    await expect(page).toHaveURL(`${DEMO}/${MAIN.slug}?cam=1000,30000,20000,500,0,-200`);
     await expect(mapButton(page, MAIN.name)).toBeVisible();
+    // The canvas drew the sky on the home page already: wait for the map's view to place it.
+    await expect
+      .poll(async () =>
+        (await page.evaluate(() => window.__GE_TEST__?.cameraPose()))?.position.map(Math.round),
+      )
+      .toEqual([1000, 30000, 20000]);
 
     await page.getByRole('button', { name: /^Universe:/ }).click();
     await page.getByRole('menuitem', { name: 'All universes' }).click();

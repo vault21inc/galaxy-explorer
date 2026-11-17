@@ -27,6 +27,7 @@ describe('GET /api/health', () => {
           authMode: 'none',
           canEdit: true,
           homeUniverse: null,
+          homePath: null,
         },
       });
     }));
@@ -43,16 +44,20 @@ describe('GET /api/health', () => {
         authMode: 'none',
         canEdit: true,
         homeUniverse: null,
+        homePath: null,
       },
     });
   });
 
   it('names the home universe for signed-out visitors when one is set (D-51)', () =>
     withTestDb(async (_db, url) => {
-      const app = await buildServer(testConfig({ databaseUrl: url, homeUniverse: 'milky-way' }));
+      const home = { universe: 'milky-way', path: '/u/milky-way/present-day?cam=1,2,3,0,0,0' };
+      const app = await buildServer(testConfig({ databaseUrl: url, home }));
       try {
         const response = await app.inject({ method: 'GET', url: '/api/health' });
-        expect(response.json()).toMatchObject({ data: { homeUniverse: 'milky-way' } });
+        expect(response.json()).toMatchObject({
+          data: { homeUniverse: 'milky-way', homePath: '/u/milky-way/present-day?cam=1,2,3,0,0,0' },
+        });
       } finally {
         await app.close();
       }

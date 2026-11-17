@@ -6827,6 +6827,7 @@ export interface operations {
                             authMode: "none" | "required";
                             canEdit: boolean;
                             homeUniverse: string | null;
+                            homePath: string | null;
                         };
                     };
                 };
@@ -6848,6 +6849,7 @@ export interface operations {
                             authMode: "none" | "required";
                             canEdit: boolean;
                             homeUniverse: string | null;
+                            homePath: string | null;
                         };
                     };
                 };

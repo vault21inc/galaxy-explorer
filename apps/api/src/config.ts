@@ -1,6 +1,5 @@
 import { isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Slug } from '@ge/domain';
 import { z } from 'zod';
 
 /** The repository root: relative paths in the environment are read from here. */
@@ -26,6 +25,14 @@ const optional = <T extends z.ZodType>(schema: T) =>
  */
 const withDefault = <T extends z.ZodType>(schema: T) =>
   z.preprocess((value) => (value === '' ? undefined : value), schema);
+
+/**
+ * GE_HOME_UNIVERSE (D-51): a universe's slug, or a path into one (`/u/{slug}/…`, with a query
+ * such as `?select=…&cam=…`). The path is the app's own, so no host and no `//`: it can't send a
+ * visitor anywhere else.
+ */
+const HOME =
+  /^(?:([a-z0-9]+(?:-[a-z0-9]+)*)|\/u\/([a-z0-9]+(?:-[a-z0-9]+)*)(?:\/[A-Za-z0-9._~-]+)*(?:\?[A-Za-z0-9._~=&,%-]*)?)$/;
 
 /** The wikis offered unless GE_WIKI_SOURCES says otherwise. */
 export const DEFAULT_WIKI_SOURCES: readonly WikiSourceConfig[] = [
@@ -80,11 +87,15 @@ const configSchema = z
      */
     GE_RATE_LIMITS: z.enum(['on', 'off']).default('on'),
     /**
-     * The universe a signed-out visitor opens at `/`, by slug (D-51), such as `milky-way`.
-     * Unset, `/` lists the public universes. Only a public universe is opened this way: the
-     * web app checks it's in the visitor's list, so a private one changes nothing.
+     * Where a signed-out visitor goes from `/` (D-51): a universe's slug, such as `milky-way`,
+     * or a path into it, such as `/u/milky-way/present-day/view/{id}?select={id}&cam=…` (its
+     * view, selection and camera, ux.md §9). Unset, `/` lists the public universes. Only a
+     * public universe is opened this way: the web app checks it's in the visitor's list, so a
+     * private one changes nothing.
      */
-    GE_HOME_UNIVERSE: optional(Slug),
+    GE_HOME_UNIVERSE: optional(
+      z.string().regex(HOME, 'Use a universe slug, or a path starting /u/{slug}/ with no host.'),
+    ),
     /**
      * How the API introduces itself to wikis (M7-T3). Wikis ask for a name and a way to reach
      * whoever runs the client; set it to include yours.
@@ -142,7 +153,7 @@ const configSchema = z
     publicUrl: env.GE_PUBLIC_URL === undefined ? undefined : new URL(env.GE_PUBLIC_URL).origin,
     trustProxy: env.GE_TRUST_PROXY,
     rateLimits: env.GE_RATE_LIMITS === 'on',
-    homeUniverse: env.GE_HOME_UNIVERSE as string | undefined,
+    home: homeOf(env.GE_HOME_UNIVERSE),
     wikiUserAgent: env.GE_WIKI_USER_AGENT,
     wikiSources: env.GE_WIKI_SOURCES,
     mediaDir: isAbsolute(env.GE_MEDIA_DIR)
@@ -151,6 +162,15 @@ const configSchema = z
   }));
 
 export type Config = z.output<typeof configSchema>;
+
+/** GE_HOME_UNIVERSE as the universe's slug and the path to open (D-51). */
+function homeOf(value: string | undefined): { universe: string; path: string } | undefined {
+  const match = value === undefined ? null : HOME.exec(value);
+  if (!match || value === undefined) return undefined;
+  const slug = match[1] ?? match[2];
+  if (slug === undefined) return undefined;
+  return { universe: slug, path: match[1] === undefined ? value : `/u/${slug}` };
+}
 
 export class ConfigError extends Error {
   override name = 'ConfigError';

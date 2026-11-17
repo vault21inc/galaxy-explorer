@@ -163,7 +163,7 @@ export async function buildServer(config: Config) {
     db,
     version: packageJson.version,
     authMode: config.authMode,
-    homeUniverse: config.homeUniverse,
+    home: config.home,
   });
   await app.register(
     async (v1) => {

@@ -98,6 +98,7 @@ export const renderers = {
 
   The parent view's camera pose is saved on the navigation stack.
 - **Leaving** does the same in reverse and restores the saved pose. A view opened from a link has no saved pose for its parent, so the parent's camera looks at the object just left instead (M5-T1).
+- **A link can name the camera** (`?cam=`, D-52, ux.md §9): a view opened with one and no saved pose starts there, in the view's own frame and unit, instead of its default pose (`placeOnArrival` in `render/camera/use-view-camera.ts`). Addresses built while moving between views leave it out, so it applies only to the view the link named. It's read once, when the view opens: nothing per frame.
 - **The URL decides** which views are open (ux.md §9). Each address is resolved into a chain of views, and the transition controller (`render/transition/`) animates from what's shown to that chain, committing it to the stack behind the fade. Links, Back, Forward, breadcrumbs and Esc all go through it. If the address changes again mid-transition, the swap commits the latest chain.
 - `prefers-reduced-motion` replaces both animations with a single quick fade.
 - **When zoom triggers a switch** (S1):

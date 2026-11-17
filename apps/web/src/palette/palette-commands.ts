@@ -1,4 +1,5 @@
 import { searchTerms } from '@ge/domain';
+import { copyViewLink } from '@/app/copy-view-link.ts';
 import { useEditor } from '@/state/editor.ts';
 import { useHelp } from '@/state/help.ts';
 import { useSpoilers } from '@/state/spoilers.ts';
@@ -48,6 +49,15 @@ export function paletteCommands(context: CommandContext): PaletteCommand[] {
       });
     }
   }
+  if (mapSlug !== undefined) {
+    commands.push({
+      id: 'copy-view-link',
+      label: 'Copy link to this view',
+      run: () => {
+        void copyViewLink();
+      },
+    });
+  }
   if (mapSlug !== undefined && canEdit) {
     commands.push(
       {
@@ -89,7 +99,8 @@ export function paletteCommands(context: CommandContext): PaletteCommand[] {
       id: 'universes',
       label: 'All universes',
       run: () => {
-        navigate('/');
+        // Not `/`: a signed-out visitor there goes to the site's home universe (D-51).
+        navigate('/universes');
       },
     },
   );
