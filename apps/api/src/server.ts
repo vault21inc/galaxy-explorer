@@ -186,7 +186,11 @@ export async function buildServer(config: Config) {
       await v1.register(mediaAccessRoutes, { db });
       await v1.register(exchangeRoutes, { db, store, version: packageJson.version });
       await v1.register(iconRoutes);
-      await v1.register(siteRoutes, { db, publicUrl: config.publicUrl });
+      await v1.register(siteRoutes, {
+        db,
+        publicUrl: config.publicUrl,
+        homeUniverse: config.home?.universe,
+      });
       await v1.register(practiceRoutes, { db });
       await v1.register(searchRoutes, { db });
       await v1.register(wikiRoutes, {

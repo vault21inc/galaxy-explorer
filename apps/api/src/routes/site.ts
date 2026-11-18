@@ -21,7 +21,9 @@ export const siteRoutes: FastifyPluginCallbackZod<{
   db: Database;
   /** The site's address (`GE_PUBLIC_URL`), for absolute links; else the request's own. */
   publicUrl: string | undefined;
-}> = (app, { db, publicUrl }, done) => {
+  /** The home universe's slug (D-51), whose card the home page's preview shows. */
+  homeUniverse: string | undefined;
+}> = (app, { db, publicUrl, homeUniverse }, done) => {
   app.get(
     '/attributions',
     {
@@ -45,7 +47,7 @@ export const siteRoutes: FastifyPluginCallbackZod<{
         tags: ['site'],
         summary: 'The page a link-preview fetcher gets',
         description:
-          'An HTML page of Open Graph and Twitter card tags for a site address: a universe (`/u/{slug}`), a map (`/u/{slug}/{map}`) or an object’s view (`…/view/{id}`), with `select` for a selected object. Caddy sends chat apps’ and search engines’ fetchers here (`@ge/domain/link-preview`), and people to the app. It reads as an anonymous visitor: a universe that isn’t public, or an address with nothing there, gets the site’s own card with `noindex`; drafts are never read; spoilers are left out.',
+          'An HTML page of Open Graph and Twitter card tags for a site address: the home page (`/`, the home universe’s card), a universe (`/u/{slug}`), a map (`/u/{slug}/{map}`) or an object’s view (`…/view/{id}`), with `select` for a selected object. Caddy sends chat apps’ and search engines’ fetchers here (`@ge/domain/link-preview`), and people to the app. It reads as an anonymous visitor: a universe that isn’t public, or an address with nothing there, gets the site’s own card with `noindex`; drafts are never read; spoilers are left out. A card with no picture of its own gets the site’s.',
         operationId: 'site.linkPreview',
         ...routeAccess({ scope: 'open' }),
         querystring: z.object({
@@ -58,7 +60,7 @@ export const siteRoutes: FastifyPluginCallbackZod<{
     },
     async (request, reply) => {
       const origin = publicUrl ?? `${request.protocol}://${request.host}`;
-      const preview = await linkPreview(db, request.query, origin);
+      const preview = await linkPreview(db, request.query, origin, homeUniverse);
       void reply.header('cache-control', PREVIEW_CACHE);
       if (preview.noIndex) void reply.header('x-robots-tag', 'noindex');
       return reply.type('text/html; charset=utf-8').send(linkPreviewPage(preview));

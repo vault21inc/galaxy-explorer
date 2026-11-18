@@ -3,6 +3,7 @@ import {
   mediaUrl,
   pageTitle,
   REDACTION_CHAR,
+  SITE_CARD_IMAGE,
   SITE_NAME,
   toPlainText,
   type RichText,
@@ -34,6 +35,9 @@ export interface LinkPreview {
   noIndex: boolean;
 }
 
+/** The site's own card's line, also in the web app's `index.html` for other fetchers. */
+const SITE_DESCRIPTION = 'Explore galaxies, their systems and their worlds, built by hand.';
+
 /** A card's text is cut at about this many characters, at a word. */
 const DESCRIPTION_MAX_CHARS = 200;
 
@@ -44,19 +48,56 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const STRANGER: Requester = { kind: 'anonymous', shareKeys: new Map() };
 const { entities, entityImages, assets, maps, universes } = schema;
 
+/**
+ * The preview for `page`, with the site's own picture when it has none of its own: a card
+ * with no picture is a bare line of text on Facebook and LinkedIn, easy to scroll past.
+ */
 export async function linkPreview(
   ex: Executor,
   page: { path: string; select?: string | undefined },
   origin: string,
+  /** The home universe's slug (D-51, `GE_HOME_UNIVERSE`), whose card the home page shows. */
+  homeUniverse?: string,
+): Promise<LinkPreview> {
+  const preview = await previewOf(ex, page, origin, homeUniverse);
+  return preview.image
+    ? preview
+    : {
+        ...preview,
+        image: {
+          url: `${origin}${SITE_CARD_IMAGE.path}`,
+          width: SITE_CARD_IMAGE.width,
+          height: SITE_CARD_IMAGE.height,
+          alt: SITE_CARD_IMAGE.alt,
+        },
+      };
+}
+
+async function previewOf(
+  ex: Executor,
+  page: { path: string; select?: string | undefined },
+  origin: string,
+  homeUniverse: string | undefined,
 ): Promise<LinkPreview> {
   const site: LinkPreview = {
     title: SITE_NAME,
     heading: SITE_NAME,
-    description: 'Explore galaxies, their systems and their worlds, built by hand.',
+    description: SITE_DESCRIPTION,
     url: `${origin}/`,
     image: null,
     noIndex: true,
   };
+  if (page.path === '/') {
+    // The home page opens the home universe for a signed-out visitor (D-51), so its card is
+    // that universe's, linking to the home page itself. Not the deeper view GE_HOME_UNIVERSE
+    // may name: "Earth" would be a strange card for the site. A home universe that isn't
+    // public gets the site's card, as anywhere else, but the home page is still indexed.
+    const home =
+      homeUniverse === undefined
+        ? site
+        : await previewOf(ex, { path: `/u/${homeUniverse}` }, origin, undefined);
+    return { ...home, url: `${origin}/`, noIndex: false };
+  }
   const [, universeSlug, mapSlug, objectId] = PATH.exec(page.path) ?? [];
   if (universeSlug === undefined) return site;
 

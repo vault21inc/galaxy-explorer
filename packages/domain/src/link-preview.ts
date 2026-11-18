@@ -58,13 +58,28 @@ export const LINK_PREVIEW_AGENT_PATTERN = `(?:${LINK_PREVIEW_AGENTS.map((agent) 
 ).join('|')})`;
 
 /**
- * The addresses that have previews: a universe, one of its maps, and an object's view, with
- * an optional trailing slash. Their parts are slugs and ids, so a matched path can go into a
- * query string as it is. (`…?select=<id>`, the selected object, rides in the query.) No
- * `{n}` counts: in a Caddyfile, braces are placeholders. The API checks the id itself.
+ * The addresses that have previews: the home page (the home universe's card, D-51, or the
+ * site's), a universe, one of its maps, and an object's view, with an optional trailing
+ * slash. Their parts are slugs and ids, so a matched path can go into a query string as it
+ * is. (`…?select=<id>`, the selected object, rides in the query.) No `{n}` counts: in a
+ * Caddyfile, braces are placeholders. The API checks the id itself.
  */
 export const LINK_PREVIEW_PATH_PATTERN =
-  '^/u/[a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*(?:/view/[0-9a-f-]+)?)?/?$';
+  '^/(?:u/[a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*(?:/view/[0-9a-f-]+)?)?/?)?$';
+
+/**
+ * The site's own card picture, for every preview with no picture of its own: the home page,
+ * a universe, a map, or an object with no cover. 1200 × 630 is the size Facebook, LinkedIn
+ * and X show full width; a smaller one becomes a thumbnail, or nothing. It's a file of the
+ * web app (`apps/web/public`), served at the site's root, so the API names it by address.
+ * A JPEG, because a starfield in PNG is several times the size.
+ */
+export const SITE_CARD_IMAGE = {
+  path: '/social-card.jpg',
+  width: 1200,
+  height: 630,
+  alt: 'A spiral galaxy seen at an angle, under the words Galaxy Explorer.',
+} as const;
 
 const AGENT = new RegExp(LINK_PREVIEW_AGENT_PATTERN, 'i');
 const PATH = new RegExp(LINK_PREVIEW_PATH_PATTERN);

@@ -26,11 +26,19 @@ describe('wantsLinkPreview', () => {
     expect(wantsLinkPreview(VIEW, undefined)).toBe(false);
   });
 
-  it('only for a universe, a map or a view', () => {
-    for (const path of ['/u/eisenhorn', '/u/eisenhorn/', '/u/eisenhorn/m41', VIEW]) {
+  it('only for the home page, a universe, a map or a view', () => {
+    for (const path of ['/', '/u/eisenhorn', '/u/eisenhorn/', '/u/eisenhorn/m41', VIEW]) {
       expect(wantsLinkPreview(path, SLACK), path).toBe(true);
     }
-    for (const path of ['/', '/login', '/u/', '/u/Eisenhorn', '/u/a/b/c', '/u/a/b/view/x&y=1']) {
+    for (const path of [
+      '',
+      '//',
+      '/login',
+      '/u/',
+      '/u/Eisenhorn',
+      '/u/a/b/c',
+      '/u/a/b/view/x&y=1',
+    ]) {
       expect(wantsLinkPreview(path, SLACK), path).toBe(false);
     }
   });

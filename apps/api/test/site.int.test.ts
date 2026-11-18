@@ -120,15 +120,53 @@ describe('link previews', () => {
       expect(tag(selected.html, 'og:url')).toBe(`${SITE}/u/contract/main?select=${gudrun.id}`);
     }));
 
-  it('give a map and a universe their own cards', () =>
+  it('give a map and a universe their own cards, with the site’s picture', () =>
     run(async (api) => {
       const map = await preview(api, '/u/contract/main/');
       expect(tag(map.html, 'og:title')).toBe('Main');
       expect(map.html).toContain('<title>Main · Contract · Galaxy Explorer</title>');
-      expect(tag(map.html, 'twitter:card')).toBe('summary');
+      expect(tag(map.html, 'og:image')).toBe(`${SITE}/social-card.jpg`);
+      expect(tag(map.html, 'og:image:width')).toBe('1200');
+      expect(tag(map.html, 'og:image:height')).toBe('630');
+      expect(tag(map.html, 'twitter:card')).toBe('summary_large_image');
       const universe = await preview(api, '/u/contract');
       expect(tag(universe.html, 'og:title')).toBe('Contract');
       expect(tag(universe.html, 'og:description')).toBe('A universe on Galaxy Explorer.');
+      expect(tag(universe.html, 'og:image')).toBe(`${SITE}/social-card.jpg`);
+    }));
+
+  it('give the home page the site’s card, indexed', () =>
+    run(async (api) => {
+      const { html, robots } = await preview(api, '/');
+      expect(tag(html, 'og:title')).toBe('Galaxy Explorer');
+      expect(tag(html, 'og:url')).toBe(`${SITE}/`);
+      expect(tag(html, 'og:image')).toBe(`${SITE}/social-card.jpg`);
+      expect(robots).toBeUndefined();
+    }));
+
+  it('give the home page the home universe’s card, while it’s public', () =>
+    withTestDb(async (_db, url) => {
+      const api = await apiOn(url, {
+        publicUrl: SITE,
+        home: { universe: 'contract', path: '/u/contract/main' },
+      });
+      try {
+        const { universeId } = await newWorld(api);
+        const home = await preview(api, '/');
+        expect(tag(home.html, 'og:title')).toBe('Contract');
+        expect(home.html).toContain('<title>Contract · Galaxy Explorer</title>');
+        // It links to the home page, not to the universe's own address.
+        expect(tag(home.html, 'og:url')).toBe(`${SITE}/`);
+        expect(home.robots).toBeUndefined();
+
+        await setVisibility(api, universeId, 'private');
+        const hidden = await preview(api, '/');
+        expect(tag(hidden.html, 'og:title')).toBe('Galaxy Explorer');
+        expect(hidden.html).not.toContain('Contract');
+        expect(hidden.robots).toBeUndefined();
+      } finally {
+        await api.app.close();
+      }
     }));
 
   it('say nothing of a draft, a spoiler or a bad id: the map’s card', () =>

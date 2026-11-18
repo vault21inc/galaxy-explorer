@@ -5,6 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
     <title>Galaxy Explorer</title>
+    <!--
+      For a fetcher that isn't in @ge/domain/link-preview's list, so gets this page and not the
+      API's card (M8-T9): at least a line of text. No og:image, which must be an absolute
+      address, and this page doesn't know the site's.
+    -->
+    <meta
+      name="description"
+      content="Explore galaxies, their systems and their worlds, built by hand."
+    />
+    <meta property="og:site_name" content="Galaxy Explorer" />
+    <meta property="og:title" content="Galaxy Explorer" />
+    <meta
+      property="og:description"
+      content="Explore galaxies, their systems and their worlds, built by hand."
+    />
   </head>
   <body>
     <div id="root"></div>

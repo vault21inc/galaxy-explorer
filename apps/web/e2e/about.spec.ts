@@ -68,6 +68,14 @@ test.describe('public polish (M8-T9)', () => {
       );
       expect(card).not.toContain('secretly loyal');
       expect(card).not.toContain('id="root"');
+
+      // The home page has a card too, with the site's picture, which the web app serves.
+      const home = await (await chatApp.get('/')).text();
+      expect(home).not.toContain('id="root"');
+      const picture = /<meta property="og:image" content="https?:\/\/[^/"]+(\/[^"]+)">/.exec(home);
+      expect(picture?.[1]).toBe('/social-card.jpg');
+      const served = await request.get('/social-card.jpg');
+      expect(served.headers()['content-type']).toBe('image/jpeg');
     } finally {
       await chatApp.dispose();
     }
