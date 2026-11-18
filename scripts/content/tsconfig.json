@@ -1,6 +1,6 @@
 {
   "extends": "@ge/config/tsconfig.base.json",
-  "include": ["*.ts", "milky-way/*.ts"],
+  "include": ["*.ts", "milky-way/*.ts", "star-wars/*.ts"],
   "compilerOptions": {
     "types": ["node"]
   }

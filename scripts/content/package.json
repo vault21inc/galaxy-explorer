@@ -6,6 +6,7 @@
   "description": "Content builders: real or sample universes, made through the API and the MCP server like any agent would.",
   "scripts": {
     "milky-way": "node milky-way/cli.ts",
+    "star-wars": "node star-wars/cli.ts",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit"
   },
