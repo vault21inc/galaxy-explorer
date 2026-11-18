@@ -119,5 +119,6 @@ Today a `GroupShape` is one closed loop of points, and its fill is a fan from th
 
 ## Also noted for a Star Wars galaxy (not planned here)
 
+- **Its regions wait for traced shapes** (the owner's call, 2026-11-18). On the published grid the regions aren't circles around the centre: Naboo (Mid Rim) is 48,600 ly out and Mandalore (Outer Rim) 20,700 ly. Rings that follow their members overlap, and pinned rings put worlds in the wrong band. So the live `star-wars` universe keeps its regions as facts until the traced shape ("Other approaches") has its own plan and is built. Rings stay for galaxies whose regions really are concentric.
 - **Grid squares.** The published maps name squares such as "R-16". For now that's a custom fact on a system. A grid overlay drawn on the map, with labelled squares, would be a new renderer and a map setting.
 - **The background.** The procedural spiral is tuned per map, so a Star Wars map can have its own arms and colors already. Check the settings give enough range before adding more.
