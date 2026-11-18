@@ -69,6 +69,7 @@ Each of these can be revisited later, and the registries leave room for them.
 
 **Plans to come back to** ([later/](later/)):
 - [Ring-shaped groups](later/ring-shaped-groups.md): groups drawn as rings around the galaxy's centre. Its first task, the rings themselves, is built (D-53); the ring handles and "add the systems inside this ring" remain.
+- [Traced-shape groups](later/traced-shape-groups.md): groups drawn as a closed curve traced by hand, for irregular regions such as the Star Wars map's, which fit neither hulls nor rings.
 
 ## Glossary
 
