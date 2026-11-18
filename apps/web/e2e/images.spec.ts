@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { expect, test, type APIRequestContext, type Page } from './test.ts';
 import { waitForFirstFrame } from './test-hooks.ts';
 import { getJson } from './api.ts';
@@ -115,4 +116,48 @@ test.describe('images (M3-T7)', () => {
     ).toHaveAccessibleName('nebula.png, already added');
     await expect(picker.getByRole('button', { name: 'nebula.png, already added' })).toBeDisabled();
   });
+
+  test('an animated cover plays, pauses, and starts still for reduced motion (D-54)', async ({
+    page,
+  }) => {
+    const s = await setUp(page.request);
+    const universe = (await getJson(page.request, `/api/v1/objects/${s.id}`)) as {
+      data: { universeId: string };
+    };
+    // Uploaded through the API, then made the cover: the picker is covered above.
+    const uploaded = await page.request.post(
+      `/api/v1/universes/${universe.data.universeId}/assets`,
+      {
+        multipart: {
+          file: { name: 'blink.gif', mimeType: 'image/gif', buffer: await gifFixture() },
+        },
+      },
+    );
+    expect(uploaded.ok(), await uploaded.text()).toBe(true);
+    const asset = ((await uploaded.json()) as { data: { id: string } }).data;
+    const attached = await page.request.post(`/api/v1/entities/${s.id}/images`, {
+      data: { assetId: asset.id, role: 'cover' },
+    });
+    expect(attached.ok(), await attached.text()).toBe(true);
+
+    await page.goto(s.url);
+    await waitForFirstFrame(page);
+    const figure = page.getByRole('complementary', { name: 'Details' }).getByRole('figure');
+    const picture = figure.locator('img');
+    await expect(picture).toHaveAttribute('src', /\/animated\.webp$/);
+    await figure.getByRole('button', { name: 'Pause the animation' }).click();
+    await expect(picture).toHaveAttribute('src', /\/display\.webp$/);
+    await expect(picture).toHaveAttribute('data-animation', 'paused');
+
+    // Asking the system for reduced motion: the still, until the reader presses play.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.reload();
+    await waitForFirstFrame(page);
+    await expect(picture).toHaveAttribute('src', /\/display\.webp$/);
+    await figure.getByRole('button', { name: 'Play the animation' }).click();
+    await expect(picture).toHaveAttribute('src', /\/animated\.webp$/);
+  });
 });
+
+/** A 40 × 30 GIF of three frames, red, green and blue, read from the web package. */
+const gifFixture = () => readFile('e2e/fixtures/blink.gif');

@@ -69,7 +69,7 @@ export const Sha256 = z
   .regex(/^[a-z0-9][a-z0-9-]{0,127}$/, 'The SHA-256 of the upload, in lower-case hex.');
 
 /** An asset's stored sizes; the files are `assets/<sha256>/<variant>.webp`. */
-export const ASSET_VARIANTS = ['thumb', 'display', 'texture'] as const;
+export const ASSET_VARIANTS = ['thumb', 'display', 'texture', 'animated'] as const;
 export type AssetVariantName = (typeof ASSET_VARIANTS)[number];
 
 export function assetPath(sha256: string, variant: AssetVariantName): string {
@@ -84,7 +84,13 @@ export const ExportAsset = z.strictObject({
   width: z.int().positive(),
   height: z.int().positive(),
   byteSize: z.int().nonnegative(),
-  variants: z.strictObject({ thumb: size, display: size, texture: size.optional() }),
+  variants: z.strictObject({
+    thumb: size,
+    display: size,
+    texture: size.optional(),
+    // An animation's frames (D-54); its other variants are its first frame.
+    animated: size.optional(),
+  }),
   originalFilename: z.string().max(300).nullable().optional(),
   ...AssetMetadata.shape,
 });

@@ -92,8 +92,13 @@ export function useQualityPreset() {
  */
 export function useAmbientMotion(): boolean {
   const on = useQuality((state) => state.ambientMotion);
-  const reduced = useSyncExternalStore(subscribeReducedMotion, prefersReducedMotion, () => false);
+  const reduced = useReducedMotion();
   return on && !reduced;
+}
+
+/** Whether the reader has asked their system for reduced motion, checked as it changes. */
+export function useReducedMotion(): boolean {
+  return useSyncExternalStore(subscribeReducedMotion, prefersReducedMotion, () => false);
 }
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';

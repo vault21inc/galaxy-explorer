@@ -349,7 +349,7 @@ create table assets (
   width              integer not null,
   height             integer not null,
   byte_size          integer not null,
-  variants           jsonb not null,                   -- AssetVariants: { thumb: {key,w,h}, display: {…}, texture?: {…} }
+  variants           jsonb not null,                   -- AssetVariants: { thumb: {key,w,h}, display: {…}, texture?: {…}, animated?: {…} }
   original_filename  text,
   alt_text           text,
   credit             text,                             -- A5

@@ -50,6 +50,11 @@ export const AssetVariants = z.object({
   display: variant,
   /** Planet and cloud textures only: power-of-two sized. */
   texture: variant.optional(),
+  /**
+   * An animated GIF's or WebP's frames, as an animated WebP (D-54); `display` and `thumb` are
+   * its first frame. Its size is one frame's.
+   */
+  animated: variant.optional(),
 });
 export type AssetVariants = z.infer<typeof AssetVariants>;
 
@@ -108,13 +113,18 @@ export const AssetMetadata = z.strictObject({
 });
 
 /** The URLs of an asset's variants, ready for `<img src>`. */
-export const AssetUrls = z.object({ thumb: z.string(), display: z.string() });
+export const AssetUrls = z.object({
+  thumb: z.string(),
+  display: z.string(),
+  /** For an animation: the moving image, which `display` is the still of (D-54). */
+  animated: z.string().optional(),
+});
 
 /** An uploaded image, as the API returns it (data-model §3.6). */
 export const AssetRead = z.object({
   id: Uuid,
   universeId: Uuid,
-  /** Of the stored variants: image/webp. */
+  /** Of the stored variants: image/webp (animated, for `variants.animated`). */
   mimeType: z.string(),
   /** Of the original, after applying its orientation. */
   width: z.int().positive(),

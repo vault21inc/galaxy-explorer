@@ -2101,15 +2101,15 @@ export interface paths {
         };
         /**
          * List a universe's images, newest first
-         * @description Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.
+         * @description Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. An animated GIF or WebP also gets `animated` (at most 800 px, every frame), and its thumb and display are its first frame. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.
          */
         get: operations["assets.list"];
         put?: never;
         /**
          * Upload an image
-         * @description Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.
+         * @description Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. An animated GIF or WebP also gets `animated` (at most 800 px, every frame), and its thumb and display are its first frame. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.
          *
-         *     Send `multipart/form-data` with the image in a field named `file`: PNG, JPEG, WebP, AVIF or GIF (first frame), at most 25 MB. The type is read from the bytes, not the name. The same image uploaded again returns the existing asset with 200; a new one is 201. Set alt text and credit afterwards with PATCH /assets/{id}.
+         *     Send `multipart/form-data` with the image in a field named `file`: PNG, JPEG, WebP, AVIF or GIF, at most 25 MB; an animation has at most 300 frames. The type is read from the bytes, not the name. The same image uploaded again returns the existing asset with 200, gaining its `animated` variant if it was stored as a still before animations were kept; a new one is 201. Set alt text and credit afterwards with PATCH /assets/{id}.
          */
         post: operations["assets.upload"];
         delete?: never;
@@ -2127,7 +2127,7 @@ export interface paths {
         };
         /**
          * Get an image
-         * @description Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.
+         * @description Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. An animated GIF or WebP also gets `animated` (at most 800 px, every frame), and its thumb and display are its first frame. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.
          */
         get: operations["assets.get"];
         put?: never;
@@ -2137,7 +2137,7 @@ export interface paths {
         head?: never;
         /**
          * Change an image's alt text, credit, source or license
-         * @description Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths. Empty text clears a field. The credit is shown under the image wherever it appears.
+         * @description Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. An animated GIF or WebP also gets `animated` (at most 800 px, every frame), and its thumb and display are its first frame. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths. Empty text clears a field. The credit is shown under the image wherever it appears.
          */
         patch: operations["assets.update"];
         trace?: never;
@@ -2594,6 +2594,11 @@ export interface components {
                 width: number;
                 height: number;
             };
+            animated?: {
+                key: string;
+                width: number;
+                height: number;
+            };
         };
         AssetMetadataInput: {
             altText?: string | null;
@@ -2621,6 +2626,7 @@ export interface components {
             urls: {
                 thumb: string;
                 display: string;
+                animated?: string;
             };
         };
         ImageAssetInput: {
@@ -2633,6 +2639,7 @@ export interface components {
             urls: {
                 thumb: string;
                 display: string;
+                animated?: string;
             };
         };
         ImageReadInput: {
@@ -4784,6 +4791,11 @@ export interface components {
                 width: number;
                 height: number;
             };
+            animated?: {
+                key: string;
+                width: number;
+                height: number;
+            };
         };
         AssetMetadata: {
             altText?: string | null;
@@ -4811,6 +4823,7 @@ export interface components {
             urls: {
                 thumb: string;
                 display: string;
+                animated?: string;
             };
         };
         ImageAsset: {
@@ -4823,6 +4836,7 @@ export interface components {
             urls: {
                 thumb: string;
                 display: string;
+                animated?: string;
             };
         };
         ImageRead: {

@@ -261,6 +261,45 @@ describe('export and import', () => {
       }
     }));
 
+  it('carries an animation across, frames and all (D-54)', () =>
+    withTestDb(async (_db, url) => {
+      const api = await apiOn(url, { mediaDir });
+      try {
+        const universeId = await newUniverse(api, 'moving');
+        const width = 24;
+        const height = 16;
+        const frames = 3;
+        const pixels = Buffer.alloc(width * height * frames * 3);
+        for (let i = 0; i < pixels.length; i++) pixels[i] = (i * 2_654_435_761) >>> 24;
+        const gif = await sharp(pixels, {
+          raw: { width, height: height * frames, channels: 3, pageHeight: height },
+        })
+          .gif()
+          .toBuffer();
+        const upload = await api.app.inject({
+          method: 'POST',
+          url: `/api/v1/universes/${universeId}/assets`,
+          ...multipart(gif, 'blink.gif', 'image/gif'),
+        });
+        expect(upload.statusCode, upload.body).toBe(201);
+        const files = await exported(api, `/universes/${universeId}/export`);
+        const [asset] = json(files, 'universe.json').assets as Json[];
+        expect(asset?.variants.animated).toEqual({ width, height });
+
+        const copy = await newUniverse(api, 'moving-copy');
+        const result = await imported(api, copy, zipOf(files), 'mode=create');
+        expect(result.status, JSON.stringify(result.body)).toBe(200);
+        expect(result.body.data.conflicts).toEqual([]);
+        const [stored] = (await api.expect(200, 'GET', `/universes/${copy}/assets`)).body
+          .data as Json[];
+        const served = await api.app.inject({ method: 'GET', url: String(stored?.urls.animated) });
+        expect(served.statusCode).toBe(200);
+        expect((await sharp(served.rawPayload).metadata()).pages).toBe(frames);
+      } finally {
+        await api.app.close();
+      }
+    }));
+
   it('carries citations across with ISO dates, and reads older exports’ dates', () =>
     withTestDb(async (_db, url) => {
       const api = await apiOn(url, { mediaDir });

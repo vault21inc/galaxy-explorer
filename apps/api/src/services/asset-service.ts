@@ -18,7 +18,11 @@ export function toAssetRead(row: AssetRow): AssetRead {
   const read = {
     ...rest,
     createdAt: row.createdAt.toISOString(),
-    urls: { thumb: mediaUrl(row.variants.thumb.key), display: mediaUrl(row.variants.display.key) },
+    urls: {
+      thumb: mediaUrl(row.variants.thumb.key),
+      display: mediaUrl(row.variants.display.key),
+      ...(row.variants.animated ? { animated: mediaUrl(row.variants.animated.key) } : {}),
+    },
   };
   // Ids from the database are UUIDs; the domain type only brands them.
   return read as unknown as AssetRead;
@@ -80,6 +84,36 @@ export async function storeAsset(
     return toAssetRead(row);
   } catch (error) {
     await Promise.all(written.map((key) => store.delete(key)));
+    throw error;
+  }
+}
+
+/**
+ * Adds the `animated` variant to an image stored as a still before animations were kept
+ * (D-54), when its GIF is uploaded again. Its other files stay as they are.
+ */
+export async function addAnimation(
+  tx: Executor,
+  store: BlobStore,
+  asset: AssetRead,
+  animated: ImageVariant,
+): Promise<AssetRead> {
+  const key = assetKey(asset.universeId, asset.id, 'animated');
+  await store.put(key, animated.data, 'image/webp');
+  try {
+    const variants: AssetVariants = {
+      ...asset.variants,
+      animated: { key, width: animated.width, height: animated.height },
+    };
+    const [row] = await tx
+      .update(assets)
+      .set({ variants })
+      .where(eq(assets.id, asset.id))
+      .returning();
+    if (!row) throw new NotFound('asset', asset.id);
+    return toAssetRead(row);
+  } catch (error) {
+    await store.delete(key);
     throw error;
   }
 }

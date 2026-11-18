@@ -284,10 +284,10 @@ The system and orbit payloads have the same shape: the subject, its direct child
 - `BlobStore` interface: `put(key, data, contentType)`, `get(key)`, `delete(key)`, `publicUrl(key)`. `LocalBlobStore` writes to `GE_MEDIA_DIR`; in development Fastify serves the files under `/media/`, in production Caddy does.
 - Pipeline:
   1. Limit uploads to 25 MB, one file per request (nothing after it is read) and a few short fields (M8-T3).
-  2. Sniff the real type with `file-type`. Accept PNG, JPEG, WebP and AVIF, plus GIF for its first frame only.
+  2. Sniff the real type with `file-type`. Accept PNG, JPEG, WebP, AVIF and GIF. An animation (a GIF or WebP of more than one frame) may have at most 300 frames and 100 million pixels over all of them (D-54).
   3. sharp decodes and re-encodes to WebP, which strips EXIF and anything else embedded. An image of more than 16,384 × 8,192 pixels is refused from its header, before decoding (a small file can claim a huge size).
-  4. Write the variants: `thumb` (256 px), `display` (1,600 px) and, for surface textures, `texture` (2:1, power-of-two width, at most 4,096 × 2,048).
-  5. Deduplicate by the SHA-256 of the original.
+  4. Write the variants: `thumb` (256 px), `display` (1,600 px) and, for surface textures, `texture` (2:1, power-of-two width, at most 4,096 × 2,048). For an animation, these are its first frame, and `animated` (at most 800 px) has every frame, as an animated WebP (D-54).
+  5. Deduplicate by the SHA-256 of the original. An animation stored as a still before D-54 gains its `animated` variant when it's uploaded again: a new file, since stored files are cached as immutable.
 - Keys: `u/{universeId}/{assetId}/{variant}.webp`. The API's `/media/*` serves only keys of that shape (development and tests), as `image/webp` with `Content-Disposition: inline` and `X-Content-Type-Options: nosniff` (M8-T3); production's Caddy sends the same.
 - **Private universes' files are private too (M8, D-34):** a file is served only to a request with at least `read` on its universe, else 404. In production Caddy still serves the files, after asking the API (`forward_auth` to `GET /api/v1/media-access`, which reads the universe from the key and the viewer from the cookies). Files of a `public` universe are cached publicly; the others are sent `Cache-Control: private`. Uploads need `edit`, and count against the owner's media quota.
 - An entity's images carry their asset (`ImageRead.asset`: URLs, size, alt text, credit), so readers draw the gallery from one response.

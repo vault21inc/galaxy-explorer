@@ -661,6 +661,30 @@
               "width",
               "height"
             ]
+          },
+          "animated": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1
+              },
+              "width": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "height": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "key",
+              "width",
+              "height"
+            ]
           }
         },
         "required": [
@@ -796,6 +820,9 @@
               },
               "display": {
                 "type": "string"
+              },
+              "animated": {
+                "type": "string"
               }
             },
             "required": [
@@ -865,6 +892,9 @@
                 "type": "string"
               },
               "display": {
+                "type": "string"
+              },
+              "animated": {
                 "type": "string"
               }
             },
@@ -11272,6 +11302,31 @@
               "height"
             ],
             "additionalProperties": false
+          },
+          "animated": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1
+              },
+              "width": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "height": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "key",
+              "width",
+              "height"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -11408,6 +11463,9 @@
               },
               "display": {
                 "type": "string"
+              },
+              "animated": {
+                "type": "string"
               }
             },
             "required": [
@@ -11479,6 +11537,9 @@
                 "type": "string"
               },
               "display": {
+                "type": "string"
+              },
+              "animated": {
                 "type": "string"
               }
             },
@@ -37946,7 +38007,7 @@
         "tags": [
           "assets"
         ],
-        "description": "Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.\n\nSend `multipart/form-data` with the image in a field named `file`: PNG, JPEG, WebP, AVIF or GIF (first frame), at most 25 MB. The type is read from the bytes, not the name. The same image uploaded again returns the existing asset with 200; a new one is 201. Set alt text and credit afterwards with PATCH /assets/{id}.",
+        "description": "Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. An animated GIF or WebP also gets `animated` (at most 800 px, every frame), and its thumb and display are its first frame. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.\n\nSend `multipart/form-data` with the image in a field named `file`: PNG, JPEG, WebP, AVIF or GIF, at most 25 MB; an animation has at most 300 frames. The type is read from the bytes, not the name. The same image uploaded again returns the existing asset with 200, gaining its `animated` variant if it was stored as a still before animations were kept; a new one is 201. Set alt text and credit afterwards with PATCH /assets/{id}.",
         "parameters": [
           {
             "schema": {
@@ -38077,7 +38138,7 @@
         "tags": [
           "assets"
         ],
-        "description": "Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.",
+        "description": "Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. An animated GIF or WebP also gets `animated` (at most 800 px, every frame), and its thumb and display are its first frame. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.",
         "parameters": [
           {
             "schema": {
@@ -38223,7 +38284,7 @@
         "tags": [
           "assets"
         ],
-        "description": "Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.",
+        "description": "Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. An animated GIF or WebP also gets `animated` (at most 800 px, every frame), and its thumb and display are its first frame. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.",
         "parameters": [
           {
             "schema": {
@@ -38328,7 +38389,7 @@
         "tags": [
           "assets"
         ],
-        "description": "Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths. Empty text clears a field. The credit is shown under the image wherever it appears.",
+        "description": "Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. An animated GIF or WebP also gets `animated` (at most 800 px, every frame), and its thumb and display are its first frame. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths. Empty text clears a field. The credit is shown under the image wherever it appears.",
         "requestBody": {
           "required": true,
           "content": {

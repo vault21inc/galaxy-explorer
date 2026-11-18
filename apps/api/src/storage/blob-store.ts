@@ -63,4 +63,6 @@ export function assetKey(universeId: string, assetId: string, variant: string): 
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
 
 /** Exactly the keys `assetKey` makes: what `/media/*` will serve, and nothing else. */
-export const ASSET_KEY_PATTERN = new RegExp(`^u/${UUID}/${UUID}/(thumb|display|texture)\\.webp$`);
+export const ASSET_KEY_PATTERN = new RegExp(
+  `^u/${UUID}/${UUID}/(thumb|display|texture|animated)\\.webp$`,
+);

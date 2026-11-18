@@ -11,9 +11,13 @@ import sharp from 'sharp';
  *    than the original; and for an image about twice as wide as tall, a map of a globe,
  *    `texture`: exactly 2:1 and a power of two wide, at most 2,048 px (M6-T2). GPUs build
  *    mipmaps of power-of-two textures best, and the planet shaders read the exact 2:1 shape.
+ * 4. for an animated GIF or WebP, also `animated`: every frame, as an animated WebP, at most
+ *    ANIMATED_MAX_PX. The other variants stay stills of the first frame, so everything that
+ *    can't or shouldn't move (thumbnails, textures on the GPU, link previews, readers who ask
+ *    for reduced motion) uses them unchanged; only a displayed image plays (D-54).
  */
 
-/** What we accept. GIFs keep only their first frame. */
+/** What we accept. */
 export const ACCEPTED_TYPES: ReadonlySet<string> = new Set([
   'image/png',
   'image/jpeg',
@@ -34,6 +38,20 @@ const TEXTURE_ASPECT_TOLERANCE = 0.05;
 const WEBP_QUALITY = 82;
 
 /**
+ * The longest side of the `animated` variant, in pixels. Smaller than `display`: every frame is
+ * stored, so the file grows with the frame count, and most GIFs are 500 px or less anyway.
+ */
+export const ANIMATED_MAX_PX = 800;
+/** The most frames an animation may have: about 30 seconds at 10 frames a second. */
+export const MAX_ANIMATION_FRAMES = 300;
+/**
+ * The most pixels all of an animation's frames may have together. sharp decodes every frame
+ * to resize it, so this bounds the memory and time an upload takes, as MAX_INPUT_PIXELS does
+ * for one frame: 100 million is about 400 MB decoded, such as 300 frames of 640 × 520.
+ */
+export const MAX_ANIMATION_PIXELS = 100_000_000;
+
+/**
  * The most pixels an upload may have (M8-T3): 16,384 × 8,192, the largest globe map worth
  * reading. A file's header states its size, and a small file can claim a huge one (a
  * "decompression bomb"): sharp refuses past this before decoding a pixel. Decoded, an image
@@ -51,7 +69,10 @@ export interface ProcessedImage {
   /** Of the original, upright. */
   width: number;
   height: number;
-  variants: Record<'thumb' | 'display', ImageVariant> & { texture?: ImageVariant };
+  variants: Record<'thumb' | 'display', ImageVariant> & {
+    texture?: ImageVariant;
+    animated?: ImageVariant;
+  };
 }
 
 export interface ImageVariant {
@@ -84,14 +105,18 @@ export async function processImage(data: Buffer): Promise<ProcessedImage> {
     );
   }
   // `.rotate()` without an angle applies the EXIF orientation, so photos stand upright once
-  // the metadata is gone. sharp reads only the first frame of a GIF or animated WebP.
+  // the metadata is gone. Read this way, sharp sees only the first frame of a GIF or animated
+  // WebP: the still that every variant but `animated` is made from.
   const upright = sharp(data, { failOn: 'error', limitInputPixels: MAX_INPUT_PIXELS }).rotate();
   let width: number;
   let height: number;
+  let frames: number;
   try {
-    // The header alone gives the size; `autoOrient` is it after turning upright.
+    // The header alone gives the size; `autoOrient` is it after turning upright. Read as a
+    // still, an animation's size is one frame's, and `pages` counts its frames.
     const metadata = await upright.metadata();
     ({ width, height } = metadata.autoOrient);
+    frames = metadata.pages ?? 1;
   } catch (error) {
     if (error instanceof Error && error.message.includes('pixel limit')) {
       throw new UnsupportedImage(
@@ -109,6 +134,31 @@ export async function processImage(data: Buffer): Promise<ProcessedImage> {
       .toBuffer({ resolveWithObject: true });
     return { data: out, width: info.width, height: info.height };
   };
+  if (frames > MAX_ANIMATION_FRAMES || width * height * frames > MAX_ANIMATION_PIXELS) {
+    throw new UnsupportedImage(
+      `That animation is too long to keep: ${String(frames)} frames of ${String(width)} × ${String(height)}. Upload one with at most ${String(MAX_ANIMATION_FRAMES)} frames, or a smaller one.`,
+    );
+  }
+  const animated = async (): Promise<ImageVariant> => {
+    // `animated: true` reads every frame, stacked one above the other; sharp resizes each one
+    // and keeps their timings and loop count. `.rotate()` is left out: GIFs have no EXIF, and
+    // an animated WebP's orientation, if any, would turn the whole stack, not each frame.
+    const { data: out, info } = await sharp(data, {
+      animated: true,
+      failOn: 'error',
+      limitInputPixels: MAX_ANIMATION_PIXELS,
+    })
+      .resize({
+        width: ANIMATED_MAX_PX,
+        height: ANIMATED_MAX_PX,
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .webp({ quality: WEBP_QUALITY })
+      .toBuffer({ resolveWithObject: true });
+    // `height` is the whole stack's; one frame is `pageHeight`.
+    return { data: out, width: info.width, height: info.pageHeight ?? info.height };
+  };
   const textureWidth = textureWidthFor(width, height);
   const texture = async (widthPx: number): Promise<ImageVariant> => {
     // `fill` stretches the last few percent to exactly 2:1.
@@ -122,11 +172,13 @@ export async function processImage(data: Buffer): Promise<ProcessedImage> {
   let thumb: ImageVariant;
   let display: ImageVariant;
   let surface: ImageVariant | null;
+  let moving: ImageVariant | null;
   try {
-    [thumb, display, surface] = await Promise.all([
+    [thumb, display, surface, moving] = await Promise.all([
       variant(VARIANT_SIZES.thumb),
       variant(VARIANT_SIZES.display),
       textureWidth === null ? null : texture(textureWidth),
+      frames > 1 ? animated() : null,
     ]);
   } catch {
     // The header was fine but the pixels aren't.
@@ -136,6 +188,23 @@ export async function processImage(data: Buffer): Promise<ProcessedImage> {
     sha256: sha256Of(data),
     width,
     height,
-    variants: { thumb, display, ...(surface ? { texture: surface } : {}) },
+    variants: {
+      thumb,
+      display,
+      ...(surface ? { texture: surface } : {}),
+      ...(moving ? { animated: moving } : {}),
+    },
   };
+}
+
+/**
+ * Whether these bytes are an animation (more than one frame), read from the header alone: for
+ * an upload that matches a still stored before animations were kept (D-54).
+ */
+export async function isAnimation(data: Buffer): Promise<boolean> {
+  try {
+    return ((await sharp(data).metadata()).pages ?? 1) > 1;
+  } catch {
+    return false;
+  }
 }

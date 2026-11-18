@@ -8,6 +8,7 @@ import { problem, problemSchema } from '../http/problems.ts';
 import { accessFactsOf, universeAccess } from '../services/access.ts';
 import { envelope, listQuery, page, problemResponses } from '../http/schemas.ts';
 import {
+  addAnimation,
   findDuplicate,
   getAsset,
   listAssets,
@@ -18,12 +19,12 @@ import { InvalidRequest } from '../services/errors.ts';
 import { requireUniverse } from '../services/lookup.ts';
 import { requireMediaRoom } from '../services/quota.ts';
 import { ASSET_KEY_PATTERN, type LocalBlobStore } from '../storage/blob-store.ts';
-import { processImage, sha256Of } from '../storage/image-pipeline.ts';
+import { isAnimation, processImage, sha256Of } from '../storage/image-pipeline.ts';
 import { routeAccess } from '../http/access-guard.ts';
 import { rateLimit } from '../http/rate-limits.ts';
 
 const ASSETS_DOC =
-  "Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.";
+  "Images uploaded to a universe (A5). Uploads are re-encoded as WebP in two sizes (thumb, 256 px; display, 1,600 px), which leaves EXIF and other embedded data behind. An animated GIF or WebP also gets `animated` (at most 800 px, every frame), and its thumb and display are its first frame. Attach one to an entity with POST /entities/{id}/images. `urls` are this site's /media/ paths.";
 
 /**
  * Uploads and the image library (M3-T7, architecture.md §8): `POST` stores a new image as one
@@ -43,7 +44,7 @@ export const assetRoutes: FastifyPluginCallbackZod<{ db: Database; store: LocalB
       schema: {
         tags: ['assets'],
         summary: 'Upload an image',
-        description: `${ASSETS_DOC}\n\nSend \`multipart/form-data\` with the image in a field named \`file\`: PNG, JPEG, WebP, AVIF or GIF (first frame), at most 25 MB. The type is read from the bytes, not the name. The same image uploaded again returns the existing asset with 200; a new one is 201. Set alt text and credit afterwards with PATCH /assets/{id}.`,
+        description: `${ASSETS_DOC}\n\nSend \`multipart/form-data\` with the image in a field named \`file\`: PNG, JPEG, WebP, AVIF or GIF, at most 25 MB; an animation has at most 300 frames. The type is read from the bytes, not the name. The same image uploaded again returns the existing asset with 200, gaining its \`animated\` variant if it was stored as a still before animations were kept; a new one is 201. Set alt text and credit afterwards with PATCH /assets/{id}.`,
         operationId: 'assets.upload',
         ...rateLimit('uploads'),
         consumes: ['multipart/form-data'],
@@ -65,7 +66,26 @@ export const assetRoutes: FastifyPluginCallbackZod<{ db: Database; store: LocalB
       const data = await part.toBuffer();
 
       const duplicate = await findDuplicate(db, universeId, sha256Of(data));
-      if (duplicate) return reply.code(200).send({ data: duplicate });
+      if (duplicate) {
+        // Uploaded before animations were kept (D-54): only its first frame is stored, and
+        // uploading it again is the way to bring the rest back. Its files are cached forever
+        // under their names, so the animation is a new file, not a replaced one.
+        if (duplicate.variants.animated || !(await isAnimation(data))) {
+          return reply.code(200).send({ data: duplicate });
+        }
+        const { animated } = (await processImage(data)).variants;
+        if (!animated) return reply.code(200).send({ data: duplicate });
+        const name = duplicate.originalFilename;
+        const asset = await inBatch(
+          db,
+          request,
+          reply,
+          name ? `Keep the animation of “${name}”` : 'Keep an image’s animation',
+          { universeId },
+          (tx) => addAnimation(tx, store, duplicate, animated),
+        );
+        return await reply.code(200).send({ data: asset });
+      }
       // A new image counts against the universe's owner's media quota (M8-T11).
       await requireMediaRoom(db, universeId, data.length);
 

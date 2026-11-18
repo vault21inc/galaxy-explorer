@@ -2,10 +2,12 @@ import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { crc32, deflateSync } from 'node:zlib';
+import { schema, withBatch } from '@ge/db';
 import { withTestDb } from '@ge/db/testing';
 import { MAX_UPLOAD_BYTES, rt } from '@ge/domain';
 import { fileTypeFromBuffer } from 'file-type';
 import sharp from 'sharp';
+import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { apiOn, newWorld, type Api } from './contract/harness.ts';
 import { multipart } from './helpers.ts';
@@ -55,6 +57,15 @@ function png(width: number, height: number) {
 }
 
 const stored = (key: string) => readFile(join(mediaDir, key));
+
+/** An animated GIF of `frames` noisy frames, each `width` × `height`, 100 ms apiece. */
+async function gif(frames: number, width: number, height: number) {
+  const pixels = Buffer.alloc(width * height * frames * 3);
+  for (let i = 0; i < pixels.length; i++) pixels[i] = (i * 2_654_435_761) >>> 24;
+  return sharp(pixels, { raw: { width, height: height * frames, channels: 3, pageHeight: height } })
+    .gif({ delay: Array.from({ length: frames }, () => 100), loop: 0 })
+    .toBuffer();
+}
 
 /** A PNG that is only a header claiming `width` × `height`, and a scrap of data. */
 function pngClaiming(width: number, height: number) {
@@ -272,6 +283,92 @@ describe('POST /universes/{id}/assets', () => {
       await upload(api, universeId, await png(64, 64), 'tiny.png');
       const history = await api.expect(200, 'GET', `/universes/${universeId}/history`);
       expect(history.body.data[0]).toMatchObject({ description: 'Upload “tiny.png”' });
+    }));
+});
+
+describe('animated uploads (D-54)', () => {
+  it('keep every frame in `animated`, and make the other variants of the first', () =>
+    run(async (api, { universeId }) => {
+      const { status, body } = await upload(
+        api,
+        universeId,
+        await gif(4, 1_000, 500),
+        'a.gif',
+        'image/gif',
+      );
+      expect(status, JSON.stringify(body)).toBe(201);
+      const { variants, urls } = body.data;
+      // Capped at 800 px, smaller than display's 1,600; the size is one frame's.
+      expect(variants.animated).toMatchObject({ width: 800, height: 400 });
+      expect(urls.animated).toBe(`/media/${variants.animated.key as string}`);
+      const moving = await sharp(await stored(variants.animated.key)).metadata();
+      expect(moving).toMatchObject({ format: 'webp', pages: 4, width: 800, height: 400, loop: 0 });
+      expect(moving.delay).toEqual([100, 100, 100, 100]);
+      for (const name of ['thumb', 'display']) {
+        const still = await sharp(await stored(variants[name].key)).metadata();
+        expect(still.pages ?? 1, name).toBe(1);
+      }
+      expect(variants.display).toMatchObject({ width: 1_000, height: 500 });
+      const served = await api.app.inject({ method: 'GET', url: urls.animated });
+      expect(served.statusCode).toBe(200);
+    }));
+
+  it('leave a still image without one', () =>
+    run(async (api, { universeId }) => {
+      const { body } = await upload(api, universeId, await gif(1, 64, 64), 'one.gif', 'image/gif');
+      expect(body.data.variants.animated).toBeUndefined();
+      expect(body.data.urls.animated).toBeUndefined();
+    }));
+
+  it('refuse an animation with too many frames', () =>
+    run(async (api, { universeId }) => {
+      const { status, body } = await upload(
+        api,
+        universeId,
+        await gif(301, 8, 8),
+        'long.gif',
+        'image/gif',
+      );
+      expect(status).toBe(415);
+      expect(body.detail).toMatch(/301 frames/);
+    }));
+
+  it('bring back the animation of a GIF stored as a still, when it’s uploaded again', () =>
+    withTestDb(async (db, url) => {
+      const api = await apiOn(url, { mediaDir });
+      try {
+        const { universeId } = await newWorld(api);
+        const data = await gif(3, 120, 80);
+        const first = (await upload(api, universeId, data, 'rocky.gif', 'image/gif')).body.data;
+        // As it was stored before D-54: the first frame only.
+        const { animated: _animated, ...still } = first.variants;
+        await withBatch(
+          db,
+          { type: 'local', label: 'test' },
+          'as before D-54',
+          (tx) =>
+            tx.update(schema.assets).set({ variants: still }).where(eq(schema.assets.id, first.id)),
+          { universeId },
+        );
+        await rm(join(mediaDir, first.variants.animated.key as string));
+
+        const again = await upload(api, universeId, data, 'rocky.gif', 'image/gif');
+        expect(again.status).toBe(200);
+        expect(again.body.data.id).toBe(first.id);
+        expect(again.body.data.urls.animated).toBe(first.urls.animated);
+        expect((await sharp(await stored(first.variants.animated.key)).metadata()).pages).toBe(3);
+        const history = await api.expect(200, 'GET', `/universes/${universeId}/history`);
+        expect(history.body.data[0]).toMatchObject({
+          description: 'Keep the animation of “rocky.gif”',
+        });
+        // Once it has its animation, a third upload changes nothing.
+        const third = await upload(api, universeId, data, 'rocky.gif', 'image/gif');
+        expect(third.body.data).toEqual(again.body.data);
+        const after = await api.expect(200, 'GET', `/universes/${universeId}/history`);
+        expect(after.body.data).toHaveLength(history.body.data.length);
+      } finally {
+        await api.close();
+      }
     }));
 });
 
