@@ -52,7 +52,10 @@ export function SelectField({
   const saved = valueAt(record, field.path);
   // A value the record doesn't set shows its default, dimmed (a planet's preset, M6-T2).
   const inherited = inheritedValue(record, field.path, subtypes);
-  const fallback = saved === undefined && typeof inherited === 'string' ? inherited : undefined;
+  // Or the default the form names for it (a group's shape, D-53).
+  const named = options.from === 'values' ? options.default : undefined;
+  const fallback =
+    saved === undefined ? (typeof inherited === 'string' ? inherited : named) : undefined;
   const [pending, setPending] = useState<string | null>(null);
 
   let choices: { value: string; label: string }[];

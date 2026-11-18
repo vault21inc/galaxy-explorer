@@ -69,7 +69,11 @@ function entityOf(kind: EntityKind): PanelEntity {
 const escape = (text: string) => text.replaceAll('&', '&amp;');
 
 /** Whether a field's base-type conditions rule it out (the shape conditions are tested apart). */
-function ruledOut(field: FormFieldDef, baseType: keyof typeof objectTypes | undefined): boolean {
+function ruledOut(
+  field: FormFieldDef,
+  baseType: keyof typeof objectTypes | undefined,
+  entity: object = {},
+): boolean {
   const { showWhen } = field;
   const conditions: readonly FormCondition[] =
     showWhen === undefined
@@ -84,8 +88,25 @@ function ruledOut(field: FormFieldDef, baseType: keyof typeof objectTypes | unde
       (condition === 'regionType' && (!baseType || !isRegionType(baseType))) ||
       (condition === 'planetType' && (!baseType || !isPlanetType(baseType))) ||
       // The fixture sits at the top level, not in a system (M5-T4).
-      condition === 'systemChild',
+      condition === 'systemChild' ||
+      // A condition on a value nothing inherits (a group's `style.shape`, D-53): the record's own.
+      (typeof condition === 'object' &&
+        !condition.path.startsWith('appearance.') &&
+        'in' in condition &&
+        !condition.in.includes(valueAtPath(entity, condition.path) as string)),
   );
+}
+
+/** The value at a dotted path, or undefined. */
+function valueAtPath(record: object, path: string): unknown {
+  let value: unknown = record;
+  for (const key of path.split('.')) {
+    value =
+      typeof value === 'object' && value !== null
+        ? (value as Record<string, unknown>)[key]
+        : undefined;
+  }
+  return value;
 }
 
 describe.each(ENTITY_KINDS)('the generated %s form', (kind) => {
@@ -98,7 +119,7 @@ describe.each(ENTITY_KINDS)('the generated %s form', (kind) => {
     for (const group of formGroups(entityKinds[kind].form)) {
       if (group.heading) expect(html).toContain(`>${group.heading}<`);
       for (const field of group.fields) {
-        const hidden = ruledOut(field, entity.baseType);
+        const hidden = ruledOut(field, entity.baseType, entity);
         if (hidden) expect(html).not.toContain(`>${escape(field.label)}<`);
         else expect(html, field.label).toContain(escape(field.label));
       }

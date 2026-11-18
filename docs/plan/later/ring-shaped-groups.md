@@ -1,6 +1,6 @@
 # Later: ring-shaped groups
 
-**Status:** a plan to come back to, written 2026-11-13. Not scheduled, and nothing here is decided yet. The task IDs (`L1-T1` and so on) are provisional: renumber them if this joins a milestone.
+**Status:** written 2026-11-13. **L1-T1 is built** (2026-11-18, D-53, which settles the three decisions below for now: circles, whole rings, per group). L1-T2 and L1-T3 remain, not scheduled.
 
 **Goal:** a group can be drawn as a ring around the galaxy's centre instead of an outline around its members. That makes galaxies with concentric regions possible, such as Star Wars's Deep Core, Core Worlds, Colonies, Inner Rim, Mid Rim and Outer Rim.
 
@@ -79,10 +79,10 @@ Today a `GroupShape` is one closed loop of points, and its fill is a fan from th
 - Docs: rendering.md §6, data-model.md §4 (`GroupStyle`), the README glossary's Group row, the LLM guide (M7-T8) if it describes group styles, and a D-entry for the decisions below.
 
 **Done when:**
-- [ ] Unit tests: radii from 1, 2 and many members; pinned radii; inner 0 (a disc); every member lies inside the band by at least the padding; inner ≥ outer is rejected.
-- [ ] E2E: six concentric ring groups save, reload and draw; the test hook reports six shapes whose bands don't overlap and whose label anchors are on their own bands.
-- [ ] A hull group next to them is drawn exactly as before (the M4-T3 tests still pass unchanged).
-- [ ] The stress map with ring groups stays within 3 draw calls for groups, and the galaxy performance budget holds. Numbers before and after are in the commit message.
+- [x] Unit tests: radii from 1, 2 and many members; pinned radii; inner 0 (a disc); every member lies inside the band by at least the padding; inner ≥ outer is rejected.
+- [x] E2E: six concentric ring groups save, reload and draw; the test hook reports six shapes whose bands don't overlap and whose label anchors are on their own bands.
+- [x] A hull group next to them is drawn exactly as before (the M4-T3 tests still pass unchanged).
+- [x] The stress map with ring groups stays within 3 draw calls for groups, and the galaxy performance budget holds. Numbers before and after are in the commit message.
 
 ### L1-T2 Ring handles
 

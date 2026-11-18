@@ -163,6 +163,8 @@ The planet must be `explorable` for its globe, and the pin, to be seen.
 
 Members are top-level objects (systems, not planets). The group's outline follows them.
 
+Regions that are concentric bands around the galaxy's centre (a Core, a Mid Rim, an Outer Rim) need a **ring** instead, since a hull around an outer rim covers the whole disc. Set `"style": { "shape": "ring" }`: the band then runs from just inside the member nearest the centre to just outside the farthest. `style.ring` can pin `innerRadiusLy` and `outerRadiusLy` (inner 0 is a disc; with an outer radius the ring shows even before it has members), move its `center` (`[x, z]` in ly, default `[0, 0]`) and turn its label with `labelDeg`. Each `style` you send replaces the whole document, so send every key you want to keep.
+
 ### Facts and a subtype
 
 Define the facts and the subtype once per universe:

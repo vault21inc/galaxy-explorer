@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import { REGION_SHAPES } from '../schemas/appearance.ts';
+import { GROUP_SHAPES } from '../schemas/styles.ts';
 import type { EntityFormDef, FormFieldDef } from './entity-forms.ts';
 import {
   celestialObjectExtension,
@@ -87,6 +88,8 @@ const REGION_SHAPE_LABELS = {
 } satisfies Record<(typeof REGION_SHAPES)[number], string>;
 
 const STORM = { path: 'appearance.region.shape', in: ['storm'] } as const;
+/** A ring group's fields show only while its shape is 'ring' (D-53). */
+const RING = { path: 'style.shape', in: ['ring'] } as const;
 
 /**
  * A nebula's or anomaly's region fields (M4-T6): the shape and its look, then each shape's own
@@ -273,12 +276,49 @@ export const entityKinds = defineEntityKinds({
           hint: 'A group of the parent type, such as the sector a sub-sector is in.',
         },
       ],
-      appearance: [{ path: 'outlineColor', widget: 'color', label: 'Outline color' }],
+      appearance: [
+        { path: 'outlineColor', widget: 'color', label: 'Outline color' },
+        {
+          path: 'style.shape',
+          widget: 'select',
+          label: 'Shape',
+          options: {
+            from: 'values',
+            values: GROUP_SHAPES,
+            labels: { hull: 'Around its members', ring: 'Ring around the centre' },
+            default: 'hull',
+          },
+          hint: 'A ring is a band around the galaxy’s centre, for regions such as a Core and an Outer Rim.',
+        },
+        {
+          path: 'style.ring.innerRadiusLy',
+          widget: 'number',
+          label: 'Inner radius (ly)',
+          hint: 'Empty: just inside the member nearest the centre. 0 makes a disc.',
+          showWhen: RING,
+        },
+        {
+          path: 'style.ring.outerRadiusLy',
+          widget: 'number',
+          label: 'Outer radius (ly)',
+          hint: 'Empty: just outside the farthest member. Set, the ring shows with no members.',
+          showWhen: RING,
+        },
+        {
+          path: 'style.ring.labelDeg',
+          widget: 'number',
+          label: 'Label angle (°)',
+          hint: 'Where the name sits on the band, around the centre. Empty: above it (−90).',
+          showWhen: RING,
+        },
+      ],
     },
     description:
       'A named set of top-level objects drawn as a colored outline: a sector, territory or faction. ' +
       "Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. " +
-      "An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color.",
+      "An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color. " +
+      "`style.shape` is 'hull' (default: a padded outline around the members) or 'ring': a band around `style.ring.center` ([x, z] ly, default [0, 0], the galaxy's centre), for concentric regions such as a Core, Mid Rim and Outer Rim. " +
+      'A ring follows its members unless `style.ring.innerRadiusLy` / `outerRadiusLy` pin it (inner 0 is a disc; with `outerRadiusLy` set it is drawn even with no members); `style.ring.labelDeg` places its label on the band (degrees from +x toward +z, default −90).',
     example: {
       name: { format: 'plain', source: 'Helican Sub-sector' },
       groupTypeId: EXAMPLE_ID,

@@ -68,7 +68,7 @@ It runs locally first, then on one DigitalOcean droplet.
 Each of these can be revisited later, and the registries leave room for them.
 
 **Plans to come back to** ([later/](later/)):
-- [Ring-shaped groups](later/ring-shaped-groups.md): groups drawn as rings around the galaxy's centre, for galaxies with concentric regions such as Star Wars's Core, Mid Rim and Outer Rim.
+- [Ring-shaped groups](later/ring-shaped-groups.md): groups drawn as rings around the galaxy's centre. Its first task, the rings themselves, is built (D-53); the ring handles and "add the systems inside this ring" remain.
 
 ## Glossary
 
@@ -80,7 +80,7 @@ Each of these can be revisited later, and the registries leave room for them.
 | Object | a celestial object, of a **base type** (system, star, planet, moon, asteroid belt, station, nebula, anomaly, black hole, marker) and optionally a universe-defined **subtype** (Hive World). |
 | Explorable | an object that opens its own view: systems open a system view; planets and moons open an orbit view. |
 | View | one of the three levels: **galaxy view**, **system view**, **orbit view**. The **subject** is the object a view is about. |
-| Group / group type / layer | a named set of objects drawn as an outline (Helican Sub-sector); its universe-defined type (Sub-sector, whose parent type is Sector); and the layer the type belongs to (Administrative). |
+| Group / group type / layer | a named set of objects drawn as an outline (Helican Sub-sector), or as a ring around the galaxy's centre (the Outer Rim, D-53); its universe-defined type (Sub-sector, whose parent type is Sector); and the layer the type belongs to (Administrative). |
 | Region | a nebula or anomaly (such as a warp storm): an object with a radius, drawn as a cloud. |
 | Route | an ordered line through objects (a warp route). |
 | Place / event | a lasting pin (a city or fortress) / something that happened, located on a surface, an object, in space or at a place. |

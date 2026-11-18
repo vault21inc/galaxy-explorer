@@ -555,8 +555,17 @@ const GroupStyle = z.object({
   fillOpacity: z.number().min(0).max(0.5),             // default 0.06
   lineWidthPx: z.number().min(1).max(6),               // default 2
   dashed: z.boolean(),
-  shape: z.enum(['hull']),                             // later: 'voronoi' territories, 'freeform'
+  shape: z.enum(['hull', 'ring']),                     // default 'hull'; later: 'voronoi', 'freeform'
+  ring: GroupRing,                                     // read only while shape is 'ring' (D-53)
 }).partial();
+
+// A ring group's band around a centre (D-53). A radius left out follows the members.
+const GroupRing = z.object({
+  center: z.tuple([z.number(), z.number()]),           // [x, z] ly; default [0, 0]
+  innerRadiusLy: z.number().min(0),                    // pinned; 0 is a disc
+  outerRadiusLy: z.number().positive(),                // pinned; drawn even with no members
+  labelDeg: z.number().min(-360).max(360),             // from +x toward +z; default −90
+}).partial().refine(/* inner < outer when both are pinned */);
 
 const RouteStyle = z.object({ color: HexColor, widthPx: z.number().min(1).max(6), dashed: z.boolean() }).partial();
 

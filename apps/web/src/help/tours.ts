@@ -150,7 +150,7 @@ const EDITOR: TourDef = {
     {
       id: 'group',
       title: 'Grouping',
-      text: 'Shift-drag a box around a few objects, then press ⌘/Ctrl + G to make them a sector or another group.',
+      text: 'Shift-drag a box around a few objects, then press ⌘/Ctrl + G to make them a sector or another group. Its form’s Shape can make it a ring around the galaxy’s centre instead, for regions like a Core or an Outer Rim.',
       target: { kind: 'control', name: 'tool-group' },
       completes: 'next',
       needs: ['editing'],

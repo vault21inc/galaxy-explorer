@@ -22,12 +22,15 @@ export {
   areaCentroid,
   chaikin,
   convexHull,
+  fanFill,
   offsetConvex,
   outlineForGroup,
+  type GroupFigure,
   type Outline,
   type OutlineOptions,
   type PlanePoint,
 } from './geo/outline.ts';
+export { ringForGroup, type Ring, type RingOptions } from './geo/ring.ts';
 export {
   catmullRom,
   defaultRiftPath,

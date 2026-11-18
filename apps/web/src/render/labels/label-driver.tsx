@@ -121,9 +121,9 @@ function addCandidate(
   delete slot.color;
 }
 
-/** A group's label, centred on its outline's centroid, if that's in front of the camera. */
+/** A group's label, centred on its label anchor (a hull’s centroid, or on a ring’s band), if that's in front of the camera. */
 function addGroupCandidate(state: RootState, group: GroupShape, selected: ReadonlySet<string>) {
-  scratch.set(...group.centroid).project(state.camera);
+  scratch.set(...group.labelAnchor).project(state.camera);
   if (scratch.z < -1 || scratch.z > 1) return;
   const slot = nextSlot();
   slot.id = group.id;

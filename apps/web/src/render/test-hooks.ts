@@ -63,12 +63,17 @@ export interface GeTestHooks {
   /** How an object is drawn: its renderer, state (normal, redacted, draft) and color. */
   drawnObject(id: string): DrawnObject | null;
   /**
-   * How a group's outline is drawn (M4-T3), or null when it has none: its point count, the
-   * centroid where its label goes, its look, its label text and how many members it encloses.
+   * How a group's outline is drawn (M4-T3), or null when it has none: its shape (D-53), its
+   * point count over all its loops, where its label goes (`centroid`, a hull's area centroid or
+   * a point on a ring's band), its look, its label text and how many members it encloses. A
+   * ring also reports its centre and radii as drawn.
    */
   groupOutline(id: string): {
+    shape: 'hull' | 'ring';
+    loopCount: number;
     pointCount: number;
     centroid: [number, number, number];
+    ring: { center: [number, number]; innerRadiusLy: number; outerRadiusLy: number } | null;
     color: string;
     dashed: boolean;
     widthPx: number;
@@ -260,10 +265,14 @@ export function installTestHooks(): void {
     groupOutline: (id) => {
       const shape = drawnGroup(id);
       if (!shape) return null;
-      const { points, centroid, color, dashed, widthPx, label, memberCount, redacted } = shape;
+      const { loops, labelAnchor, ring, color, dashed, widthPx, label, memberCount, redacted } =
+        shape;
       return {
-        pointCount: points.length,
-        centroid,
+        shape: shape.kind,
+        loopCount: loops.length,
+        pointCount: loops.reduce((sum, loop) => sum + loop.length, 0),
+        centroid: labelAnchor,
+        ring: ring && { ...ring, center: [ring.center[0], ring.center[1]] },
         color,
         dashed,
         widthPx,

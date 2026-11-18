@@ -416,6 +416,18 @@ export const GROUP_OUTLINE_PADDING_SHARE = 0.02;
  * outline clearly encloses its sub-sectors' outlines: 750 ly more per level at 50,000 ly.
  */
 export const GROUP_OUTLINE_NESTING_SHARE = 0.015;
+/**
+ * Degrees between the points of a ring group's circles (D-53). A circle 50,000 ly across drawn
+ * with a hull's 15° steps shows its corners; 2° is 180 points a circle, two circles a ring,
+ * which still adds only vertices to the merged batches, not draw calls.
+ */
+export const GROUP_RING_STEP_DEG = 2;
+/**
+ * Where a ring group's label sits on its band when the group doesn't say: degrees around the
+ * centre from +x toward +z. −90 is toward −z, straight above the centre in the usual top-down
+ * view, so concentric rings label one above the other like contour lines on a map.
+ */
+export const GROUP_RING_LABEL_DEG = -90;
 /** A group's line width in CSS pixels when its style doesn't set one (GroupStyle). */
 export const GROUP_LINE_WIDTH_PX = 2;
 /** A group's fill opacity when its style doesn't set one: barely there (ux.md §11). */

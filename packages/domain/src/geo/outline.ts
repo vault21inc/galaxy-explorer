@@ -15,7 +15,21 @@
 /** A point on the galactic plane: [x, z] in light-years. */
 export type PlanePoint = readonly [number, number];
 
-export interface Outline {
+/**
+ * A group's shape on the plane in one form for every `GroupStyle.shape` (D-53), so the renderer
+ * has one code path: the closed loops to draw as lines (one for a hull or a disc, two for a
+ * ring), the triangles that fill it, and where its label goes.
+ */
+export interface GroupFigure {
+  /** Closed polylines; the last point of each joins its first. */
+  loops: PlanePoint[][];
+  /** The fill: points, and three indices into them per triangle. */
+  fill: { vertices: PlanePoint[]; triangles: number[] };
+  /** Where the label goes. */
+  label: PlanePoint;
+}
+
+export interface Outline extends GroupFigure {
   /** The closed curve, counter-clockwise seen from +y; the last point joins the first. */
   points: PlanePoint[];
   /** The area centroid, for the label. */
@@ -158,6 +172,18 @@ export function areaCentroid(points: readonly PlanePoint[]): PlanePoint {
   return [cx / (3 * area), cz / (3 * area)];
 }
 
+/**
+ * A fan of triangles from `center` to each edge of a closed loop: exactly covers a convex loop,
+ * or any loop every point of which `center` can see (a circle from its middle).
+ */
+export function fanFill(loop: readonly PlanePoint[], center: PlanePoint): GroupFigure['fill'] {
+  const count = loop.length;
+  const triangles: number[] = [];
+  // Vertex 0 is the centre; the loop's points follow from 1.
+  for (let i = 0; i < count; i++) triangles.push(0, 1 + i, 1 + ((i + 1) % count));
+  return { vertices: [center, ...loop], triangles };
+}
+
 /** The outline around these points, or null for none (rendering.md §6). */
 export function outlineForGroup(
   points: readonly PlanePoint[],
@@ -167,5 +193,13 @@ export function outlineForGroup(
   if (hull.length === 0) return null;
   let curve = offsetConvex(hull, paddingLy * SMOOTHING_SLACK, arcStepDeg);
   for (let pass = 0; pass < smoothing; pass++) curve = chaikin(curve);
-  return { points: curve, centroid: areaCentroid(curve) };
+  const centroid = areaCentroid(curve);
+  return {
+    points: curve,
+    centroid,
+    loops: [curve],
+    // The hull is convex, so a fan from its centroid covers it.
+    fill: fanFill(curve, centroid),
+    label: centroid,
+  };
 }

@@ -40,7 +40,16 @@ export type FormWidget =
 
 /** Where a select's choices come from. */
 export type FormOptions =
-  | { from: 'values'; values: readonly string[]; labels?: Readonly<Record<string, string>> }
+  | {
+      from: 'values';
+      values: readonly string[];
+      labels?: Readonly<Record<string, string>>;
+      /**
+       * The value in force while the record doesn't set one (a group's shape is 'hull'): shown
+       * dimmed, with no "None" choice, since the field isn't nullable.
+       */
+      default?: string;
+    }
   | {
       from: 'config';
       /**

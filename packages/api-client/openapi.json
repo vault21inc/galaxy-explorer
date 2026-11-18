@@ -430,8 +430,41 @@
           "shape": {
             "type": "string",
             "enum": [
-              "hull"
+              "hull",
+              "ring"
             ]
+          },
+          "ring": {
+            "type": "object",
+            "properties": {
+              "center": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "items": false,
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "innerRadiusLy": {
+                "type": "number",
+                "minimum": 0
+              },
+              "outerRadiusLy": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "labelDeg": {
+                "type": "number",
+                "minimum": -360,
+                "maximum": 360
+              }
+            }
           }
         }
       },
@@ -10996,8 +11029,42 @@
           "shape": {
             "type": "string",
             "enum": [
-              "hull"
+              "hull",
+              "ring"
             ]
+          },
+          "ring": {
+            "type": "object",
+            "properties": {
+              "center": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "items": false,
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "innerRadiusLy": {
+                "type": "number",
+                "minimum": 0
+              },
+              "outerRadiusLy": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "labelDeg": {
+                "type": "number",
+                "minimum": -360,
+                "maximum": 360
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -27093,7 +27160,7 @@
         "tags": [
           "groups"
         ],
-        "description": "A named set of top-level objects drawn as a colored outline: a sector, territory or faction. Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color.",
+        "description": "A named set of top-level objects drawn as a colored outline: a sector, territory or faction. Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color. `style.shape` is 'hull' (default: a padded outline around the members) or 'ring': a band around `style.ring.center` ([x, z] ly, default [0, 0], the galaxy's centre), for concentric regions such as a Core, Mid Rim and Outer Rim. A ring follows its members unless `style.ring.innerRadiusLy` / `outerRadiusLy` pin it (inner 0 is a disc; with `outerRadiusLy` set it is drawn even with no members); `style.ring.labelDeg` places its label on the band (degrees from +x toward +z, default −90).",
         "parameters": [
           {
             "schema": {
@@ -27316,7 +27383,7 @@
         "tags": [
           "groups"
         ],
-        "description": "A named set of top-level objects drawn as a colored outline: a sector, territory or faction. Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color.\n\nExample body:\n\n```json\n{\n  \"name\": {\n    \"format\": \"plain\",\n    \"source\": \"Helican Sub-sector\"\n  },\n  \"groupTypeId\": \"019a5b3c-7d2e-7f00-8a1b-2c3d4e5f6a7b\",\n  \"parentGroupId\": null,\n  \"outlineColor\": \"#c8a24a\"\n}\n```",
+        "description": "A named set of top-level objects drawn as a colored outline: a sector, territory or faction. Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color. `style.shape` is 'hull' (default: a padded outline around the members) or 'ring': a band around `style.ring.center` ([x, z] ly, default [0, 0], the galaxy's centre), for concentric regions such as a Core, Mid Rim and Outer Rim. A ring follows its members unless `style.ring.innerRadiusLy` / `outerRadiusLy` pin it (inner 0 is a disc; with `outerRadiusLy` set it is drawn even with no members); `style.ring.labelDeg` places its label on the band (degrees from +x toward +z, default −90).\n\nExample body:\n\n```json\n{\n  \"name\": {\n    \"format\": \"plain\",\n    \"source\": \"Helican Sub-sector\"\n  },\n  \"groupTypeId\": \"019a5b3c-7d2e-7f00-8a1b-2c3d4e5f6a7b\",\n  \"parentGroupId\": null,\n  \"outlineColor\": \"#c8a24a\"\n}\n```",
         "requestBody": {
           "required": true,
           "content": {
@@ -27429,7 +27496,7 @@
         "tags": [
           "groups"
         ],
-        "description": "A named set of top-level objects drawn as a colored outline: a sector, territory or faction. Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color.\n\nIdempotent: the first call creates the entity with this `externalKey`, later calls update it (no `version` needed). Use this from scripts and LLM agents so re-running them never duplicates content.",
+        "description": "A named set of top-level objects drawn as a colored outline: a sector, territory or faction. Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color. `style.shape` is 'hull' (default: a padded outline around the members) or 'ring': a band around `style.ring.center` ([x, z] ly, default [0, 0], the galaxy's centre), for concentric regions such as a Core, Mid Rim and Outer Rim. A ring follows its members unless `style.ring.innerRadiusLy` / `outerRadiusLy` pin it (inner 0 is a disc; with `outerRadiusLy` set it is drawn even with no members); `style.ring.labelDeg` places its label on the band (degrees from +x toward +z, default −90).\n\nIdempotent: the first call creates the entity with this `externalKey`, later calls update it (no `version` needed). Use this from scripts and LLM agents so re-running them never duplicates content.",
         "requestBody": {
           "required": true,
           "content": {
@@ -27571,7 +27638,7 @@
         "tags": [
           "groups"
         ],
-        "description": "A named set of top-level objects drawn as a colored outline: a sector, territory or faction. Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color.",
+        "description": "A named set of top-level objects drawn as a colored outline: a sector, territory or faction. Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color. `style.shape` is 'hull' (default: a padded outline around the members) or 'ring': a band around `style.ring.center` ([x, z] ly, default [0, 0], the galaxy's centre), for concentric regions such as a Core, Mid Rim and Outer Rim. A ring follows its members unless `style.ring.innerRadiusLy` / `outerRadiusLy` pin it (inner 0 is a disc; with `outerRadiusLy` set it is drawn even with no members); `style.ring.labelDeg` places its label on the band (degrees from +x toward +z, default −90).",
         "parameters": [
           {
             "schema": {
@@ -27709,7 +27776,7 @@
         "tags": [
           "groups"
         ],
-        "description": "A named set of top-level objects drawn as a colored outline: a sector, territory or faction. Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color.\n\nSend only the fields to change, plus the `version` you read. A stale version returns 409 with the current record.",
+        "description": "A named set of top-level objects drawn as a colored outline: a sector, territory or faction. Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color. `style.shape` is 'hull' (default: a padded outline around the members) or 'ring': a band around `style.ring.center` ([x, z] ly, default [0, 0], the galaxy's centre), for concentric regions such as a Core, Mid Rim and Outer Rim. A ring follows its members unless `style.ring.innerRadiusLy` / `outerRadiusLy` pin it (inner 0 is a disc; with `outerRadiusLy` set it is drawn even with no members); `style.ring.labelDeg` places its label on the band (degrees from +x toward +z, default −90).\n\nSend only the fields to change, plus the `version` you read. A stale version returns 409 with the current record.",
         "requestBody": {
           "required": true,
           "content": {
@@ -27820,7 +27887,7 @@
         "tags": [
           "groups"
         ],
-        "description": "A named set of top-level objects drawn as a colored outline: a sector, territory or faction. Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color.\n\nDeletes what depends on it too (data-model §11); revert the batch to undo.",
+        "description": "A named set of top-level objects drawn as a colored outline: a sector, territory or faction. Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color. `style.shape` is 'hull' (default: a padded outline around the members) or 'ring': a band around `style.ring.center` ([x, z] ly, default [0, 0], the galaxy's centre), for concentric regions such as a Core, Mid Rim and Outer Rim. A ring follows its members unless `style.ring.innerRadiusLy` / `outerRadiusLy` pin it (inner 0 is a disc; with `outerRadiusLy` set it is drawn even with no members); `style.ring.labelDeg` places its label on the band (degrees from +x toward +z, default −90).\n\nDeletes what depends on it too (data-model §11); revert the batch to undo.",
         "requestBody": {
           "required": true,
           "content": {
@@ -39054,7 +39121,7 @@
         "tags": [
           "site"
         ],
-        "description": "An HTML page of Open Graph and Twitter card tags for a site address: a universe (`/u/{slug}`), a map (`/u/{slug}/{map}`) or an object’s view (`…/view/{id}`), with `select` for a selected object. Caddy sends chat apps’ and search engines’ fetchers here (`@ge/domain/link-preview`), and people to the app. It reads as an anonymous visitor: a universe that isn’t public, or an address with nothing there, gets the site’s own card with `noindex`; drafts are never read; spoilers are left out.",
+        "description": "An HTML page of Open Graph and Twitter card tags for a site address: the home page (`/`, the home universe’s card), a universe (`/u/{slug}`), a map (`/u/{slug}/{map}`) or an object’s view (`…/view/{id}`), with `select` for a selected object. Caddy sends chat apps’ and search engines’ fetchers here (`@ge/domain/link-preview`), and people to the app. It reads as an anonymous visitor: a universe that isn’t public, or an address with nothing there, gets the site’s own card with `noindex`; drafts are never read; spoilers are left out. A card with no picture of its own gets the site’s.",
         "parameters": [
           {
             "schema": {
@@ -39830,7 +39897,7 @@
     },
     {
       "name": "groups",
-      "description": "A named set of top-level objects drawn as a colored outline: a sector, territory or faction. Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color."
+      "description": "A named set of top-level objects drawn as a colored outline: a sector, territory or faction. Its `groupTypeId` (a universe setting) decides which layer it belongs to and how groups nest: a Sub-sector's `parentGroupId` must be a Sector. An object is in at most one group of each type. Members are managed under /groups/{id}/members. `outlineColor` defaults to the group type's color. `style.shape` is 'hull' (default: a padded outline around the members) or 'ring': a band around `style.ring.center` ([x, z] ly, default [0, 0], the galaxy's centre), for concentric regions such as a Core, Mid Rim and Outer Rim. A ring follows its members unless `style.ring.innerRadiusLy` / `outerRadiusLy` pin it (inner 0 is a disc; with `outerRadiusLy` set it is drawn even with no members); `style.ring.labelDeg` places its label on the band (degrees from +x toward +z, default −90)."
     },
     {
       "name": "routes",

@@ -211,6 +211,12 @@ void main() {
 - Padding and nesting padding are shares of the galaxy's radius (`tuning.ts`), and dashes are scaled to stay about 10 px on screen.
 - Outlines rebuild only when groups, memberships or positions change.
 - The group label is anchored at the polygon's area centroid and handled by the label layer.
+- **Ring groups** (`style.shape: 'ring'`, D-53): for regions that are concentric bands, such as a Core, Mid Rim and Outer Rim, whose hulls would each cover the whole disc. `ringForGroup()` in `packages/domain/src/geo/ring.ts` draws the band between two circles around `style.ring.center` (default the galaxy's centre):
+  - Each radius follows the members (the padding inside the nearest, the padding outside the farthest, with the same nesting padding as a hull) unless `innerRadiusLy` or `outerRadiusLy` pins it. If one pinned radius passes the other, the following one gives way to keep the band two paddings wide. With `outerRadiusLy` pinned, a ring is drawn with no members, at height 0.
+  - An inner radius of 0 is a disc: one circle, filled as a fan from the centre. Otherwise two circles, filled as a strip of quads between them (two triangles per step), so no polygon with a hole is triangulated.
+  - The circles have a point every `GROUP_RING_STEP_DEG` (2°: 180 points), since a 15° step shows its corners on a circle 50,000 ly across. The outer circle's points are pushed out by 1 / cos(half a step), so its chords stay outside the true circle and every member keeps the full padding.
+  - The label sits on the band, at its middle radius and at `labelDeg` around the centre (from +x toward +z; default `GROUP_RING_LABEL_DEG`, −90, above the centre in the usual top-down view), so concentric rings label like contour lines.
+  - **One code path:** every group, hull or ring, is drawn from the same `GroupShape`: its closed **loops** (one or two), its **fill triangles** and a **label anchor**. Rings join the hulls' merged line and fill batches, so it's still two to three draw calls for any number of groups.
 
 **Routes:** the same merged-line approach, from waypoint positions; dashed or solid per `RouteStyle`.
 

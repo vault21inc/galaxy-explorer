@@ -36,6 +36,9 @@ export interface StressOptions {
   explorable: boolean;
 }
 
+/** One group in this many is drawn as a ring (D-53): 6 of the default 300. */
+const RING_EVERY = 50;
+
 export const STRESS_DEFAULTS: StressOptions = {
   objects: 5_000,
   groups: 300,
@@ -196,6 +199,9 @@ export async function seedStress(db: Database, options: Partial<StressOptions> =
           mapId: map.id,
           groupTypeId,
           outlineColor: `#${(0x404040 + ((index * 2_654_435_761) % 0xbfbfbf)).toString(16).padStart(6, '0')}`,
+          // Every RING_EVERY-th group is a ring around the galaxy's centre (D-53), so `pnpm perf`
+          // draws rings beside the hulls: each is two 180-point circles in the same batches.
+          style: index % RING_EVERY === 0 ? ({ shape: 'ring' } as const) : {},
         })),
       )
       .onConflictDoUpdate({
@@ -203,6 +209,7 @@ export async function seedStress(db: Database, options: Partial<StressOptions> =
         set: {
           groupTypeId: sql`excluded.group_type_id`,
           outlineColor: sql`excluded.outline_color`,
+          style: sql`excluded.style`,
         },
       });
 
