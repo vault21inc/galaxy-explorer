@@ -1,5 +1,6 @@
 import { searchTerms } from '@ge/domain';
 import { copyViewLink } from '@/app/copy-view-link.ts';
+import { aspectLabel, CAPTURE_ASPECTS, type CaptureAspectId } from '@/lib/capture-params.ts';
 import { useEditor } from '@/state/editor.ts';
 import { useHelp } from '@/state/help.ts';
 import { useSpoilers } from '@/state/spoilers.ts';
@@ -23,11 +24,15 @@ export interface CommandContext {
   canEdit: boolean;
   editing: boolean;
   showAll: boolean;
+  /** Capture mode's frame (D-55), or null when it's off. */
+  capture: CaptureAspectId | null;
+  setCapture: (aspect: CaptureAspectId | null) => void;
   navigate: (path: string) => void;
 }
 
 export function paletteCommands(context: CommandContext): PaletteCommand[] {
-  const { universeSlug, mapSlug, maps, canEdit, editing, showAll, navigate } = context;
+  const { universeSlug, mapSlug, maps, canEdit, editing, showAll, capture, setCapture, navigate } =
+    context;
   const commands: PaletteCommand[] = [
     {
       id: 'spoilers',
@@ -57,6 +62,26 @@ export function paletteCommands(context: CommandContext): PaletteCommand[] {
         void copyViewLink();
       },
     });
+    // Capture mode (D-55): the canvas alone, framed for a clip; for everyone, like the link.
+    for (const aspect of CAPTURE_ASPECTS) {
+      if (aspect.id === capture) continue;
+      commands.push({
+        id: `capture:${aspect.id}`,
+        label: `Capture mode ${aspectLabel(aspect)}, for ${aspect.use}`,
+        run: () => {
+          setCapture(aspect.id);
+        },
+      });
+    }
+    if (capture !== null) {
+      commands.push({
+        id: 'capture:leave',
+        label: 'Leave capture mode',
+        run: () => {
+          setCapture(null);
+        },
+      });
+    }
   }
   if (mapSlug !== undefined && canEdit) {
     commands.push(

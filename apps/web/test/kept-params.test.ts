@@ -3,8 +3,10 @@ import { keptSearch } from '../src/lib/kept-params.ts';
 import { draftsSentence } from '../src/pages/universe-settings/visibility-choice.tsx';
 
 describe('keptSearch (M8-T12)', () => {
-  it('keeps perf and a share link’s key, and nothing else', () => {
+  it('keeps perf, a share link’s key and capture mode, and nothing else', () => {
     expect(keptSearch('?perf=1&k=abc&select=x')).toBe('?perf=1&k=abc');
+    // Capture mode stays on into another view (D-55); the shot's move belongs to its view.
+    expect(keptSearch('?capture=9x16&cam=1,2,3,0,0,0&to=4,5,6,0,0,0&secs=8')).toBe('?capture=9x16');
     expect(keptSearch('?select=x')).toBe('');
     expect(keptSearch('')).toBe('');
   });

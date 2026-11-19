@@ -847,3 +847,43 @@ export const GALAXY_BAND_TILT_DEG = 55;
 export const GALAXY_BAND_TURN_DEG = -120;
 export const GALAXY_BAND_COLOR = '#aab4d8';
 export const GALAXY_BAND_INTENSITY = 0.085;
+
+// ---------------------------------------------------------------------------------------------
+// Capture mode (D-55, rendering.md §16): the canvas alone, framed for recording, and a
+// scripted camera move between two camera links.
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * The pixel-ratio cap while capturing (the High setting's): a 9:16 frame is about a third of a
+ * wide window's pixels, so at ratio 2 it costs less than the full window at Medium's 1.5, and a
+ * Retina screen recording gets one canvas pixel per screen pixel. The ratio also stays put while
+ * the camera moves (no `regress`), so a clip doesn't soften mid-move.
+ */
+export const CAPTURE_MAX_DPR = 2;
+
+/** The move's length when the address doesn't say (`secs`), in seconds. */
+export const CAPTURE_MOVE_SECONDS = 10;
+/** The lengths `,` and `.` step through, in seconds; the first and last bound `secs`. */
+export const CAPTURE_MOVE_SECONDS_STEPS = [3, 5, 8, 10, 12, 15, 20, 30, 45, 60] as const;
+/** `spin` is bounded to this many degrees either way: ten turns. */
+export const CAPTURE_SPIN_LIMIT_DEG = 3_600;
+
+/**
+ * Pressing P jumps to the move's start and holds it this long before moving, so a recording
+ * started just before has a still first second to cut on.
+ */
+export const CAPTURE_LEAD_IN_MS = 1_000;
+
+/**
+ * How much the move pulls back to travel (the ρ of van Wijk and Nuij's "smooth and efficient
+ * zooming and panning", the curve d3's zoom transitions use; render/camera/capture-move.ts).
+ * Higher pulls back further and travels faster while out; √2 is the paper's choice, which
+ * viewers in its trials found most natural. Near 0 it barely pulls back, and a long pan whizzes.
+ */
+export const CAPTURE_ZOOM_CURVATURE = Math.SQRT2;
+
+/**
+ * The keys' card in the black bars beside the frame shows only where a bar is at least this
+ * wide, in CSS px, so it never covers the frame.
+ */
+export const CAPTURE_HINT_MIN_BAR_PX = 240;

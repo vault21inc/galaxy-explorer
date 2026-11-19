@@ -70,16 +70,31 @@ describe('the help panel', () => {
     expect(rowsOf('mac', false, false).map((section) => section.id)).toEqual([
       'everywhere',
       'pointer',
+      'capture',
     ]);
     expect(rowsOf('mac', false).map((section) => section.id)).toEqual([
       'everywhere',
       'edit',
       'pointer',
+      'capture',
     ]);
     expect(rowsOf('mac', true).map((section) => section.id)).toEqual([
       'edit',
       'everywhere',
       'pointer',
+      'capture',
+    ]);
+  });
+
+  it('lists capture mode’s keys, in the order they’re used (D-55)', () => {
+    const capture = rowsOf('mac', false).find((section) => section.id === 'capture');
+    expect(capture?.rows.map((item) => [item.description, item.keys.join(' ')])).toEqual([
+      ['Start the move here', 'A'],
+      ['End the move here', 'B'],
+      ['Play the move, or stop it', 'P'],
+      ['Make the move shorter', ','],
+      ['Make the move longer', '.'],
+      ['Leave capture mode', 'Esc'],
     ]);
   });
 

@@ -34,7 +34,7 @@ These are **acceptance criteria**. A milestone that touches 3D isn't done until 
 
 ### Hard rules
 
-1. **Render on demand.** The canvas uses `frameloop="demand"`. Anything that changes the picture calls `invalidate()`. Frames render continuously only while the camera moves or a transition plays; ambient motion (planet spin, cloud drift) is opt-in and capped at 30 fps. Its timer is the clock: each tick turns the globe and asks for one frame, and frames only draw the angle. A renderer that publishes positions while a frame is drawn mustn't ask for another frame unless it has something new to show, or it starts a loop at the display's rate.
+1. **Render on demand.** The canvas uses `frameloop="demand"`. Anything that changes the picture calls `invalidate()`. Frames render continuously only while the camera moves, a transition plays or a capture move plays (§16); ambient motion (planet spin, cloud drift) is opt-in and capped at 30 fps. Its timer is the clock: each tick turns the globe and asks for one frame, and frames only draw the angle. A renderer that publishes positions while a frame is drawn mustn't ask for another frame unless it has something new to show, or it starts a loop at the display's rate.
 2. **Cap the pixel ratio.** DPR is limited to 1.5 by default and drops during interaction (camera-controls' `regress` plus drei's `<AdaptiveDpr>`; the quality guard of §13 steps the setting down if frames stay slow). The picture is crisp when still and lighter while moving. Only the "High" quality setting allows 2.
 3. **No per-frame React work.** Camera pose, hover, projected positions and label placement live in refs or zustand transient subscriptions, never in React state that re-renders components each frame.
 4. **No allocations in `useFrame`.** Reuse vectors and matrices from module-level scratch objects.
@@ -401,3 +401,16 @@ interface GeTestHooks {
 
   No other code changes.
 - **Asteroid fields as subjects** follow the same path with an instanced-rock renderer.
+
+## 16. Capture mode
+
+D-55 and ux.md §14 have what it's for. Three pieces:
+
+- **The frame** (`app/app-shell.tsx`): the canvas, the label layer, the progress ring and the fade share one wrapper, which capture mode shrinks to the largest centred box of the chosen shape (`captureFrame()` in `lib/capture-params.ts`, whole pixels). R3F resizes the canvas to it, and picking, labels and tests measure from the canvas's own rectangle, so nothing else changes. The rest of the page is hidden with `display: none`, never unmounted.
+- **Resolution:** while capturing, the pixel ratio may reach `CAPTURE_MAX_DPR` (2, the High setting's) whatever the quality setting, `regress` is off so it doesn't halve while the camera moves, and the quality guard doesn't step down. A 9:16 frame is about a third of a wide window's pixels, so this still costs less than the full window at Medium.
+- **The move** (`render/camera/capture-move.ts`, played by `render/capture-move-driver.tsx`):
+  - The pose is split in two. The **target and distance** follow van Wijk and Nuij's smooth zooming and panning (2003), the curve d3's zoom transitions use: measured in view spans (the view's height, 2 · distance · tan(fov / 2)), a pure zoom is exponential, so each second covers the same ratio of distance, and a long trip pulls back while it travels and pushes in at the end, so the picture moves at one pace. `CAPTURE_ZOOM_CURVATURE` (ρ, √2) sets how far it pulls back. The **direction** from target to camera is two angles, azimuth around the vertical and polar from straight above, each interpolated on its own, the azimuth the short way round plus any `spin`.
+  - Time is eased (half a cosine) before either is computed, so the move starts and stops gently.
+  - `planMove()` does the trigonometry once; `poseAt()` writes into reused vectors, so frames allocate nothing.
+  - The driver is a `useFrame` at priority −2, before camera-controls' own update at −1, so the pose it sets (without camera-controls' smoothing) is drawn in the same frame. Each frame asks for the next until the end; the one-second hold before the move is a timer, not frames. Then the canvas is idle again.
+- **Measured** (headless Chrome on the owner's Mac, 1512 × 860 window at DPR 2, the 9:16 frame 483 × 858, the Milky Way): 9 draw calls in the galaxy view and in the Solar System's view, as outside capture mode; a 6–8 s move draws a steady 60 frames a second (median 16.7 ms, p95 17.0–17.5 ms), and 0 frames before and after.

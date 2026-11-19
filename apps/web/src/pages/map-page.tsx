@@ -13,6 +13,7 @@ import { useSelectionUrlSync } from '@/state/selection-url.ts';
 import { viewPath } from '@/state/view-navigator.ts';
 import { levels } from '@/levels/registry.ts';
 import { SubjectViewPanels } from './subject-view-panels.tsx';
+import { useCaptureMode } from './use-capture-mode.ts';
 import { ViewPanels } from './view-panels.tsx';
 
 /**
@@ -36,6 +37,8 @@ export function MapPage() {
   const top = useNavigation(topView);
   const universeId = route.status === 'ready' ? route.universe.id : undefined;
   useSelectionUrlSync();
+  // `?capture=`: the canvas alone, framed for recording (D-55).
+  useCaptureMode();
   // The tab's title (M8-T9): the map and universe. A system or orbit view adds its subject's
   // name, once it has it (subject-view-panels.tsx).
   const titleParts =

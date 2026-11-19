@@ -45,6 +45,14 @@ export function viewLink(
 ): string {
   const params = new URLSearchParams(location.search);
   params.set(CAMERA_PARAM, formatCameraParam(pose));
-  // Commas are safe in a query; leaving them unescaped keeps the link readable.
-  return `${location.origin}${location.pathname}?${params.toString().replace(/%2C/g, ',')}`;
+  return `${location.origin}${location.pathname}${readableSearch(params)}`;
+}
+
+/**
+ * A query string with its `?` ('' when empty), with commas left unescaped: they're safe in a
+ * query, and `cam=1,2,3,…` stays readable where `cam=1%2C2%2C3…` wouldn't be.
+ */
+export function readableSearch(params: URLSearchParams): string {
+  const query = params.toString().replace(/%2C/g, ',');
+  return query === '' ? '' : `?${query}`;
 }

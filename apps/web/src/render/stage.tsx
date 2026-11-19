@@ -2,8 +2,10 @@ import { AdaptiveDpr, CameraControls } from '@react-three/drei';
 import { Canvas, type RootState } from '@react-three/fiber';
 import { useState } from 'react';
 import { InputBindings } from '@/input/input-bindings.tsx';
+import { useCapture } from '@/state/capture.ts';
 import { useEditor } from '@/state/editor.ts';
 import { useQuality, useQualityPreset } from '@/state/quality.ts';
+import { CaptureMoveDriver } from './capture-move-driver.tsx';
 import { attachCanvas, DIAGNOSTICS_ENABLED, loadTestHooks } from './diagnostics.ts';
 import { FrameProbe } from './frame-probe.tsx';
 import { LabelDriver } from './labels/label-driver.tsx';
@@ -14,6 +16,7 @@ import { TransitionRig } from './transition/transition-rig.tsx';
 import { ViewHost } from './view-host.tsx';
 import {
   CAMERA_DRAGGING_SMOOTH_TIME_S,
+  CAPTURE_MAX_DPR,
   CAMERA_FAR,
   CAMERA_FOV_DEG,
   CAMERA_NEAR,
@@ -41,13 +44,15 @@ import {
 export function Stage() {
   const { dprRange } = useQualityPreset();
   const editing = useEditor((state) => state.editing);
+  // Capture mode (D-55): a sharper canvas that stays sharp while the camera moves.
+  const capture = useCapture((state) => state.aspect !== null);
   // WebGL fixes antialiasing when the context is created, so read it once: a change in the
   // quality popover applies on the next load.
   const [antialias] = useState(() => QUALITY_PRESETS[useQuality.getState().level].antialias);
   return (
     <Canvas
       frameloop="demand"
-      dpr={dprRange}
+      dpr={capture ? [1, Math.max(dprRange[1], CAPTURE_MAX_DPR)] : dprRange}
       gl={{ antialias, powerPreference: 'default', alpha: false }}
       camera={{
         fov: CAMERA_FOV_DEG,
@@ -63,7 +68,7 @@ export function Stage() {
       <AdaptiveDpr />
       <CameraControls
         makeDefault
-        regress
+        regress={!capture}
         smoothTime={CAMERA_SMOOTH_TIME_S}
         draggingSmoothTime={CAMERA_DRAGGING_SMOOTH_TIME_S}
         dollyToCursor
@@ -73,6 +78,8 @@ export function Stage() {
       <InputBindings mode={editing ? 'edit' : 'view'} />
       {/* Lets the transition between views fly the camera (rendering.md §4). */}
       <TransitionRig />
+      {/* Plays capture mode's scripted camera move (D-55). */}
+      <CaptureMoveDriver />
       <Sky />
       {/* The current view, which sets its own camera limits (rendering.md §4–5). */}
       <ViewHost />

@@ -327,6 +327,45 @@ export function resolveEditKey(
 }
 
 /**
+ * Capture mode's keys (D-55, ux.md §14). They come before the keys above while capture mode is
+ * on: Esc leaves it instead of going up a view. The other keys above still work, so the camera
+ * can be framed with the arrows, `+` and `−`, and L changes the labels.
+ */
+export type CaptureKeyAction =
+  'leave-capture' | 'play-move' | 'mark-start' | 'mark-end' | 'move-shorter' | 'move-longer';
+
+export const CAPTURE_KEY_BINDINGS: Readonly<Record<string, CaptureKeyAction>> = {
+  Escape: 'leave-capture',
+  p: 'play-move',
+  P: 'play-move',
+  a: 'mark-start',
+  A: 'mark-start',
+  b: 'mark-end',
+  B: 'mark-end',
+  ',': 'move-shorter',
+  '.': 'move-longer',
+};
+
+export const CAPTURE_ACTION_DESCRIPTIONS: Readonly<Record<CaptureKeyAction, string>> = {
+  'mark-start': 'Start the move here',
+  'mark-end': 'End the move here',
+  'play-move': 'Play the move, or stop it',
+  'move-shorter': 'Make the move shorter',
+  'move-longer': 'Make the move longer',
+  'leave-capture': 'Leave capture mode',
+};
+
+/**
+ * Keys capture mode keeps from the reader while it's on: edit mode and its Add menu would change
+ * what's drawn, and the help would open over the frame.
+ */
+export const CAPTURE_BLOCKED_KEY_ACTIONS: readonly KeyAction[] = [
+  'toggle-edit',
+  'add-object',
+  'show-help',
+];
+
+/**
  * Shortcuts with the primary modifier that work on every page, even with focus in a text field
  * (M7-T6): ⌘K on a Mac, Ctrl + K elsewhere, opens the command palette.
  */

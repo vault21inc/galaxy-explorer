@@ -1,0 +1,59 @@
+import { create } from 'zustand';
+import type { CaptureAspect } from '@/lib/capture-params.ts';
+import type { MovePlan } from '@/render/camera/capture-move.ts';
+
+/**
+ * Capture mode (D-55, ux.md §14): the canvas alone, framed to an aspect ratio for recording,
+ * with a scripted camera move.
+ *
+ * The address holds the shot (lib/capture-params.ts); the map page mirrors its `capture` here
+ * (pages/use-capture-mode.ts), so the shell, the canvas and the keys can read it without the
+ * router. A move that's playing lives here too: the canvas's driver reads it on every frame
+ * through `getState()`, never through React (rendering.md §2, rule 3).
+ */
+
+export interface PlayingMove {
+  plan: MovePlan;
+  /** `performance.now()` when the move itself starts, after the lead-in hold. */
+  startsAtMs: number;
+  durationMs: number;
+}
+
+interface CaptureState {
+  /** The frame's shape, or null outside capture mode. */
+  aspect: CaptureAspect | null;
+  move: PlayingMove | null;
+  /** A line for the keys' card: what just happened, or why P did nothing. */
+  notice: string | null;
+  setAspect: (aspect: CaptureAspect | null) => void;
+  play: (move: PlayingMove) => void;
+  stop: () => void;
+  setNotice: (notice: string | null) => void;
+}
+
+export const useCapture = create<CaptureState>()((set) => ({
+  aspect: null,
+  move: null,
+  notice: null,
+  setAspect: (aspect) => {
+    set((state) =>
+      state.aspect?.id === aspect?.id
+        ? state
+        : { aspect, ...(aspect === null ? { move: null, notice: null } : {}) },
+    );
+  },
+  play: (move) => {
+    set({ move, notice: null });
+  },
+  stop: () => {
+    set((state) => (state.move === null ? state : { move: null }));
+  },
+  setNotice: (notice) => {
+    set({ notice });
+  },
+}));
+
+/** Whether capture mode is on: for code that runs per frame, outside React. */
+export function capturing(): boolean {
+  return useCapture.getState().aspect !== null;
+}

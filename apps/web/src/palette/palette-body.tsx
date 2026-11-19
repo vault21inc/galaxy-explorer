@@ -12,6 +12,9 @@ import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { hasViewNavigator, viewPath } from '@/state/view-navigator.ts';
 import { commandMatches, paletteCommands, type PaletteCommand } from './palette-commands.ts';
 import { KEPT_PARAMS, keptSearch } from '@/lib/kept-params.ts';
+import { readableSearch } from '@/lib/camera-param.ts';
+import { withCapture } from '@/lib/capture-params.ts';
+import { useCapture } from '@/state/capture.ts';
 
 /** How long typing pauses before the words are searched. */
 const SEARCH_DELAY_MS = 150;
@@ -28,6 +31,7 @@ export function PaletteBody({ onDone }: { onDone: () => void }) {
   const listId = useId();
   const navigate = useNavigate();
   const location = useLocation();
+  const capture = useCapture((state) => state.aspect?.id ?? null);
   const { universeSlug, mapSlug } = useParams();
   const route = useUniverseRoute(universeSlug ?? '');
   const ready = universeSlug !== undefined && route.status === 'ready' ? route : null;
@@ -59,6 +63,12 @@ export function PaletteBody({ onDone }: { onDone: () => void }) {
     canEdit,
     editing,
     showAll: policy.showAll,
+    capture,
+    // Capture mode is in the address (lib/capture-params.ts); turning it on doesn't add history.
+    setCapture: (aspect) => {
+      const search = readableSearch(withCapture(new URLSearchParams(location.search), aspect));
+      void navigate({ search }, { replace: true, state: location.state as unknown });
+    },
     // A share link's key stays in the address within its universe (M8-T12), as between views.
     navigate: (path) => {
       const within = universeSlug !== undefined && path.startsWith(`/u/${universeSlug}/`);

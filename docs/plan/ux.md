@@ -32,6 +32,7 @@ What the app looks like and how it responds to the mouse, trackpad, touch and ke
 - **Left outliner:** a tree of the current view's contents, grouped by group. It's always available in edit mode, and in view mode through a "List" button. It is also the accessible alternative to the canvas (§10). The History and Map settings panels open in its place, one at a time; closing them brings the outliner back.
 - **Bottom toolbar:** edit mode only.
 - **Overlays:** the shortcut help (`?`, §12), a tour's step (§12), and toasts in the bottom-right corner.
+- **Capture mode** (§14) hides all of the above and frames the canvas alone, for recording clips.
 
 ## 2. Modes
 
@@ -93,6 +94,7 @@ Shortcuts are ignored while focus is in a text field. `?` opens this list as an 
 | Space (hold) | Show all labels while held | both |
 | Shift + S | Toggle "Show potential spoilers" | both |
 | ⌘/Ctrl + K | Search / command palette (M7) | both |
+| A, B, P, `,` `.`, Esc | Capture mode's keys: mark the move's start and end, play it, change its length, leave (§14) | capture mode |
 | ? | Shortcut help | both |
 | E | Toggle edit mode | owner |
 | N | Add an object at the cursor (opens the type menu) | edit |
@@ -187,6 +189,7 @@ How hidden content looks (P2, black out rather than remove):
   - `/u/{universeSlug}/{mapSlug}/view/{objectId}` is the system or orbit view of that object (the level comes from its type);
   - `?select={id},{id}` restores the selection;
   - `?cam={px},{py},{pz},{tx},{ty},{tz}` is the camera the view opens with: its position and the point it looks at, in the view's frame and unit (D-52). **Copy link to this view**, in the command palette, copies the address with the camera where it is now. Moving around doesn't rewrite it;
+  - `?capture=9x16` (or `4x5`, `3x4`) is capture mode, with `to`, `secs` and `spin` for its move (§14, D-55);
   - `/u/{universeSlug}/settings` is the universe's settings page (M4-T1), so no map may use the slug `settings`.
 
   Every state can be shared as a link, and the browser's Back and Forward move between views.
@@ -278,3 +281,17 @@ D-34 has the reasoning; data-model §8 has the access rule. None of this exists 
 
   Disabling, deleting, transferring, a role change and a reset link each ask for a current two-factor code, or the admin's password if their codes are off (D-47).
 - **Accessible like the rest** (§10): these are ordinary pages and tables with labelled controls, keyboard paths and focus kept on dialogs; the QR code has the secret as text beside it.
+
+## 14. Capture mode
+
+D-55 has the reasoning; rendering.md §16 the camera's path. For recording clips of the views, such as vertical videos for Instagram: the canvas alone, framed to a shape, with a scripted camera move.
+
+- **On and off:** the command palette's **Capture mode 9:16, for Reels and Stories** (or **4:5** and **3:4**, for feed posts), or `?capture=9x16` in the address. Esc, or **Leave capture mode** in the palette, leaves it. It's for everyone, in any view, and stays on into another view (Enter on a selected system flies into it, framed).
+- **What's in the frame:** the canvas, its labels and its fades, in the largest centred box of that shape, on black. Nothing else: no top bar, panels, List, tour offer or toasts. Labels follow the label mode, so L shows or hides them; groups' outlines follow Layers, set before. Edit mode is left on the way in, since its drafts and tools aren't what readers see.
+- **The keys' card** sits in the black bar beside the frame, outside what's recorded: the frame's size in CSS pixels and in the screen's own, the shot, the keys and what just happened. It's left out where the bar is too narrow to hold it.
+- **The move:**
+  - `cam` is where it starts (and where the view opens, D-52), `to` where it ends, `secs` its length (10 by default, 3 to 60), and `spin` extra degrees to turn around the target on the way: a turntable with no `to`. Without `cam` it starts where the camera is.
+  - **A** writes the camera's pose into `cam`, **B** into `to`; `,` and `.` step the length through 3, 5, 8, 10, 12, 15, 20, 30, 45 and 60 s. The address is the whole shot, readable (`cam=1,2,3,…`), to bookmark or write down.
+  - **P** jumps to the start, holds still a second, then moves, easing in and out; P again stops it. The pointer is hidden while it plays. A drag, a wheel, a camera key or a change of view stops it too, leaving the camera where it was.
+  - With `prefers-reduced-motion` (§10), P cuts to the end with a quick fade instead, and the card says so.
+- **Recording** is the screen recorder's: on a Mac, ⇧⌘5 and "Record Selected Portion" around the frame. A Retina screen records the frame at twice its CSS size.

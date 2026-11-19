@@ -1,5 +1,6 @@
 import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
+import { capturing } from '@/state/capture.ts';
 import { useQuality } from '@/state/quality.ts';
 import { FrameRateGuard } from './frame-rate-guard.ts';
 import { pacedIntervalMs } from './frame-pacing.ts';
@@ -17,7 +18,8 @@ export function QualityGuard() {
   const automated = typeof navigator !== 'undefined' && navigator.webdriver;
 
   useFrame(() => {
-    if (automated) return;
+    // Nor while capturing (D-55): a quality change mid-clip would show in the recording.
+    if (automated || capturing()) return;
     guard.current ??= new FrameRateGuard(QUALITY_FLOOR_FPS, QUALITY_WINDOW_MS, QUALITY_PACED_SLACK);
     const now = performance.now();
     const interval = now - last.current;

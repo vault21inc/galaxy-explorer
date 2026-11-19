@@ -1,6 +1,8 @@
 import {
   ACTION_DESCRIPTIONS,
   BINDINGS,
+  CAPTURE_ACTION_DESCRIPTIONS,
+  CAPTURE_KEY_BINDINGS,
   EDIT_ACTION_DESCRIPTIONS,
   EDIT_KEY_BINDINGS,
   GLOBAL_ACTION_DESCRIPTIONS,
@@ -25,7 +27,7 @@ export interface HelpRow {
 }
 
 export interface HelpSection {
-  id: 'everywhere' | 'edit' | 'pointer';
+  id: 'everywhere' | 'edit' | 'pointer' | 'capture';
   title: string;
   rows: HelpRow[];
 }
@@ -120,8 +122,9 @@ class Rows {
 
 /**
  * The sections, current mode's first: everywhere (keys in both modes), edit mode (only for a
- * reader who may edit: E, N, the edit commands and edit-mode gestures), and mouse, trackpad and
- * touch gestures. Rows bound to `none`, or to another platform, are left out.
+ * reader who may edit: E, N, the edit commands and edit-mode gestures), mouse, trackpad and
+ * touch gestures, and capture mode's keys (D-55). Rows bound to `none`, or to another platform,
+ * are left out.
  */
 export function helpSections({
   platform,
@@ -171,9 +174,23 @@ export function helpSections({
     { id: 'everywhere', title: 'Everywhere', rows: everywhere.list() },
     ...(canEdit ? [{ id: 'edit' as const, title: 'Edit mode', rows: edit.list() }] : []),
     { id: 'pointer', title: 'Mouse, trackpad and touch', rows: pointer.list() },
+    { id: 'capture', title: 'Capture mode', rows: captureRows(platform) },
   ];
   // The current mode's section first.
   return editing
     ? sections.toSorted((a, b) => Number(b.id === 'edit') - Number(a.id === 'edit'))
     : sections;
+}
+
+/** Capture mode's keys (D-55), in the order they're used: mark, play, adjust, leave. */
+export function captureRows(platform: Platform): HelpRow[] {
+  const rows = new Rows();
+  const order = Object.keys(CAPTURE_ACTION_DESCRIPTIONS);
+  const bindings = Object.entries(CAPTURE_KEY_BINDINGS).toSorted(
+    ([, a], [, b]) => order.indexOf(a) - order.indexOf(b),
+  );
+  for (const [key, action] of bindings) {
+    rows.add(CAPTURE_ACTION_DESCRIPTIONS[action], formatKeys(key, [], platform));
+  }
+  return rows.list();
 }
