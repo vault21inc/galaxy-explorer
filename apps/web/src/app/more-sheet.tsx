@@ -9,6 +9,7 @@ import {
   List,
   Pencil,
   Settings2,
+  Video,
   type LucideIcon,
 } from 'lucide-react';
 import { useId, type ReactNode } from 'react';
@@ -42,6 +43,7 @@ export function MoreSheet() {
       )}
       <SpoilerRow />
       <OpenRow sheet="display" icon={Settings2} label="Display" />
+      {onMap && <OpenRow sheet="capture" icon={Video} label="Record a clip" />}
       <OpenRow sheet="help" icon={CircleHelp} label="Help and tours" tourName="help" />
       {account.state === 'signed-in' && (
         <OpenRow sheet="account" icon={CircleUser} label={account.username} />

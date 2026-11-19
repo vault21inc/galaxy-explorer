@@ -1,6 +1,7 @@
 import { recordingSize, type CaptureAspect } from '@/lib/capture-params.ts';
 import { recordMove, RecordingUnsupportedError } from '@/render/capture/record-move.ts';
 import { CAPTURE_RECORD_HOLD_S } from '@/render/tuning.ts';
+import { hasFinePointer } from '@/lib/pointer-kind.ts';
 import { useCapture } from '@/state/capture.ts';
 import { shotPlan } from './shot-plan.ts';
 
@@ -29,6 +30,7 @@ export async function recordShot(): Promise<void> {
   const controller = new AbortController();
   running = controller;
   capture.setNotice(null);
+  capture.setShareable(null);
   capture.setRecording(0);
   // The card shows whole percents: at most 100 updates, not one per frame (rendering.md §2).
   let shownPercent = 0;
@@ -49,7 +51,14 @@ export async function recordShot(): Promise<void> {
       },
     });
     const name = clipName(aspect, new Date());
-    saveFile(clip, name);
+    // On a phone or tablet, the share sheet saves it to Photos; elsewhere, a download.
+    const file = new File([clip], name, { type: 'video/mp4' });
+    // `canShare` is missing from some browsers (Firefox on a desktop) though the types say not.
+    if (!hasFinePointer() && 'canShare' in navigator && navigator.canShare({ files: [file] })) {
+      useCapture.getState().setShareable(file);
+    } else {
+      saveFile(clip, name);
+    }
     const seconds = shot.durationS + 2 * CAPTURE_RECORD_HOLD_S;
     capture.setNotice(
       `Saved ${name}: ${String(width)} × ${String(height)}, ${String(seconds)} s at ${String(shot.fps)} fps.`,
@@ -95,4 +104,20 @@ function saveFile(file: Blob, name: string): void {
   setTimeout(() => {
     URL.revokeObjectURL(url);
   }, 60_000);
+}
+
+/** Hands the finished clip to the share sheet: called from the Save or share button's tap. */
+export async function shareClip(): Promise<void> {
+  const file = useCapture.getState().shareable;
+  if (!file) return;
+  try {
+    await navigator.share({ files: [file], title: file.name });
+    useCapture.getState().setShareable(null);
+  } catch (error) {
+    // Closing the share sheet without choosing is an AbortError: the clip stays offered.
+    if (error instanceof DOMException && error.name === 'AbortError') return;
+    useCapture
+      .getState()
+      .setNotice(`Couldn’t share: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }

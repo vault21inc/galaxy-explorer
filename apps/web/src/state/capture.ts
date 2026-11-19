@@ -32,6 +32,13 @@ interface CaptureState {
    * pixels the clip's; null otherwise. Its frame loop is 'never' meanwhile.
    */
   recordDpr: number | null;
+  /**
+   * A finished clip to hand to the phone's share sheet (L3-T5): on a touch device a download
+   * lands in Files, but Instagram reads Photos, and the share sheet has "Save Video". Sharing
+   * needs a tap of its own, so it waits here for the Save or share button. Null otherwise.
+   */
+  shareable: File | null;
+  setShareable: (file: File | null) => void;
   setAspect: (aspect: CaptureAspect | null) => void;
   play: (move: PlayingMove) => void;
   stop: () => void;
@@ -46,11 +53,15 @@ export const useCapture = create<CaptureState>()((set) => ({
   notice: null,
   recording: null,
   recordDpr: null,
+  shareable: null,
+  setShareable: (shareable) => {
+    set({ shareable });
+  },
   setAspect: (aspect) => {
     set((state) =>
       state.aspect?.id === aspect?.id
         ? state
-        : { aspect, ...(aspect === null ? { move: null, notice: null } : {}) },
+        : { aspect, ...(aspect === null ? { move: null, notice: null, shareable: null } : {}) },
     );
   },
   play: (move) => {

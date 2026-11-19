@@ -4,13 +4,14 @@ import { EventsList } from '@/panels/events-list/events-list.tsx';
 import { LayersPanel } from '@/panels/layers/layers-panel.tsx';
 import { useSheet, type SheetId } from '@/state/sheet.ts';
 import { AccountRows } from './account-menu.tsx';
+import { CaptureSheet } from './capture-sheet.tsx';
 import { LocationSheet } from './location-sheet.tsx';
 import { MoreSheet } from './more-sheet.tsx';
 import { QualitySettings } from './quality-popover.tsx';
 import { useUniverseBar } from './use-universe-bar.ts';
 
 /** Each sheet's title, and whether it was opened from More (so it has a way back there). */
-const SHEETS: Record<Exclude<SheetId, 'list' | 'capture'>, { title: string; fromMore: boolean }> = {
+const SHEETS: Record<Exclude<SheetId, 'list'>, { title: string; fromMore: boolean }> = {
   location: { title: 'Where you are', fromMore: false },
   more: { title: 'More', fromMore: false },
   events: { title: 'Events', fromMore: true },
@@ -18,6 +19,7 @@ const SHEETS: Record<Exclude<SheetId, 'list' | 'capture'>, { title: string; from
   display: { title: 'Display', fromMore: true },
   help: { title: 'Help and tours', fromMore: true },
   account: { title: 'Account', fromMore: true },
+  capture: { title: 'Record a clip', fromMore: true },
 };
 
 /**
@@ -30,7 +32,7 @@ export function SlimSheets({ universeSlug }: { universeSlug: string | undefined 
   const open = useSheet((state) => state.open);
   const show = useSheet((state) => state.show);
   const close = useSheet((state) => state.close);
-  const id = open === null || open === 'list' || open === 'capture' ? null : open;
+  const id = open === null || open === 'list' ? null : open;
   const sheet = id ? SHEETS[id] : null;
   return (
     <Sheet
@@ -54,6 +56,7 @@ export function SlimSheets({ universeSlug }: { universeSlug: string | undefined 
       {id === 'display' && <QualitySettings />}
       {id === 'help' && <HelpRows />}
       {id === 'account' && <AccountRows />}
+      {id === 'capture' && <CaptureSheet />}
     </Sheet>
   );
 }

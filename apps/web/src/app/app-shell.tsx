@@ -2,6 +2,8 @@ import { lazy, Suspense, useRef } from 'react';
 import { Outlet, useSearchParams } from 'react-router';
 import { TourLayer } from '@/help/tour-layer.tsx';
 import { captureFrame } from '@/lib/capture-params.ts';
+import { useLayoutTier } from '@/lib/layout-tier.ts';
+import { useHasFinePointer } from '@/lib/pointer-kind.ts';
 import { cn } from '@/lib/utils.ts';
 import { LabelLayer } from '@/render/labels/label-layer.tsx';
 import { Stage } from '@/render/stage.tsx';
@@ -10,6 +12,7 @@ import { TransitionOverlay } from '@/render/transition/transition-overlay.tsx';
 import { useCapture } from '@/state/capture.ts';
 import { useReducedMotion } from '@/state/quality.ts';
 import { CaptureCard } from './capture-card.tsx';
+import { CaptureControls } from './capture-controls.tsx';
 import { QualityNotice } from './quality-notice.tsx';
 import { Toaster } from './toaster.tsx';
 import { TopBar } from './top-bar.tsx';
@@ -38,6 +41,9 @@ export function AppShell() {
   const shell = useRef<HTMLDivElement>(null);
   const size = useElementSize(shell);
   const frame = aspect && size ? captureFrame(size.width, size.height, aspect) : null;
+  const slim = useLayoutTier() === 'slim';
+  const finePointer = useHasFinePointer();
+  const touchControls = slim || !finePointer;
 
   return (
     <div
@@ -85,9 +91,11 @@ export function AppShell() {
         <QualityNotice />
         <Toaster />
       </div>
-      {aspect && frame && size && (
+      {aspect && frame && size && !touchControls && (
         <CaptureCard aspect={aspect} frame={frame} containerWidth={size.width} />
       )}
+      {/* Capture's keys as buttons, on a phone or without a mouse or trackpad (L3-T5). */}
+      {aspect && touchControls && <CaptureControls />}
       {showPerfHud && (
         <Suspense fallback={null}>
           <PerfHud />

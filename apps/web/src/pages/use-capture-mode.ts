@@ -4,6 +4,7 @@ import {
   CAPTURE_KEY_BINDINGS,
   CAPTURE_BLOCKED_KEY_ACTIONS,
   KEY_BINDINGS,
+  type CaptureKeyAction,
 } from '@/input/bindings.ts';
 import { ignoresCameraKeys } from '@/input/use-keyboard.ts';
 import { readableSearch } from '@/lib/camera-param.ts';
@@ -80,13 +81,7 @@ export function useCaptureMode(): void {
       if (action) {
         // Before the view's own keys (input/use-keyboard.ts), which skip a prevented event.
         event.preventDefault();
-        runCaptureKey(action, (change) => {
-          const { navigate: go, location: at } = here.current;
-          // Written with readable commas (`cam=1,2,3,…`), so a shot's address can be copied
-          // from the address bar and written down.
-          const search = readableSearch(change(new URLSearchParams(at.search)));
-          void go({ search }, { replace: true, state: at.state as unknown });
-        });
+        runCaptureKey(action, searchUpdater(here.current));
         return;
       }
       if (viewAction && CAPTURE_BLOCKED_KEY_ACTIONS.includes(viewAction)) {
@@ -108,7 +103,37 @@ export function useCaptureMode(): void {
   }, [aspectId]);
 }
 
-function runCaptureKey(action: (typeof CAPTURE_KEY_BINDINGS)[string], update: UpdateSearch): void {
+/**
+ * Changes the address's query in place, for capture's actions: written with readable commas
+ * (`cam=1,2,3,…`), so a shot's address can be copied from the address bar and written down.
+ */
+function searchUpdater(here: {
+  navigate: ReturnType<typeof useNavigate>;
+  location: ReturnType<typeof useLocation>;
+}): UpdateSearch {
+  return (change) => {
+    const search = readableSearch(change(new URLSearchParams(here.location.search)));
+    void here.navigate({ search }, { replace: true, state: here.location.state as unknown });
+  };
+}
+
+/**
+ * Capture's actions for buttons (app/capture-controls.tsx, L3-T5): what each key does, without
+ * a keyboard. While a clip records, only leaving does anything: it stops the recording.
+ */
+export function useCaptureActions(): (action: CaptureKeyAction) => void {
+  const navigate = useNavigate();
+  const location = useLocation();
+  return (action) => {
+    if (useCapture.getState().recording !== null) {
+      if (action === 'leave-capture') cancelRecording();
+      return;
+    }
+    runCaptureKey(action, searchUpdater({ navigate, location }));
+  };
+}
+
+function runCaptureKey(action: CaptureKeyAction, update: UpdateSearch): void {
   const capture = useCapture.getState();
   switch (action) {
     case 'leave-capture':

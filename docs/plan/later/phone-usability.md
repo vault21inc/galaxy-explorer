@@ -1,6 +1,6 @@
 # Later: a usability pass for phones and narrow windows
 
-**Status:** in progress (L3-T1 to L3-T4 done, 2026-11-19). Written 2026-11-19 after the owner tried the live site on an iPhone; the owner settled its open questions the same day ("Decided" below). The task IDs (`L3-T1` and so on) are provisional: renumber them if this joins a milestone. Do the tasks in order: each one stands on the ones before it and leaves `main` working.
+**Status:** L3-T1 to L3-T5 done (2026-11-19). Left: the owner's checks on an iPhone (L3-T2, L3-T3, L3-T5), the phone performance measurements (L3-T6, the owner's), and the optional L3-T7. Written 2026-11-19 after the owner tried the live site on an iPhone; the owner settled its open questions the same day ("Decided" below). The task IDs (`L3-T1` and so on) are provisional: renumber them if this joins a milestone. Do the tasks in order: each one stands on the ones before it and leaves `main` working.
 
 **Goal:** a reader on a phone can do everything a reader on a laptop can: find their way around, search, open and read an object, change what's shown, and record a clip. Nothing is off screen or too small to tap, at any window width from 320 px up. Editing stays with a mouse or trackpad, and the app says so only to the people it affects.
 
@@ -219,16 +219,16 @@ One row, left to right, each 44 px high:
 
 - **Record a clip** in the More sheet lists the three shapes (the palette's commands, which stay) and enters capture mode.
 - **Buttons for the keys.** Capture's actions are already a table (`CaptureKeyAction`, run by `runCaptureKey` in `use-capture-mode.ts`). Export the runner, and `capture-controls.tsx` renders one button per action from the table and `CAPTURE_ACTION_DESCRIPTIONS`: Start here, End here, shorter, longer, Play, Record, Leave. No second list of actions.
-- **Where they sit:** shown when there's no fine pointer, or on the slim tier. A strip along the bottom of the window, over the frame's lower edge, inside the safe area, with one line of the card's text above it (the shot, and what just happened). The card beside the frame stays for wide windows.
+- **Where they sit:** shown when there's no fine pointer, or on the slim tier. (As built: the keys' card isn't shown then; on a phone its bars are too narrow for it anyway.) A strip along the bottom of the window, over the frame's lower edge, inside the safe area, with one line of the card's text above it (the shot, and what just happened). The card beside the frame stays for wide windows.
 - **They can't get into the clip.** A recording is drawn from the WebGL canvas and the painted labels (rendering.md §16), never from the page, so nothing over the frame is recorded. The strip still hides while a move plays or records, so the owner sees the shot and a screen recorder gets a clean frame; a tap during play stops it (a drag already does), and Stop shows alone while recording.
 - **Save to where the phone keeps video.** A download on iOS goes to Files; Instagram reads Photos. When `navigator.canShare({ files: [file] })` is true, the finished clip shows **Save or share**, which calls `navigator.share` with the file: the share sheet has "Save Video". It needs a tap of its own (a browser only allows sharing from a user's gesture, and the recording took seconds), so it's a button, not automatic. Elsewhere the download stays.
 - The frame needs no change: `captureFrame()` already fits the shape to any window, and recording sets the drawing buffer to 1,080 px wide whatever the screen.
 - Docs: ux.md §14, rendering.md §16.
 
 **Done when:**
-- [ ] E2E (phone projects): from More, enter 9:16; Start here and End here write `cam` and `to` into the address; Play moves the camera and ends; Leave restores the slim bar.
-- [ ] E2E: Record produces an MP4 of the expected size, checked as `e2e/capture.spec.ts` checks it; where sharing isn't available the download happens.
-- [ ] Idle stays at 0 frames in capture mode with the strip showing.
+- [x] E2E (phone projects): from More, enter 9:16; Start here and End here write `cam` and `to` into the address; Play moves the camera and ends; Leave restores the slim bar. (Also: a tap on the frame stops a move.)
+- [x] E2E: Record produces an MP4 of the expected size, checked as `e2e/capture.spec.ts` checks it; where sharing isn't available the download happens. (And with sharing stubbed in, the clip goes to `navigator.share` from the button's tap, with no download.)
+- [x] Idle stays at 0 frames in capture mode with the strip showing.
 - [ ] **Owner's check,** on the iPhone: a 10 s 9:16 clip records, saves to Photos through the share sheet, is 1,080 × 1,920, and uploads to Instagram. If Safari on iOS has no H.264 encoder the card says so already: report which, and the recording time.
 
 ### L3-T6 Performance on a phone (the owner's measurements)
