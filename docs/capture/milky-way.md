@@ -2,7 +2,7 @@
 
 Starting shots of the Milky Way for capture mode (D-55, [ux.md §14](../plan/ux.md#14-capture-mode)), as links. Each opens framed at 9:16 for Reels and Stories, with the camera at the shot's start: press **R** to save it as a 1080 × 1920 video, or **P** to play it on screen. Change `9x16` to `4x5` or `3x4` for a feed post: the same poses, a wider frame.
 
-Capture mode is on production since `v0.10.0`; recording (R) comes with the release after it. On your own machine, replace `https://galaxyexplorer.perturbatory.com` with `http://localhost:5173`, and in the two Solar System links, the Solar System's id with your copy's (its galaxy-view link has it after `/view/`).
+Capture mode is on production since `v0.10.0`, and recording (R) since `v0.11.0`. On your own machine, replace `https://galaxyexplorer.perturbatory.com` with `http://localhost:5173`, and in the two Solar System links, the Solar System's id with your copy's (its galaxy-view link has it after `/view/`).
 
 ## Recording one
 
