@@ -149,7 +149,8 @@ test('on a phone, a finished clip goes to the share sheet, from a tap of its own
   });
   await button(page, 'Record').tap();
   const save = button(page, 'Save or share the clip');
-  await expect(save).toBeVisible({ timeout: 60_000 });
+  // As long as the recording takes: minutes with software rendering (CI), so the test's own.
+  await expect(save).toBeVisible({ timeout: 0 });
   await save.tap();
   await expect(save).toBeHidden();
   const shared = await page.evaluate(
