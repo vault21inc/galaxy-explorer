@@ -55,6 +55,8 @@ What the app looks like and how it responds to the mouse, trackpad, touch and ke
 
 Edit mode changes **only** what a plain left-drag does. Everything else is identical, so moving between the modes doesn't require relearning the controls.
 
+**Where editing is offered** (D-57, L3-T4): wherever there's a mouse or trackpad, at any size of screen, and not otherwise (`EditAvailability` in `app/edit-toggle.tsx`, `lib/pointer-kind.ts`). "A mouse or trackpad" is the browser's `(any-pointer: fine)`, or a mouse's pointer event seen on the page (one plugged into a phone or tablet), which then holds for the page's life. Without one, a reader who may edit sees "Editing needs a mouse or trackpad." in the More sheet where the Edit switch would be; nobody else sees a note. The E key, the shortcut help's Edit section and the editor's tour follow, since they read the same flag. Universe settings, sharing and "Clone map as…" aren't 3D editing and are offered on any device. In a narrow window with a mouse, Edit is a switch in the More sheet.
+
 ## 3. Input bindings
 
 These follow widely used conventions (T3):
@@ -250,6 +252,8 @@ D-30 has the reasoning.
   - **Accessible:** the popover takes focus and reads as text, every step's action has a keyboard path (often the List), and the highlight is visual only. With `prefers-reduced-motion`, nothing animates.
 
 ## 13. Accounts, sharing and admin (M8)
+
+On a phone (the slim tier) the pages here, and home and the About pages, span the window with 8 px margins, under the top bar and clear of the notch (`app/panel-classes.ts`); their tables scroll inside the page's panel, never the page. On a touch screen, form fields' text is at least 16 px, so iOS doesn't zoom into a field when it's focused.
 
 D-34 has the reasoning; data-model §8 has the access rule. None of this exists locally, where there is no login.
 

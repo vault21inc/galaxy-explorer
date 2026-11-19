@@ -10,6 +10,7 @@ import { errorMessage } from '@/app/route-states.tsx';
 import { StatusPanel } from '@/app/status-panel.tsx';
 import { UniverseList } from './universe-list.tsx';
 import { NewUniverseForm } from './new-universe-form.tsx';
+import { PAGE_PANEL } from '@/app/panel-classes.ts';
 
 /**
  * `/`: the universes this reader can open, and a form to start a new one (ux.md §9, §13). A
@@ -59,7 +60,9 @@ export function HomePage({ listOnly = false }: { listOnly?: boolean }) {
       : { yours: [], shared: [], others: [], rest: universes.data };
 
   return (
-    <main className="absolute top-16 left-4 flex max-h-[calc(100%-5rem)] w-80 flex-col gap-4 overflow-y-auto rounded-lg border bg-card p-4 text-sm">
+    <main
+      className={`${PAGE_PANEL} flex max-h-[calc(100%-5rem)] w-80 flex-col gap-4 overflow-y-auto rounded-lg border bg-card p-4 text-sm`}
+    >
       {sections.yours.length > 0 && (
         <UniverseList title="Your universes" universes={sections.yours} username={username} />
       )}

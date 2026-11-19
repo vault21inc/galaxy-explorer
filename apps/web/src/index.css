@@ -179,3 +179,16 @@
   );
   border-radius: 2px;
 }
+
+/*
+ * On a touch screen, form text is at least 16 px: iOS zooms the page into any field whose text is
+ * smaller when it's focused, and the zoom then stays (L3-T4). Outside every layer, so it wins
+ * over a `text-sm` on the field. Same query as the `coarse:` variant.
+ */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+}

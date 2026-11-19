@@ -6,13 +6,8 @@ import { GIZMO_SIZE } from '@/editor/move-tool.tsx';
 import { placementGhost } from '@/editor/placement.tsx';
 import { toNdc, workPlanePoint } from '@/editor/work-plane.ts';
 import { detectPlatform, type Platform } from '@/input/platform.ts';
-import {
-  currentTier,
-  FINE_POINTER_QUERY,
-  LAYOUT_QUERIES,
-  matches,
-  type LayoutTier,
-} from '@/lib/layout-tier.ts';
+import { currentTier, LAYOUT_QUERIES, matches, type LayoutTier } from '@/lib/layout-tier.ts';
+import { hasFinePointer } from '@/lib/pointer-kind.ts';
 import { hoverStore } from '@/state/hover.ts';
 import { useSelection } from '@/state/selection.ts';
 import { useSheet } from '@/state/sheet.ts';
@@ -308,7 +303,7 @@ export function installTestHooks(): void {
     layout: () => ({
       tier: currentTier(),
       short: matches(LAYOUT_QUERIES.short),
-      finePointer: matches(FINE_POINTER_QUERY),
+      finePointer: hasFinePointer(),
       sheet: useSheet.getState().open,
     }),
     selectedIds: () => [...useSelection.getState().selectedIds],

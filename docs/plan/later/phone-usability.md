@@ -1,6 +1,6 @@
 # Later: a usability pass for phones and narrow windows
 
-**Status:** in progress (L3-T1 to L3-T3 done, 2026-11-19). Written 2026-11-19 after the owner tried the live site on an iPhone; the owner settled its open questions the same day ("Decided" below). The task IDs (`L3-T1` and so on) are provisional: renumber them if this joins a milestone. Do the tasks in order: each one stands on the ones before it and leaves `main` working.
+**Status:** in progress (L3-T1 to L3-T4 done, 2026-11-19). Written 2026-11-19 after the owner tried the live site on an iPhone; the owner settled its open questions the same day ("Decided" below). The task IDs (`L3-T1` and so on) are provisional: renumber them if this joins a milestone. Do the tasks in order: each one stands on the ones before it and leaves `main` working.
 
 **Goal:** a reader on a phone can do everything a reader on a laptop can: find their way around, search, open and read an object, change what's shown, and record a clip. Nothing is off screen or too small to tap, at any window width from 320 px up. Editing stays with a mouse or trackpad, and the app says so only to the people it affects.
 
@@ -203,14 +203,15 @@ One row, left to right, each 44 px high:
 
 - `useHasFinePointer()` and the rule under "Who is offered editing". The More sheet's note.
 - The fixed-width pages become `w-full max-w-…` with 16 px side margins on slim. Tables on the settings and admin pages scroll sideways inside their own box, never the page.
-- The shared input is already 16 px on narrow screens (`text-base`), which is what keeps iOS from zooming on focus. Check the two inputs that style themselves: the command palette's and the rich-text editor's.
+- **Form text is at least 16 px on a touch screen** (as built): one unlayered rule in `index.css` for every `input`, `select` and `textarea` under `(pointer: coarse)`, rather than checking fields one by one: several style themselves `text-sm` (the palette, the outliner's and the events' filters). The rich-text editor is only offered in edit mode, which needs a mouse.
+- **Tests tap, not click** (as built): Playwright's `click()` sends mouse pointer events even on an emulated phone, which the app rightly takes as a mouse plugged in. The editing spec uses `tap()`.
 - Docs: ux.md §2 (where editing is offered), §13 (the pages on a phone).
 
 **Done when:**
-- [ ] E2E (phone projects): an editor sees no edit toggle and no Edit row, pressing E does nothing, and the More sheet shows the note. A viewer of the same universe sees no note.
-- [ ] E2E (phone project): after a mouse pointer event on the page, `layout().finePointer` is true and Edit is offered. (If the emulated context can't send a `mouse` pointer event, dispatch a `PointerEvent` with that `pointerType` from the page.)
-- [ ] E2E (desktop, viewport 600 px wide): an editor still gets the edit toggle, in the More sheet.
-- [ ] E2E (phone projects): home, sign-in, the account page, universe settings and the admin screens don't scroll sideways; signing in works.
+- [x] E2E (phone projects): an editor sees no edit toggle and no Edit row, pressing E does nothing, and the More sheet shows the note. A viewer of the same universe (signed out, as it's public) sees no note.
+- [x] E2E (phone project): after a mouse pointer event on the page, `layout().finePointer` is true and Edit is offered. (A `PointerEvent` with that `pointerType` dispatched from the page.)
+- [x] E2E (desktop, viewport 600 px wide): an editor still gets the edit toggle, in the More sheet.
+- [x] E2E (phone projects): home, sign-in, the account page, universe settings and the admin screens don't scroll sideways, and their panels lie inside the window. (Signing in itself is the account specs'; this signs in through the API.)
 
 ### L3-T5 Capture mode by touch
 

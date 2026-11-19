@@ -2,6 +2,7 @@ import { Pencil } from 'lucide-react';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button.tsx';
 import { useCanEdit } from '@/editor/use-can-edit.ts';
+import { useHasFinePointer } from '@/lib/pointer-kind.ts';
 import { useEditor } from '@/state/editor.ts';
 import { BAR_BUTTON, BAR_TEXT } from './bar-classes.ts';
 
@@ -10,16 +11,21 @@ import { BAR_BUTTON, BAR_TEXT } from './bar-classes.ts';
  * key, the shortcut help, the editor's tour and the edit toggle all read. Mounted on a map's
  * page at every width, apart from the toggle, which the slim bar doesn't show (its More sheet
  * has an Edit row instead).
+ *
+ * Offered to those who may edit (`useCanEdit`), where there's a mouse or trackpad to edit with
+ * (D-57): editing in 3D needs one, whatever the screen's size. Losing it leaves edit mode.
  */
 export function EditAvailability() {
   const canEdit = useCanEdit();
+  const finePointer = useHasFinePointer();
   const setAvailable = useEditor((state) => state.setAvailable);
+  const available = canEdit && finePointer;
   useEffect(() => {
-    setAvailable(canEdit);
+    setAvailable(available);
     return () => {
       setAvailable(false);
     };
-  }, [canEdit, setAvailable]);
+  }, [available, setAvailable]);
   return null;
 }
 

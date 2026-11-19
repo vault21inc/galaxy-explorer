@@ -1,6 +1,8 @@
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button.tsx';
+import { cn } from '@/lib/utils.ts';
+import { PAGE_PANEL } from './panel-classes.ts';
 
 interface StatusPanelProps {
   tone: 'loading' | 'error' | 'empty';
@@ -19,7 +21,7 @@ export function StatusPanel({ tone, title, children, onRetry }: StatusPanelProps
     <section
       role={tone === 'error' ? 'alert' : 'status'}
       aria-live={tone === 'error' ? undefined : 'polite'}
-      className="absolute top-16 left-4 max-w-sm rounded-lg border bg-card p-4 text-sm"
+      className={cn(PAGE_PANEL, 'max-w-sm rounded-lg border bg-card p-4 text-sm slim:max-w-none')}
     >
       <h1 className="flex items-center gap-2 font-medium">
         {tone === 'loading' && <Loader2 aria-hidden className="size-4 animate-spin" />}

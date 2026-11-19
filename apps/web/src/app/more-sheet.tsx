@@ -15,6 +15,8 @@ import { useId, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 import { SHEET_ROW } from '@/components/ui/sheet.tsx';
 import { Switch } from '@/components/ui/switch.tsx';
+import { useCanEdit } from '@/editor/use-can-edit.ts';
+import { useHasFinePointer } from '@/lib/pointer-kind.ts';
 import { useEditor } from '@/state/editor.ts';
 import { useSheet, type SheetId } from '@/state/sheet.ts';
 import { useSpoilers } from '@/state/spoilers.ts';
@@ -50,6 +52,7 @@ export function MoreSheet() {
           Sign in
         </Link>
       )}
+      {onMap && <EditNote />}
     </div>
   );
 }
@@ -162,5 +165,21 @@ function EditRow() {
         toggle();
       }}
     />
+  );
+}
+
+/**
+ * For a reader who may edit here but has no mouse or trackpad (D-57): where the Edit row would
+ * be, why it isn't. Nobody else sees it: a reader who can't edit loses nothing.
+ */
+function EditNote() {
+  const canEdit = useCanEdit();
+  const finePointer = useHasFinePointer();
+  if (!canEdit || finePointer) return null;
+  return (
+    <p className="flex min-h-11 items-center gap-3 px-3 text-sm text-muted-foreground">
+      <Pencil aria-hidden className="size-5" />
+      Editing needs a mouse or trackpad.
+    </p>
   );
 }

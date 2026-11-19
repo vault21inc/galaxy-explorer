@@ -5,6 +5,7 @@ import { NotFoundPage } from '../not-found-page.tsx';
 import { AccountsTab } from './accounts-tab.tsx';
 import { LogTab } from './log-tab.tsx';
 import { UniversesTab } from './universes-tab.tsx';
+import { FULL_PAGE_PANEL } from '@/app/panel-classes.ts';
 
 const TABS = [
   { value: 'accounts', label: 'Accounts', Content: AccountsTab },
@@ -21,7 +22,7 @@ export function AdminPage() {
   if (account.isPending) return <StatusPanel tone="loading" title="Loading…" />;
   if (account.data?.role !== 'admin') return <NotFoundPage />;
   return (
-    <main className="absolute inset-x-4 top-16 bottom-4 overflow-auto rounded-lg border bg-card p-4 text-sm">
+    <main className={`${FULL_PAGE_PANEL} overflow-auto rounded-lg border bg-card p-4 text-sm`}>
       <h1 className="mb-3 text-base font-medium">Admin</h1>
       <Tabs.Root defaultValue="accounts" className="flex flex-col gap-4">
         <Tabs.List aria-label="Admin screens" className="flex gap-1 border-b">

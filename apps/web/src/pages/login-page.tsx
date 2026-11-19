@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { Label } from '@/components/ui/label.tsx';
 import { safeNext } from '@/lib/safe-next.ts';
+import { PAGE_PANEL } from '@/app/panel-classes.ts';
 
 /**
  * `/login` (M8-T1, ux.md §13): a username and a password, and, for an account with two-factor
@@ -79,7 +80,7 @@ function LoginForm({ next }: { next: string }) {
   const shownError = signIn.error && !isCodeNeeded(signIn.error) ? signIn.error : null;
 
   return (
-    <main className="absolute top-16 left-4 w-80 rounded-lg border bg-card p-4 text-sm">
+    <main className={`${PAGE_PANEL} w-80 rounded-lg border bg-card p-4 text-sm`}>
       <form aria-labelledby={`${id}-heading`} onSubmit={onSubmit} className="flex flex-col gap-3">
         <h1 id={`${id}-heading`} className="text-base font-medium">
           Sign in

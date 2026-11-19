@@ -3,6 +3,7 @@ import { Link, NavLink } from 'react-router';
 import { ABOUT_PAGES } from '@/app/about-links.tsx';
 import { usePageTitle } from '@/app/use-page-title.ts';
 import { cn } from '@/lib/utils.ts';
+import { PAGE_PANEL } from '@/app/panel-classes.ts';
 
 /**
  * The panel the About pages share: a scrolling column of text over the canvas, as the account
@@ -11,7 +12,9 @@ import { cn } from '@/lib/utils.ts';
 export function AboutFrame({ title, children }: { title: string; children: ReactNode }) {
   usePageTitle([title]);
   return (
-    <main className="absolute top-16 left-4 flex max-h-[calc(100%-5rem)] w-[28rem] max-w-[calc(100%-2rem)] flex-col gap-5 overflow-y-auto rounded-lg border bg-card p-4 text-sm leading-relaxed">
+    <main
+      className={`${PAGE_PANEL} flex max-h-[calc(100%-5rem)] w-[28rem] flex-col gap-5 overflow-y-auto rounded-lg border bg-card p-4 text-sm leading-relaxed`}
+    >
       <nav aria-label="About this site" className="flex gap-3 text-xs">
         {ABOUT_PAGES.map((page) => (
           <NavLink

@@ -11,6 +11,7 @@ import { UniverseDetails } from '@/panels/universe-details/universe-details.tsx'
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { LeaveUniverse } from './universe-settings/leave-universe.tsx';
 import { SharingSection } from './universe-settings/sharing-section.tsx';
+import { FULL_PAGE_PANEL } from '@/app/panel-classes.ts';
 
 /**
  * `/u/:universeSlug/settings` (M4-T1): the universe's details, who it's shared with (M8-T12),
@@ -48,7 +49,7 @@ export function UniverseSettingsPage() {
     <main
       aria-labelledby="settings-heading"
       data-keys="own"
-      className="absolute inset-x-4 top-16 bottom-4 mx-auto flex max-w-6xl flex-col gap-8 overflow-y-auto rounded-lg border bg-card p-6 text-sm"
+      className={`${FULL_PAGE_PANEL} mx-auto flex max-w-6xl flex-col gap-8 overflow-y-auto rounded-lg border bg-card p-6 text-sm`}
     >
       <h1 id="settings-heading" className="text-base font-semibold">
         {containerName(universe, policy)}: settings

@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu.tsx';
 import { SHEET_ROW } from '@/components/ui/sheet.tsx';
 import { useCanCreate } from '@/editor/use-can-edit.ts';
+import { useHasFinePointer } from '@/lib/pointer-kind.ts';
 import { useHelp } from '@/state/help.ts';
 import { useSheet } from '@/state/sheet.ts';
 import { useStartEditorTour } from './practice.ts';
@@ -36,6 +37,8 @@ interface HelpItem {
 function useHelpItems(): HelpItem[] {
   const { mapSlug } = useParams();
   const canCreate = useCanCreate();
+  // The editor's tour edits a practice universe: it needs a mouse or trackpad, as editing does.
+  const finePointer = useHasFinePointer();
   const startEditor = useStartEditorTour();
   return [
     {
@@ -55,7 +58,7 @@ function useHelpItems(): HelpItem[] {
         useTour.getState().start('reader');
       },
     },
-    ...(canCreate
+    ...(canCreate && finePointer
       ? [
           {
             key: 'editor-tour',

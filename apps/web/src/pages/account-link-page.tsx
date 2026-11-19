@@ -6,6 +6,7 @@ import { errorMessage } from '@/app/route-states.tsx';
 import { StatusPanel } from '@/app/status-panel.tsx';
 import { CodeStep } from './account-link/code-step.tsx';
 import { PasswordStep } from './account-link/password-step.tsx';
+import { PAGE_PANEL } from '@/app/panel-classes.ts';
 
 /**
  * `/link/{token}` (M8-T1, ux.md §13): an invite or reset link an admin passed on. A username (an
@@ -51,7 +52,9 @@ function LinkSteps({ token, link }: { token: string; link: AccountLink }) {
       ? 'Make your account'
       : `A new password for ${link.username ?? 'your account'}`;
   return (
-    <main className="absolute top-16 left-4 flex max-h-[calc(100%-5rem)] w-96 flex-col gap-3 overflow-y-auto rounded-lg border bg-card p-4 text-sm">
+    <main
+      className={`${PAGE_PANEL} flex max-h-[calc(100%-5rem)] w-96 flex-col gap-3 overflow-y-auto rounded-lg border bg-card p-4 text-sm`}
+    >
       <h1 className="text-base font-medium">{title}</h1>
       {twoFactor && <p className="text-xs text-muted-foreground">Step {setup ? '2' : '1'} of 2</p>}
       {setup ? (
