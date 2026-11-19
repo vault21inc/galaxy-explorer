@@ -17,19 +17,15 @@ import {
   withCapture,
   withPose,
 } from '@/lib/capture-params.ts';
-import { planMove } from '@/render/camera/capture-move.ts';
 import { currentCameraPose } from '@/render/transition/transition-controller.ts';
 import { useTransition } from '@/render/transition/transition-store.ts';
-import {
-  CAMERA_FOV_DEG,
-  CAPTURE_LEAD_IN_MS,
-  CAPTURE_ZOOM_CURVATURE,
-  VIEW_REDUCED_FADE_MS,
-} from '@/render/tuning.ts';
+import { CAPTURE_LEAD_IN_MS, VIEW_REDUCED_FADE_MS } from '@/render/tuning.ts';
 import { useCapture } from '@/state/capture.ts';
 import { useEditor } from '@/state/editor.ts';
 import { useHelp } from '@/state/help.ts';
 import { usePalette } from '@/state/palette.ts';
+import { cancelRecording, recordShot } from './record-shot.ts';
+import { shotPlan } from './shot-plan.ts';
 
 /** Changes the query in place: no new history entry, and the entry's state kept. */
 type UpdateSearch = (change: (params: URLSearchParams) => URLSearchParams) => void;
@@ -75,6 +71,12 @@ export function useCaptureMode(): void {
       if (usePalette.getState().open || ignoresCameraKeys(event.target)) return;
       const action = CAPTURE_KEY_BINDINGS[event.key];
       const viewAction = KEY_BINDINGS[event.key];
+      // While a clip records, the camera is the recorder's: every key waits, but Esc stops it.
+      if (useCapture.getState().recording !== null) {
+        event.preventDefault();
+        if (action === 'leave-capture') cancelRecording();
+        return;
+      }
       if (action) {
         // Before the view's own keys (input/use-keyboard.ts), which skip a prevented event.
         event.preventDefault();
@@ -101,6 +103,7 @@ export function useCaptureMode(): void {
     return () => {
       window.removeEventListener('keydown', onKeyDown, { capture: true });
       useCapture.getState().stop();
+      cancelRecording();
     };
   }, [aspectId]);
 }
@@ -138,6 +141,9 @@ function runCaptureKey(action: (typeof CAPTURE_KEY_BINDINGS)[string], update: Up
       if (capture.move) capture.stop();
       else playMove();
       return;
+    case 'record-move':
+      void recordShot();
+      return;
   }
 }
 
@@ -147,20 +153,10 @@ function runCaptureKey(action: (typeof CAPTURE_KEY_BINDINGS)[string], update: Up
  * for (ux.md §10), the camera doesn't move: a quick fade cuts to the end instead.
  */
 function playMove(): void {
+  const planned = shotPlan();
+  if (!planned) return;
+  const { shot, plan } = planned;
   const capture = useCapture.getState();
-  const shot = parseCaptureShot(new URLSearchParams(window.location.search));
-  const from = shot.start ?? currentCameraPose();
-  if (!from) return;
-  const to = shot.end ?? (shot.spinDeg !== 0 ? from : null);
-  if (!to) {
-    capture.setNotice('Press B where the move should end first, or add spin= to the address.');
-    return;
-  }
-  const plan = planMove(from, to, {
-    spinDeg: shot.spinDeg,
-    curvature: CAPTURE_ZOOM_CURVATURE,
-    fovDeg: CAMERA_FOV_DEG,
-  });
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     capture.play({
       plan,

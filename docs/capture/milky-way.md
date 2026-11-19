@@ -1,15 +1,17 @@
 # Milky Way shots for clips
 
-Starting shots of the Milky Way for capture mode (D-55, [ux.md §14](../plan/ux.md#14-capture-mode)), as links. Each opens framed at 9:16 for Reels and Stories, with the camera at the shot's start; press **P** to play the move. Change `9x16` to `4x5` or `3x4` for a feed post: the same poses, a wider frame.
+Starting shots of the Milky Way for capture mode (D-55, [ux.md §14](../plan/ux.md#14-capture-mode)), as links. Each opens framed at 9:16 for Reels and Stories, with the camera at the shot's start: press **R** to save it as a 1080 × 1920 video, or **P** to play it on screen. Change `9x16` to `4x5` or `3x4` for a feed post: the same poses, a wider frame.
 
-Capture mode isn't on production until the next release. Until then, open them on your own machine: replace `https://galaxyexplorer.perturbatory.com` with `http://localhost:5173`, and in the two Solar System links, the Solar System's id with your copy's (its galaxy-view link has it after `/view/`).
+Capture mode is on production since `v0.10.0`; recording (R) comes with the release after it. On your own machine, replace `https://galaxyexplorer.perturbatory.com` with `http://localhost:5173`, and in the two Solar System links, the Solar System's id with your copy's (its galaxy-view link has it after `/view/`).
 
 ## Recording one
 
-1. Open the link in Chrome or Safari, ideally full screen (⌃⌘F), so the frame is as tall as the screen. The card beside the frame gives its size, and the size it records at.
-2. Choose the labels with **L** (production shows all of them; the first mode shows none but the selection's). Hide groups' outlines in **Layers** before entering capture mode if they're in the way.
-3. **⇧⌘5**, then **Record Selected Portion**, drag the box over the frame, and start recording. In Options, turn off "Show Mouse Clicks".
-4. Press **P**. The camera holds still a second, moves, and stops at the end. Stop the recording after a beat.
+1. Open the link. The card beside the frame lists the keys.
+2. Choose the labels with **L** (production shows all of them; the first mode shows none but the selection's). Hide groups' outlines in **Layers** before entering capture mode if they're in the way. What you see is what's recorded.
+3. Press **R**. The move is drawn frame by frame into an MP4 of exactly 1080 × 1920 (a still second, the move, a still second) and saved to your downloads, named like `milky-way-present-day-9x16-2026-11-18-1932.mp4`. It takes a few seconds; Esc stops it. Add `&fps=60` to the address for 60 frames a second.
+4. Post the file as it is.
+
+**P** plays the move on screen instead, to check it before recording. If the browser can't encode H.264, the card says so; then screen-record the frame: ⇧⌘5, **Record Selected Portion** over the frame, start, and press **P**.
 
 To make your own: move the camera where the shot should start and press **A**, then where it should end and press **B**; `,` and `.` make it shorter or longer. The address bar then holds the whole shot, to bookmark or add here.
 

@@ -92,9 +92,10 @@ describe('the help panel', () => {
       ['Start the move here', 'A'],
       ['End the move here', 'B'],
       ['Play the move, or stop it', 'P'],
+      ['Record the move to a video file', 'R'],
       ['Make the move shorter', ','],
       ['Make the move longer', '.'],
-      ['Leave capture mode', 'Esc'],
+      ['Leave capture mode, or stop a recording', 'Esc'],
     ]);
   });
 

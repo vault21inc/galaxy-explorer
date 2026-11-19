@@ -6,6 +6,7 @@ import { useCapture } from '@/state/capture.ts';
 import { useEditor } from '@/state/editor.ts';
 import { useQuality, useQualityPreset } from '@/state/quality.ts';
 import { CaptureMoveDriver } from './capture-move-driver.tsx';
+import { CaptureRecorderRig } from './capture/capture-recorder-rig.tsx';
 import { attachCanvas, DIAGNOSTICS_ENABLED, loadTestHooks } from './diagnostics.ts';
 import { FrameProbe } from './frame-probe.tsx';
 import { LabelDriver } from './labels/label-driver.tsx';
@@ -46,13 +47,15 @@ export function Stage() {
   const editing = useEditor((state) => state.editing);
   // Capture mode (D-55): a sharper canvas that stays sharp while the camera moves.
   const capture = useCapture((state) => state.aspect !== null);
+  // Recording a clip (D-56): the clip's own pixel ratio, and frames drawn only by the recorder.
+  const recordDpr = useCapture((state) => state.recordDpr);
   // WebGL fixes antialiasing when the context is created, so read it once: a change in the
   // quality popover applies on the next load.
   const [antialias] = useState(() => QUALITY_PRESETS[useQuality.getState().level].antialias);
   return (
     <Canvas
-      frameloop="demand"
-      dpr={capture ? [1, Math.max(dprRange[1], CAPTURE_MAX_DPR)] : dprRange}
+      frameloop={recordDpr === null ? 'demand' : 'never'}
+      dpr={recordDpr ?? (capture ? [1, Math.max(dprRange[1], CAPTURE_MAX_DPR)] : dprRange)}
       gl={{ antialias, powerPreference: 'default', alpha: false }}
       camera={{
         fov: CAMERA_FOV_DEG,
@@ -78,8 +81,9 @@ export function Stage() {
       <InputBindings mode={editing ? 'edit' : 'view'} />
       {/* Lets the transition between views fly the camera (rendering.md §4). */}
       <TransitionRig />
-      {/* Plays capture mode's scripted camera move (D-55). */}
+      {/* Plays capture mode's scripted camera move (D-55), and lets it be recorded (D-56). */}
       <CaptureMoveDriver />
+      <CaptureRecorderRig />
       <Sky />
       {/* The current view, which sets its own camera limits (rendering.md §4–5). */}
       <ViewHost />

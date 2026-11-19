@@ -1,9 +1,12 @@
+import { readFile } from 'node:fs/promises';
+import { ALL_FORMATS, BufferSource, Input } from 'mediabunny';
 import { expect, test, type Page } from './test.ts';
 import { frameCount, waitForFirstFrame, waitForIdle } from './test-hooks.ts';
 
 /**
  * Capture mode (D-55, ux.md §14): the canvas alone, framed to an aspect ratio on black, for
- * screen-recording clips; a scripted camera move between two camera links; Esc leaves.
+ * screen-recording clips; a scripted camera move between two camera links; Esc leaves. And R
+ * records the move to an MP4 at Instagram's exact size (D-56).
  */
 
 const MAP = '/u/example-universe/main';
@@ -146,4 +149,74 @@ test('with reduced motion, P cuts to the end instead of moving', async ({ page }
   await page.keyboard.press('p');
   // A 30 s move would take 30 s; the cut is a fade's length.
   await expect.poll(() => poseDistance(page, END), { timeout: 3_000 }).toBeLessThan(1);
+});
+
+/** Whether this browser can encode H.264 at 1080 × 1920 (Linux builds of Chromium may not). */
+function canEncodeClips(page: Page): Promise<boolean> {
+  return page.evaluate(async () => {
+    if (!('VideoEncoder' in window)) return false;
+    const support = await VideoEncoder.isConfigSupported({
+      codec: 'avc1.640028',
+      width: 1080,
+      height: 1920,
+    });
+    return support.supported === true;
+  });
+}
+
+test('R records the move to an MP4 of exactly 1080 × 1920', async ({ page }) => {
+  test.slow();
+  // 3 s of moving, and a still second either side, at 24 frames a second: 120 frames.
+  await openAt(page, `capture=9x16&cam=${asParam(START)}&to=${asParam(END)}&secs=3&fps=24`);
+  const status = page.getByRole('complementary', { name: 'Capture mode' }).getByRole('status');
+  if (!(await canEncodeClips(page))) {
+    await page.keyboard.press('r');
+    await expect(status).toContainText('can’t encode H.264');
+    return;
+  }
+  const download = page.waitForEvent('download');
+  await page.keyboard.press('r');
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(
+    /^example-universe-main-9x16-\d{4}-\d\d-\d\d-\d{4}\.mp4$/,
+  );
+
+  // Read the file back as a video player would.
+  const input = new Input({
+    source: new BufferSource(await readFile(await file.path())),
+    formats: ALL_FORMATS,
+  });
+  const track = await input.getPrimaryVideoTrack();
+  expect(await track?.getCodec()).toBe('avc');
+  expect(await track?.getDisplayWidth()).toBe(1080);
+  expect(await track?.getDisplayHeight()).toBe(1920);
+  expect((await track?.computePacketStats())?.packetCount).toBe(120);
+  expect(await input.computeDuration()).toBeCloseTo(5, 1);
+
+  // Afterwards: the camera where the move ended, the canvas back to drawing on demand.
+  await expect(status).toContainText('Saved');
+  expect(await poseDistance(page, END)).toBeLessThan(1);
+  await waitForIdle(page);
+  const frames = await frameCount(page);
+  await page.waitForTimeout(500);
+  expect(await frameCount(page)).toBe(frames);
+});
+
+test('Esc stops a recording, and nothing is saved', async ({ page }) => {
+  await openAt(page, `capture=9x16&cam=${asParam(START)}&to=${asParam(END)}&secs=60&fps=60`);
+  test.skip(!(await canEncodeClips(page)), 'This browser can’t encode H.264.');
+  let saved = false;
+  page.on('download', () => {
+    saved = true;
+  });
+  const status = page.getByRole('complementary', { name: 'Capture mode' }).getByRole('status');
+  await page.keyboard.press('r');
+  await expect(status).toContainText('Recording');
+  // Other keys wait while a clip records: still capture mode, still recording.
+  await page.keyboard.press('p');
+  await expect(status).toContainText('Recording');
+  await page.keyboard.press('Escape');
+  await expect(status).toContainText('Recording stopped.');
+  await expect(page).toHaveURL(/[?&]capture=9x16/);
+  expect(saved).toBe(false);
 });

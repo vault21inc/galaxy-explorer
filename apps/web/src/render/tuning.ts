@@ -887,3 +887,25 @@ export const CAPTURE_ZOOM_CURVATURE = Math.SQRT2;
  * wide, in CSS px, so it never covers the frame.
  */
 export const CAPTURE_HINT_MIN_BAR_PX = 240;
+
+/**
+ * Recording a clip in the app (D-56, rendering.md §16): the move drawn frame by frame at
+ * exactly this width (the height follows the frame's shape: 1920 for 9:16), and encoded as
+ * H.264 in an MP4, the format Instagram takes. 1080 px wide is Instagram's own size.
+ */
+export const CAPTURE_RECORD_WIDTH_PX = 1_080;
+/** Frames a second when the address doesn't say (`fps`), and the rates it may say. */
+export const CAPTURE_RECORD_FPS = 30;
+export const CAPTURE_RECORD_FPS_CHOICES = [24, 25, 30, 60] as const;
+/**
+ * The video's bit rate, in bits a second at 30 frames a second (twice at 60). 16 Mbit/s keeps
+ * the depth stars' fine grain; Instagram re-encodes uploads to less anyway.
+ */
+export const CAPTURE_RECORD_BITRATE_BPS = 16_000_000;
+/** Still seconds before and after the move in a recorded clip, to cut on. */
+export const CAPTURE_RECORD_HOLD_S = 1;
+/**
+ * After raising the pixel ratio for a recording, wait this long before the first frame, so
+ * anything that follows the canvas's size has caught up.
+ */
+export const CAPTURE_RECORD_SETTLE_MS = 100;

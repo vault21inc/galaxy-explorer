@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   captureFrame,
+  CAPTURE_ASPECTS,
   parseCaptureShot,
+  recordingSize,
   stepDuration,
   withCapture,
   withPose,
@@ -70,8 +72,37 @@ describe('capture mode’s address (D-55)', () => {
       width: 400,
       height: 500,
     });
-    const frame = captureFrame(1280, 719, { width: 3, height: 4 });
-    expect(frame.width / frame.height).toBeCloseTo(3 / 4, 2);
-    expect(frame.height).toBeLessThanOrEqual(719);
+    // Exactly the shape, in whole steps of it, so a recording isn't stretched (D-56).
+    for (const [width, height] of [
+      [1280, 719],
+      [1512, 860],
+      [1000, 1000],
+    ] as const) {
+      for (const aspect of CAPTURE_ASPECTS) {
+        const frame = captureFrame(width, height, aspect);
+        expect(frame.width * aspect.height).toBe(frame.height * aspect.width);
+        expect(frame.width).toBeLessThanOrEqual(width);
+        expect(frame.height).toBeLessThanOrEqual(height);
+        // Never more than one step short of filling the window's tighter side.
+        expect(
+          Math.min(width - frame.width - aspect.width, height - frame.height - aspect.height),
+        ).toBeLessThan(0);
+      }
+    }
+  });
+
+  it('records clips at Instagram’s sizes', () => {
+    expect(CAPTURE_ASPECTS.map((aspect) => recordingSize(aspect))).toEqual([
+      { width: 1080, height: 1920 },
+      { width: 1080, height: 1350 },
+      { width: 1080, height: 1440 },
+    ]);
+  });
+
+  it('reads the frame rate, keeping to the rates on offer', () => {
+    expect(parseCaptureShot(new URLSearchParams('fps=60')).fps).toBe(60);
+    expect(parseCaptureShot(new URLSearchParams('fps=59')).fps).toBe(30);
+    expect(parseCaptureShot(new URLSearchParams('')).fps).toBe(30);
+    expect(withCapture(new URLSearchParams('capture=9x16&fps=60'), null).has('fps')).toBe(false);
   });
 });

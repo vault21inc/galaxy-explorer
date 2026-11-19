@@ -28,6 +28,9 @@ interface Slot {
   /** A group label's color; objects use their kind's. */
   color: string | null;
   visible: boolean;
+  /** Where it's placed, in whole CSS pixels from the canvas's top left. */
+  left: number;
+  top: number;
 }
 
 /** Styles per kind. Labels get a dark outline so they read on any background (ux.md §10). */
@@ -67,7 +70,16 @@ export function mountLabelPool(container: HTMLElement): () => void {
       `-webkit-text-stroke:${LABEL_OUTLINE_PX.toString()}px ${LABEL_OUTLINE_COLOR};` +
       `paint-order:stroke fill;text-shadow:${LABEL_SHADOW};`;
     container.appendChild(element);
-    return { element, id: null, text: '', kind: null, color: null, visible: false };
+    return {
+      element,
+      id: null,
+      text: '',
+      kind: null,
+      color: null,
+      visible: false,
+      left: 0,
+      top: 0,
+    };
   });
   container.addEventListener('click', onLabelClick);
   return () => {
@@ -150,9 +162,37 @@ function place(slot: Slot, label: PlacedLabel): void {
   element.dataset.labelId = label.id;
   element.dataset.labelKind = label.kind;
   // Whole pixels keep text crisp; translate3d keeps the move on the compositor.
-  element.style.transform = `translate3d(${Math.round(label.left).toString()}px, ${Math.round(label.top).toString()}px, 0)`;
+  slot.left = Math.round(label.left);
+  slot.top = Math.round(label.top);
+  element.style.transform = `translate3d(${slot.left.toString()}px, ${slot.top.toString()}px, 0)`;
   if (!slot.visible) {
     element.style.display = 'block';
     slot.visible = true;
   }
+}
+
+/** A label on screen now, as a recorded clip paints it (render/capture/paint-labels.ts). */
+export interface ShownLabel {
+  text: string;
+  kind: LabelKind;
+  /** Its color: a group's own, or the kind's. */
+  color: string;
+  left: number;
+  top: number;
+}
+
+/** The labels shown after the last frame, read from the pool rather than the page. */
+export function shownLabels(): ShownLabel[] {
+  const shown: ShownLabel[] = [];
+  for (const slot of slots) {
+    if (!slot.visible || slot.kind === null) continue;
+    shown.push({
+      text: slot.text,
+      kind: slot.kind,
+      color: slot.color ?? (slot.kind === 'object' ? OBJECT_LABEL_COLOR : '#ffffff'),
+      left: slot.left,
+      top: slot.top,
+    });
+  }
+  return shown;
 }

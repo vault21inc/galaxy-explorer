@@ -1,6 +1,9 @@
 import type { CameraPose } from '@/state/navigation-stack.ts';
 import {
   CAPTURE_MOVE_SECONDS,
+  CAPTURE_RECORD_FPS,
+  CAPTURE_RECORD_FPS_CHOICES,
+  CAPTURE_RECORD_WIDTH_PX,
   CAPTURE_MOVE_SECONDS_STEPS,
   CAPTURE_SPIN_LIMIT_DEG,
 } from '@/render/tuning.ts';
@@ -15,15 +18,23 @@ import { formatCameraParam, parseCameraParam } from './camera-param.ts';
  * - `to=…`: where the move ends, in the same six numbers as `cam`;
  * - `secs=10`: how long the move takes, in seconds;
  * - `spin=90`: extra degrees to turn around the target on the way (positive is
- *   counterclockwise seen from above), for a turntable shot with no `to`, or a turn on the way.
+ *   counterclockwise seen from above), for a turntable shot with no `to`, or a turn on the way;
+ * - `fps=30`: frames a second of a recorded clip (D-56), one of CAPTURE_RECORD_FPS_CHOICES.
  */
 export const CAPTURE_PARAM = 'capture';
 export const MOVE_END_PARAM = 'to';
 export const MOVE_SECONDS_PARAM = 'secs';
 export const MOVE_SPIN_PARAM = 'spin';
+export const RECORD_FPS_PARAM = 'fps';
 
 /** The params that belong to a shot, and go when capture mode is left. `cam` stays (D-52). */
-export const SHOT_PARAMS = [CAPTURE_PARAM, MOVE_END_PARAM, MOVE_SECONDS_PARAM, MOVE_SPIN_PARAM];
+export const SHOT_PARAMS = [
+  CAPTURE_PARAM,
+  MOVE_END_PARAM,
+  MOVE_SECONDS_PARAM,
+  MOVE_SPIN_PARAM,
+  RECORD_FPS_PARAM,
+];
 
 /**
  * The frames on offer, as width:height. Instagram shows Reels and Stories at 9:16 and feed posts
@@ -55,6 +66,8 @@ export interface CaptureShot {
   end: CameraPose | null;
   durationS: number;
   spinDeg: number;
+  /** A recorded clip's frames a second. */
+  fps: number;
 }
 
 export function parseCaptureShot(params: URLSearchParams): CaptureShot {
@@ -74,7 +87,13 @@ export function parseCaptureShot(params: URLSearchParams): CaptureShot {
       CAPTURE_SPIN_LIMIT_DEG,
       0,
     ),
+    fps: recordFps(params.get(RECORD_FPS_PARAM)),
   };
+}
+
+function recordFps(value: string | null): number {
+  const fps = Number(value);
+  return (CAPTURE_RECORD_FPS_CHOICES as readonly number[]).includes(fps) ? fps : CAPTURE_RECORD_FPS;
 }
 
 /** A number from the address, kept within [min, max]; `fallback` when it isn't one. */
@@ -130,20 +149,36 @@ export interface CaptureFrame {
 
 /**
  * The largest box of the aspect's shape that fits the container, centred: the rest is black
- * bars. Whole pixels, so the canvas isn't resampled at a fractional size.
+ * bars. Whole pixels, in whole steps of the shape (9 by 16 px for 9:16), so the box is exactly
+ * that shape: a clip recorded from it (render/capture/record-move.ts) isn't stretched by a rounding pixel.
  */
 export function captureFrame(
   containerWidth: number,
   containerHeight: number,
   aspect: Pick<CaptureAspect, 'width' | 'height'>,
 ): CaptureFrame {
-  const ratio = aspect.width / aspect.height;
-  const width = Math.floor(Math.min(containerWidth, containerHeight * ratio));
-  const height = Math.floor(Math.min(containerHeight, width / ratio));
+  const fit = Math.min(containerWidth / aspect.width, containerHeight / aspect.height);
+  const steps = Math.max(1, Math.floor(fit));
+  const width = steps * aspect.width;
+  const height = steps * aspect.height;
   return {
     left: Math.floor((containerWidth - width) / 2),
     top: Math.floor((containerHeight - height) / 2),
     width,
     height,
   };
+}
+
+/**
+ * The size of a recorded clip (D-56): CAPTURE_RECORD_WIDTH_PX wide, and the aspect's height,
+ * so 1080 × 1920 for 9:16, 1080 × 1350 for 4:5 and 1080 × 1440 for 3:4: Instagram's sizes.
+ */
+export function recordingSize(aspect: Pick<CaptureAspect, 'width' | 'height'>): {
+  width: number;
+  height: number;
+} {
+  const width = CAPTURE_RECORD_WIDTH_PX;
+  // Even, as H.264 needs.
+  const height = Math.round((width * aspect.height) / aspect.width / 2) * 2;
+  return { width, height };
 }

@@ -332,12 +332,20 @@ export function resolveEditKey(
  * can be framed with the arrows, `+` and `−`, and L changes the labels.
  */
 export type CaptureKeyAction =
-  'leave-capture' | 'play-move' | 'mark-start' | 'mark-end' | 'move-shorter' | 'move-longer';
+  | 'leave-capture'
+  | 'play-move'
+  | 'record-move'
+  | 'mark-start'
+  | 'mark-end'
+  | 'move-shorter'
+  | 'move-longer';
 
 export const CAPTURE_KEY_BINDINGS: Readonly<Record<string, CaptureKeyAction>> = {
   Escape: 'leave-capture',
   p: 'play-move',
   P: 'play-move',
+  r: 'record-move',
+  R: 'record-move',
   a: 'mark-start',
   A: 'mark-start',
   b: 'mark-end',
@@ -350,9 +358,10 @@ export const CAPTURE_ACTION_DESCRIPTIONS: Readonly<Record<CaptureKeyAction, stri
   'mark-start': 'Start the move here',
   'mark-end': 'End the move here',
   'play-move': 'Play the move, or stop it',
+  'record-move': 'Record the move to a video file',
   'move-shorter': 'Make the move shorter',
   'move-longer': 'Make the move longer',
-  'leave-capture': 'Leave capture mode',
+  'leave-capture': 'Leave capture mode, or stop a recording',
 };
 
 /**

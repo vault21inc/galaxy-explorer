@@ -8,6 +8,7 @@ import { Stage } from '@/render/stage.tsx';
 import { ProgressRing } from '@/render/transition/progress-ring.tsx';
 import { TransitionOverlay } from '@/render/transition/transition-overlay.tsx';
 import { useCapture } from '@/state/capture.ts';
+import { useReducedMotion } from '@/state/quality.ts';
 import { CaptureCard } from './capture-card.tsx';
 import { QualityNotice } from './quality-notice.tsx';
 import { Toaster } from './toaster.tsx';
@@ -32,6 +33,8 @@ export function AppShell() {
   const showPerfHud = PerfHud !== null && searchParams.get('perf') === '1';
   const aspect = useCapture((state) => state.aspect);
   const playing = useCapture((state) => state.move !== null);
+  const recording = useCapture((state) => state.recording !== null);
+  const reducedMotion = useReducedMotion();
   const shell = useRef<HTMLDivElement>(null);
   const size = useElementSize(shell);
   const frame = aspect && size ? captureFrame(size.width, size.height, aspect) : null;
@@ -41,7 +44,11 @@ export function AppShell() {
       ref={shell}
       data-capture={aspect?.id}
       // The pointer would be in the recording: hide it while the move plays.
-      className={cn('relative h-full w-full', aspect && 'bg-black', playing && 'cursor-none')}
+      className={cn(
+        'relative h-full w-full',
+        aspect && 'bg-black',
+        (playing || recording) && 'cursor-none',
+      )}
     >
       <div
         data-testid="view-frame"
@@ -56,6 +63,19 @@ export function AppShell() {
         <ProgressRing />
         {/* The fade between views covers the canvas and labels, not the top bar. */}
         <TransitionOverlay />
+        {recording && (
+          // While a clip records (D-56), the pointer can't reach the canvas. With reduced
+          // motion asked for, the move being drawn is hidden too: the file still gets it.
+          <div
+            data-testid="recording-cover"
+            className={cn(
+              'absolute inset-0 flex items-center justify-center text-sm text-muted-foreground',
+              reducedMotion && 'bg-black',
+            )}
+          >
+            {reducedMotion && 'Recording…'}
+          </div>
+        )}
       </div>
       <div className={aspect ? 'hidden' : 'contents'}>
         <TopBar />

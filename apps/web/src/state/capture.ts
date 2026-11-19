@@ -25,16 +25,27 @@ interface CaptureState {
   move: PlayingMove | null;
   /** A line for the keys' card: what just happened, or why P did nothing. */
   notice: string | null;
+  /** A clip being recorded (D-56): how much is done, 0 to 1; null when none is. */
+  recording: number | null;
+  /**
+   * While recording, the canvas's pixel ratio (`<Stage>` reads it), which makes the canvas's
+   * pixels the clip's; null otherwise. Its frame loop is 'never' meanwhile.
+   */
+  recordDpr: number | null;
   setAspect: (aspect: CaptureAspect | null) => void;
   play: (move: PlayingMove) => void;
   stop: () => void;
   setNotice: (notice: string | null) => void;
+  setRecording: (recording: number | null) => void;
+  setRecordDpr: (dpr: number | null) => void;
 }
 
 export const useCapture = create<CaptureState>()((set) => ({
   aspect: null,
   move: null,
   notice: null,
+  recording: null,
+  recordDpr: null,
   setAspect: (aspect) => {
     set((state) =>
       state.aspect?.id === aspect?.id
@@ -50,6 +61,12 @@ export const useCapture = create<CaptureState>()((set) => ({
   },
   setNotice: (notice) => {
     set({ notice });
+  },
+  setRecording: (recording) => {
+    set({ recording });
+  },
+  setRecordDpr: (recordDpr) => {
+    set({ recordDpr });
   },
 }));
 

@@ -3,6 +3,7 @@ import { detectPlatform } from '@/input/platform.ts';
 import {
   aspectLabel,
   parseCaptureShot,
+  recordingSize,
   type CaptureAspect,
   type CaptureFrame,
 } from '@/lib/capture-params.ts';
@@ -28,11 +29,13 @@ export function CaptureCard({
   const [searchParams] = useSearchParams();
   const playing = useCapture((state) => state.move !== null);
   const notice = useCapture((state) => state.notice);
+  const recording = useCapture((state) => state.recording);
   const reducedMotion = useReducedMotion();
   const barPx = Math.min(frame.left, containerWidth - frame.left - frame.width);
   if (barPx < CAPTURE_HINT_MIN_BAR_PX) return null;
   const shot = parseCaptureShot(searchParams);
   const rows = captureRows(detectPlatform());
+  const clip = recordingSize(aspect);
 
   return (
     <aside
@@ -54,6 +57,10 @@ export function CaptureCard({
         {shot.end ? 'to the end you set' : 'no end set'}, {shot.durationS} s
         {shot.spinDeg !== 0 ? `, turning ${String(shot.spinDeg)}°` : ''}.
       </p>
+      <p>
+        Or press R to record it as a {clip.width} × {clip.height} MP4 at {shot.fps} fps, labels
+        included, with a still second before and after.
+      </p>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
         {rows.map((row) => (
           <div key={row.description} className="contents">
@@ -66,7 +73,11 @@ export function CaptureCard({
         <p>Your system asks for reduced motion, so P cuts to the end instead of moving.</p>
       )}
       <p role="status" className="min-h-4 text-foreground">
-        {playing ? 'Playing. P stops.' : notice}
+        {recording !== null
+          ? `Recording: ${String(Math.floor(recording * 100))} %. Esc stops it.`
+          : playing
+            ? 'Playing. P stops.'
+            : notice}
       </p>
     </aside>
   );

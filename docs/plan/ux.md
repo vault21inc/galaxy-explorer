@@ -94,7 +94,7 @@ Shortcuts are ignored while focus is in a text field. `?` opens this list as an 
 | Space (hold) | Show all labels while held | both |
 | Shift + S | Toggle "Show potential spoilers" | both |
 | ⌘/Ctrl + K | Search / command palette (M7) | both |
-| A, B, P, `,` `.`, Esc | Capture mode's keys: mark the move's start and end, play it, change its length, leave (§14) | capture mode |
+| A, B, P, R, `,` `.`, Esc | Capture mode's keys: mark the move's start and end, play it, record it to a video file, change its length, leave (§14) | capture mode |
 | ? | Shortcut help | both |
 | E | Toggle edit mode | owner |
 | N | Add an object at the cursor (opens the type menu) | edit |
@@ -189,7 +189,7 @@ How hidden content looks (P2, black out rather than remove):
   - `/u/{universeSlug}/{mapSlug}/view/{objectId}` is the system or orbit view of that object (the level comes from its type);
   - `?select={id},{id}` restores the selection;
   - `?cam={px},{py},{pz},{tx},{ty},{tz}` is the camera the view opens with: its position and the point it looks at, in the view's frame and unit (D-52). **Copy link to this view**, in the command palette, copies the address with the camera where it is now. Moving around doesn't rewrite it;
-  - `?capture=9x16` (or `4x5`, `3x4`) is capture mode, with `to`, `secs` and `spin` for its move (§14, D-55);
+  - `?capture=9x16` (or `4x5`, `3x4`) is capture mode, with `to`, `secs` and `spin` for its move and `fps` for a recorded clip (§14, D-55, D-56);
   - `/u/{universeSlug}/settings` is the universe's settings page (M4-T1), so no map may use the slug `settings`.
 
   Every state can be shared as a link, and the browser's Back and Forward move between views.
@@ -294,4 +294,6 @@ D-55 has the reasoning; rendering.md §16 the camera's path. For recording clips
   - **A** writes the camera's pose into `cam`, **B** into `to`; `,` and `.` step the length through 3, 5, 8, 10, 12, 15, 20, 30, 45 and 60 s. The address is the whole shot, readable (`cam=1,2,3,…`), to bookmark or write down.
   - **P** jumps to the start, holds still a second, then moves, easing in and out; P again stops it. The pointer is hidden while it plays. A drag, a wheel, a camera key or a change of view stops it too, leaving the camera where it was.
   - With `prefers-reduced-motion` (§10), P cuts to the end with a quick fade instead, and the card says so.
-- **Recording** is the screen recorder's: on a Mac, ⇧⌘5 and "Record Selected Portion" around the frame. A Retina screen records the frame at twice its CSS size.
+- **Recording** (D-56): **R** records the move to an MP4 at Instagram's size, 1080 × 1920 for 9:16 (1080 × 1350 for 4:5, 1080 × 1440 for 3:4), at 30 frames a second or `fps` (24, 25, 30, 60), with a still second before and after, labels as shown. It's drawn frame by frame, so it's smooth on any machine and quick (seconds for a 10 s clip), and saved as a download (`milky-way-present-day-9x16-2026-11-18-1932.mp4`). The card shows the progress; Esc stops it and saves nothing; other keys and the pointer wait meanwhile. With reduced motion asked for, the frame is covered while it records.
+  - A browser with no H.264 encoder says so on the card. The screen recorder is the other way: on a Mac, ⇧⌘5 and "Record Selected Portion" around the frame (a Retina screen records it at twice its CSS size).
+- **The frame is exactly its shape,** in whole steps of it (9 × 16 CSS pixels for 9:16), so a recording isn't stretched; it can fall up to a step short of filling the window.
