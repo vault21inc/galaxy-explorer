@@ -1,35 +1,51 @@
 # Galaxy Explorer
 
-A browser app for building and exploring galaxies from any fictional universe, starting with Warhammer 40,000. The owner builds each galaxy by hand in 3D: star systems, sectors, nebulae, planets, places and events. Visitors explore it at three levels: galaxy, system and orbit. Potential spoilers stay hidden until a visitor chooses to see them.
+A browser app for building and exploring galaxies from any fictional universe. Its owners build each galaxy by hand in 3D: star systems, sectors, nebulae, planets, places, people and events. Readers explore it at three levels, the galaxy view, the system view and the orbit view, on a computer or a phone. Potential spoilers stay hidden until a reader chooses to see them.
 
-**Status (12 November 2026):** the galaxy view can be explored and edited. You can place and edit systems, planets, stations, black holes and regions, organize them into nested groups shown as outlines, and draw routes between them. Milestones M0–M3 are done. M4 (groups, regions and routes) is done except the owner's sector-tracing trial. M5's tasks are done (its last check is the owner's feel of the zoom threshold): zooming into a system marked explorable (or double-clicking it, or pressing Enter) opens its own view, and zooming out, Back, Esc and the breadcrumbs return to the galaxy at the same camera position. Inside, stars glow in their temperature's color and light their planets, with orbit rings and asteroid belts. In edit mode you can add and arrange stars, planets and belts inside a system with the same tools as the galaxy, and set a planet to orbit one star of a binary. Planets show surfaces generated from ten presets (ocean, desert, gas giant, hive city and more) or an uploaded map of the globe, and in edit mode their look follows the sliders live. Zooming into an explorable planet or moon opens its orbit view: the globe lit by its star, with clouds, atmosphere, rings and city lights at night, and the moons and stations around it. Places and events stand on the globe as pins in their category's icon and color. In edit mode you add them by clicking the globe, drag their pins, and set where they are in the panel; events in deep space or at a system show as small diamonds in the galaxy and system views. Characters list the events they were part of, in date order, each a link to its pin; events list their people and roles. The Events button in the top bar lists a map's events in date order, filtered by category or text, each one a link to where it happened. M6 is complete: the proof of concept's golden path passes, every performance budget is met, and it's tagged `v0.1.0-poc`. M7 (content tools and LLM access) has started: universes define their own facts, such as Population, and their own subtypes, such as Hive World, with a default look that new objects of that subtype start with. "Fill from wiki" fills an entry's facts and description from a wiki page, citing it. A universe or map exports as a zip and imports back, into the same install or another, and a CSV places objects in bulk. A map can be cloned for another era, and each object can switch to its copies on other maps. ⌘K searches a universe and runs commands. An MCP server (`pnpm mcp`) lets LLM agents such as Claude Code build content through the same API, and every change they make can be reverted. Progress is tracked task by task in the [plan's status section](docs/plan/README.md#status).
+It's live at **https://galaxyexplorer.perturbatory.com**, where signed-out visitors start in the real Milky Way's Solar System. Accounts are by invitation.
+
+**Status (19 November 2026):** the proof of concept (M0–M6) and the content tools and LLM access (M7) are complete. M8, going public, is done but for nightly backups (M8-T7), which wait on a storage bucket. The live site runs `v0.11.0`. Since then, a usability pass for phones and narrow windows (L3-T1 to L3-T5) is on `main` and unreleased; the owner's checks on an iPhone and the phone performance measurements remain ([the phone plan](docs/plan/later/phone-usability.md)). Every change is listed, task by task, in the [plan's status section](docs/plan/README.md#status).
 
 ## What you can do today
 
-- **Explore a galaxy:** a procedural spiral or elliptical galaxy with your objects on it. Each kind of body has its own look: systems as stars ringed by their planets (binaries and triples in each star's color), black holes as lensed accretion discs, stations and markers as icons.
-- **Regions:** nebulae and anomalies as round or flat clouds, storms seen from above (the Eye of Terror, with a gap in its rim for the Cadian Gate, from a generated or uploaded picture), and rifts along a curve (the Great Rift).
-- **Groups:** nested groups such as Segmentum › Sector › Sub-sector, drawn as colored outlines with their names, shown or hidden by layer.
-- **Routes:** lines through systems in order, such as a trade lane or a warp route, solid or dashed, with their names on the line.
-- **Read about anything:** select an object, group or route for its details, images, facts and links. Potential spoilers stay blacked out until you reveal them, one at a time or all at once.
-- **Build it, in edit mode (E):**
-  - add, move, duplicate and delete objects;
-  - edit their details, with rich text and images;
-  - group a selection (⌘/Ctrl + G);
-  - draw routes with the Route tool, or through a selection in the order you picked it;
-  - reshape regions with handles on the map;
-  - change the galaxy's look, or trace over an uploaded map image;
-  - undo anything, or revert it later from the History panel.
-- **Universe settings** (from the universe menu): the universe's details, and its group types, event categories, object subtypes and custom fields.
+**Reading a universe**
 
-Try it with the demo data: after setup, `pnpm db:reset` loads the **Example Universe** (at `/u/example-universe/main`) and `pnpm db:seed stress` adds a 5,000-object map for performance testing (`/u/stress-test/main`).
+- **Explore a galaxy:** a procedural spiral or elliptical galaxy with its systems, black holes, stations and markers. Zoom into a system for its stars, planets, belts and stations; zoom into a planet or moon for its globe, with clouds, atmosphere, rings, city lights, and pins for its places and events.
+- **Regions, groups and routes:** nebulae and storms as clouds, rifts along a curve; nested groups such as Segmentum › Sector › Sub-sector drawn as outlines or as rings around the galaxy's centre, shown or hidden by layer; routes such as warp lanes drawn through systems in order.
+- **Read about anything:** select an object, group, route, place, event or person for its details, pictures (animated GIFs play), facts, links, and the events it took part in. The Events list shows a map's events in date order, each a way to where it happened.
+- **Spoilers** stay blacked out until revealed, one at a time or all at once.
+- **Find anything:** ⌘/Ctrl + K searches a universe by name and runs commands, such as "Copy link to this view". A link carries the camera, so it opens exactly what you saw.
+- **Several eras:** a universe has maps, one per period, and each object can switch to its copies on the others.
+- **Learn it:** the Help menu has every key and gesture, and guided tours for readers and editors.
+- **Record a clip:** capture mode frames the map for Reels, Stories or feed posts, plays a camera move between two points, and records it to an MP4 at Instagram's exact size.
+- **On a phone:** a slim top bar (where you are, Search, More), panels as sheets, touch gestures (one finger turns, two slide, pinch zooms, tap selects, double-tap enters), and capture mode by buttons. Editing needs a mouse or trackpad, on any size of screen.
+
+**Building one** (edit mode, E or the Edit button, for a universe's owner and editors)
+
+- Add, move, duplicate and delete objects; group a selection (⌘/Ctrl + G); draw routes; reshape regions with handles; place pins on a globe.
+- Edit details with rich text and images; set each planet's look from ten presets or an uploaded map.
+- Undo anything, or revert it later from the History panel.
+- **Universe settings:** the universe's details; its group types, event categories, object subtypes (Hive World, with a default look) and custom facts (Population); sharing; and import and export.
+- **Fill from wiki:** fill an entry's facts and description from a configured wiki page, cited.
+- **Import and export** a universe or map as a zip, or many objects at once from a CSV; **clone a map** for another era.
+- **Agents:** an MCP server lets LLM agents such as Claude Code build content through the same API, locally (`pnpm mcp`) or remotely with an API token (`pnpm mcp:http`). Every change they make can be reverted.
+
+**Accounts and sharing** (on a server with accounts)
+
+- Accounts come from invite links, with optional two-factor codes. Each universe has an owner and is private, link-only or public; owners add editors and viewers by username. Admins manage accounts and universes from `/admin`. API tokens act for their account, narrowed to read or write and to one universe.
+- Links to public pages get a card with a picture in chat apps, without spoilers.
+
+Running locally, there's no sign-in and you can edit everything. Try it with the demo data: after setup, `pnpm db:reset` loads the **Example Universe** (at `/u/example-universe/main`), and `pnpm db:seed stress` adds a 5,000-object map for performance testing (`/u/stress-test/main`).
 
 ## Documentation
 
-- [Implementation plan](docs/plan/README.md): principles, scope, milestones and open items
+- [Implementation plan](docs/plan/README.md): principles, scope, milestones, status and the plans to come back to
 - [Decisions](docs/plan/decisions.md): every product and technical decision
 - [Agent instructions](AGENTS.md): rules for AI coding agents working in this repository, and the full command list
-- [Performance log](docs/perf/README.md): the reference machine, how to measure, and baseline numbers
-- [Private preview](docs/ops/preview.md): putting the app on one password-protected server for invited testers, before M8's public site (which adds invited accounts, private universes and sharing: [D-34](docs/plan/decisions.md))
+- [Performance log](docs/perf/README.md): the reference machine, how to measure, and the reports
+- [Production](docs/ops/production.md), [the droplet](docs/ops/droplet.md) and [releasing](docs/ops/deploy.md): the live site, how it's run, and how a `v*` tag deploys it
+- [MCP server](apps/mcp/README.md): adding it to Claude Code or Claude Desktop
+- [Capture shots](docs/capture/milky-way.md): camera links for clips of the Milky Way
 
 ## Getting started
 
@@ -97,21 +113,25 @@ Run these once, in the repository folder.
 
 ### Controls
 
-| Do | Mouse or trackpad | Keyboard |
-|---|---|---|
-| Orbit | drag (Option/Alt + drag in edit mode) | — |
-| Pan | right-drag, or ⌘/Ctrl + drag | arrow keys |
-| Zoom toward the pointer | scroll, or pinch | `+` and `−` |
-| Select | click; Shift or ⌘/Ctrl + click adds | Esc clears; with nothing selected, Esc goes up one view |
-| Enter a system or planet's view | double-click it, or keep zooming in on it until the ring fills | Enter |
-| Leave a view | keep zooming out until the ring fills, or click a breadcrumb | Esc, or Back |
-| Fly to the selection | double-click (anything that opens no view) | F |
-| Reset the camera | — | H |
-| Labels: hover only, group names, all | — | L cycles; hold Space for all |
-| Show or hide spoilers | the Spoilers button | Shift + S |
-| Quality, and how many galaxy stars to draw and how bright | the settings button (top right) | — |
-| Every shortcut and gesture | the Help button | ? |
-| Edit mode | the Edit button | E |
+| Do | Mouse or trackpad | Touch | Keyboard |
+|---|---|---|---|
+| Orbit | drag (Option/Alt + drag in edit mode) | drag with one finger | — |
+| Pan | right-drag, or ⌘/Ctrl + drag | drag with two fingers | arrow keys |
+| Zoom toward the pointer | scroll, or pinch | pinch | `+` and `−` |
+| Select | click; Shift or ⌘/Ctrl + click adds | tap | Esc clears; with nothing selected, Esc goes up one view |
+| Enter a system or planet's view | double-click it, or keep zooming in on it until the ring fills | double-tap, or pinch in | Enter |
+| Leave a view | keep zooming out until the ring fills, or click a breadcrumb | pinch out, or the name at the top | Esc, or Back |
+| Fly to the selection | double-click (anything that opens no view) | double-tap | F |
+| Reset the camera | — | — | H |
+| Labels: on hover (or selected only), group names, all | the Labels buttons in Layers | the same, in More | L cycles; hold Space for all |
+| Show or hide spoilers | the Spoilers button | the Spoilers switch, in More | Shift + S |
+| Search, and commands | the Search button | Search | ⌘/Ctrl + K |
+| Quality, and how many galaxy stars to draw and how bright | the settings button (top right) | Display, in More | — |
+| Every shortcut and gesture, and the tours | the Help button | Help and tours, in More | ? |
+| Capture mode, for clips | a command in Search | Record a clip, in More | A, B, P, R, Esc |
+| Edit mode | the Edit button | — (needs a mouse or trackpad) | E |
+
+Below 1,280 px wide the top bar's buttons show their icons alone; below 768 px wide, or 500 px high, it becomes the phone's slim bar, with everything else in its More sheet.
 
 In edit mode:
 - dragging empty space draws a selection box, with Shift adding to the selection;
@@ -122,7 +142,7 @@ In edit mode:
 - ⌘/Ctrl + D duplicates, ⌘/Ctrl + G groups, and Delete deletes, after a confirmation that counts what goes with it;
 - ⌘/Ctrl + Z undoes and ⌘/Ctrl + Shift + Z redoes.
 
-The List button (always open in edit mode) shows everything in the view as a tree of layers, groups, routes and objects, usable with the keyboard alone. Press `?` for every shortcut that works today; [ux.md](docs/plan/ux.md#4-keyboard-shortcuts) also lists what's still to come.
+The List button (always open in edit mode) shows everything in the view as a tree of layers, groups, routes, objects and people, usable with the keyboard alone. Press `?` for every shortcut that works today.
 
 ### Other pages
 
@@ -137,9 +157,9 @@ The List button (always open in edit mode) shows everything in the view as a tre
 |---|---|---|
 | `pnpm check` | format check, lint, typecheck and unit tests | nothing |
 | `pnpm test:integration` | database and API tests; each test gets its own throwaway database | `pnpm db:up` |
-| `pnpm test:e2e` | browser tests in Chromium and WebKit, against a production build | `pnpm db:up`, Playwright's browsers |
+| `pnpm test:e2e` | browser tests in desktop Chromium and WebKit, and in an emulated Android phone and iPhone (`*.phone.spec.ts`), against a production build | `pnpm db:up`, Playwright's browsers |
 
-The e2e tests start their own API and web server on different ports, so they can run while `pnpm dev` is running. GitHub Actions runs all three on every push to `main`.
+The e2e tests start their own API and web servers on other ports, one without accounts and one with, so they can run while `pnpm dev` is running. `-- --project=chromium` runs one browser (the projects are `chromium`, `webkit`, `phone-chromium` and `phone-webkit`). GitHub Actions runs all three commands on every push to `main`, the browser tests in Chromium and the emulated Android phone.
 
 Database commands:
 - `pnpm db:migrate` applies new migrations;
@@ -152,6 +172,10 @@ After pulling new code, run `pnpm db:migrate` before `pnpm dev`: new migrations 
 Other commands:
 - `pnpm perf` measures frame times, draw calls and memory on the stress map in visible Chrome and WebKit windows, and fails on a missed budget. `pnpm perf --edit` does the same in edit mode. Leave the mouse alone while it runs: a pointer over the windows counts as interaction. [docs/perf/README.md](docs/perf/README.md) explains the report.
 - `pnpm api:generate` regenerates the typed API client after a route or schema change, and `pnpm api:check` fails if it's out of date (CI runs it).
+- `pnpm mcp` and `pnpm mcp:http` run the MCP server for LLM agents ([apps/mcp/README.md](apps/mcp/README.md)).
+- `pnpm admin:create-user`, `admin:invite` and `admin:reset-link` make accounts and links on a server with accounts.
+
+Pushing to `main` doesn't deploy. A release is a `v*` tag on a commit whose CI has passed ([docs/ops/deploy.md](docs/ops/deploy.md)).
 
 [AGENTS.md](AGENTS.md#commands) lists every command.
 
@@ -163,7 +187,10 @@ Other commands:
 | 3100 | API (`pnpm dev`) |
 | 5442 | dev database |
 | 5443 | test database |
+| 3110 | remote MCP server (`pnpm mcp:http`) |
 | 4173, 3101 | web app and API started by `pnpm test:e2e` |
+| 4174, 3108, 3109 | the same with accounts, and its remote MCP, started by `pnpm test:e2e` |
+| 4174, 3103 | web app and API started by `pnpm perf` (so it can't run beside the e2e tests) |
 
 Everything listens on this machine only (127.0.0.1 or localhost), not on your network.
 
@@ -181,4 +208,4 @@ Everything listens on this machine only (127.0.0.1 or localhost), not on your ne
 - **`DATABASE_URL is not set` or `TEST_DATABASE_URL is not set`:** create `.env` from `.env.example`.
 - **The databases stopped by themselves:** quitting or restarting Docker Desktop stops them. Run `pnpm db:up` again; your data is kept.
 - **Errors about a missing column or table after pulling:** run `pnpm db:migrate`.
-- **The e2e tests can't start their server:** the test database isn't running (`pnpm db:up`), or something holds port 4173 or 3101.
+- **The e2e tests can't start their servers:** the test database isn't running (`pnpm db:up`), or something holds one of their ports (4173, 4174, 3101, 3108, 3109), often a `pnpm perf` run.
