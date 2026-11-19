@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx';
+import { BAR_BUTTON, BAR_TEXT } from './bar-classes.ts';
 
 /**
  * The account menu at the top bar's right end (M8-T1, T13, ux.md §13): the username, opening
@@ -27,7 +28,8 @@ export function AccountMenu() {
     if (location.pathname === '/login') return null;
     const next = encodeURIComponent(`${location.pathname}${location.search}`);
     return (
-      <Button asChild variant="ghost" size="sm" className="pointer-events-auto">
+      // "Sign in" keeps its text at every width: it's short, and has no icon to stand for it.
+      <Button asChild variant="ghost" size="sm" className={BAR_BUTTON}>
         <Link to={`/login?next=${next}`}>Sign in</Link>
       </Button>
     );
@@ -35,10 +37,15 @@ export function AccountMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="pointer-events-auto gap-1.5">
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`${BAR_BUTTON} gap-1.5`}
+          title={`Account: ${account.data.username}`}
+        >
           <CircleUser aria-hidden />
           <span className="sr-only">Account: </span>
-          {account.data.username}
+          <span className={BAR_TEXT}>{account.data.username}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-44">

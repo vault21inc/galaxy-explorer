@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { QUALITY_LEVELS, QUALITY_PRESETS, type QualityLevel } from '@/render/tuning.ts';
 import { useQuality } from '@/state/quality.ts';
 import { useStarField } from '@/state/star-field.ts';
+import { BAR_BUTTON } from './bar-classes.ts';
 
 const LEVEL_TEXT: Record<QualityLevel, { label: string; hint: string }> = {
   low: { label: 'Low', hint: 'For older or Intel Macs.' },
@@ -29,7 +30,8 @@ export function QualityPopover() {
           variant="ghost"
           size="icon-sm"
           aria-label="Quality settings"
-          className="pointer-events-auto"
+          title="Quality settings"
+          className={`${BAR_BUTTON} compact:coarse:size-10`}
         >
           <Settings2 aria-hidden />
         </Button>

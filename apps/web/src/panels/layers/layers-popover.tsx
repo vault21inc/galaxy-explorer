@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router';
 import { useViewPayload } from '@/api/hooks.ts';
 import { useReadOptions } from '@/api/read-options.ts';
 import { useUniverseRoute } from '@/app/use-universe-route.ts';
+import { BAR_BUTTON, BAR_TEXT } from '@/app/bar-classes.ts';
 import { Button } from '@/components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
 import { activeLayerOf } from '@/editor/actions/group.ts';
@@ -57,11 +58,12 @@ export function LayersPopover() {
         <Button
           variant="ghost"
           size="sm"
-          className="pointer-events-auto gap-1.5"
+          className={`${BAR_BUTTON} gap-1.5`}
           data-tour="layers"
+          title="Layers"
         >
           <Layers aria-hidden />
-          Layers
+          <span className={BAR_TEXT}>Layers</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="flex max-h-[70vh] w-72 flex-col gap-3 text-sm">

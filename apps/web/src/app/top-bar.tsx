@@ -21,6 +21,7 @@ import { Switcher } from './switcher.tsx';
 import { useUniverseRoute } from './use-universe-route.ts';
 import { keptSearch } from '@/lib/kept-params.ts';
 import { useNoIndex } from './use-no-index.ts';
+import { BAR_TEXT } from './bar-classes.ts';
 
 /**
  * The top bar (ux.md §1): the app's name, the universe and map switchers, the breadcrumbs and
@@ -31,18 +32,20 @@ import { useNoIndex } from './use-no-index.ts';
 export function TopBar() {
   const { universeSlug, mapSlug } = useParams();
   return (
+    // One row that never wraps: the left part (switchers, breadcrumbs) truncates to make room,
+    // and the right-hand buttons keep their size (phone-usability.md, "Tiers").
     <header className="pointer-events-none absolute inset-x-0 top-0 flex items-center gap-2 px-4 py-3">
       <Link
         to="/"
-        className="pointer-events-auto mr-2 text-sm font-semibold label-caps text-foreground"
+        className="pointer-events-auto mr-2 shrink-0 text-sm font-semibold whitespace-nowrap label-caps text-foreground"
       >
-        <span aria-hidden className="mr-1.5 text-primary">
+        <span aria-hidden className="mr-1.5 text-primary compact:mr-0 slim:mr-0">
           ◈
         </span>
-        Galaxy Explorer
+        <span className={BAR_TEXT}>Galaxy Explorer</span>
       </Link>
       {universeSlug !== undefined && <UniverseControls universeSlug={universeSlug} />}
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto flex shrink-0 items-center gap-1">
         {universeSlug !== undefined && <PaletteButton />}
         {mapSlug !== undefined && <EditToggle />}
         {mapSlug !== undefined && <EventsPopover />}

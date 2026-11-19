@@ -4,6 +4,7 @@ import { useParams } from 'react-router';
 import { useConfigList, useEventList } from '@/api/hooks.ts';
 import { useReadOptions } from '@/api/read-options.ts';
 import { useUniverseRoute } from '@/app/use-universe-route.ts';
+import { BAR_BUTTON, BAR_TEXT } from '@/app/bar-classes.ts';
 import { Button } from '@/components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
 import { iconDataUrl, useIconDrawings } from '@/icons/use-icons.ts';
@@ -57,11 +58,12 @@ export function EventsPopover() {
         <Button
           variant="ghost"
           size="sm"
-          className="pointer-events-auto gap-1.5"
+          className={`${BAR_BUTTON} gap-1.5`}
           data-tour="events"
+          title="Events"
         >
           <CalendarDays aria-hidden />
-          Events
+          <span className={BAR_TEXT}>Events</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent

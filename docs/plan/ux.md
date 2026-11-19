@@ -26,6 +26,11 @@ What the app looks like and how it responds to the mouse, trackpad, touch and ke
   - the edit toggle, for those who may edit this universe (locally, everyone; from M8, its owner and editors, §13);
   - Help: the keyboard shortcuts (M4-T9), and from M8-T10 the guided tours (§12);
   - from M8, the account menu (§13), or "Sign in".
+  - **Three widths** (D-57, [the phone plan](later/phone-usability.md)), defined once in `apps/web/src/lib/layout-tier.ts` and as the Tailwind variants `slim:`, `compact:`, `full:`, `short:` and `coarse:` in `index.css`:
+    - **full,** 1,280 px and wider: as drawn above;
+    - **compact,** 768 to 1,279 px wide: the app's name is its mark (◈) alone and the right-hand buttons are icons, keeping their names for screen readers and in their tooltips; on a touch screen they're 40 px;
+    - **slim,** narrower than 768 px or shorter than 500 px (a phone, either way up): a bar of its own, with sheets instead of popovers (L3-T2); until that's built, the compact bar.
+    - At every width the bar is one row that never wraps: the switchers and the breadcrumbs truncate, the crumbs above the current view first, and the full names are in their tooltips.
 - **Right panel:** about 380 px wide, collapsible. It shows the selection's details, or for several selected items, a summary with bulk actions. On screens narrower than 768 px it becomes a bottom sheet.
   - **Reading** (the owner's request after M7-T6): the name stays pinned at the top while the rest scrolls under it. The picture comes next (the cover across the panel, the gallery two to a row), then the summary, then the description. A description longer than about 265 characters shows its start, cut at a word, with **More**; **Less** folds it again, and a new selection starts folded.
   - In edit mode the form leads, and the images editor keeps its place further down.

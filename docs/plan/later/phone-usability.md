@@ -1,6 +1,6 @@
 # Later: a usability pass for phones and narrow windows
 
-**Status:** ready to pick up, not scheduled. Written 2026-11-19 after the owner tried the live site on an iPhone; the owner settled its open questions the same day ("Decided" below). The task IDs (`L3-T1` and so on) are provisional: renumber them if this joins a milestone. Do the tasks in order: each one stands on the ones before it and leaves `main` working.
+**Status:** in progress (L3-T1 done, 2026-11-19). Written 2026-11-19 after the owner tried the live site on an iPhone; the owner settled its open questions the same day ("Decided" below). The task IDs (`L3-T1` and so on) are provisional: renumber them if this joins a milestone. Do the tasks in order: each one stands on the ones before it and leaves `main` working.
 
 **Goal:** a reader on a phone can do everything a reader on a laptop can: find their way around, search, open and read an object, change what's shown, and record a clip. Nothing is off screen or too small to tap, at any window width from 320 px up. Editing stays with a mouse or trackpad, and the app says so only to the people it affects.
 
@@ -54,7 +54,7 @@ An orbit view adds a third breadcrumb, and a longer universe or map name adds it
 8. **The note** (delegated): "Editing needs a mouse or trackpad." No link.
 9. **No native apps.** The app stays in the browser; "Add to Home Screen" is the optional last task.
 
-Record these as one D-entry in `decisions.md` with L3-T1's commit.
+Recorded as D-57 in `decisions.md`.
 
 ## The layout
 
@@ -66,9 +66,9 @@ Record these as one D-entry in `decisions.md` with L3-T1's commit.
 | **compact** | 768 to 1,279 px wide, and not short | today's bar with the name reduced to its mark and the right-hand buttons to their icons | as today |
 | **full** | 1,280 px and wider, and not short | today's bar | as today |
 
-- **One definition.** `apps/web/src/lib/layout-tier.ts` holds the media queries as strings and exports `useLayoutTier()` (`'slim' | 'compact' | 'full'`) and `useShort()`, both from `matchMedia` with change listeners, so a rotation or a resized window is followed. `index.css` declares the same queries as Tailwind custom variants (`slim:`, `compact:`, `full:`, `short:`), and a unit test reads `index.css` and fails if the two disagree (CSS can't import the constants).
+- **One definition.** `apps/web/src/lib/layout-tier.ts` holds the media queries as strings (slim is `not all and (min-width: 768px) and (min-height: 500px)`: a comma list reads the same in a browser, but Tailwind's `@custom-variant` splits a comma into two selectors) and exports `useLayoutTier()` (`'slim' | 'compact' | 'full'`) and `useShort()`, both from `matchMedia` with change listeners, so a rotation or a resized window is followed. `index.css` declares the same queries as Tailwind custom variants (`slim:`, `compact:`, `full:`, `short:`), and a unit test reads `index.css` and fails if the two disagree (CSS can't import the constants). The test imports it with `?raw`, which Vitest empties unless `test.css.include` names the file (`vite.config.js`).
 - **CSS where the markup is the same, the hook where it isn't.** Compact against full is the same controls with or without their text: variants only, no hook. Slim is different markup (the chip and More replace the switchers, breadcrumbs and buttons), so `TopBar` renders one or the other from the hook. Rendering both and hiding one would put every `data-tour` mark and every focusable control on the page twice.
-- **Compact and full never wrap or overflow.** The name is "◈ Galaxy Explorer" on full and "◈" on compact (the link keeps its `aria-label`). Switcher names and breadcrumbs get `min-w-0` and `truncate`; the breadcrumbs before the current one shrink first, and the current one keeps at least 12 characters. Icon-only buttons keep their names as `aria-label` and `title`.
+- **Compact and full never wrap or overflow.** The name is "◈ Galaxy Explorer" on full and "◈" on compact (the link keeps its `aria-label`). Switcher names and breadcrumbs truncate (the full name is in each one's tooltip); the breadcrumbs before the current one shrink first, down to four characters, and the current one never shrinks but stops at 24 characters (as built: a minimum of 12 would have padded short names with blank space). Icon-only buttons keep their names as `aria-label` and `title`.
 - **Under a finger:** a `coarse` custom variant (`@media (pointer: coarse)`) makes the compact bar's buttons 40 px (`icon-lg`). In the slim bar and in sheets, every control is at least 44 px high.
 
 ### The slim bar
@@ -147,10 +147,10 @@ One row, left to right, each 44 px high:
 - The D-entry for "Decided" above; ux.md §1 gains the three tiers.
 
 **Done when:**
-- [ ] Unit test: `index.css`'s variants and `layout-tier.ts`'s queries are the same.
-- [ ] E2E (the existing desktop projects, with `page.setViewportSize`): as a signed-in editor in an orbit view of the demo universe, the helper passes at 768, 1,024, 1,279, 1,280 and 1,440 px wide.
-- [ ] E2E: at 1,024 px the bar's buttons have no visible text but keep their accessible names; at 1,280 px they have text.
-- [ ] The existing e2e suites pass with no change to their selectors (they run at 1,280 px, the full tier).
+- [x] Unit test: `index.css`'s variants and `layout-tier.ts`'s queries are the same.
+- [x] E2E (the existing desktop projects, with `page.setViewportSize`): as a signed-in editor in an orbit view, the helper passes at 768, 1,024, 1,279, 1,280 and 1,440 px wide. (As built, `e2e/top-bar.spec.ts` makes its own universe with long names on the API with accounts, which is wider than the demo's.)
+- [x] E2E: at 1,024 px the bar's buttons have no visible text but keep their accessible names; at 1,280 px they have text.
+- [x] The existing e2e suites pass with no change to their selectors (they run at 1,280 px, the full tier).
 
 ### L3-T2 The slim bar and its sheets
 

@@ -44,9 +44,10 @@ export function Breadcrumbs({ universeSlug, mapSlug, mapId }: BreadcrumbsProps) 
     <nav
       aria-label="Breadcrumbs"
       data-tour="breadcrumbs"
-      className="ml-2 text-sm text-muted-foreground"
+      // Shrinks before anything else in the bar: the crumbs above the current view first.
+      className="ml-2 min-w-0 shrink-[4] text-sm whitespace-nowrap text-muted-foreground"
     >
-      <ol className="flex items-center gap-1.5">
+      <ol className="flex min-w-0 items-center gap-1.5">
         {crumbs.map((entry, index) => {
           const name = names.get(entry.subjectId);
           const text = entry.level === 'galaxy' ? 'Galaxy' : name ? labelText(name, policy) : '…';
@@ -62,7 +63,13 @@ export function Breadcrumbs({ universeSlug, mapSlug, mapId }: BreadcrumbsProps) 
             viewNavigation.exit();
           };
           return (
-            <li key={`${entry.level}:${entry.subjectId}`} className={separator}>
+            <li
+              key={`${entry.level}:${entry.subjectId}`}
+              title={text}
+              // The current view keeps up to 24 characters and never shrinks; the ones above
+              // it give way, down to a few letters and an ellipsis.
+              className={`${separator} truncate ${last ? 'max-w-[24ch] shrink-0' : 'min-w-[4ch] shrink'}`}
+            >
               {last ? (
                 <span aria-current="page" className="text-foreground">
                   {text}

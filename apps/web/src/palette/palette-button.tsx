@@ -1,4 +1,5 @@
 import { Search } from 'lucide-react';
+import { BAR_BUTTON, BAR_TEXT } from '@/app/bar-classes.ts';
 import { Button } from '@/components/ui/button.tsx';
 import { detectPlatform } from '@/input/platform.ts';
 import { usePalette } from '@/state/palette.ts';
@@ -10,15 +11,18 @@ export function PaletteButton() {
     <Button
       variant="ghost"
       size="sm"
-      className="pointer-events-auto gap-1.5 text-muted-foreground"
+      className={`${BAR_BUTTON} gap-1.5 text-muted-foreground`}
       data-tour="search"
+      title={`Search (${shortcut})`}
       onClick={() => {
         usePalette.getState().setOpen(true);
       }}
     >
       <Search aria-hidden />
-      Search
-      <kbd className="rounded border px-1 font-sans text-[10px]">{shortcut}</kbd>
+      <span className={BAR_TEXT}>Search</span>
+      <kbd className="rounded border px-1 font-sans text-[10px] compact:hidden slim:hidden">
+        {shortcut}
+      </kbd>
     </Button>
   );
 }

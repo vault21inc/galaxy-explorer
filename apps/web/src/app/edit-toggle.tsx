@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { Button } from '@/components/ui/button.tsx';
 import { useCanEdit } from '@/editor/use-can-edit.ts';
 import { useEditor } from '@/state/editor.ts';
+import { BAR_BUTTON, BAR_TEXT } from './bar-classes.ts';
 
 /**
  * The edit toggle (ux.md §1–2), shown on a map's page to readers who may edit. The E key does
@@ -29,11 +30,11 @@ export function EditToggle() {
       aria-pressed={editing}
       title="Edit mode (E)"
       data-tour="edit-toggle"
-      className="pointer-events-auto gap-1.5"
+      className={`${BAR_BUTTON} gap-1.5`}
       onClick={toggle}
     >
       <Pencil aria-hidden />
-      Edit
+      <span className={BAR_TEXT}>Edit</span>
     </Button>
   );
 }

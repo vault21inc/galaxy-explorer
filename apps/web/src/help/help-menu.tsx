@@ -1,5 +1,6 @@
 import { CircleHelp } from 'lucide-react';
 import { Link, useParams } from 'react-router';
+import { BAR_BUTTON } from '@/app/bar-classes.ts';
 import { Button } from '@/components/ui/button.tsx';
 import {
   DropdownMenu,
@@ -31,7 +32,7 @@ export function HelpMenu() {
           size="icon-sm"
           aria-label="Help"
           title="Help"
-          className="pointer-events-auto"
+          className={`${BAR_BUTTON} compact:coarse:size-10`}
           data-tour="help"
         >
           <CircleHelp aria-hidden />

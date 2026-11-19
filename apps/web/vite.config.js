@@ -61,8 +61,9 @@ export default defineConfig(({ mode }) => {
     // Web Workers (src/workers/) are built as ES modules, like the app, so they can share its
     // code (the domain package) and `new Worker(…, { type: 'module' })` works in every browser.
     worker: { format: 'es' },
-    // Vitest runs only the unit tests; e2e/*.spec.ts are Playwright's.
-    test: { include: ['{src,test}/**/*.test.{ts,tsx}'] },
+    // Vitest runs only the unit tests; e2e/*.spec.ts are Playwright's. It skips CSS unless told,
+    // which empties even a `?raw` import: lib/layout-tier.test.ts reads index.css's variants.
+    test: { include: ['{src,test}/**/*.test.{ts,tsx}'], css: { include: [/index\.css/] } },
     build: {
       sourcemap: true,
       // three.js alone is about 700 kB minified, so Vite's default 500 kB warning always fires.

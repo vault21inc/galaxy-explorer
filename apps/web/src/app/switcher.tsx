@@ -48,12 +48,15 @@ export function Switcher({
         <Button
           variant="ghost"
           size="sm"
-          className="pointer-events-auto gap-1 px-2"
+          // It may shrink, down to a few letters, when the bar is short of room; the full name
+          // is in its title and in the menu it opens.
+          className="pointer-events-auto max-w-56 min-w-12 shrink gap-1 px-2 compact:coarse:h-10"
           data-tour={tourName}
+          title={`${label}: ${current}`}
         >
           {/* The visible text stays part of the name, so speech input can say what it sees. */}
           <span className="sr-only">{label}: </span>
-          {current}
+          <span className="truncate">{current}</span>
           <ChevronDown aria-hidden className="size-3.5 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>

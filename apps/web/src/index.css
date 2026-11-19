@@ -10,6 +10,16 @@
  */
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * The layout tiers (src/lib/layout-tier.ts, which explains them). The queries must match
+ * LAYOUT_QUERIES there exactly: lib/layout-tier.test.ts compares the two.
+ */
+@custom-variant slim (@media not all and (min-width: 768px) and (min-height: 500px));
+@custom-variant compact (@media (min-width: 768px) and (max-width: 1279.98px) and (min-height: 500px));
+@custom-variant full (@media (min-width: 1280px) and (min-height: 500px));
+@custom-variant short (@media (max-height: 499.98px));
+@custom-variant coarse (@media (pointer: coarse));
+
 :root {
   --radius: 0.5rem;
 

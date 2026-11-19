@@ -6,6 +6,13 @@ import { GIZMO_SIZE } from '@/editor/move-tool.tsx';
 import { placementGhost } from '@/editor/placement.tsx';
 import { toNdc, workPlanePoint } from '@/editor/work-plane.ts';
 import { detectPlatform, type Platform } from '@/input/platform.ts';
+import {
+  currentTier,
+  FINE_POINTER_QUERY,
+  LAYOUT_QUERIES,
+  matches,
+  type LayoutTier,
+} from '@/lib/layout-tier.ts';
 import { hoverStore } from '@/state/hover.ts';
 import { useSelection } from '@/state/selection.ts';
 import { useNavigation } from '@/state/navigation.ts';
@@ -96,6 +103,12 @@ export interface GeTestHooks {
   } | null;
   /** The keyboard convention the app detected: Cmd is primary on 'mac', Ctrl elsewhere. */
   platform(): Platform;
+  /**
+   * How the page is laid out now (docs/plan/later/phone-usability.md): the tier, whether the
+   * window is short (a phone on its side), whether a mouse or trackpad is there to edit with,
+   * and which sheet is open (null when none).
+   */
+  layout(): { tier: LayoutTier; short: boolean; finePointer: boolean; sheet: string | null };
   /** The selection, in order. */
   selectedIds(): string[];
   /** Selects these, as a click or the outliner would (`pnpm perf`'s look preview, M6-T2). */
@@ -291,6 +304,12 @@ export function installTestHooks(): void {
       return { waypointIds: [...waypointIds], points, color, dashed, widthPx, label, redacted };
     },
     platform: () => detectPlatform(),
+    layout: () => ({
+      tier: currentTier(),
+      short: matches(LAYOUT_QUERIES.short),
+      finePointer: matches(FINE_POINTER_QUERY),
+      sheet: null,
+    }),
     selectedIds: () => [...useSelection.getState().selectedIds],
     select: (ids) => {
       useSelection.getState().select(ids);
