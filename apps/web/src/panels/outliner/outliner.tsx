@@ -48,6 +48,7 @@ export function Outliner({
   subject = null,
   emptyNote = null,
   onClose,
+  inSheet = false,
 }: {
   objects: readonly ViewObject[];
   groups?: readonly ViewGroup[];
@@ -61,6 +62,8 @@ export function Outliner({
   emptyNote?: { title: string; hint: string } | null;
   /** View mode's List button opened it; edit mode shows it always. */
   onClose?: () => void;
+  /** Shown in the slim bar's List sheet, which is its frame: no panel of its own. */
+  inSheet?: boolean;
 }) {
   const filterId = useId();
   const policy = useSpoilerPolicy();
@@ -196,7 +199,11 @@ export function Outliner({
   return (
     <aside
       aria-label="Outliner"
-      className="absolute top-16 left-4 flex max-h-[calc(100%-9rem)] w-64 flex-col rounded-lg border bg-card"
+      className={
+        inSheet
+          ? 'flex min-h-0 flex-col'
+          : 'absolute top-16 left-4 flex max-h-[calc(100%-9rem)] w-64 flex-col rounded-lg border bg-card'
+      }
     >
       <div className="flex items-center gap-1 border-b px-2 py-1.5">
         <label htmlFor={filterId} className="sr-only">

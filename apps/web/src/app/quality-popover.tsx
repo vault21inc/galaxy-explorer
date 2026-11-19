@@ -19,10 +19,6 @@ const LEVEL_TEXT: Record<QualityLevel, { label: string; hint: string }> = {
  * without lowering the quality.
  */
 export function QualityPopover() {
-  const id = useId();
-  const level = useQuality((state) => state.level);
-  const setLevel = useQuality((state) => state.setLevel);
-
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -37,36 +33,51 @@ export function QualityPopover() {
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-64 text-sm">
-        <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-xs text-muted-foreground label-caps">Quality</legend>
-          {QUALITY_LEVELS.map((option) => (
-            <label key={option} className="flex cursor-pointer items-start gap-2">
-              <input
-                type="radio"
-                name={`${id}-quality`}
-                value={option}
-                checked={level === option}
-                onChange={() => {
-                  setLevel(option);
-                }}
-                className="mt-1 accent-primary"
-              />
-              <span>
-                {LEVEL_TEXT[option].label}
-                <span className="block text-xs text-muted-foreground">
-                  {LEVEL_TEXT[option].hint} Up to {QUALITY_PRESETS[option].dprRange[1]}× pixels.
-                </span>
-              </span>
-            </label>
-          ))}
-        </fieldset>
-        <p className="mt-3 text-xs text-muted-foreground">
-          Antialiasing changes apply when the page next loads.
-        </p>
-        <StarFieldControls />
-        <AmbientMotionToggle />
+        <QualitySettings />
       </PopoverContent>
     </Popover>
+  );
+}
+
+/**
+ * What the quality popover holds, and the slim bar's Display sheet: the quality level, the
+ * galaxy's stars and ambient motion.
+ */
+export function QualitySettings() {
+  const id = useId();
+  const level = useQuality((state) => state.level);
+  const setLevel = useQuality((state) => state.setLevel);
+  return (
+    <div className="text-sm">
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-2 text-xs text-muted-foreground label-caps">Quality</legend>
+        {QUALITY_LEVELS.map((option) => (
+          <label key={option} className="flex cursor-pointer items-start gap-2">
+            <input
+              type="radio"
+              name={`${id}-quality`}
+              value={option}
+              checked={level === option}
+              onChange={() => {
+                setLevel(option);
+              }}
+              className="mt-1 accent-primary"
+            />
+            <span>
+              {LEVEL_TEXT[option].label}
+              <span className="block text-xs text-muted-foreground">
+                {LEVEL_TEXT[option].hint} Up to {QUALITY_PRESETS[option].dprRange[1]}× pixels.
+              </span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+      <p className="mt-3 text-xs text-muted-foreground">
+        Antialiasing changes apply when the page next loads.
+      </p>
+      <StarFieldControls />
+      <AmbientMotionToggle />
+    </div>
   );
 }
 

@@ -9,21 +9,70 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx';
+import { SHEET_ROW } from '@/components/ui/sheet.tsx';
 import { useCanCreate } from '@/editor/use-can-edit.ts';
 import { useHelp } from '@/state/help.ts';
+import { useSheet } from '@/state/sheet.ts';
 import { useStartEditorTour } from './practice.ts';
 import { useTour } from './tour-store.ts';
 import { TOURS } from './tours.ts';
 
+/** One thing the Help menu offers, rendered as a menu item or as a sheet's row. */
+interface HelpItem {
+  key: string;
+  label: string;
+  /** A short note at the row's end: the key that does it, or why it's unavailable. */
+  hint?: string;
+  disabled?: boolean;
+  run: () => void;
+}
+
 /**
- * The top bar's Help menu (M8-T10, ux.md §12): the keyboard shortcuts (M4-T9, also `?`), the
- * reader's tour on the map that's open, the editor tour for anyone who may make universes, and
- * the About pages (M8-T9).
+ * What Help offers (M8-T10, ux.md §12): the shortcuts and gestures (M4-T9, also `?`), the
+ * reader's tour on the map that's open, and the editor tour for anyone who may make universes.
+ * The About pages (M8-T9) follow as a link. One list for the top bar's menu and the slim bar's
+ * Help sheet.
  */
-export function HelpMenu() {
+function useHelpItems(): HelpItem[] {
   const { mapSlug } = useParams();
   const canCreate = useCanCreate();
   const startEditor = useStartEditorTour();
+  return [
+    {
+      key: 'shortcuts',
+      label: 'Keyboard shortcuts',
+      hint: '?',
+      run: () => {
+        useHelp.getState().setOpen(true);
+      },
+    },
+    {
+      key: 'reader-tour',
+      label: TOURS.reader.title,
+      hint: mapSlug === undefined ? 'open a map' : undefined,
+      disabled: mapSlug === undefined,
+      run: () => {
+        useTour.getState().start('reader');
+      },
+    },
+    ...(canCreate
+      ? [
+          {
+            key: 'editor-tour',
+            label: TOURS.editor.title,
+            disabled: startEditor.isPending,
+            run: () => {
+              startEditor.mutate();
+            },
+          },
+        ]
+      : []),
+  ];
+}
+
+/** The top bar's Help menu. */
+export function HelpMenu() {
+  const items = useHelpItems();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -48,44 +97,55 @@ export function HelpMenu() {
           document.querySelector<HTMLElement>('[data-tour-step]')?.focus();
         }}
       >
-        <DropdownMenuItem
-          onSelect={() => {
-            // Once the menu has closed and put focus back on this button, so that closing the
-            // shortcuts returns it here.
-            window.setTimeout(() => {
-              useHelp.getState().setOpen(true);
-            }, 0);
-          }}
-        >
-          Keyboard shortcuts
-          <kbd className="ml-auto text-xs text-muted-foreground">?</kbd>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          disabled={mapSlug === undefined}
-          onSelect={() => {
-            useTour.getState().start('reader');
-          }}
-        >
-          {TOURS.reader.title}
-          {mapSlug === undefined && (
-            <span className="ml-auto text-xs text-muted-foreground">open a map</span>
-          )}
-        </DropdownMenuItem>
-        {canCreate && (
+        {items.map((item) => (
           <DropdownMenuItem
-            disabled={startEditor.isPending}
+            key={item.key}
+            disabled={item.disabled}
             onSelect={() => {
-              startEditor.mutate();
+              // Once the menu has closed and put focus back on this button, so that closing
+              // what it opens (the shortcuts) returns focus here.
+              window.setTimeout(item.run, 0);
             }}
           >
-            {TOURS.editor.title}
+            {item.label}
+            {item.hint && <kbd className="ml-auto text-xs text-muted-foreground">{item.hint}</kbd>}
           </DropdownMenuItem>
-        )}
+        ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link to="/about/attributions">About this site</Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/** The slim bar's Help sheet: the same items as rows. Each closes the sheet first. */
+export function HelpRows() {
+  const items = useHelpItems();
+  const close = useSheet((state) => state.close);
+  return (
+    <div className="flex flex-col">
+      {items.map((item) => (
+        <button
+          key={item.key}
+          type="button"
+          className={SHEET_ROW}
+          disabled={item.disabled}
+          onClick={() => {
+            close();
+            item.run();
+          }}
+        >
+          <span className="flex-1">{item.label}</span>
+          {item.hint && item.hint !== '?' && (
+            <span className="text-xs text-muted-foreground">{item.hint}</span>
+          )}
+        </button>
+      ))}
+      <Link to="/about/attributions" className={SHEET_ROW} onClick={close}>
+        About this site
+      </Link>
+    </div>
   );
 }

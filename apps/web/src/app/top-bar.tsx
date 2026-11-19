@@ -1,45 +1,64 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
-import { useUniverses } from '@/api/containers.ts';
+import { Link, useParams } from 'react-router';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu.tsx';
-import { containerName } from '@/lib/container-name.ts';
-import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { EventsPopover } from '@/panels/events-list/events-popover.tsx';
 import { LayersPopover } from '@/panels/layers/layers-popover.tsx';
 import { ShortcutHelp } from '@/panels/shortcut-help/shortcut-help.tsx';
 import { HelpMenu } from '@/help/help-menu.tsx';
+import { useLayoutTier } from '@/lib/layout-tier.ts';
 import { CommandPalette } from '@/palette/command-palette.tsx';
 import { PaletteButton } from '@/palette/palette-button.tsx';
-import { useCanEdit } from '@/editor/use-can-edit.ts';
 import { AccountMenu } from './account-menu.tsx';
+import { BAR_TEXT } from './bar-classes.ts';
 import { Breadcrumbs } from './breadcrumbs.tsx';
 import { CloneMapDialog } from './clone-map-dialog.tsx';
+import { EditAvailability, EditToggle } from './edit-toggle.tsx';
 import { QualityPopover } from './quality-popover.tsx';
-import { EditToggle } from './edit-toggle.tsx';
+import { SlimBar } from './slim-bar.tsx';
 import { SpoilerToggle } from './spoiler-toggle.tsx';
 import { Switcher } from './switcher.tsx';
-import { useUniverseRoute } from './use-universe-route.ts';
-import { keptSearch } from '@/lib/kept-params.ts';
 import { useNoIndex } from './use-no-index.ts';
-import { BAR_TEXT } from './bar-classes.ts';
+import { useUniverseBar } from './use-universe-bar.ts';
+import { useUniverseRoute } from './use-universe-route.ts';
 
 /**
  * The top bar (ux.md §1): the app's name, the universe and map switchers, the breadcrumbs and
  * the edit toggle, the events list (M6-T7) and the layers (on a map), the spoiler toggle, the Help
  * menu (shortcuts, M4-T9; tours, M8-T10) and the settings,
  * search with the command palette (M7-T6), and the account menu (M8-T1).
+ *
+ * On a phone (the slim tier, lib/layout-tier.ts) it's the slim bar instead (app/slim-bar.tsx):
+ * different markup, not the same hidden, so no control or tour mark is on the page twice. What
+ * isn't drawn (the palette, the shortcut help, whether editing is offered) is mounted at every
+ * width.
  */
 export function TopBar() {
   const { universeSlug, mapSlug } = useParams();
+  const slim = useLayoutTier() === 'slim';
   return (
     // One row that never wraps: the left part (switchers, breadcrumbs) truncates to make room,
-    // and the right-hand buttons keep their size (phone-usability.md, "Tiers").
-    <header className="pointer-events-none absolute inset-x-0 top-0 flex items-center gap-2 px-4 py-3">
+    // and the right-hand buttons keep their size (phone-usability.md, "Tiers"). It clears the
+    // notch and rounded corners once the page reaches under them (`viewport-fit=cover`).
+    <header className="pointer-events-none absolute inset-x-0 top-0 flex items-center gap-2 pt-[max(0.75rem,env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))] pb-3 pl-[max(1rem,env(safe-area-inset-left))] slim:pr-[max(0.5rem,env(safe-area-inset-right))] slim:pl-[max(0.5rem,env(safe-area-inset-left))]">
+      {universeSlug !== undefined && <UniverseNoIndex universeSlug={universeSlug} />}
+      {mapSlug !== undefined && <EditAvailability />}
+      {slim ? <SlimBar universeSlug={universeSlug} /> : <WideBar universeSlug={universeSlug} />}
+      <ShortcutHelp />
+      <CommandPalette />
+    </header>
+  );
+}
+
+/** The bar on the compact and full tiers: as drawn in ux.md §1. */
+function WideBar({ universeSlug }: { universeSlug: string | undefined }) {
+  const { mapSlug } = useParams();
+  return (
+    <>
       <Link
         to="/"
         className="pointer-events-auto mr-2 shrink-0 text-sm font-semibold whitespace-nowrap label-caps text-foreground"
       >
-        <span aria-hidden className="mr-1.5 text-primary compact:mr-0 slim:mr-0">
+        <span aria-hidden className="mr-1.5 text-primary compact:mr-0">
           ◈
         </span>
         <span className={BAR_TEXT}>Galaxy Explorer</span>
@@ -52,47 +71,38 @@ export function TopBar() {
         {mapSlug !== undefined && <LayersPopover />}
         <SpoilerToggle />
         <HelpMenu />
-        <ShortcutHelp />
         <QualityPopover />
         <AccountMenu />
       </div>
-      <CommandPalette />
-    </header>
+    </>
   );
 }
 
-function UniverseControls({ universeSlug }: { universeSlug: string }) {
-  const { mapSlug } = useParams();
-  const navigate = useNavigate();
-  const keep = useKeptParams();
-  const universes = useUniverses();
-  const policy = useSpoilerPolicy();
-  const canEdit = useCanEdit();
-  const [cloning, setCloning] = useState(false);
-  // Resolved without the map, so a mistyped map slug still shows the switchers to recover.
+/** Asks search engines not to index a universe that isn't public (M8-T12), at every width. */
+function UniverseNoIndex({ universeSlug }: { universeSlug: string }) {
   const route = useUniverseRoute(universeSlug);
   useNoIndex(route.status === 'ready' && route.universe.visibility !== 'public');
-  // Another universe gets `perf` only: a share link's key is this universe's.
-  const keepAcross = keptSearch(useLocation().search, {}, ['perf']);
-  if (route.status !== 'ready') return null;
+  return null;
+}
 
-  const map = route.maps.find((item) => item.slug === mapSlug);
+function UniverseControls({ universeSlug }: { universeSlug: string }) {
+  const bar = useUniverseBar(universeSlug);
+  const [cloning, setCloning] = useState(false);
+  if (!bar) return null;
+  const { universe, map } = bar;
   return (
     <>
       <Switcher
         label="Universe"
         tourName="universe-switcher"
-        value={route.universe.slug}
-        current={containerName(route.universe, policy)}
-        options={(universes.data ?? []).map((item) => ({
-          value: item.slug,
-          label: containerName(item, policy),
-        }))}
-        onSelect={(slug) => void navigate(`/u/${slug}${keepAcross}`)}
+        value={universe.slug}
+        current={bar.universeName}
+        options={bar.universeOptions}
+        onSelect={bar.selectUniverse}
         footer={
           <>
             <DropdownMenuItem asChild>
-              <Link to={`/u/${route.universe.slug}/settings`}>Universe settings</Link>
+              <Link to={`/u/${universe.slug}/settings`}>Universe settings</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/universes">All universes</Link>
@@ -100,18 +110,15 @@ function UniverseControls({ universeSlug }: { universeSlug: string }) {
           </>
         }
       />
-      {route.maps.length > 0 && (
+      {bar.maps.length > 0 && (
         <Switcher
           label="Map"
           value={map?.slug ?? ''}
-          current={map ? containerName(map, policy) : 'Choose a map'}
-          options={route.maps.map((item) => ({
-            value: item.slug,
-            label: containerName(item, policy),
-          }))}
-          onSelect={(slug) => void navigate(`/u/${universeSlug}/${slug}${keep}`)}
+          current={bar.mapName}
+          options={bar.mapOptions}
+          onSelect={bar.selectMap}
           footer={
-            canEdit && map ? (
+            bar.canClone ? (
               // A copy of this map for another era (M7-T5).
               <DropdownMenuItem
                 onSelect={() => {
@@ -130,7 +137,7 @@ function UniverseControls({ universeSlug }: { universeSlug: string }) {
           onClose={() => {
             setCloning(false);
           }}
-          universeId={route.universe.id}
+          universeId={universe.id}
           universeSlug={universeSlug}
           map={map}
         />
@@ -138,10 +145,4 @@ function UniverseControls({ universeSlug }: { universeSlug: string }) {
       {map && <Breadcrumbs universeSlug={universeSlug} mapSlug={map.slug} mapId={map.id} />}
     </>
   );
-}
-
-/** Query parameters that follow the reader to another map: `perf` and a share link's `k`. */
-function useKeptParams(): string {
-  const [searchParams] = useSearchParams();
-  return keptSearch(searchParams.toString());
 }

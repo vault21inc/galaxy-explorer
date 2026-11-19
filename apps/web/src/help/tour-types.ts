@@ -29,8 +29,28 @@ export const TOUR_CONTROLS = [
   'tool-map',
   'tool-history',
   'info-panel',
+  // The slim bar's (docs/plan/later/phone-usability.md): where SLIM_FALLBACK points instead.
+  'more',
+  'location',
 ] as const;
 export type TourControl = (typeof TOUR_CONTROLS)[number];
+
+/**
+ * On a phone (the slim tier) most of the bar is inside a sheet that's closed until the reader
+ * opens it, so a step pointing at it points at the slim bar's button that opens it instead:
+ * More, or the location chip. Once the sheet is open, the control is on the page and the step
+ * points at it (use-target.ts).
+ */
+export const SLIM_FALLBACK: Partial<Record<TourControl, TourControl>> = {
+  list: 'more',
+  layers: 'more',
+  events: 'more',
+  spoilers: 'more',
+  help: 'more',
+  'edit-toggle': 'more',
+  breadcrumbs: 'location',
+  'universe-switcher': 'location',
+};
 
 /**
  * The objects a step can point at, found through the scene index (render/scene-index.ts):

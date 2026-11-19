@@ -82,7 +82,7 @@ export function DefaultLookField(props: FieldProps<PathFieldDef>) {
         <span className="truncate">{summary || 'Base type’s'}</span>
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+        <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>

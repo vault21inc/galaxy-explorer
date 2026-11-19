@@ -58,7 +58,7 @@ export function TourPopover(props: TourPopoverProps) {
       aria-describedby={`tour-step-${step.id}`}
       data-tour-step={step.id}
       style={style}
-      className="pointer-events-auto fixed z-40 flex flex-col gap-2 rounded-lg border bg-card p-4 text-sm shadow-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="pointer-events-auto fixed z-[45] flex flex-col gap-2 rounded-lg border bg-card p-4 text-sm shadow-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
       onKeyDown={(event) => {
         if (event.key !== 'Escape') return;
         event.preventDefault();
@@ -112,18 +112,48 @@ function usePlacement(
       observer.disconnect();
     };
   }, [region]);
-  const width = Math.min(WIDTH_PX, window.innerWidth - 2 * MARGIN_PX);
+  // The room it has: the window, less an open sheet the target isn't in (on a phone).
+  const room = roomBesideSheet(target);
+  const width = Math.min(WIDTH_PX, room.right - room.left - 2 * MARGIN_PX);
   if (!target) {
-    return { width, left: (window.innerWidth - width) / 2, bottom: 88 };
+    return {
+      width,
+      left: room.left + (room.right - room.left - width) / 2,
+      bottom: window.innerHeight - room.bottom + 88,
+    };
   }
   const centerX = target.left + target.width / 2;
   const left = Math.min(
-    Math.max(centerX - width / 2, MARGIN_PX),
-    window.innerWidth - width - MARGIN_PX,
+    Math.max(centerX - width / 2, room.left + MARGIN_PX),
+    room.right - width - MARGIN_PX,
   );
   const below = target.top + target.height + GAP_PX;
-  const fitsBelow = below + Math.max(height, ROOM_BELOW_PX) < window.innerHeight - MARGIN_PX;
+  const fitsBelow = below + Math.max(height, ROOM_BELOW_PX) < room.bottom - MARGIN_PX;
   return fitsBelow
     ? { width, left, top: below }
     : { width, left, top: Math.max(MARGIN_PX, target.top - GAP_PX - height) };
+}
+
+/**
+ * The part of the window a step can use without covering an open sheet: above a sheet along
+ * the bottom, or left of one on the right (a phone on its side). A step pointing into the sheet
+ * keeps the whole window: it sits above or below its row as anywhere else.
+ */
+function roomBesideSheet(target: TargetBox | null): {
+  left: number;
+  right: number;
+  bottom: number;
+} {
+  const room = { left: 0, right: window.innerWidth, bottom: window.innerHeight };
+  const sheet = document.querySelector('[data-slot="sheet"]')?.getBoundingClientRect();
+  if (!sheet || sheet.height === 0) return room;
+  const inside =
+    target !== null &&
+    target.left >= sheet.left &&
+    target.left + target.width <= sheet.right &&
+    target.top >= sheet.top &&
+    target.top + target.height <= sheet.bottom;
+  if (inside) return room;
+  // A sheet from the right reaches the top of the window; one from the bottom doesn't.
+  return sheet.top <= 1 ? { ...room, right: sheet.left } : { ...room, bottom: sheet.top };
 }

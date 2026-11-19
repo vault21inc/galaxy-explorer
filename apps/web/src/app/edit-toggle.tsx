@@ -6,23 +6,29 @@ import { useEditor } from '@/state/editor.ts';
 import { BAR_BUTTON, BAR_TEXT } from './bar-classes.ts';
 
 /**
- * The edit toggle (ux.md §1–2), shown on a map's page to readers who may edit. The E key does
- * the same while this is on screen.
+ * Whether edit mode is offered on this map (ux.md §2): `useEditor`'s `available`, which the E
+ * key, the shortcut help, the editor's tour and the edit toggle all read. Mounted on a map's
+ * page at every width, apart from the toggle, which the slim bar doesn't show (its More sheet
+ * has an Edit row instead).
  */
-export function EditToggle() {
+export function EditAvailability() {
   const canEdit = useCanEdit();
-  const editing = useEditor((state) => state.editing);
-  const toggle = useEditor((state) => state.toggle);
   const setAvailable = useEditor((state) => state.setAvailable);
-
   useEffect(() => {
     setAvailable(canEdit);
     return () => {
       setAvailable(false);
     };
   }, [canEdit, setAvailable]);
+  return null;
+}
 
-  if (!canEdit) return null;
+/** The edit toggle (ux.md §1–2), for readers who may edit. The E key does the same. */
+export function EditToggle() {
+  const available = useEditor((state) => state.available);
+  const editing = useEditor((state) => state.editing);
+  const toggle = useEditor((state) => state.toggle);
+  if (!available) return null;
   return (
     <Button
       variant={editing ? 'default' : 'ghost'}

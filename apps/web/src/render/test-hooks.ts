@@ -15,6 +15,7 @@ import {
 } from '@/lib/layout-tier.ts';
 import { hoverStore } from '@/state/hover.ts';
 import { useSelection } from '@/state/selection.ts';
+import { useSheet } from '@/state/sheet.ts';
 import { useNavigation } from '@/state/navigation.ts';
 import { viewNavigation } from '@/state/view-navigator.ts';
 import { orbitRingOf } from './orbits/orbit-rings.tsx';
@@ -308,7 +309,7 @@ export function installTestHooks(): void {
       tier: currentTier(),
       short: matches(LAYOUT_QUERIES.short),
       finePointer: matches(FINE_POINTER_QUERY),
-      sheet: null,
+      sheet: useSheet.getState().open,
     }),
     selectedIds: () => [...useSelection.getState().selectedIds],
     select: (ids) => {

@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button.tsx';
 import { useEventList } from '@/api/hooks.ts';
 import { useReadOptions } from '@/api/read-options.ts';
+import { cn } from '@/lib/utils.ts';
 import { useNavigation } from '@/state/navigation.ts';
+import { useSheet } from '@/state/sheet.ts';
 import { usePeople } from './outliner/outliner-slot.tsx';
 import { labelText } from '@/render/labels/label-text.ts';
 import { SpoilerProvider } from '@/richtext/spoiler-context.tsx';
@@ -42,6 +44,7 @@ export default function InfoPanel({
   const mapId = useNavigation((state) => state.stack[0]?.subjectId);
   const events = useEventList(mapId, useReadOptions()).data?.events;
   const [collapsed, setCollapsed] = useState(false);
+  const sheetOpen = useSheet((state) => state.open !== null);
   if (selectedIds.length === 0) return null;
 
   const [onlyId] = selectedIds;
@@ -61,10 +64,16 @@ export default function InfoPanel({
       <aside
         aria-label="Details"
         data-tour="info-panel"
-        className={
-          'absolute inset-x-0 bottom-0 flex max-h-[50vh] flex-col rounded-t-lg border bg-card ' +
-          'md:inset-x-auto md:top-16 md:right-4 md:bottom-auto md:max-h-[calc(100%-5rem)] md:w-[380px] md:rounded-lg'
-        }
+        className={cn(
+          // A phone upright: a sheet along the bottom, clear of the home bar. Wider windows,
+          // and a phone on its side (short): a panel on the right.
+          'absolute inset-x-0 bottom-0 flex max-h-[50dvh] flex-col rounded-t-lg border bg-card pb-[env(safe-area-inset-bottom)]',
+          'md:inset-x-auto md:top-16 md:right-4 md:bottom-auto md:max-h-[calc(100%-5rem)] md:w-[380px] md:rounded-lg md:pb-0',
+          'short:inset-x-auto short:top-16 short:right-[max(0.5rem,env(safe-area-inset-right))] short:bottom-auto short:max-h-[calc(100%-5rem)] short:w-[min(380px,60vw)] short:rounded-lg short:pb-0',
+          // On a phone it steps aside while a sheet is open, and comes back when that closes:
+          // hidden, not unmounted, so it keeps its place.
+          sheetOpen && 'slim:hidden',
+        )}
       >
         <div className="flex items-center justify-end gap-1 border-b px-2 py-1">
           <Button

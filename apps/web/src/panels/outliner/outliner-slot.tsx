@@ -3,7 +3,11 @@ import { List } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useEntityList } from '@/api/hooks.ts';
 import { Button } from '@/components/ui/button.tsx';
+import { Sheet } from '@/components/ui/sheet.tsx';
+import { useLayoutTier } from '@/lib/layout-tier.ts';
 import { useEditor } from '@/state/editor.ts';
+import { useSelection } from '@/state/selection.ts';
+import { useSheet } from '@/state/sheet.ts';
 import { useSidePanel } from '@/state/side-panel.ts';
 import { Outliner } from './outliner.tsx';
 import type { Person } from './outliner-tree.ts';
@@ -34,7 +38,8 @@ export function usePeople(universeId: string): readonly Person[] {
 
 /**
  * Where the outliner goes (ux.md §1): always on the left in edit mode, unless History or Map
- * settings is open there; in view mode, behind the List button.
+ * settings is open there; in view mode, behind the List button, or on a phone (the slim tier)
+ * in the List sheet that the More sheet opens.
  */
 export function OutlinerSlot({
   universeId,
@@ -60,6 +65,9 @@ export function OutlinerSlot({
   const listOpen = useSidePanel((state) => state.listOpen);
   const setListOpen = useSidePanel((state) => state.setListOpen);
   const people = usePeople(universeId);
+  const slim = useLayoutTier() === 'slim';
+  const listSheet = useSheet((state) => state.open === 'list');
+  useCloseOnChoice(slim && listSheet && !editing);
 
   if (editing) {
     return left === null ? (
@@ -73,6 +81,31 @@ export function OutlinerSlot({
         emptyNote={emptyNote}
       />
     ) : null;
+  }
+  if (slim) {
+    return (
+      <Sheet
+        open={listSheet}
+        title="List"
+        onClose={() => {
+          useSheet.getState().close();
+        }}
+        onBack={() => {
+          useSheet.getState().show('more');
+        }}
+      >
+        <Outliner
+          objects={objects}
+          groups={groups}
+          groupTypes={groupTypes}
+          routes={routes}
+          people={people}
+          subject={subject}
+          emptyNote={emptyNote}
+          inSheet
+        />
+      </Sheet>
+    );
   }
   if (listOpen) {
     return (
@@ -105,4 +138,19 @@ export function OutlinerSlot({
       List
     </Button>
   );
+}
+
+/**
+ * Closes the List sheet when the reader chooses something in it, so the info panel can show
+ * what was chosen: on a phone the two don't fit on screen together.
+ */
+function useCloseOnChoice(active: boolean): void {
+  useEffect(() => {
+    if (!active) return;
+    return useSelection.subscribe((state, before) => {
+      if (state.selectedIds !== before.selectedIds && state.selectedIds.length > 0) {
+        useSheet.getState().close();
+      }
+    });
+  }, [active]);
 }

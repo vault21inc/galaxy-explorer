@@ -7,12 +7,16 @@ import { useToasts, type Toast } from '@/state/toasts.ts';
 /** How long a toast stays, in milliseconds. Errors stay until dismissed. */
 const INFO_MS = 5_000;
 
-/** The toasts, stacked in the bottom-right corner (ux.md §1). */
+/**
+ * The toasts, stacked in the bottom-right corner (ux.md §1), clear of the home bar. On a phone
+ * they go under the top bar instead, across the screen, since the info panel and the sheets
+ * take the bottom.
+ */
 export function Toaster() {
   const toasts = useToasts((state) => state.toasts);
   if (toasts.length === 0) return null;
   return (
-    <div className="absolute right-4 bottom-4 flex w-80 flex-col gap-2">
+    <div className="absolute right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 flex w-80 flex-col gap-2 slim:top-[calc(env(safe-area-inset-top)+4.5rem)] slim:right-2 slim:bottom-auto slim:left-2 slim:w-auto">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} />
       ))}

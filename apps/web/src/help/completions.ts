@@ -3,6 +3,7 @@ import { useHistory } from '@/state/history.ts';
 import { useLabels } from '@/state/labels.ts';
 import { useNavigation } from '@/state/navigation.ts';
 import { useSelection } from '@/state/selection.ts';
+import { useSheet } from '@/state/sheet.ts';
 import { useSidePanel } from '@/state/side-panel.ts';
 import { currentLevel } from './needs.ts';
 import { useTourSignals } from './tour-signals.ts';
@@ -47,12 +48,21 @@ export const COMPLETIONS: Record<TourCompletion, CompletionWatch> = {
         if (state.mode !== before.mode) done();
       }),
   },
+  // The List button, or on a phone the List sheet (state/sheet.ts).
   'list-opened': {
-    already: () => useSidePanel.getState().listOpen,
-    watch: (done) =>
-      useSidePanel.subscribe((state) => {
+    already: () => useSidePanel.getState().listOpen || useSheet.getState().open === 'list',
+    watch: (done) => {
+      const stopPanel = useSidePanel.subscribe((state) => {
         if (state.listOpen) done();
-      }),
+      });
+      const stopSheet = useSheet.subscribe((state) => {
+        if (state.open === 'list') done();
+      });
+      return () => {
+        stopPanel();
+        stopSheet();
+      };
+    },
   },
   'entered-system': levelIs('system'),
   'entered-orbit': levelIs('orbit'),

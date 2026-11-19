@@ -50,8 +50,8 @@ export async function expectBarFits(page: Page): Promise<void> {
   expect(report.scrollWidth, `the page scrolls sideways ${at}`).toBeLessThanOrEqual(
     report.clientWidth,
   );
-  // One row of 32–40 px controls with 12 px above and below; a second row would double it.
-  expect(report.headerHeight, `the bar wraps ${at}`).toBeLessThanOrEqual(64);
+  // One row of 32–44 px controls with 12 px above and below; a second row would double it.
+  expect(report.headerHeight, `the bar wraps ${at}`).toBeLessThanOrEqual(72);
 }
 
 /** `window.__GE_TEST__.layout()`, for specs about the tiers. */

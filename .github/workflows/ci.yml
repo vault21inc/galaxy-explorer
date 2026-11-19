@@ -104,7 +104,7 @@ jobs:
         run: pnpm --filter @ge/web exec playwright install-deps chromium
 
       - name: End-to-end tests (Chromium, software rendering)
-        run: pnpm test:e2e -- --project=chromium
+        run: pnpm test:e2e -- --project=chromium --project=phone-chromium
 
       - name: Upload the Playwright report
         if: failure()

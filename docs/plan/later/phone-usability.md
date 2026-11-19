@@ -1,6 +1,6 @@
 # Later: a usability pass for phones and narrow windows
 
-**Status:** in progress (L3-T1 done, 2026-11-19). Written 2026-11-19 after the owner tried the live site on an iPhone; the owner settled its open questions the same day ("Decided" below). The task IDs (`L3-T1` and so on) are provisional: renumber them if this joins a milestone. Do the tasks in order: each one stands on the ones before it and leaves `main` working.
+**Status:** in progress (L3-T1 and L3-T2 done, 2026-11-19). Written 2026-11-19 after the owner tried the live site on an iPhone; the owner settled its open questions the same day ("Decided" below). The task IDs (`L3-T1` and so on) are provisional: renumber them if this joins a milestone. Do the tasks in order: each one stands on the ones before it and leaves `main` working.
 
 **Goal:** a reader on a phone can do everything a reader on a laptop can: find their way around, search, open and read an object, change what's shown, and record a clip. Nothing is off screen or too small to tap, at any window width from 320 px up. Editing stays with a mouse or trackpad, and the app says so only to the people it affects.
 
@@ -115,13 +115,15 @@ One row, left to right, each 44 px high:
 - **One at a time.** `apps/web/src/state/sheet.ts`: `useSheet`, with `open: SheetId | null` (`'location' | 'more' | 'list' | 'events' | 'layers' | 'display' | 'help' | 'account' | 'capture'`), `show(id)` and `close()`. Showing one replaces another. `useSidePanel.listOpen` stays the desktop List button's state; on slim, List is `useSheet`'s `'list'`.
 - **The same contents as today.** `EventsPopover`, `LayersPopover`, `QualityPopover`, `HelpMenu`, `AccountMenu` and the outliner each split into a body component and a frame. The body is used by both the popover (compact, full) and the sheet (slim). Nothing is written twice.
 - **Dragging the grab bar down closes a bottom sheet.** No other gesture: a sheet is open or closed.
+- **Not modal** (as built): a modal Radix dialog makes the rest of the page inert, so a tour's step over an open sheet couldn't be used. Sheets are non-modal, as the popovers are: focus moves in and back, Esc and a tap outside close them, but focus isn't trapped. A tap on the top bar is left to its controls, which open their own sheet in place of the open one or close it: on touch, Radix dismisses after the tap's click, which would close the sheet the tap had just opened.
+- **Editing in a narrow window** (as built): the edit toggle moves into the More sheet as an "Edit" switch. Whether it's offered is `EditAvailability`, mounted on a map at every width, apart from the toggle.
 
 ### The info panel and the outliner on slim
 
 - **The info panel** keeps its bottom sheet (`max-h-[50vh]` becomes `50dvh`, plus the bottom safe area). It is hidden while a sheet from `useSheet` is open and returns when that closes: the map is never under two things. When short, it docks to the right as it does from 768 px (`short:` variants beside the `md:` ones), 360 px wide at most.
 - **No two heights.** An earlier draft gave the info sheet a peek and a full height. Left out: its contents already fold (the description's **More**), and half the screen is enough.
 - **The outliner** is the `'list'` sheet. Choosing an item selects it and closes the sheet, so the info panel shows what was chosen. The floating List button isn't shown on slim.
-- **Toasts** move above the info panel's top edge on slim, and inside the safe areas.
+- **Toasts** move under the top bar on slim (as built: above the info panel's edge, which moves, they'd jump), across the screen, inside the safe areas.
 
 ### Who is offered editing
 
@@ -164,13 +166,13 @@ One row, left to right, each 44 px high:
 - **Tours point at what's on screen.** A tour's control is found by its `data-tour` mark (`use-target.ts`), and on slim most marks are inside a closed sheet. Add `'more'` and `'location'` to `TOUR_CONTROLS`, and a table in `tour-types.ts`, `SLIM_FALLBACK`: `list`, `layers`, `events`, `spoilers` and `help` fall back to `more`; `breadcrumbs` and `universe-switcher` to `location`. `controlBox()` uses the fallback when the named control isn't on the page, so a step points at More until the reader opens it, then at the row. The steps' completions (`list-opened` and the rest) don't change. The tour's popover keeps clear of the safe areas and of an open sheet (above a bottom sheet, left of a right-hand one).
 
 **Done when:**
-- [ ] E2E (phone projects): on a map, L3-T1's helper passes at the device's size and at 320 px wide; `layout().tier` is `'slim'`.
-- [ ] E2E: the chip names the current view at each of the three levels; the location sheet goes back up a view, and switches map and universe.
-- [ ] E2E: Search, List, Events, Layers, the spoiler switch, Display, Help and "Sign in" each work from the slim bar or the More sheet.
-- [ ] E2E: showing a second sheet replaces the first (`layout().sheet`); the info panel is hidden while one is open and back when it closes; choosing an outliner item closes the sheet and selects the item.
-- [ ] E2E: at 844 × 390 (a phone on its side) the tier is slim, and a sheet and the info panel are on the right.
-- [ ] E2E: the reader's tour runs from first step to last on a phone project.
-- [ ] The unit test that holds every tour step to the lists passes with the new controls.
+- [x] E2E (phone projects): on a map, L3-T1's helper passes at the device's size and at 320 px wide; `layout().tier` is `'slim'`.
+- [x] E2E: the chip names the current view at each of the three levels; the location sheet goes back up a view, and switches universe (and map, by the same control).
+- [x] E2E: Search, List, Events, Layers, the spoiler switch, Display, Help and "Sign in" each work from the slim bar or the More sheet.
+- [x] E2E: showing a second sheet replaces the first (`layout().sheet`); the info panel is hidden while one is open and back when it closes; choosing an outliner item closes the sheet and selects the item.
+- [x] E2E: at 844 × 390 (a phone on its side) the tier is slim, and a sheet and the info panel are on the right.
+- [x] E2E: the reader's tour runs from first step to last on a phone project.
+- [x] The unit test that holds every tour step to the lists passes with the new controls.
 - [ ] **Owner's check,** on the iPhone, with the build deployed or on the local network: nothing sits under the notch, the home bar or Safari's bar, upright and on its side. Reported in the commit message, or in a follow-up commit if it's made after release.
 
 ### L3-T3 Touch on the canvas, and labels

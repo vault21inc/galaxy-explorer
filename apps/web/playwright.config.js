@@ -47,6 +47,19 @@ const wikiSources = JSON.stringify([
   },
 ]);
 
+// GPU memory over 20 round trips: too slow and timing-sensitive with software rendering.
+// `pnpm perf` checks it on the reference Mac (scripts/perf/system-path.ts).
+// stack.spec.ts needs the production stack (playwright.stack.config.js, M8-T4).
+const testIgnore = isCI ? ['**/leaks.spec.ts', '**/stack.spec.ts'] : ['**/stack.spec.ts'];
+// The phone specs (docs/plan/later/phone-usability.md) run in the phone projects only, and the
+// rest in the desktop projects only.
+const PHONE_SPECS = '**/*.phone.spec.ts';
+// CI machines have no GPU. SwiftShader is Chrome's software WebGL; newer Chrome versions require
+// opting in to it explicitly.
+const chromiumLaunch = {
+  args: isCI ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : [],
+};
+
 /**
  * Playwright end-to-end tests (`pnpm test:e2e`): real browsers driving the app built with
  * VITE_TEST_HOOKS=1, so tests read 3D state from `window.__GE_TEST__` (rendering.md §14).
@@ -54,10 +67,7 @@ const wikiSources = JSON.stringify([
  */
 export default defineConfig({
   testDir: './e2e',
-  // GPU memory over 20 round trips: too slow and timing-sensitive with software rendering.
-  // `pnpm perf` checks it on the reference Mac (scripts/perf/system-path.ts).
-  // stack.spec.ts needs the production stack (playwright.stack.config.js, M8-T4).
-  testIgnore: isCI ? ['**/leaks.spec.ts', '**/stack.spec.ts'] : ['**/stack.spec.ts'],
+  testIgnore,
   // Read by tests whose numbers depend on the machine's speed (test.info().config.metadata).
   metadata: { softwareRendering: isCI },
   fullyParallel: true,
@@ -74,16 +84,22 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-        launchOptions: {
-          // CI machines have no GPU. SwiftShader is Chrome's software WebGL; newer Chrome
-          // versions require opting in to it explicitly.
-          args: isCI ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : [],
-        },
-      },
+      testIgnore: [...testIgnore, PHONE_SPECS],
+      use: { ...devices['Desktop Chrome'], launchOptions: chromiumLaunch },
     },
-    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+    {
+      name: 'webkit',
+      testIgnore: [...testIgnore, PHONE_SPECS],
+      use: { ...devices['Desktop Safari'] },
+    },
+    // Phones (L3-T2): a narrow window with touch and no fine pointer, as on a real phone.
+    // Chromium emulates an Android phone, WebKit an iPhone.
+    {
+      name: 'phone-chromium',
+      testMatch: PHONE_SPECS,
+      use: { ...devices['Pixel 7'], launchOptions: chromiumLaunch },
+    },
+    { name: 'phone-webkit', testMatch: PHONE_SPECS, use: { ...devices['iPhone 14'] } },
   ],
   webServer: [
     {

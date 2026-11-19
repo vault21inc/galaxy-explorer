@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTourSignals } from './tour-signals.ts';
-import type { TourTarget } from './tour-types.ts';
+import { SLIM_FALLBACK, type TourControl, type TourTarget } from './tour-types.ts';
 
 /** Where a step points, on the page: a control's box, or a circle around an object. */
 export interface TargetBox {
@@ -71,8 +71,10 @@ export function controlElement(name: string): HTMLElement | null {
   return null;
 }
 
-function controlBox(name: string): TargetBox | null {
-  const element = controlElement(name);
+function controlBox(name: TourControl): TargetBox | null {
+  // Not on the page: on a phone it may be in a closed sheet, so point at what opens that.
+  const fallback = SLIM_FALLBACK[name];
+  const element = controlElement(name) ?? (fallback ? controlElement(fallback) : null);
   if (!element) return null;
   const rect = element.getBoundingClientRect();
   return { left: rect.left, top: rect.top, width: rect.width, height: rect.height, shape: 'box' };

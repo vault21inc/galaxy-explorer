@@ -16,7 +16,7 @@ export function TourHighlight({ box }: { box: TargetBox }) {
       aria-hidden
       data-tour-highlight
       className={
-        'pointer-events-none fixed z-40 border-2 border-primary shadow-[0_0_0_4px_rgb(0_0_0/0.35)] motion-safe:transition-[left,top,width,height] motion-safe:duration-150 ' +
+        'pointer-events-none fixed z-[45] border-2 border-primary shadow-[0_0_0_4px_rgb(0_0_0/0.35)] motion-safe:transition-[left,top,width,height] motion-safe:duration-150 ' +
         (box.shape === 'circle' ? 'rounded-full' : 'rounded-lg')
       }
       style={{

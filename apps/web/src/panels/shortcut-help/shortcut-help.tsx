@@ -36,7 +36,7 @@ export function ShortcutHelp() {
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
-          className="max-h-[85vh] overflow-y-auto sm:max-w-2xl"
+          className="max-h-[85dvh] overflow-y-auto sm:max-w-2xl"
           onOpenAutoFocus={() => {
             // Runs before focus moves into the panel.
             returnTo.current =
