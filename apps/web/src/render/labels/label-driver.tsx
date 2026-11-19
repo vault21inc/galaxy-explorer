@@ -16,6 +16,7 @@ import { worldPerPxAt1 } from '../screen-scale.ts';
 import {
   GROUP_LABEL_HEIGHT_PX,
   LABEL_GAP_PX,
+  LABEL_MARGIN_SLIM_PX,
   LABEL_MAX,
   OBJECT_LABEL_HEIGHT_PX,
 } from '../tuning.ts';
@@ -23,6 +24,7 @@ import { labelTimeline } from './label-stats.ts';
 import { showLabels } from './label-pool.ts';
 import { measureLabel } from './measure-text.ts';
 import { solveLabels, type LabelCandidate, type PlacedLabel } from './solve-labels.ts';
+import { isSlimNow } from '@/lib/layout-tier.ts';
 
 const METRICS = {
   measure: measureLabel,
@@ -30,6 +32,8 @@ const METRICS = {
   gapPx: LABEL_GAP_PX,
   max: LABEL_MAX,
 };
+/** On a phone (the slim tier), labels keep a margin, so fewer crowd the small screen. */
+const SLIM_METRICS = { ...METRICS, marginPx: LABEL_MARGIN_SLIM_PX };
 
 let lastPlaced: readonly PlacedLabel[] = [];
 
@@ -216,7 +220,8 @@ function updateLabels(state: RootState): void {
   lastPlaced = solveLabels(
     candidates,
     { widthPx: state.size.width, heightPx: state.size.height },
-    METRICS,
+    // Chosen, not built, each frame: nothing is allocated here.
+    isSlimNow() ? SLIM_METRICS : METRICS,
     // Only this frame's candidates: the array is reused and may hold older ones past this.
     candidateCount,
   );

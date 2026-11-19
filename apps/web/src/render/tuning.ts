@@ -307,6 +307,16 @@ export const REGION_SPRITE_PX = 256;
 /** A press that moves less than this, in CSS pixels, before release is a click, not a drag. */
 export const CLICK_MAX_MOVE_PX = 4;
 
+/**
+ * Two taps on the same object within this long, in milliseconds, are a double-tap: they enter
+ * it, as a double-click does (ux.md §3). Touch browsers don't all send `dblclick` (WebKit
+ * doesn't), so the app counts taps itself (input/double-tap.ts). 300 ms is about what phones
+ * use for their own double-tap.
+ */
+export const DOUBLE_TAP_MS = 300;
+/** How far apart the two taps may land, in CSS pixels: a fingertip is never quite still. */
+export const DOUBLE_TAP_SLOP_PX = 24;
+
 /** One "line" of wheel scrolling (Firefox with a mouse reports lines), in CSS pixels. */
 export const WHEEL_LINE_PX = 16;
 
@@ -341,8 +351,16 @@ export const PICK_CELL_PX = 64;
  * radius around its center.
  */
 export const PICK_MIN_RADIUS_PX = 10;
+/**
+ * The same for a finger (pointerType "touch"): half of a 44 px target, the smallest Apple and
+ * Google advise for touch. The nearest object within reach still wins, so close neighbours can
+ * still be told apart. It reaches at most one grid cell further (PICK_CELL_PX is larger).
+ */
+export const PICK_MIN_RADIUS_TOUCH_PX = 22;
 /** An object label is a pick target this many CSS pixels beyond its text's box on every side. */
 export const LABEL_HIT_PADDING_PX = 3;
+/** The same for a finger: a 16 px label line becomes a 36 px target. */
+export const LABEL_HIT_PADDING_TOUCH_PX = 10;
 /**
  * Where an object's label and another object overlap under the pointer, the object wins when
  * its pick circle is at most this radius in CSS pixels (a dot, a small planet), and the label
@@ -380,6 +398,12 @@ export const LABEL_MAX = 200;
 
 /** Space between a body's on-screen edge and its label, in CSS pixels. */
 export const LABEL_GAP_PX = 4;
+/**
+ * On a phone (the slim tier), the clear space every placed label keeps around it, in CSS
+ * pixels, so fewer names crowd the small screen: a label that would come closer than this to
+ * one already placed is left out (solve-labels.ts). The font doesn't change.
+ */
+export const LABEL_MARGIN_SLIM_PX = 6;
 
 /** Label typography. The canvas measures text with the same font, so widths match the DOM. */
 export const LABEL_FONT_FAMILY =

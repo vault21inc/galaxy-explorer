@@ -26,7 +26,10 @@ interface LabelState {
   mode: LabelMode;
   /** Space is held: show all labels, whatever the mode. Not remembered. */
   showAllHeld: boolean;
+  /** The L key: hover → groups → all → hover. */
   cycle: () => void;
+  /** The Labels control in the Layers panel (L3-T3): the way to change it without a key. */
+  setMode: (mode: LabelMode) => void;
   setShowAllHeld: (held: boolean) => void;
 }
 
@@ -39,6 +42,9 @@ export const useLabels = create<LabelState>()(
       cycle: () => {
         const index = LABEL_MODES.indexOf(get().mode);
         set({ mode: LABEL_MODES[(index + 1) % LABEL_MODES.length] ?? 'hover' });
+      },
+      setMode: (mode) => {
+        set({ mode });
       },
       setShowAllHeld: (held) => {
         if (get().showAllHeld !== held) set({ showAllHeld: held });

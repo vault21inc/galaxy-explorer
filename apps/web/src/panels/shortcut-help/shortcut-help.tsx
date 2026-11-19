@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog.tsx';
 import { detectPlatform } from '@/input/platform.ts';
+import { FINE_POINTER_QUERY, useMediaQuery } from '@/lib/layout-tier.ts';
 import { useEditor } from '@/state/editor.ts';
 import { useHelp } from '@/state/help.ts';
 import { helpSections } from './help-sections.ts';
@@ -24,12 +25,14 @@ export function ShortcutHelp() {
   const setOpen = useHelp((state) => state.setOpen);
   const editing = useEditor((state) => state.editing);
   const canEdit = useEditor((state) => state.available);
+  // No mouse or trackpad: the touch gestures lead (L3-T3).
+  const finePointer = useMediaQuery(FINE_POINTER_QUERY);
   // Where focus was when the panel opened, to return it there. Radix returns focus to a
   // DialogTrigger, which this dialog has none of: `?` opens it from anywhere.
   const returnTo = useRef<HTMLElement | null>(null);
   const sections = useMemo(
-    () => helpSections({ platform: detectPlatform(), editing, canEdit }),
-    [editing, canEdit],
+    () => helpSections({ platform: detectPlatform(), editing, canEdit, touch: !finePointer }),
+    [editing, canEdit, finePointer],
   );
 
   return (

@@ -1,6 +1,6 @@
 # Later: a usability pass for phones and narrow windows
 
-**Status:** in progress (L3-T1 and L3-T2 done, 2026-11-19). Written 2026-11-19 after the owner tried the live site on an iPhone; the owner settled its open questions the same day ("Decided" below). The task IDs (`L3-T1` and so on) are provisional: renumber them if this joins a milestone. Do the tasks in order: each one stands on the ones before it and leaves `main` working.
+**Status:** in progress (L3-T1 to L3-T3 done, 2026-11-19). Written 2026-11-19 after the owner tried the live site on an iPhone; the owner settled its open questions the same day ("Decided" below). The task IDs (`L3-T1` and so on) are provisional: renumber them if this joins a milestone. Do the tasks in order: each one stands on the ones before it and leaves `main` working.
 
 **Goal:** a reader on a phone can do everything a reader on a laptop can: find their way around, search, open and read an object, change what's shown, and record a clip. Nothing is off screen or too small to tap, at any window width from 320 px up. Editing stays with a mouse or trackpad, and the app says so only to the people it affects.
 
@@ -180,20 +180,20 @@ One row, left to right, each 44 px high:
 **Where:** `apps/web/src/input/` (`use-pointer-selection.ts`, `bindings.ts`), `apps/web/src/render/tuning.ts`, `apps/web/src/render/labels/`, `apps/web/src/panels/layers/`, `apps/web/src/panels/shortcut-help/`, `apps/web/src/help/` (`tour-types.ts`, `tours.ts`).
 
 - **Double-tap is ours.** Two touch taps on the same object within `DOUBLE_TAP_MS` (300) and `DOUBLE_TAP_SLOP_PX` (24), in `tuning.ts` beside `CLICK_MAX_MOVE_PX`, enter it. The first tap selects at once, as a click does: nothing waits for a second tap. The native `dblclick` listener ignores a double-click whose last `pointerdown` was a touch, so browsers that do send one don't enter twice. The rule is a pure function, unit-tested.
-- **The canvas owns its gestures.** At run time the canvas's computed `touch-action` must be `none` (camera-controls may already set it on the element it's given: check, and set it in CSS if not), and `overscroll-behavior: none` on the page stops pull-to-refresh and the rubber band.
+- **The canvas owns its gestures.** At run time the canvas's computed `touch-action` must be `none` (camera-controls may already set it on the element it's given: check, and set it in CSS if not), and `overscroll-behavior: none` on the page stops pull-to-refresh and the rubber band. (As built: camera-controls listens on R3F's event element, not the canvas, so `index.css` sets it on the canvas.)
 - **A wider reach under a finger.** `PICK_MIN_RADIUS_TOUCH_PX` (22, half a 44 px target) and a touch value for `LABEL_HIT_PADDING_PX`, used when the event's `pointerType` is `'touch'`. The nearest object within reach still wins, so close neighbours stay tellable apart.
 - **A Labels control** at the top of the Layers panel, on every tier: Hover, Groups, All, bound to `useLabels` (add a `setMode`; `cycle` stays for the L key). On a device with no hover, "Hover" is worded "Selected only". The More row becomes "Layers and labels". The first-visit mode is unchanged (decision 5).
 - **Fewer labels on slim.** `LABEL_MARGIN_SLIM_PX` (start at 6) pads every placed label's rectangle in `solveLabels()` on the slim tier, so neighbours are dropped sooner. Font sizes don't change.
-- **The shortcut help** leads with a Touch section when there's no fine pointer: the touch column of ux.md §3, from the same bindings table as the other sections.
+- **The shortcut help** leads with a Touch section when there's no fine pointer: the touch column of ux.md §3, from the same bindings table as the other sections. (As built: the sections are Touch, Keyboard, Mouse and trackpad, Capture mode; nothing is folded, since the dialog scrolls.)
 - **The reader's tour speaks of the device in hand.** `TourStep` gains an optional `touchText`, used when there's no fine pointer. Every reader step that names the mouse or a key gets one ("Drag with two fingers to slide it", "Double-tap this system", "Tap Search", "Open More, then Help, for every gesture"). A unit test fails for a reader step whose `text` mentions a key or the mouse and has no `touchText`.
 - Docs: ux.md §3 (the touch column as built), §7 (the Labels control), rendering.md §10 and §11 (the touch reach, the slim margin).
 
 **Done when:**
-- [ ] Unit tests: the double-tap rule (inside and outside the time and the distance, and two different objects); `solveLabels()` places no more labels with the margin than without, and fewer on the stress map.
-- [ ] E2E (phone projects, WebKit included): a tap selects; two taps on a system enter it; the location sheet leads back out.
-- [ ] E2E: the Labels control changes `__GE_TEST__.visibleLabels()` between its three modes, on a phone project and on desktop, and the choice survives a reload.
-- [ ] E2E: a tap 18 px outside a small body's drawn edge selects it by touch; the same point clicked with a mouse selects nothing.
-- [ ] E2E: the canvas's computed `touch-action` is `none`.
+- [x] Unit tests: the double-tap rule (inside and outside the time and the distance, and two different objects); `solveLabels()` places fewer labels with the margin than without, none nearer than the margin (on a random crowd of 2,000, standing in for the stress map).
+- [x] E2E (phone projects, WebKit included): a tap selects; two taps on a system enter it; the location sheet leads back out.
+- [x] E2E: the Labels control changes `__GE_TEST__.visibleLabels()` between its three modes, on a phone project and on desktop, and the choice survives a reload.
+- [x] E2E: a tap 18 px from a small body's center, outside what's drawn, selects it by touch; the same point clicked with a mouse selects nothing.
+- [x] E2E: the canvas's computed `touch-action` is `none`.
 - [ ] `pnpm perf` still meets the galaxy budget (the label margin doesn't apply at its width, and the solver's time must not rise). Numbers in the commit message.
 - [ ] **Owner's check,** on the iPhone: one finger rotates, two pan, pinch zooms, double-tap enters, and the page never scrolls, zooms or reloads under the map.
 

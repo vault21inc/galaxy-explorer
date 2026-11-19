@@ -21,17 +21,23 @@ export function publishLabelHits(labels: readonly PlacedLabel[]): void {
  * The id of the object whose label is at this canvas point (CSS pixels), or null. A label's
  * hit area reaches back across the gap to its body: a pointer moving from the body to its
  * label never crosses empty space, where the hover would end and the label vanish (labels
- * show on hover by default).
+ * show on hover by default). Padded labels may overlap, so the first placed (the higher
+ * ranked) wins.
  */
-export function labelHitAt(xPx: number, yPx: number): string | null {
+export function labelHitAt(
+  xPx: number,
+  yPx: number,
+  /** How far beyond the text a label is hit: wider for a finger (LABEL_HIT_PADDING_TOUCH_PX). */
+  paddingPx = LABEL_HIT_PADDING_PX,
+): string | null {
   // Later labels were placed after earlier ones and don't overlap them, so any hit is the hit.
   for (const label of placed) {
     if (label.kind !== 'object') continue;
     if (
-      xPx >= label.left - LABEL_GAP_PX - LABEL_HIT_PADDING_PX &&
-      xPx <= label.left + label.width + LABEL_HIT_PADDING_PX &&
-      yPx >= label.top - LABEL_HIT_PADDING_PX &&
-      yPx <= label.top + label.height + LABEL_HIT_PADDING_PX
+      xPx >= label.left - LABEL_GAP_PX - paddingPx &&
+      xPx <= label.left + label.width + paddingPx &&
+      yPx >= label.top - paddingPx &&
+      yPx <= label.top + label.height + paddingPx
     ) {
       return label.id;
     }

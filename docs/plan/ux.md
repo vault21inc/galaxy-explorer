@@ -82,6 +82,7 @@ They're defined once in `apps/web/src/input/bindings.ts` and resolved by `resolv
 - **Click versus drag:** a press that moves less than 4 px before release is a click.
 - **Right-click versus right-drag:** a right press that doesn't move opens the context menu (edit mode); one that moves pans. The browser's own context menu is suppressed on the canvas.
 - **Why the wheel always zooms:** browsers can't reliably tell a trackpad's two-finger scroll from a mouse wheel, so both zoom. Pinch arrives as ctrl+wheel (Safari also sends gesture events) and is normalized to feel the same.
+- **Touch, as built** (L3-T3): a tap picks within 22 px of a body, wider than a pointer's 10, since a finger covers more. Two taps on the same object within 300 ms and 24 px are a double-tap and enter it (`input/double-tap.ts`): the app counts them, since WebKit sends no `dblclick` for taps, and ignores a browser's own `dblclick` after a touch, so nothing enters twice. The first tap has already selected; nothing waits for a second. The canvas has `touch-action: none` and the page `overscroll-behavior: none`, so a drag on the map never scrolls, zooms or refreshes the page.
 - **Touch editing** is out of scope for the proof of concept. Touch devices get view mode.
 - **Configurable later:** the table is data, so a user-facing keymap editor can come later without touching the controls.
 
@@ -177,6 +178,7 @@ How hidden content looks (P2, black out rather than remove):
 
 - **Default:** labels appear on hover and selection, so the galaxy stays uncluttered.
 - **L cycles** hover → groups (group names always visible) → all (decluttered). **Holding Space** shows all labels while held.
+- **The Labels control** (L3-T3) leads the Layers panel at every width: the same three modes as buttons, for a phone (no L key, no Space, no hover) and anyone else. On a device that can't hover, "hover" is worded "Selected only", which is what it shows there. The first visit's mode is the deployment's on every device (D-57).
 - Labels never overlap; lower-priority ones are dropped (rendering.md §11). Raising an object's label priority (0–10) in the appearance editor keeps it visible ahead of others.
 
 ## 8. Rich text

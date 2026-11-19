@@ -4,7 +4,11 @@ import { drawnObject, drawnObjects, drawnVersion, type DrawnObject } from '../sc
 import { worldPerPxAt1 } from '../screen-scale.ts';
 import { labelHitAt } from './label-hits.ts';
 import { ScreenPicker } from './screen-picker.ts';
-import { LABEL_OVER_AREA_PX } from '../tuning.ts';
+import {
+  LABEL_HIT_PADDING_TOUCH_PX,
+  LABEL_OVER_AREA_PX,
+  PICK_MIN_RADIUS_TOUCH_PX,
+} from '../tuning.ts';
 
 /**
  * The app's picker, rebuilt only when needed (rendering.md §10): when the camera has moved,
@@ -61,17 +65,20 @@ export function pickAt(
   state: RootState,
   clientX: number,
   clientY: number,
-  /** `false`: bodies only, as zooming wants (zoom-gate.ts). */
-  { labels = true }: { labels?: boolean } = {},
+  /**
+   * `labels: false`: bodies only, as zooming wants (zoom-gate.ts). `touch`: a finger's tap,
+   * which reaches further than a pointer (PICK_MIN_RADIUS_TOUCH_PX, LABEL_HIT_PADDING_TOUCH_PX).
+   */
+  { labels = true, touch = false }: { labels?: boolean; touch?: boolean } = {},
 ): DrawnObject | null {
   ensureFresh(state);
   const rect = state.gl.domElement.getBoundingClientRect();
   const xPx = clientX - rect.left;
   const yPx = clientY - rect.top;
-  const body = picker.pick(xPx, yPx);
+  const body = picker.pick(xPx, yPx, touch ? PICK_MIN_RADIUS_TOUCH_PX : 0);
   if (!labels) return body;
   if (body && picker.lastHitRadiusPx <= LABEL_OVER_AREA_PX) return body;
-  const labelled = labelHitAt(xPx, yPx);
+  const labelled = labelHitAt(xPx, yPx, touch ? LABEL_HIT_PADDING_TOUCH_PX : undefined);
   const viaLabel = labelled === null ? undefined : drawnObject(labelled);
   return viaLabel ?? body;
 }

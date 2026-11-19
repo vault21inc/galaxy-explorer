@@ -14,7 +14,7 @@ const SHEETS: Record<Exclude<SheetId, 'list' | 'capture'>, { title: string; from
   location: { title: 'Where you are', fromMore: false },
   more: { title: 'More', fromMore: false },
   events: { title: 'Events', fromMore: true },
-  layers: { title: 'Layers', fromMore: true },
+  layers: { title: 'Layers and labels', fromMore: true },
   display: { title: 'Display', fromMore: true },
   help: { title: 'Help and tours', fromMore: true },
   account: { title: 'Account', fromMore: true },

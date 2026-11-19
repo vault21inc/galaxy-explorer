@@ -27,7 +27,7 @@ export interface HelpRow {
 }
 
 export interface HelpSection {
-  id: 'everywhere' | 'edit' | 'pointer' | 'capture';
+  id: 'touch' | 'everywhere' | 'edit' | 'pointer' | 'capture';
   title: string;
   rows: HelpRow[];
 }
@@ -97,6 +97,13 @@ const GESTURE_NAMES: Record<Gesture, string> = {
 };
 
 /** A gesture with its modifiers: "⌥ drag" on a Mac, "Alt + drag" elsewhere. */
+/** The touch gestures' names as the help shows them: what goes in the Touch section. */
+const TOUCH_GESTURE_NAMES = new Set(
+  (['touch-drag', 'touch-two-finger-drag', 'pinch', 'tap', 'double-tap'] as const).map(
+    (gesture) => GESTURE_NAMES[gesture],
+  ),
+);
+
 function formatGesture(gesture: Gesture, modifiers: readonly Modifier[], platform: Platform) {
   const name = GESTURE_NAMES[gesture];
   if (modifiers.length === 0) return name;
@@ -124,16 +131,19 @@ class Rows {
  * The sections, current mode's first: everywhere (keys in both modes), edit mode (only for a
  * reader who may edit: E, N, the edit commands and edit-mode gestures), mouse, trackpad and
  * touch gestures, and capture mode's keys (D-55). Rows bound to `none`, or to another platform,
- * are left out.
+ * are left out. On a device with no mouse or trackpad (`touch`, L3-T3), the touch gestures
+ * come first, in a section of their own, and the mouse's follow the keys.
  */
 export function helpSections({
   platform,
   editing,
   canEdit,
+  touch = false,
 }: {
   platform: Platform;
   editing: boolean;
   canEdit: boolean;
+  touch?: boolean;
 }): HelpSection[] {
   const everywhere = new Rows();
   const edit = new Rows();
@@ -170,6 +180,21 @@ export function helpSections({
     else pointer.add(description, binding.mode === 'view' ? `${gesture}, in view mode` : gesture);
   }
 
+  if (touch) {
+    const fingers = new Rows();
+    const mouse = new Rows();
+    for (const row of pointer.list()) {
+      for (const keys of row.keys) {
+        (TOUCH_GESTURE_NAMES.has(keys) ? fingers : mouse).add(row.description, keys);
+      }
+    }
+    return [
+      { id: 'touch', title: 'Touch', rows: fingers.list() },
+      { id: 'everywhere', title: 'Keyboard', rows: everywhere.list() },
+      { id: 'pointer', title: 'Mouse and trackpad', rows: mouse.list() },
+      { id: 'capture', title: 'Capture mode', rows: captureRows(platform) },
+    ];
+  }
   const sections: HelpSection[] = [
     { id: 'everywhere', title: 'Everywhere', rows: everywhere.list() },
     ...(canEdit ? [{ id: 'edit' as const, title: 'Edit mode', rows: edit.list() }] : []),

@@ -88,6 +88,21 @@ test.describe('labels (rendering.md §11, ux.md §7)', () => {
     await expect.poll(async () => (await labels(page)).length).toBe(0);
   });
 
+  test('the Labels control in Layers sets the mode, as L does (L3-T3)', async ({ page }) => {
+    await openDemo(page);
+    await page.getByRole('button', { name: 'Layers' }).click();
+    const control = page.getByRole('group', { name: 'Labels' });
+    await control.getByText('Groups', { exact: true }).click();
+    await expect
+      .poll(async () => (await labels(page)).map((label) => label.text).sort())
+      .toEqual(['Inner Reach', 'Outer Reach', 'Reach Run', 'Vela Sector']);
+    await control.getByText('All', { exact: true }).click();
+    await expect.poll(async () => (await labels(page)).length).toBeGreaterThan(5);
+    // A mouse hovers, so the first mode says so.
+    await control.getByText('On hover').click();
+    await expect.poll(async () => (await labels(page)).length).toBe(0);
+  });
+
   test('holding Space shows many labels, none overlapping, and hidden spoilers stay hidden', async ({
     page,
   }) => {

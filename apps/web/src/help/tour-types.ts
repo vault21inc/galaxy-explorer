@@ -107,6 +107,12 @@ export interface TourStep {
   title: string;
   /** A sentence or two, in the app's own words: "event", never "scene". */
   text: string;
+  /**
+   * The same on a device with no mouse or trackpad (L3-T3), where `text` would name keys and
+   * clicks: taps, pinches and where the slim bar keeps things. A unit test asks for one on any
+   * reader step whose `text` names a key or the mouse.
+   */
+  touchText?: string;
   target: TourTarget;
   completes: TourCompletion;
   needs?: readonly TourNeed[];

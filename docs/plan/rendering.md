@@ -292,6 +292,7 @@ Procedural looks are generated once on the GPU and reused (D-10):
   - It projects every pickable item in the current view into a `Float32Array` of screen x, screen y and pick radius in px. Pickables are body centers, region circles, pins and route midpoints.
   - It buckets them into a 64 px uniform grid.
   - A pointer move finds the nearest item within `max(radiusPx, 10 px)` by checking neighboring grid cells: O(1) on average, under 1 ms for 5,000 items.
+  - **A finger reaches further** (L3-T3): a tap (`pointerType` "touch") picks within `max(radiusPx, 22 px)` (`PICK_MIN_RADIUS_TOUCH_PX`, half of a 44 px touch target), checking the cells within that reach, and a label is hit 10 px beyond its text instead of 3. The nearest within reach still wins.
 - **Box selection** tests projected centers against the rectangle.
 - **Group outlines** are picked through their label (a DOM hit area) or through the outliner. Clicks inside an outline select objects, not the group.
 - **Object labels** are pick targets too: pointing at a label is pointing at its object, for hover, click, double-click and drag (`label-hits.ts`). The hit area reaches back across the gap to the body, so the pointer can move from a body to its label without the hover ending. A body under the pointer whose pick circle is at most 30 px across wins over a label drawn across it; over anything wider (a belt's band, a rift, a route) the label wins. Zooming targets bodies only (zoom-gate.ts): a wheel turned over some system's label would otherwise push into that system.
@@ -313,6 +314,7 @@ Procedural looks are generated once on the GPU and reused (D-10):
 - Text comes from `labelText(item, spoilerPolicy)`. Hidden spoilers render as a redaction bar of similar length.
 - Group labels are uppercase with letter spacing, in the group's color. Object labels are smaller and a soft white.
 - Every label has a dark outline: a 3 px stroke painted under the text (`-webkit-text-stroke` with `paint-order: stroke fill`), so about 1.5 px shows around each glyph, plus a soft shadow. That keeps names readable over the bright core and dense star fields, in Chrome and Safari alike. Before, labels had only a soft shadow, which bright backgrounds washed out.
+- **On a phone** (the slim tier, L3-T3), every placed label keeps 6 px of clear space around it (`LABEL_MARGIN_SLIM_PX`), so a candidate that would come closer is left out and fewer names crowd the small screen. The font doesn't change. The driver picks between two prepared metrics objects by `isSlimNow()`, a MediaQueryList read, so nothing is allocated per frame.
 - Labels are `aria-hidden`: the outliner is the accessible list of the same items (ux.md §10).
 
 ## 12. Camera controls

@@ -54,6 +54,12 @@ export interface LabelMetrics {
   gapPx: number;
   /** At most this many labels. */
   max: number;
+  /**
+   * Clear space every label keeps from the others, in CSS pixels: a label that would come
+   * closer than this to one already placed is left out. 0 by default; on a phone,
+   * LABEL_MARGIN_SLIM_PX, so a small screen holds fewer names.
+   */
+  marginPx?: number;
 }
 
 /**
@@ -117,24 +123,28 @@ export function solveLabels(
   const columns = Math.max(1, Math.ceil(viewport.widthPx / CELL_PX));
   const rows = Math.max(1, Math.ceil(viewport.heightPx / CELL_PX));
   const cells = new Map<number, PlacedLabel[]>();
+  const margin = metrics.marginPx ?? 0;
 
-  const cellRange = (label: PlacedLabel) => ({
-    firstColumn: Math.max(0, Math.floor(label.left / CELL_PX)),
-    lastColumn: Math.min(columns - 1, Math.floor((label.left + label.width) / CELL_PX)),
-    firstRow: Math.max(0, Math.floor(label.top / CELL_PX)),
-    lastRow: Math.min(rows - 1, Math.floor((label.top + label.height) / CELL_PX)),
+  // The cells a label's box touches, grown by `grow` on every side.
+  const cellRange = (label: PlacedLabel, grow = 0) => ({
+    firstColumn: Math.max(0, Math.floor((label.left - grow) / CELL_PX)),
+    lastColumn: Math.min(columns - 1, Math.floor((label.left + label.width + grow) / CELL_PX)),
+    firstRow: Math.max(0, Math.floor((label.top - grow) / CELL_PX)),
+    lastRow: Math.min(rows - 1, Math.floor((label.top + label.height + grow) / CELL_PX)),
   });
 
+  // Overlapping, or nearer than the margin: the new label's box grown by the margin on each
+  // side against the others' boxes, which leaves at least the margin between any two.
   const overlapsPlaced = (label: PlacedLabel) => {
-    const range = cellRange(label);
+    const range = cellRange(label, margin);
     for (let row = range.firstRow; row <= range.lastRow; row++) {
       for (let column = range.firstColumn; column <= range.lastColumn; column++) {
         for (const other of cells.get(row * columns + column) ?? []) {
           if (
-            label.left < other.left + other.width &&
-            other.left < label.left + label.width &&
-            label.top < other.top + other.height &&
-            other.top < label.top + label.height
+            label.left - margin < other.left + other.width &&
+            other.left < label.left + label.width + margin &&
+            label.top - margin < other.top + other.height &&
+            other.top < label.top + label.height + margin
           ) {
             return true;
           }

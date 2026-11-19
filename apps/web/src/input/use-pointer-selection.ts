@@ -14,6 +14,7 @@ import { useSelection } from '@/state/selection.ts';
 import { viewNavigation } from '@/state/view-navigator.ts';
 import { resolveBinding, type Gesture, type Mode, type Target } from './bindings.ts';
 import { isClick } from './click.ts';
+import { isDoubleTap, type Tap } from './double-tap.ts';
 import { detectPlatform } from './platform.ts';
 
 /** A click's point in normalized device coordinates, reused. */
@@ -28,7 +29,11 @@ const clickNdc = new Vector2();
  * - in edit mode a right-click (or a Mac Ctrl-click) on an object opens the context menu,
  *   selecting the object first unless it's already part of the selection;
  * - a double-click on an object that opens a view enters it (M5-T2); on any other object it
- *   selects it, which opens its info, and flies to it.
+ *   selects it, which opens its info, and flies to it. Two quick taps do the same on a touch
+ *   screen, counted here (double-tap.ts): WebKit sends no `dblclick` for taps, and a browser
+ *   that does is ignored after a touch, so nothing enters twice;
+ * - a finger reaches further than a pointer (PICK_MIN_RADIUS_TOUCH_PX), so a tap picks with
+ *   the touch reach (picking.ts).
  */
 export function usePointerSelection(mode: Mode): void {
   const get = useThree((state) => state.get);
@@ -37,6 +42,9 @@ export function usePointerSelection(mode: Mode): void {
     const element = get().gl.domElement;
     const platform = detectPlatform();
     let press: { x: number; y: number; button: number; pointerId: number } | null = null;
+    // The last tap, for double-taps, and the last press's kind, to ignore a touch's dblclick.
+    let lastTap: Tap | null = null;
+    let lastPressType = '';
 
     const worldAt = (clientX: number, clientY: number): string | null => {
       toNdc(clientX, clientY, element, clickNdc);
@@ -63,6 +71,7 @@ export function usePointerSelection(mode: Mode): void {
         press = null;
         return;
       }
+      lastPressType = event.pointerType;
       press = {
         x: event.clientX,
         y: event.clientY,
@@ -86,7 +95,24 @@ export function usePointerSelection(mode: Mode): void {
               ? 'right-click'
               : null;
       if (!gesture) return;
-      const hit = pickAt(get(), event.clientX, event.clientY);
+      const hit = pickAt(get(), event.clientX, event.clientY, { touch: gesture === 'tap' });
+      if (gesture === 'tap') {
+        const tap = {
+          timeMs: event.timeStamp,
+          x: event.clientX,
+          y: event.clientY,
+          id: hit?.id ?? null,
+        };
+        const double = isDoubleTap(lastTap, tap);
+        // A third quick tap starts a new pair rather than entering again.
+        lastTap = double ? null : tap;
+        if (double && hit) {
+          if (resolveBinding('double-tap', event, mode, targetOf(hit.id), platform) === 'enter') {
+            enterOrFlyTo(hit);
+          }
+          return;
+        }
+      }
       // The world under the pointer, in its own orbit view: it can be selected (its details,
       // its form), but it has no context menu, since none of its commands apply to it there.
       const world = hit ? null : worldAt(event.clientX, event.clientY);
@@ -104,11 +130,16 @@ export function usePointerSelection(mode: Mode): void {
       }
     };
     const onDoubleClick = (event: MouseEvent) => {
-      if (toolOwnsClicks()) return;
+      // Taps are counted in onPointerUp; a browser's own dblclick after them would enter twice.
+      if (toolOwnsClicks() || lastPressType === 'touch') return;
       const hit = pickAt(get(), event.clientX, event.clientY);
       if (!hit) return;
       const action = resolveBinding('double-click', event, mode, targetOf(hit.id), platform);
       if (action !== 'enter') return;
+      enterOrFlyTo(hit);
+    };
+    /** Enters what opens a view; anything else is selected and flown to. */
+    const enterOrFlyTo = (hit: NonNullable<ReturnType<typeof pickAt>>) => {
       if (hit.opensView) {
         viewNavigation.enter(hit.id);
         return;

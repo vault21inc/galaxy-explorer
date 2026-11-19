@@ -50,6 +50,14 @@ describe('the tour registry', () => {
     expect(Object.keys(NEEDS).sort()).toEqual([...TOUR_NEEDS].sort());
   });
 
+  it('says each reader step in a phone’s words when it names a key or the mouse (L3-T3)', () => {
+    const pointerWords = /\b(click|right-drag|scroll|press|hold space|double-click|⌘|ctrl)\b/i;
+    for (const step of TOURS.reader.steps) {
+      if (pointerWords.test(step.text)) expect(step.touchText, step.id).toBeTruthy();
+      if (step.touchText) expect(step.touchText, step.id).not.toMatch(pointerWords);
+    }
+  });
+
   it('points only at controls marked in the markup', () => {
     const source = Object.values(SOURCES).join('\n');
     const toolbar = SOURCES['../src/editor/edit-toolbar.tsx'] ?? '';

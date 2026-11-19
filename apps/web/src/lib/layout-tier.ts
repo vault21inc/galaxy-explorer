@@ -48,6 +48,23 @@ export function currentTier(): LayoutTier {
   return matches(LAYOUT_QUERIES.compact) ? 'compact' : 'full';
 }
 
+/**
+ * Whether the slim tier is on now, for code that runs every frame (the label layer): one
+ * MediaQueryList, made once, whose `matches` the browser keeps current, so a read costs nothing
+ * and allocates nothing.
+ */
+let slimList: MediaQueryList | null = null;
+export function isSlimNow(): boolean {
+  if (slimList === null) {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+    slimList = window.matchMedia(LAYOUT_QUERIES.slim);
+  }
+  return slimList.matches;
+}
+
+/** Whether the device can hover (a mouse or trackpad): labels' "hover" mode needs it. */
+export const HOVER_QUERY = '(any-hover: hover)';
+
 /** Follows a media query, re-rendering when it starts or stops matching (a rotation, a resize). */
 export function useMediaQuery(query: string): boolean {
   return useSyncExternalStore(

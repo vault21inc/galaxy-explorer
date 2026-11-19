@@ -7,6 +7,7 @@ import {
   type RefObject,
 } from 'react';
 import { Button } from '@/components/ui/button.tsx';
+import { FINE_POINTER_QUERY, useMediaQuery } from '@/lib/layout-tier.ts';
 import type { TourStep } from './tour-types.ts';
 import type { TargetBox } from './use-target.ts';
 
@@ -39,6 +40,8 @@ export function TourPopover(props: TourPopoverProps) {
   const { step, number, count, target, canGoBack, onBack, onNext, onEnd } = props;
   const region = useRef<HTMLElement>(null);
   const last = number === count;
+  // No mouse or trackpad: the step in a phone's words (L3-T3).
+  const finePointer = useMediaQuery(FINE_POINTER_QUERY);
 
   // Focus comes to each new step, unless the reader is typing (naming the object just placed).
   useEffect(() => {
@@ -71,7 +74,7 @@ export function TourPopover(props: TourPopoverProps) {
       </p>
       <h2 className="font-medium">{step.title}</h2>
       <p id={`tour-step-${step.id}`} className="leading-relaxed">
-        {step.text}
+        {finePointer ? step.text : (step.touchText ?? step.text)}
       </p>
       <div className="mt-1 flex items-center gap-2">
         <Button variant="ghost" size="sm" onClick={onEnd}>

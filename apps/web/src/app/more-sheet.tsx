@@ -35,7 +35,9 @@ export function MoreSheet() {
       {onMap && <EditRow />}
       {onMap && <OpenRow sheet="list" icon={List} label="List" tourName="list" />}
       {onMap && <OpenRow sheet="events" icon={CalendarDays} label="Events" tourName="events" />}
-      {onMap && <OpenRow sheet="layers" icon={Layers} label="Layers" tourName="layers" />}
+      {onMap && (
+        <OpenRow sheet="layers" icon={Layers} label="Layers and labels" tourName="layers" />
+      )}
       <SpoilerRow />
       <OpenRow sheet="display" icon={Settings2} label="Display" />
       <OpenRow sheet="help" icon={CircleHelp} label="Help and tours" tourName="help" />

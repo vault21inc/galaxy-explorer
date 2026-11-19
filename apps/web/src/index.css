@@ -98,6 +98,15 @@
     @apply bg-background text-foreground antialiased;
     /* The canvas owns the whole window; nothing scrolls behind it. */
     overflow: hidden;
+    /* Nor does a drag on a phone pull the page to refresh it, or bounce it. */
+    overscroll-behavior: none;
+  }
+
+  /* The 3D view's drags and pinches are camera-controls' (rendering.md §12): the browser
+     mustn't scroll or zoom the page under them. camera-controls listens on R3F's event element,
+     not the canvas, so it doesn't set this on the canvas itself. */
+  canvas {
+    touch-action: none;
   }
 }
 

@@ -147,48 +147,61 @@ export class ScreenPicker {
   /**
    * The object whose circle contains the point, or null. Among overlapping circles the highest
    * `pickPriority` wins, then the one whose center is nearest the point (relative to its
-   * radius), then the nearest to the camera.
+   * radius), then the nearest to the camera. `minRadiusPx` widens every circle to at least
+   * that radius: a finger's reach (PICK_MIN_RADIUS_TOUCH_PX).
    */
-  pick(xPx: number, yPx: number): DrawnObject | null {
+  pick(xPx: number, yPx: number, minRadiusPx = 0): DrawnObject | null {
     this.#ensureGrid();
-    const cell = this.#cellAt(xPx, yPx);
-    if (cell < 0) return null;
+    // A finger reaches further than the circles' own radii (`minRadiusPx`), so the cells
+    // within that reach are checked too: an object is in the cell of its center, and a center
+    // within reach of the point is in one of them. Without it, only the point's own cell.
+    const reach = minRadiusPx;
+    const firstColumn = Math.max(0, Math.floor((xPx - reach) / PICK_CELL_PX));
+    const lastColumn = Math.min(this.#columns - 1, Math.floor((xPx + reach) / PICK_CELL_PX));
+    const firstRow = Math.max(0, Math.floor((yPx - reach) / PICK_CELL_PX));
+    const lastRow = Math.min(this.#rows - 1, Math.floor((yPx + reach) / PICK_CELL_PX));
+    if (firstColumn > lastColumn || firstRow > lastRow) return null;
     let best = -1;
     let bestPriority = -Infinity;
     let bestScore = Infinity;
     let bestDepth = Infinity;
     let bestRadius = 0;
-    const end = this.#cellStart[cell + 1] ?? 0;
-    for (let k = this.#cellStart[cell] ?? 0; k < end; k++) {
-      const slot = this.#cellItems[k] ?? 0;
-      let score: number;
-      let radiusPx = Infinity;
-      if ((this.#curveCount[slot] ?? 0) > 0) {
-        const curve = this.#curveScore(slot, xPx, yPx);
-        if (curve === null) continue;
-        score = curve;
-      } else {
-        const dx = xPx - (this.#x[slot] ?? 0);
-        const dy = yPx - (this.#y[slot] ?? 0);
-        const radius = this.#radius[slot] ?? 0;
-        const distanceSquared = dx * dx + dy * dy;
-        if (distanceSquared > radius * radius) continue;
-        score = Math.sqrt(distanceSquared) / radius;
-        radiusPx = radius;
-      }
-      const object = this.#objectAt(slot);
-      const priority = object?.pickPriority ?? 0;
-      const depth = this.#depth[slot] ?? 0;
-      if (
-        priority > bestPriority ||
-        (priority === bestPriority &&
-          (score < bestScore || (score === bestScore && depth < bestDepth)))
-      ) {
-        best = slot;
-        bestPriority = priority;
-        bestScore = score;
-        bestDepth = depth;
-        bestRadius = radiusPx;
+    for (let row = firstRow; row <= lastRow; row++) {
+      for (let column = firstColumn; column <= lastColumn; column++) {
+        const cell = row * this.#columns + column;
+        const end = this.#cellStart[cell + 1] ?? 0;
+        for (let k = this.#cellStart[cell] ?? 0; k < end; k++) {
+          const slot = this.#cellItems[k] ?? 0;
+          let score: number;
+          let radiusPx = Infinity;
+          if ((this.#curveCount[slot] ?? 0) > 0) {
+            const curve = this.#curveScore(slot, xPx, yPx);
+            if (curve === null) continue;
+            score = curve;
+          } else {
+            const dx = xPx - (this.#x[slot] ?? 0);
+            const dy = yPx - (this.#y[slot] ?? 0);
+            const radius = Math.max(this.#radius[slot] ?? 0, minRadiusPx);
+            const distanceSquared = dx * dx + dy * dy;
+            if (distanceSquared > radius * radius) continue;
+            score = Math.sqrt(distanceSquared) / radius;
+            radiusPx = radius;
+          }
+          const object = this.#objectAt(slot);
+          const priority = object?.pickPriority ?? 0;
+          const depth = this.#depth[slot] ?? 0;
+          if (
+            priority > bestPriority ||
+            (priority === bestPriority &&
+              (score < bestScore || (score === bestScore && depth < bestDepth)))
+          ) {
+            best = slot;
+            bestPriority = priority;
+            bestScore = score;
+            bestDepth = depth;
+            bestRadius = radiusPx;
+          }
+        }
       }
     }
     this.#lastHitRadiusPx = best < 0 ? 0 : bestRadius;
@@ -338,13 +351,6 @@ export class ScreenPicker {
 
   #objectAt(slot: number): DrawnObject | null {
     return this.#objects[this.#slotObject[slot] ?? -1] ?? null;
-  }
-
-  #cellAt(xPx: number, yPx: number): number {
-    const column = Math.floor(xPx / PICK_CELL_PX);
-    const row = Math.floor(yPx / PICK_CELL_PX);
-    if (column < 0 || row < 0 || column >= this.#columns || row >= this.#rows) return -1;
-    return row * this.#columns + column;
   }
 
   #gridStale = true;

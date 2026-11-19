@@ -128,6 +128,36 @@ describe('solveLabels', () => {
     expect(placed).toMatchObject({ left: 300 - 21, top: 200 - 7, width: 42, color: '#c8a24a' });
   });
 
+  it('keeps a margin between labels when asked, placing fewer (the slim tier)', () => {
+    const random = (() => {
+      let seed = 7;
+      return () => (seed = (seed * 16_807) % 2_147_483_647) / 2_147_483_647;
+    })();
+    const crowd = Array.from({ length: 2_000 }, () =>
+      candidate({ x: random() * 900, y: random() * 780, text: 'Gudrun' }),
+    );
+    // No cap, so the count shows what the margin leaves out.
+    const uncapped = { ...metrics, max: 5_000 };
+    const without = solveLabels(crowd, viewport, uncapped);
+    const margin = 6;
+    const withMargin = solveLabels(crowd, viewport, { ...uncapped, marginPx: margin });
+    expect(withMargin.length).toBeLessThan(without.length);
+    // No two are closer than the margin: grown by it, one never overlaps another.
+    for (let i = 0; i < withMargin.length; i++) {
+      for (let j = i + 1; j < withMargin.length; j++) {
+        const a = withMargin[i]!;
+        const grown = {
+          ...a,
+          left: a.left - margin,
+          top: a.top - margin,
+          width: a.width + 2 * margin,
+          height: a.height + 2 * margin,
+        };
+        expect(overlaps(grown, withMargin[j]!)).toBe(false);
+      }
+    }
+  });
+
   it('leaves out labels that would cross the edge of the view', () => {
     expect(solveLabels([candidate({ x: 990, y: 100 })], viewport, metrics)).toEqual([]);
     expect(solveLabels([candidate({ x: 100, y: 2 })], viewport, metrics)).toEqual([]);
@@ -171,6 +201,13 @@ describe('label modes', () => {
       useLabels.getState().cycle();
     }
     expect(seen).toEqual(['hover', 'groups', 'all', 'hover']);
+  });
+
+  it('can be set to a mode directly, as the Labels control does (L3-T3)', () => {
+    useLabels.getState().setMode('groups');
+    expect(useLabels.getState().mode).toBe('groups');
+    useLabels.getState().setMode('hover');
+    expect(useLabels.getState().mode).toBe('hover');
   });
 
   it('shows all while Space is held, whatever the mode', () => {

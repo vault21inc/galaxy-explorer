@@ -9,6 +9,8 @@ import { labelText } from '@/render/labels/label-text.ts';
 import { REDACTION_COLOR } from '@/render/tuning.ts';
 import { useEditor } from '@/state/editor.ts';
 import { isTypeShown, useLayers, useLayerVisibility } from '@/state/layers.ts';
+import { LABEL_MODES, useLabels, type LabelMode } from '@/state/labels.ts';
+import { HOVER_QUERY, useMediaQuery } from '@/lib/layout-tier.ts';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
 
 /**
@@ -16,7 +18,8 @@ import { useSpoilerPolicy } from '@/state/spoilers.ts';
  * browser, and a legend of the groups shown, in their colors. In edit mode it also picks the
  * layer that grouping commands work in (⌘/Ctrl + Shift + G, "Remove from group").
  *
- * The body of both the top bar's popover (layers-popover.tsx) and the slim bar's sheet.
+ * The body of both the top bar's popover (layers-popover.tsx) and the slim bar's sheet. The
+ * label mode leads it (L3-T3): with a keyboard it's the L key, without one this control.
  */
 export function LayersPanel() {
   const id = useId();
@@ -52,6 +55,7 @@ export function LayersPanel() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 text-sm">
+      <LabelModeControl />
       {layers.length === 0 ? (
         <p className="text-muted-foreground">
           No layers yet: group types define them.{' '}
@@ -143,5 +147,47 @@ export function LayersPanel() {
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * Which labels show (ux.md §7): the L key's three modes, as a control (L3-T3), so they can be
+ * changed without a keyboard. Remembered per browser, like the L key's choice.
+ */
+function LabelModeControl() {
+  const id = useId();
+  const mode = useLabels((state) => state.mode);
+  const setMode = useLabels((state) => state.setMode);
+  // Without a mouse or trackpad nothing is ever hovered, so "hover" shows what's selected.
+  const canHover = useMediaQuery(HOVER_QUERY);
+  const text: Record<LabelMode, string> = {
+    hover: canHover ? 'On hover' : 'Selected only',
+    groups: 'Groups',
+    all: 'All',
+  };
+  return (
+    <fieldset className="flex flex-col gap-1">
+      <legend className="mb-1 text-xs text-muted-foreground label-caps">Labels</legend>
+      <div className="flex gap-1" role="presentation">
+        {LABEL_MODES.map((option) => (
+          <label
+            key={option}
+            className="flex min-h-9 flex-1 cursor-pointer items-center justify-center rounded-md border px-2 text-center text-xs has-checked:border-primary has-checked:bg-accent"
+          >
+            <input
+              type="radio"
+              name={`${id}-labels`}
+              value={option}
+              checked={mode === option}
+              className="sr-only"
+              onChange={() => {
+                setMode(option);
+              }}
+            />
+            {text[option]}
+          </label>
+        ))}
+      </div>
+    </fieldset>
   );
 }
