@@ -279,8 +279,8 @@ D-34 has the reasoning; data-model §8 has the access rule. None of this exists 
 - **Sharing a universe:** a **Sharing** section on its settings page, shown to its owner.
   - **Who can see it:** three choices, each with one line saying what it means: Private, Anyone with the link, Public. Making it public asks to confirm, and says how many drafts stay hidden.
   - **The link** (when link-only): the address with its key, a Copy button, and "Make a new link", which stops the old one working.
-  - **People:** a list of accounts with their role (Editor or Viewer) and a remove button; "Add" takes an exact username. A name that doesn't exist says so; nothing suggests or lists other accounts.
-  - **Transfer** to another account, and **Delete**, each behind a confirmation that asks for the universe's name and a current two-factor code, or the password for an account with codes off (D-47).
+  - **People:** a list of accounts with their role (Editor or Viewer) and a remove button; "Add" takes a username. A name that doesn't exist says so. As the owner types, the field offers the people they already know (those they've shared with, and the owners who've shared with them), or every account to an admin, never a name they couldn't already see (D-59).
+  - **Transfer** to another account (its field offers the same names, members included), and **Delete**, each behind a confirmation that asks for the universe's name and a current two-factor code, or the password for an account with codes off (D-47).
   - **On your own machine** (no accounts) the section offers only Delete, asking for the name alone (M8-T12).
 - **What the others see:**
   - an **editor** gets edit mode and everything in it; the Sharing section is read-only for them, with "Leave this universe";

@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { Label } from '@/components/ui/label.tsx';
+import { UsernameInput } from '@/components/username-input.tsx';
 import { LinkOnce } from './link-once.tsx';
 
 /**
@@ -30,7 +31,8 @@ export interface AdminAction {
   /** What must be typed exactly to confirm, such as the username or universe address. */
   confirmText?: string;
   /** A value the action needs, such as the new owner or a quota. */
-  input?: { label: string; numeric?: boolean; initial?: string };
+  /** `suggestions`: usernames to offer as the admin types (D-59). */
+  input?: { label: string; numeric?: boolean; initial?: string; suggestions?: readonly string[] };
   /** Ask for a confirmation: a code, or the password. */
   askConfirmation: boolean;
   /** Does it. A returned string is a link to show once; a thrown error is shown here. */
@@ -123,15 +125,26 @@ function ActionForm({ action, onClose }: { action: AdminAction; onClose: () => v
       {action.input && (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor={`${id}-input`}>{action.input.label}</Label>
-          <Input
-            id={`${id}-input`}
-            value={input}
-            autoComplete="off"
-            {...(action.input.numeric ? { inputMode: 'decimal' as const } : {})}
-            onChange={(event) => {
-              setInput(event.target.value);
-            }}
-          />
+          {action.input.suggestions ? (
+            <UsernameInput
+              id={`${id}-input`}
+              value={input}
+              suggestions={action.input.suggestions}
+              onChange={(event) => {
+                setInput(event.target.value);
+              }}
+            />
+          ) : (
+            <Input
+              id={`${id}-input`}
+              value={input}
+              autoComplete="off"
+              {...(action.input.numeric ? { inputMode: 'decimal' as const } : {})}
+              onChange={(event) => {
+                setInput(event.target.value);
+              }}
+            />
+          )}
         </div>
       )}
       {action.confirmText !== undefined && (

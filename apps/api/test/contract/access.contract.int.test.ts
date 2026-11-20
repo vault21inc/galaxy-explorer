@@ -155,12 +155,14 @@ type Level = 'read' | 'edit' | 'own';
  *   is in);
  * - changing anything needs `edit`;
  * - who has access is the owner's (M8-T12): deleting the universe, its members, its share link
- *   and transferring it need `own`, as do its address and visibility (`ownFields`);
+ *   and transferring it need `own`, as do its address and visibility (`ownFields`), and so do
+ *   the names suggested for adding someone (D-59);
  * - leaving needs only `read`: a viewer may leave too.
  */
 const UNIVERSE = '/api/v1/universes/{universeId}';
 function specLevel(op: Operation): Level {
   if (op.method === 'get') {
+    if (op.path === `${UNIVERSE}/member-suggestions`) return 'own';
     if (op.path === `${UNIVERSE}/members` || op.path === `${UNIVERSE}/drafts`) return 'edit';
     return /\/history|\/export$|\/assets/.test(op.path) ? 'edit' : 'read';
   }
@@ -175,14 +177,21 @@ const OWN_FIELDS: Record<string, readonly string[]> = { [UNIVERSE]: ['slug', 'vi
 /**
  * Whether a route needs someone signed in on the site (architecture.md §7), so that an API
  * token never reaches it, worked out apart from what the route declares: the account's own
- * settings (its devices, password, two-factor codes, storage and tokens), and sharing (who's in, the drafts
+ * settings (its devices, password, two-factor codes, storage and tokens), and sharing (who's in, whom to suggest, the drafts
  * count shown before making it public, the link, a transfer, leaving), and deleting a universe.
  */
 const ACCOUNT_SETTINGS = /^\/api\/v1\/auth\/(sessions|password|two-factor|storage|tokens)/;
 function specSession(op: Operation): boolean {
   if (ACCOUNT_SETTINGS.test(op.path)) return true;
   if (op.method === 'delete' && op.path === UNIVERSE) return true;
-  const sharing = ['/members', '/members/{username}', '/membership', '/drafts', '/share-key'];
+  const sharing = [
+    '/members',
+    '/members/{username}',
+    '/member-suggestions',
+    '/membership',
+    '/drafts',
+    '/share-key',
+  ];
   return [...sharing, '/transfer'].some((tail) => op.path === `${UNIVERSE}${tail}`);
 }
 

@@ -14,10 +14,13 @@ import { GuardedActionDialog, type GuardedAction } from './guarded-action-dialog
 export function TransferAndDelete({
   universe,
   accounts,
+  suggestions,
 }: {
   universe: Universe;
   /** Whether this site has accounts: without, there's nobody to transfer to and no code. */
   accounts: boolean;
+  /** Names to offer for the new owner (D-59). */
+  suggestions: readonly string[];
 }) {
   const navigate = useNavigate();
   const transfer = useTransferUniverse(universe.id);
@@ -33,6 +36,7 @@ export function TransferAndDelete({
     confirmLabel: 'Transfer it',
     universeName: name,
     askUsername: true,
+    usernameSuggestions: suggestions,
     askConfirmation: accounts,
     run: async ({ username, confirmation }) => {
       await transfer.mutateAsync({ username, confirmation });

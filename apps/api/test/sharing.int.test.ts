@@ -179,6 +179,75 @@ describe('members (M8-T12)', () => {
     }));
 });
 
+describe('member suggestions (D-59)', () => {
+  it('offer the people the owner already knows, and every active account to an admin', () =>
+    withTestDb(async (db, url) => {
+      const { app, as, universe } = await setUp(db, url);
+      try {
+        const suggested = async (headers: Record<string, string>, universeId: string) => {
+          const response = await app.inject({
+            method: 'GET',
+            url: `/api/v1/universes/${universeId}/member-suggestions`,
+            headers: { ...headers, ...ORIGIN },
+          });
+          return { status: response.statusCode, names: response.json<{ data?: string[] }>().data };
+        };
+        const signedIn = async (account: TestAccount) =>
+          sessionOf(await signIn(app, account, await codeFor(account.secret)));
+        await makeAccount(db, 'carol');
+        const dave = await makeAccount(db, 'dave');
+        const admin = await makeAccount(db, 'admin', { role: 'admin' });
+
+        // The owner shares with alice and dave; bob shares his own universe with the owner.
+        const members = `/universes/${universe.id}/members`;
+        await as('owner', 'PUT', `${members}/alice`, { role: 'viewer' });
+        await as('owner', 'PUT', `${members}/dave`, { role: 'viewer' });
+        const bobs = (await as('bob', 'POST', '/universes', { slug: 'bobs', name: rt.plain('B') }))
+          .body.data as { id: string };
+        await as('bob', 'PUT', `/universes/${bobs.id}/members/owner`, { role: 'editor' });
+        await db
+          .update(schema.users)
+          .set({ disabledAt: new Date() })
+          .where(eq(schema.users.id, dave.id));
+
+        // Known people only: alice (shared with), bob (shared by); not carol, a stranger, nor
+        // dave, disabled, nor the owner. Current members are listed, for a transfer.
+        const mine = await as('owner', 'GET', `/universes/${universe.id}/member-suggestions`);
+        expect(mine.status).toBe(200);
+        expect(mine.body.data).toEqual(['alice', 'bob']);
+        // Alice knows the owner, who shared with her, but not bob, who's only a co-member.
+        const alices = (
+          await as('alice', 'POST', '/universes', { slug: 'al', name: rt.plain('A') })
+        ).body.data as { id: string };
+        expect(
+          (await as('alice', 'GET', `/universes/${alices.id}/member-suggestions`)).body.data,
+        ).toEqual(['owner']);
+        // Only the owner asks: a viewer may read the universe, not see whom to add.
+        expect(
+          (await as('alice', 'GET', `/universes/${universe.id}/member-suggestions`)).status,
+        ).toBe(403);
+
+        // An admin already sees every account on the admin screens: all active ones but itself.
+        const adminSession = await signedIn(admin);
+        const own = await app.inject({
+          method: 'POST',
+          url: '/api/v1/universes',
+          headers: { ...adminSession, ...ORIGIN },
+          payload: { slug: 'admins', name: rt.plain('Admin’s') },
+        });
+        const adminsId = own.json<{ data: { id: string } }>().data.id;
+        expect((await suggested(adminSession, adminsId)).names).toEqual([
+          'alice',
+          'bob',
+          'carol',
+          'owner',
+        ]);
+      } finally {
+        await app.close();
+      }
+    }));
+});
+
 describe('the drafts count (M8-T12)', () => {
   it('counts the draft maps and entries that stay hidden from readers', () =>
     withTestDb(async (db, url) => {

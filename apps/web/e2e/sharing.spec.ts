@@ -155,3 +155,53 @@ test('the owner shares with a viewer, an editor and a link', async ({ page, brow
   await expect(visitorPage.getByText(`No universe called “${u.slug}”`)).toBeVisible();
   await visitor.context.close();
 });
+
+test('the Username field offers the people the owner knows, and nobody else (D-59)', async ({
+  page,
+}) => {
+  const [owner, friend, stranger] = await Promise.all([
+    accountFromInvite(),
+    accountFromInvite(),
+    accountFromInvite(),
+  ]);
+  await signInThrough(page.request, owner);
+  const first = await ownUniverse(page.request);
+  const second = await ownUniverse(page.request);
+  // Sharing one universe with the friend makes them someone the owner knows.
+  const shared = await page.request.put(
+    `/api/v1/universes/${first.universeId}/members/${friend.username}`,
+    { headers: { origin: AUTH_URL }, data: { role: 'viewer' } },
+  );
+  expect(shared.ok()).toBe(true);
+
+  await page.goto(`/u/${second.slug}/settings`);
+  const sharing = page.getByRole('region', { name: 'Sharing' });
+  const add = sharing.getByRole('form', { name: 'Add a person' });
+  const field = add.getByLabel('Username');
+  /** The names the field's suggestion list offers. */
+  const offered = async () => {
+    const list = await field.getAttribute('list');
+    if (list === null) return [];
+    return page
+      .locator(`datalist[id="${list}"] option`)
+      .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
+  };
+  await expect.poll(offered).toContain(friend.username);
+  expect(await offered()).not.toContain(stranger.username);
+  expect(await offered()).not.toContain(owner.username);
+
+  // Once added, the friend is in the list, and no longer offered for this universe.
+  await field.fill(friend.username);
+  await add.getByRole('button', { name: 'Add' }).click();
+  await expect(sharing.getByLabel(`Role of ${friend.username}`)).toHaveValue('viewer');
+  await expect.poll(offered).not.toContain(friend.username);
+  // A transfer still offers them: a member is a likely new owner.
+  await sharing.getByRole('button', { name: 'Transfer…' }).click();
+  const dialog = page.getByRole('dialog');
+  const transferList = await dialog.getByLabel('Username of the new owner').getAttribute('list');
+  expect(transferList).not.toBeNull();
+  await expect(page.locator(`datalist[id="${transferList ?? ''}"] option`)).toHaveAttribute(
+    'value',
+    friend.username,
+  );
+});

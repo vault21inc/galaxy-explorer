@@ -652,7 +652,7 @@ When redaction removes content (`spoilers=exclude`), a hidden text keeps its sha
 - **Lists show only what the requester can read:** `GET /universes` returns public universes, plus the requester's own and those shared with them; for an admin, every universe. A `link` universe is never listed for someone who only has its key.
 - **Media follow their universe:** a file under `u/{universeId}/…` is served only to someone with at least `read` there (architecture §8).
 - **As built (M8-T11, D-40):** the API checks this in one hook in front of every route, from the rows the path names; the batch endpoint checks each operation's rows. The access contract suite tries every route in the OpenAPI document as each kind of requester.
-- **Sharing (M8-T12):** the members list and the drafts count need `edit`, since editors see the Sharing section read-only. Leaving (`DELETE …/membership`) needs only `read`, so a viewer can leave too. The owner's share key is in `UniverseRead.shareKey`, null for everyone else. Who may reach a universe isn't in History (D-41, §9).
+- **Sharing (M8-T12):** the members list and the drafts count need `edit`, since editors see the Sharing section read-only. Leaving (`DELETE …/membership`) needs only `read`, so a viewer can leave too. The names suggested for adding someone (`GET …/member-suggestions`, D-59) need `own`. The owner's share key is in `UniverseRead.shareKey`, null for everyone else. Who may reach a universe isn't in History (D-41, §9).
 
 ## 9. History: batches, audit trigger, revert
 

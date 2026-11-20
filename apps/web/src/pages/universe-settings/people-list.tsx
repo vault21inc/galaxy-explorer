@@ -5,15 +5,15 @@ import type { Universe } from '@/api/containers.ts';
 import { useMembers, useRemoveMember, useSetMember } from '@/api/sharing.ts';
 import { errorMessage } from '@/app/route-states.tsx';
 import { Button } from '@/components/ui/button.tsx';
-import { Input } from '@/components/ui/input.tsx';
+import { UsernameInput } from '@/components/username-input.tsx';
 import { cn } from '@/lib/utils.ts';
 import { INPUT_CLASS } from '@/panels/entity-form/fields/field-row.tsx';
 
 /**
  * "People" (M8-T12, ux.md §13): the owner, then each account the universe is shared with and
- * its role. The owner changes roles, removes people and adds them by exact username: a name
- * that doesn't exist says so, and nothing suggests or lists other accounts. Editors see the
- * list read-only.
+ * its role. The owner changes roles, removes people and adds them by username: a name that
+ * doesn't exist says so. As they type, the field offers the people they already know, or every
+ * account to an admin (D-59), leaving out those already here. Editors see the list read-only.
  */
 
 export const ROLE_LABELS: Record<MemberRole, string> = { editor: 'Editor', viewer: 'Viewer' };
@@ -22,7 +22,16 @@ const ROLE_HINTS: Record<MemberRole, string> = {
   viewer: 'reads it',
 };
 
-export function PeopleList({ universe, owner }: { universe: Universe; owner: boolean }) {
+export function PeopleList({
+  universe,
+  owner,
+  suggestions,
+}: {
+  universe: Universe;
+  owner: boolean;
+  /** Names to offer when adding someone (D-59). */
+  suggestions: readonly string[];
+}) {
   const members = useMembers(universe.id);
   const setMember = useSetMember(universe.id);
   const removeMember = useRemoveMember(universe.id);
@@ -92,6 +101,9 @@ export function PeopleList({ universe, owner }: { universe: Universe; owner: boo
       )}
       {owner && (
         <AddPerson
+          suggestions={suggestions.filter(
+            (name) => !members.data?.some((member) => member.username === name),
+          )}
           onAdd={(username, role) => act(() => setMember.mutateAsync({ username, role }))}
           busy={setMember.isPending}
         />
@@ -106,9 +118,11 @@ export function PeopleList({ universe, owner }: { universe: Universe; owner: boo
 }
 
 function AddPerson({
+  suggestions,
   onAdd,
   busy,
 }: {
+  suggestions: readonly string[];
   onAdd: (username: string, role: MemberRole) => Promise<boolean>;
   busy: boolean;
 }) {
@@ -132,12 +146,11 @@ function AddPerson({
         <label htmlFor={`${id}-username`} className="text-xs text-muted-foreground">
           Username
         </label>
-        <Input
+        <UsernameInput
           id={`${id}-username`}
           className="h-8 w-48"
           value={username}
-          autoComplete="off"
-          maxLength={32}
+          suggestions={suggestions}
           onChange={(event) => {
             setUsername(event.target.value);
           }}

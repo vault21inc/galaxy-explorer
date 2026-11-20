@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { Label } from '@/components/ui/label.tsx';
+import { UsernameInput } from '@/components/username-input.tsx';
 
 /**
  * The confirmation for what can't be undone: transferring or deleting a universe (M8-T12, ux.md
@@ -28,6 +29,8 @@ export interface GuardedAction {
   universeName: string;
   /** Ask for the account to act on (a transfer). */
   askUsername?: boolean;
+  /** Names to offer for it as the owner types (D-59). */
+  usernameSuggestions?: readonly string[];
   /** Ask for a confirmation (a code or the password): only where there are accounts. */
   askConfirmation: boolean;
   /** Does it; a thrown error is shown in the dialog. */
@@ -98,11 +101,10 @@ function GuardedForm({ action, onClose }: { action: GuardedAction; onClose: () =
       {action.askUsername && (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor={`${id}-username`}>Username of the new owner</Label>
-          <Input
+          <UsernameInput
             id={`${id}-username`}
             value={username}
-            autoComplete="off"
-            maxLength={32}
+            suggestions={action.usernameSuggestions ?? []}
             onChange={(event) => {
               setUsername(event.target.value);
             }}

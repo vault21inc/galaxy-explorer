@@ -229,7 +229,7 @@ PATCH /api/v1/objects/{id}  { version: 7, name: {...}, x: 120.5 }
 | Search (M7-T6) | `GET /universes/{universeId}/search?q&spoilers&includeDrafts&limit`: ranked results with kind, map, parent, path and snippet; `spoilers=exclude` searches only the public index (D-37) |
 | Later | `POST /practice-universe`, the editor tour's demo copy (M8-T10) |
 | Accounts (M8, D-34) | `POST /auth/login`, `POST /auth/logout`, `GET/PATCH /auth/me`, `GET/DELETE /auth/sessions`; `GET /auth/links/{token}` and `POST /auth/links/{token}/start`, `/finish` (accepting an invite or a reset); `GET/POST /auth/tokens`, `DELETE /auth/tokens/{tokenId}` |
-| Sharing (M8) | on a universe: `visibility` in `PATCH /universes/{universeId}` (owner); `POST /universes/{universeId}/share-key` (a new link); `POST /universes/unlock` (a slug and its share key for a read cookie); `GET /universes/by-slug/{slug}`; `GET /universes/{universeId}/members`, `PUT/DELETE /universes/{universeId}/members/{username}`; `POST /universes/{universeId}/transfer` |
+| Sharing (M8) | on a universe: `visibility` in `PATCH /universes/{universeId}` (owner); `POST /universes/{universeId}/share-key` (a new link); `POST /universes/unlock` (a slug and its share key for a read cookie); `GET /universes/by-slug/{slug}`; `GET /universes/{universeId}/members`, `PUT/DELETE /universes/{universeId}/members/{username}`; `GET /universes/{universeId}/member-suggestions` (D-59); `POST /universes/{universeId}/transfer` |
 | Admin (M8) | `GET /admin/users`, `PATCH/DELETE /admin/users/{userId}`, `POST /admin/invites`, `POST /admin/users/{userId}/reset-link`, `GET /admin/universes`, `PATCH/DELETE /admin/universes/{universeId}` (transfer, takedown, delete), `GET /admin/events` |
 
 ## 6. View payloads

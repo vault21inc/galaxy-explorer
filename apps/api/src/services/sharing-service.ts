@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { schema, type Executor } from '@ge/db';
 import { UniverseMemberRead, type MemberRole, type Visibility } from '@ge/domain';
-import { and, asc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { z } from 'zod';
 import type { Requester } from './access.ts';
@@ -33,6 +33,42 @@ async function accountNamed(ex: Executor, username: string) {
 }
 
 // ---- members -------------------------------------------------------------------------------
+
+/** At most this many suggestions: an installation's accounts are few, and the browser filters. */
+export const SUGGESTIONS_MAX = 200;
+
+/**
+ * Usernames to offer when adding someone to a universe or handing it over (D-59): never one the
+ * requester couldn't already see. An admin sees every account on the admin screens, so gets them
+ * all; anyone else gets the people they already know: those they've shared a universe of theirs
+ * with, and the owners of universes shared with them. Disabled accounts and the requester
+ * aren't offered. Without accounts (your own machine) there's nobody to suggest.
+ */
+export async function suggestMembers(ex: Executor, requester: Requester): Promise<string[]> {
+  if (requester.kind !== 'account') return [];
+  const me = requester.account.id;
+  const sharedWith = ex
+    .select({ id: universeMembers.userId })
+    .from(universeMembers)
+    .innerJoin(universes, eq(universes.id, universeMembers.universeId))
+    .where(eq(universes.ownerId, me));
+  const sharedBy = ex
+    .select({ id: sql<string>`${universes.ownerId}` })
+    .from(universes)
+    .innerJoin(universeMembers, eq(universeMembers.universeId, universes.id))
+    .where(eq(universeMembers.userId, me));
+  const known =
+    requester.account.role === 'admin'
+      ? undefined
+      : or(inArray(users.id, sharedWith), inArray(users.id, sharedBy));
+  const rows = await ex
+    .select({ username: users.username })
+    .from(users)
+    .where(and(isNull(users.disabledAt), ne(users.id, me), known))
+    .orderBy(asc(users.username))
+    .limit(SUGGESTIONS_MAX);
+  return rows.map((row) => row.username);
+}
 
 const addedBy = alias(users, 'added_by');
 

@@ -36,6 +36,25 @@ export function useMembers(universeId: string | undefined) {
   });
 }
 
+/**
+ * Usernames to offer when adding someone or transferring the universe (D-59): its owner's known
+ * people, or every active account for an admin. Only its owner asks, and only with accounts.
+ */
+export function useMemberSuggestions(universeId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['universe', 'member-suggestions', universeId],
+    queryFn: enabled
+      ? ({ signal }) =>
+          unwrap(
+            api.GET('/api/v1/universes/{universeId}/member-suggestions', {
+              params: { path: { universeId } },
+              signal,
+            }),
+          )
+      : skipToken,
+  });
+}
+
 /** How many maps and entries are drafts: what stays hidden when the universe is made public. */
 export function useDraftCount(universeId: string, enabled: boolean) {
   return useQuery({

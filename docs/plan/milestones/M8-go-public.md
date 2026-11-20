@@ -164,7 +164,7 @@
 
 **Where:** `apps/api/src/routes/sharing.ts`, `apps/web/src/pages/universe-settings/sharing-section.tsx`.
 
-- **Members:** `GET /universes/{universeId}/members`; `PUT /universes/{universeId}/members/{username}` with `{ role }` adds an account or changes its role; `DELETE` removes it. The owner manages them; a member may remove themself ("Leave this universe"). A username that doesn't exist is a 404 that says so; nothing lists or suggests accounts.
+- **Members:** `GET /universes/{universeId}/members`; `PUT /universes/{universeId}/members/{username}` with `{ role }` adds an account or changes its role; `DELETE` removes it. The owner manages them; a member may remove themself ("Leave this universe"). A username that doesn't exist is a 404 that says so; nothing lists or suggests accounts (changed by D-59: `GET /universes/{universeId}/member-suggestions` offers the owner names they could already see).
 - **Visibility:** the owner sets `private`, `link` or `public` with `PATCH /universes/{universeId}`.
   - Choosing `link` creates the share key; `POST /universes/{universeId}/share-key` replaces it, which stops the old link.
   - The share link is `/u/{slug}?k={key}`. The web app sends the slug and the key to `POST /universes/unlock` (a visitor with only the link doesn't know the universe's id), which sets an `HttpOnly` cookie carrying the key for that universe. The API checks the cookie's key against the current one on every request, so a replaced key locks out everyone who had the old link. The key stays in the address while the reader moves around (as `perf` does), so the address bar can be passed on.

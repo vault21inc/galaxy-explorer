@@ -658,6 +658,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/universes/{universeId}/member-suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Suggest accounts to share a universe with
+         * @description Sharing (M8-T12): a universe is private to its owner and the accounts it’s shared with, link-only (anyone with its share link reads it), or public. Editors change its content; viewers read it. Only its owner changes who has access. Usernames to offer when adding someone or transferring the universe, never one the requester couldn’t already see (D-59): for an admin, every active account; for anyone else, the accounts they’ve shared a universe of theirs with and the owners of universes shared with them. The requester isn’t listed; current members are. Sorted, at most 200. For its owner.
+         */
+        get: operations["universes.memberSuggestions.list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/universes/{universeId}/drafts": {
         parameters: {
             query?: never;
@@ -688,7 +708,7 @@ export interface paths {
         get?: never;
         /**
          * Share a universe with an account, or change its role
-         * @description Sharing (M8-T12): a universe is private to its owner and the accounts it’s shared with, link-only (anyone with its share link reads it), or public. Editors change its content; viewers read it. Only its owner changes who has access. Takes an exact username: one that doesn’t exist is a 404 that says so, and nothing lists or suggests accounts.
+         * @description Sharing (M8-T12): a universe is private to its owner and the accounts it’s shared with, link-only (anyone with its share link reads it), or public. Editors change its content; viewers read it. Only its owner changes who has access. Takes an exact username: one that doesn’t exist is a 404 that says so. `GET …/member-suggestions` offers names the owner already knows (D-59).
          */
         put: operations["universes.members.put"];
         post?: never;
@@ -9548,6 +9568,84 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["UniverseMemberRead"][];
+                    };
+                };
+            };
+            /** @description The request is invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Signed out: sign in to do this (M8). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description This universe can be read, but not changed this way (M8-T11). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found, or in a universe the requester can’t read, which looks the same (M8-T11). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict: a stale version or a duplicate. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A rule of the model was broken. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "universes.memberSuggestions.list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                universeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: string[];
                     };
                 };
             };

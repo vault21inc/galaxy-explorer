@@ -1,5 +1,6 @@
 import { useAccountsEnabled } from '@/api/auth.ts';
 import type { Universe } from '@/api/containers.ts';
+import { useMemberSuggestions } from '@/api/sharing.ts';
 import { LeaveUniverse } from './leave-universe.tsx';
 import { PeopleList } from './people-list.tsx';
 import { ShareLink } from './share-link.tsx';
@@ -17,6 +18,9 @@ import { VisibilityChoice } from './visibility-choice.tsx';
 export function SharingSection({ universe }: { universe: Universe }) {
   const accounts = useAccountsEnabled();
   const owner = universe.access === 'own';
+  // Names to offer in People and Transfer (D-59): the owner's known people, or, for an admin,
+  // every active account.
+  const suggestions = useMemberSuggestions(universe.id, accounts && owner).data ?? [];
   return (
     <section aria-labelledby="settings-sharing" className="flex flex-col gap-4">
       <h2 id="settings-sharing" className="text-xs text-muted-foreground label-caps">
@@ -26,7 +30,7 @@ export function SharingSection({ universe }: { universe: Universe }) {
         <>
           <VisibilityChoice universe={universe} owner={owner} />
           {universe.visibility === 'link' && <ShareLink universe={universe} />}
-          <PeopleList universe={universe} owner={owner} />
+          <PeopleList universe={universe} owner={owner} suggestions={suggestions} />
         </>
       ) : (
         <p className="max-w-xl text-muted-foreground">
@@ -34,7 +38,7 @@ export function SharingSection({ universe }: { universe: Universe }) {
         </p>
       )}
       {owner ? (
-        <TransferAndDelete universe={universe} accounts={accounts} />
+        <TransferAndDelete universe={universe} accounts={accounts} suggestions={suggestions} />
       ) : (
         universe.role !== null && <LeaveUniverse universe={universe} />
       )}

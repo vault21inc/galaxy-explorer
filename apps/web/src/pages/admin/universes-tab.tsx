@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { useState } from 'react';
 import {
   useAdminUniverses,
+  useAdminUsers,
   useDeleteAdminUniverse,
   useUpdateAdminUniverse,
   type AdminUniverse,
@@ -25,6 +26,11 @@ const VISIBILITY_NAMES: Record<AdminUniverse['visibility'], string> = {
  */
 export function UniversesTab() {
   const universes = useAdminUniverses();
+  // Every active account, for a transfer: the Accounts screen lists them all already (D-59).
+  const users = useAdminUsers();
+  const activeNames = (users.data ?? [])
+    .filter((user) => user.disabledAt === null)
+    .map((user) => user.username);
   const update = useUpdateAdminUniverse();
   const remove = useDeleteAdminUniverse();
   const [action, setAction] = useState<AdminAction | null>(null);
@@ -38,7 +44,10 @@ export function UniversesTab() {
         title: `Transfer ${universe.name}`,
         description: `It becomes the new owner’s, if their quota has room for its ${formatBytes(universe.mediaBytes)} of media. ${universe.owner ?? 'The installation'} keeps no access.`,
         confirmLabel: 'Transfer',
-        input: { label: 'Username of the new owner' },
+        input: {
+          label: 'Username of the new owner',
+          suggestions: activeNames.filter((name) => name !== universe.owner),
+        },
         askConfirmation: true,
         run: async ({ input, confirmation }) => {
           await update.mutateAsync({ universeId: universe.id, owner: input, confirmation });

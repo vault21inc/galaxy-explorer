@@ -25524,6 +25524,118 @@
         }
       }
     },
+    "/api/v1/universes/{universeId}/member-suggestions": {
+      "get": {
+        "operationId": "universes.memberSuggestions.list",
+        "summary": "Suggest accounts to share a universe with",
+        "tags": [
+          "sharing"
+        ],
+        "description": "Sharing (M8-T12): a universe is private to its owner and the accounts it’s shared with, link-only (anyone with its share link reads it), or public. Editors change its content; viewers read it. Only its owner changes who has access. Usernames to offer when adding someone or transferring the universe, never one the requester couldn’t already see (D-59): for an admin, every active account; for anyone else, the accounts they’ve shared a universe of theirs with and the owners of universes shared with them. The requester isn’t listed; current members are. Sorted, at most 200. For its owner.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "universeId",
+            "required": true
+          }
+        ],
+        "x-ge-access": {
+          "scope": "universe",
+          "level": "own",
+          "session": true
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "pattern": "^[a-z0-9][a-z0-9_-]{2,31}$"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Signed out: sign in to do this (M8).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "This universe can be read, but not changed this way (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or in a universe the requester can’t read, which looks the same (M8-T11).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: a stale version or a duplicate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A rule of the model was broken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/universes/{universeId}/drafts": {
       "get": {
         "operationId": "universes.drafts.count",
@@ -25656,7 +25768,7 @@
         "tags": [
           "sharing"
         ],
-        "description": "Sharing (M8-T12): a universe is private to its owner and the accounts it’s shared with, link-only (anyone with its share link reads it), or public. Editors change its content; viewers read it. Only its owner changes who has access. Takes an exact username: one that doesn’t exist is a 404 that says so, and nothing lists or suggests accounts.",
+        "description": "Sharing (M8-T12): a universe is private to its owner and the accounts it’s shared with, link-only (anyone with its share link reads it), or public. Editors change its content; viewers read it. Only its owner changes who has access. Takes an exact username: one that doesn’t exist is a 404 that says so. `GET …/member-suggestions` offers names the owner already knows (D-59).",
         "requestBody": {
           "required": true,
           "content": {

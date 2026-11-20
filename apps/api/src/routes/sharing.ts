@@ -24,6 +24,8 @@ import {
   removeMember,
   replaceShareKey,
   setMember,
+  suggestMembers,
+  SUGGESTIONS_MAX,
   transferUniverse,
   universeForShareKey,
 } from '../services/sharing-service.ts';
@@ -74,6 +76,22 @@ export const sharingRoutes: FastifyPluginCallbackZod<{
   );
 
   app.get(
+    '/universes/:universeId/member-suggestions',
+    {
+      schema: {
+        tags,
+        summary: 'Suggest accounts to share a universe with',
+        description: `${SHARING_DOC} Usernames to offer when adding someone or transferring the universe, never one the requester couldn’t already see (D-59): for an admin, every active account; for anyone else, the accounts they’ve shared a universe of theirs with and the owners of universes shared with them. The requester isn’t listed; current members are. Sorted, at most ${String(SUGGESTIONS_MAX)}. For its owner.`,
+        operationId: 'universes.memberSuggestions.list',
+        ...routeAccess({ scope: 'universe', level: 'own', session: true }),
+        params: universeParams,
+        response: { 200: envelope(z.array(Username)), ...problemResponses },
+      },
+    },
+    async (request) => ({ data: await suggestMembers(db, request.requester) }),
+  );
+
+  app.get(
     '/universes/:universeId/drafts',
     {
       schema: {
@@ -98,7 +116,7 @@ export const sharingRoutes: FastifyPluginCallbackZod<{
       schema: {
         tags,
         summary: 'Share a universe with an account, or change its role',
-        description: `${SHARING_DOC} Takes an exact username: one that doesn’t exist is a 404 that says so, and nothing lists or suggests accounts.`,
+        description: `${SHARING_DOC} Takes an exact username: one that doesn’t exist is a 404 that says so. \`GET …/member-suggestions\` offers names the owner already knows (D-59).`,
         operationId: 'universes.members.put',
         ...rateLimit('members'),
         ...routeAccess({ scope: 'universe', level: 'own', session: true }),
