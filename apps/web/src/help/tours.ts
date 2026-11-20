@@ -26,7 +26,8 @@ const READER: TourDef = {
       id: 'select',
       title: 'Selecting',
       text: 'Click a system to select it. Its panel opens with what’s known about it.',
-      touchText: 'Tap a system to select it. Its panel opens with what’s known about it.',
+      touchText:
+        'Tap a system to select it. Its card shows at the bottom: pull it up, or tap it, for what’s known about it.',
       target: { kind: 'object', pick: 'body' },
       completes: 'selected',
     },

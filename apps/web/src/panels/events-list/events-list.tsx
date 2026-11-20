@@ -6,6 +6,7 @@ import { useUniverseRoute } from '@/app/use-universe-route.ts';
 import { iconDataUrl, useIconDrawings } from '@/icons/use-icons.ts';
 import { cn } from '@/lib/utils.ts';
 import { REDACTION_COLOR } from '@/render/tuning.ts';
+import { useDetailsSheet } from '@/state/details-sheet.ts';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { viewNavigation } from '@/state/view-navigator.ts';
 import { INPUT_CLASS } from '../entity-form/fields/field-row.tsx';
@@ -46,6 +47,8 @@ export function EventsList({ active, onChose }: { active: boolean; onChose: () =
 
   const choose = (row: EventRow) => {
     onChose();
+    // Chosen by name: its details open, not only its card (D-58).
+    useDetailsSheet.getState().raise('half');
     if (row.located) void goToLocated(row.id, mapId ?? null);
     else viewNavigation.show(null, { select: row.id });
   };

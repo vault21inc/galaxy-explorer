@@ -148,8 +148,11 @@ function roomBesideSheet(target: TargetBox | null): {
   bottom: number;
 } {
   const room = { left: 0, right: window.innerWidth, bottom: window.innerHeight };
-  const sheet = document.querySelector('[data-slot="sheet"]')?.getBoundingClientRect();
-  if (!sheet || sheet.height === 0) return room;
+  // A sheet from the slim bar, or else the details sheet (hidden while one of those is open).
+  const sheet = [...document.querySelectorAll('[data-slot="sheet"], [data-slot="details-sheet"]')]
+    .map((element) => element.getBoundingClientRect())
+    .find((box) => box.height > 0);
+  if (!sheet) return room;
   const inside =
     target !== null &&
     target.left >= sheet.left &&

@@ -5,6 +5,7 @@ import { useEntityList } from '@/api/hooks.ts';
 import { Button } from '@/components/ui/button.tsx';
 import { Sheet } from '@/components/ui/sheet.tsx';
 import { useLayoutTier } from '@/lib/layout-tier.ts';
+import { useDetailsSheet } from '@/state/details-sheet.ts';
 import { useEditor } from '@/state/editor.ts';
 import { useSelection } from '@/state/selection.ts';
 import { useSheet } from '@/state/sheet.ts';
@@ -150,6 +151,8 @@ function useCloseOnChoice(active: boolean): void {
     return useSelection.subscribe((state, before) => {
       if (state.selectedIds !== before.selectedIds && state.selectedIds.length > 0) {
         useSheet.getState().close();
+        // Chosen by name: its details open, not only its card (D-58).
+        useDetailsSheet.getState().raise('half');
       }
     });
   }, [active]);

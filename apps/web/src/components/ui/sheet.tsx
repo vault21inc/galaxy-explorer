@@ -3,9 +3,7 @@ import { Dialog as DialogPrimitive } from 'radix-ui';
 import { useRef, type PointerEvent, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button.tsx';
 import { cn } from '@/lib/utils';
-
-/** How far the grab bar must be pulled down to close the sheet, in CSS pixels. */
-const CLOSE_PULL_PX = 80;
+import { CLOSE_PULL_PX } from './sheet-drag.ts';
 
 interface SheetProps {
   open: boolean;

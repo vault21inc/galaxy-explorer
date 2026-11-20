@@ -10,6 +10,7 @@ import { currentTier, LAYOUT_QUERIES, matches, type LayoutTier } from '@/lib/lay
 import { hasFinePointer } from '@/lib/pointer-kind.ts';
 import { hoverStore } from '@/state/hover.ts';
 import { useSelection } from '@/state/selection.ts';
+import { shownStop, useDetailsSheet, type DetailsStop } from '@/state/details-sheet.ts';
 import { useSheet } from '@/state/sheet.ts';
 import { useNavigation } from '@/state/navigation.ts';
 import { viewNavigation } from '@/state/view-navigator.ts';
@@ -104,7 +105,17 @@ export interface GeTestHooks {
    * window is short (a phone on its side), whether a mouse or trackpad is there to edit with,
    * and which sheet is open (null when none).
    */
-  layout(): { tier: LayoutTier; short: boolean; finePointer: boolean; sheet: string | null };
+  layout(): {
+    tier: LayoutTier;
+    short: boolean;
+    finePointer: boolean;
+    sheet: string | null;
+    /**
+     * Where the details panel rests (state/details-sheet.ts), or null with nothing selected.
+     * The side panel reports 'card' when collapsed and 'half' when open.
+     */
+    details: DetailsStop | null;
+  };
   /** The selection, in order. */
   selectedIds(): string[];
   /** Selects these, as a click or the outliner would (`pnpm perf`'s look preview, M6-T2). */
@@ -305,6 +316,13 @@ export function installTestHooks(): void {
       short: matches(LAYOUT_QUERIES.short),
       finePointer: hasFinePointer(),
       sheet: useSheet.getState().open,
+      details:
+        useSelection.getState().selectedIds.length === 0
+          ? null
+          : shownStop(
+              useDetailsSheet.getState().stop,
+              currentTier() !== 'slim' || matches(LAYOUT_QUERIES.short),
+            ),
     }),
     selectedIds: () => [...useSelection.getState().selectedIds],
     select: (ids) => {

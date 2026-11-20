@@ -1,5 +1,6 @@
 import type { EntityKind } from '@ge/domain';
 import { goToLocated } from '@/panels/relations/shown-where.ts';
+import { useDetailsSheet } from './details-sheet.ts';
 import { useSelection } from './selection.ts';
 import { viewNavigation } from './view-navigator.ts';
 
@@ -21,8 +22,11 @@ export interface EntityPlace {
  *
  * Used by search results (M7-T6) and "On other maps" (M7-T5). Only a map page can move
  * between views; elsewhere the caller navigates by URL.
+ *
+ * The reader asked for this entry by name, so its details open, not only its card (D-58).
  */
 export function showEntity(entity: EntityPlace): void {
+  useDetailsSheet.getState().raise('half');
   if (entity.mapId === null) {
     useSelection.getState().select([entity.id]);
     return;

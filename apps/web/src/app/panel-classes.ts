@@ -6,6 +6,14 @@
 export const UNDER_BAR = 'top-[calc(max(0.75rem,env(safe-area-inset-top))+3.25rem)]';
 
 /**
+ * The height of a sheet that rises from the bottom of the window to just under the top bar:
+ * the window less `UNDER_BAR`. A height, not a top edge, so the sheet stays hung from the
+ * bottom while its height animates (the details sheet's `full` stop, L3-T8).
+ */
+export const UP_TO_BAR_HEIGHT =
+  'h-[calc(100dvh_-_max(0.75rem,env(safe-area-inset-top))_-_3.25rem)]';
+
+/**
  * A page's own panel, floating over the canvas at the top left (home, sign-in, account, the
  * About pages): its width, set by the page, never wider than the window less its margins. On a
  * phone (slim) it spans the window, clear of the notch at either side.

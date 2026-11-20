@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useParams } from 'react-router';
 import { Button } from '@/components/ui/button.tsx';
 import { useCanCreate } from '@/editor/use-can-edit.ts';
+import { cn } from '@/lib/utils.ts';
 import { useEditor } from '@/state/editor.ts';
 import { useStartEditorTour } from './practice.ts';
 import { useTour, useTourOffers } from './tour-store.ts';
@@ -69,7 +70,12 @@ function Offer({
   return (
     <aside
       aria-label="Guided tour"
-      className="pointer-events-auto fixed bottom-4 left-4 z-30 flex w-72 flex-col gap-2 rounded-lg border bg-card p-3 text-sm shadow-lg"
+      className={cn(
+        'pointer-events-auto fixed bottom-4 left-4 z-30 flex w-72 flex-col gap-2 rounded-lg border bg-card p-3 text-sm shadow-lg',
+        // On a phone the bottom edge is the details sheet's (a link may open with something
+        // selected, and its card would lie under this): under the top bar instead, as toasts.
+        'slim:top-[calc(max(0.75rem,env(safe-area-inset-top))+3.25rem)] slim:bottom-auto slim:left-[max(0.5rem,env(safe-area-inset-left))]',
+      )}
     >
       <p className="font-medium">{title}</p>
       <p className="text-muted-foreground">{children}</p>
