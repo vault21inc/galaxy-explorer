@@ -88,12 +88,44 @@ async function band(page: Page) {
   });
 }
 
+/**
+ * Waits until the picture has finished sliding to where the panels put it: half of what the
+ * sheet covers beyond the bar, upward, or half the side panel, leftward. Not "until no frame
+ * has drawn for a while": with software rendering (CI) one frame of an orbit view can take
+ * longer than that, and the slide would be caught part of the way.
+ */
+async function shiftSettled(page: Page) {
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const bar = document.querySelector('header')?.getBoundingClientRect();
+          const panel = document
+            .querySelector('aside[aria-label="Details"]')
+            ?.getBoundingClientRect();
+          const now = window.__GE_TEST__?.viewShift();
+          if (!bar || !panel || !now) return Infinity;
+          const sheet = panel.left < 1;
+          const expected = sheet
+            ? { x: 0, y: (Math.min(panel.height, window.innerHeight / 2) - bar.bottom) / 2 }
+            : { x: (window.innerWidth - panel.left) / 2, y: 0 };
+          return Math.max(
+            Math.abs(now.xPx - expected.x),
+            Math.abs(now.yPx - Math.max(0, expected.y)),
+          );
+        }),
+      { timeout: 20_000 },
+    )
+    .toBeLessThan(0.5);
+  await waitForIdle(page);
+}
+
 /** Opens the card to half, and waits for the picture to finish sliding. */
 async function openHalf(page: Page) {
   await card(page).tap();
   await expect.poll(() => stopOf(page)).toBe('half');
   await expect.poll(async () => (await shift(page))?.yPx ?? 0).toBeGreaterThan(20);
-  await waitForIdle(page, 500);
+  await shiftSettled(page);
 }
 
 test.describe('the view shift (L3-T9)', () => {
@@ -129,17 +161,16 @@ test.describe('the view shift (L3-T9)', () => {
 
     // The window turns out larger (another phone): the center follows the new band.
     await page.setViewportSize({ width: 430, height: 932 });
-    await waitForIdle(page, 500);
+    await shiftSettled(page);
     const larger = await band(page);
-    await expect
-      .poll(async () => Math.abs(((await origin(page))?.y ?? 0) - (larger.top + larger.bottom) / 2))
-      .toBeLessThan(2);
+    const followed = await origin(page);
+    expect(Math.abs((followed?.y ?? 0) - (larger.top + larger.bottom) / 2)).toBeLessThan(2);
 
     // Collapsed to the card again, the picture is back where it was.
     await details(page).getByRole('button', { name: 'Collapse details' }).tap();
     await expect.poll(() => stopOf(page)).toBe('card');
-    await expect.poll(() => shift(page)).toEqual({ xPx: 0, yPx: 0 });
-    await waitForIdle(page, 500);
+    await expect.poll(() => shift(page), { timeout: 20_000 }).toEqual({ xPx: 0, yPx: 0 });
+    await waitForIdle(page);
     expect(Math.abs(((await origin(page))?.y ?? 0) - 932 / 2)).toBeLessThan(2);
     expect(await pose(page)).toEqual(before);
   });
@@ -198,7 +229,7 @@ test.describe('the view shift (L3-T9)', () => {
     await details(page).getByRole('button', { name: 'Expand details' }).tap();
     await expect.poll(() => stopOf(page)).toBe('half');
     await expect.poll(async () => (await shift(page))?.xPx ?? 0).toBeGreaterThan(20);
-    await waitForIdle(page, 500);
+    await shiftSettled(page);
     const room = await band(page);
     const moved = await origin(page);
     expect(Math.abs((moved?.x ?? 0) - (room.left + room.right) / 2)).toBeLessThan(2);
