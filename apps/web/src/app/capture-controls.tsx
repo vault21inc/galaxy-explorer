@@ -20,13 +20,52 @@ const BUTTON_TEXT: Record<CaptureKeyAction, string> = {
   'leave-capture': 'Leave',
 };
 
-/** The buttons' order: the keys' card's, so the two read alike. */
-const ORDER = Object.keys(CAPTURE_ACTION_DESCRIPTIONS) as CaptureKeyAction[];
+/**
+ * Which row each button is in: setting the move up, then doing something with it. Typed by the
+ * actions, like the texts, so a new key lands in a row.
+ */
+const ROW: Record<CaptureKeyAction, 'set' | 'do'> = {
+  'mark-start': 'set',
+  'mark-end': 'set',
+  'move-shorter': 'set',
+  'move-longer': 'set',
+  'play-move': 'do',
+  'record-move': 'do',
+  'leave-capture': 'do',
+};
+
+const ACTIONS = Object.keys(BUTTON_TEXT) as CaptureKeyAction[];
+const ROWS = (['set', 'do'] as const).map((row) => ACTIONS.filter((action) => ROW[action] === row));
+
+/**
+ * What to do next, and which button does it. A move needs an end before it can play or
+ * record, and a start that isn't the end: with neither set, the reader frames the start; with
+ * a start, the end; then it's ready. The owner's first try on a phone was Record with no end
+ * set, and nothing on screen said why it did nothing.
+ */
+function nextStep(shot: { start: unknown; end: unknown; spinDeg: number }): {
+  action: CaptureKeyAction;
+  hint: string;
+} {
+  if (shot.end || shot.spinDeg !== 0) {
+    return {
+      action: 'record-move',
+      hint: 'Ready. Play previews the move; Record saves it as a video.',
+    };
+  }
+  return shot.start
+    ? {
+        action: 'mark-end',
+        hint: 'Next: move the camera to where the clip ends, then tap End here.',
+      }
+    : { action: 'mark-start', hint: 'First: frame where the clip starts, then tap Start here.' };
+}
 
 /**
  * Capture mode by touch (D-57, docs/plan/later/phone-usability.md, L3-T5): a button for each of
- * capture's keys, in a strip along the bottom of the window, with a line saying what's set and
- * what just happened. Shown on a phone, or wherever there's no mouse or trackpad (AppShell).
+ * capture's keys, in two rows along the bottom of the window (setting the move up, then playing,
+ * recording or leaving), with a line saying what's set and what just happened, and a second
+ * saying what to do next. Shown on a phone, or wherever there's no mouse or trackpad (AppShell).
  *
  * It can't get into a clip: a recording is drawn from the canvas and its painted labels, never
  * from the page (rendering.md §16). It still hides while a move plays, so a screen recording
@@ -40,6 +79,7 @@ export function CaptureControls() {
   const notice = useCapture((state) => state.notice);
   const shareable = useCapture((state) => state.shareable);
   const shot = parseCaptureShot(searchParams);
+  const next = nextStep(shot);
 
   if (playing) {
     return (
@@ -69,6 +109,7 @@ export function CaptureControls() {
       <p role="status" className="min-h-4 text-center text-foreground">
         {line}
       </p>
+      {recording === null && <p className="text-center">{next.hint}</p>}
       {recording !== null ? (
         <Button
           variant="outline"
@@ -80,10 +121,10 @@ export function CaptureControls() {
           Stop recording
         </Button>
       ) : (
-        <div className="flex flex-wrap justify-center gap-1">
+        <div className="flex flex-col gap-1">
           {shareable && (
             <Button
-              className="h-11 basis-full"
+              className="h-11"
               onClick={() => {
                 void shareClip();
               }}
@@ -91,18 +132,24 @@ export function CaptureControls() {
               Save or share the clip
             </Button>
           )}
-          {ORDER.map((action) => (
-            <Button
-              key={action}
-              variant={action === 'record-move' ? 'default' : 'outline'}
-              title={CAPTURE_ACTION_DESCRIPTIONS[action]}
-              className="h-11 min-w-16 flex-1 px-2"
-              onClick={() => {
-                run(action);
-              }}
-            >
-              {BUTTON_TEXT[action]}
-            </Button>
+          {ROWS.map((row) => (
+            <div key={row.join()} className="flex gap-1">
+              {row.map((action) => (
+                <Button
+                  key={action}
+                  // The filled button is the next step, so the eye is led through them.
+                  variant={action === next.action ? 'default' : 'outline'}
+                  title={CAPTURE_ACTION_DESCRIPTIONS[action]}
+                  aria-current={action === next.action ? 'step' : undefined}
+                  className="h-11 min-w-0 flex-1 px-2"
+                  onClick={() => {
+                    run(action);
+                  }}
+                >
+                  {BUTTON_TEXT[action]}
+                </Button>
+              ))}
+            </div>
           ))}
         </div>
       )}

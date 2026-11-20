@@ -1,4 +1,5 @@
 import { parseCaptureShot, type CaptureShot } from '@/lib/capture-params.ts';
+import { usesTouchControls } from '@/lib/pointer-kind.ts';
 import { planMove, type MovePlan } from '@/render/camera/capture-move.ts';
 import { currentCameraPose } from '@/render/transition/transition-controller.ts';
 import { CAMERA_FOV_DEG, CAPTURE_ZOOM_CURVATURE } from '@/render/tuning.ts';
@@ -15,9 +16,14 @@ export function shotPlan(): { shot: CaptureShot; plan: MovePlan } | null {
   if (!from) return null;
   const to = shot.end ?? (shot.spinDeg !== 0 ? from : null);
   if (!to) {
+    // By its buttons (a phone) there's no B to press, and no easy way to edit the address.
     useCapture
       .getState()
-      .setNotice('Press B where the move should end first, or add spin= to the address.');
+      .setNotice(
+        usesTouchControls()
+          ? 'No end yet: move the camera to where the clip should end, and tap End here.'
+          : 'Press B where the move should end first, or add spin= to the address.',
+      );
     return null;
   }
   const plan = planMove(from, to, {

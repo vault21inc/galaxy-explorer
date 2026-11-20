@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { FINE_POINTER_QUERY, matches } from './layout-tier.ts';
+import { FINE_POINTER_QUERY, isSlimNow, matches } from './layout-tier.ts';
 
 /**
  * Whether there's a mouse or trackpad to edit with (D-57, docs/plan/later/phone-usability.md,
@@ -56,4 +56,13 @@ export function hasFinePointer(): boolean {
 /** Whether there's a mouse or trackpad, following one being plugged in or first used. */
 export function useHasFinePointer(): boolean {
   return useSyncExternalStore(subscribe, hasFinePointer);
+}
+
+/**
+ * Whether the reader works the app by its buttons, not its keys: on a phone (the slim tier),
+ * or wherever there's no mouse or trackpad. Capture mode shows buttons for its keys then
+ * (app/capture-controls.tsx), and what it says speaks of taps, not of keys to press.
+ */
+export function usesTouchControls(): boolean {
+  return isSlimNow() || !hasFinePointer();
 }

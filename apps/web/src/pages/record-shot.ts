@@ -1,7 +1,7 @@
 import { recordingSize, type CaptureAspect } from '@/lib/capture-params.ts';
 import { recordMove, RecordingUnsupportedError } from '@/render/capture/record-move.ts';
 import { CAPTURE_RECORD_HOLD_S } from '@/render/tuning.ts';
-import { hasFinePointer } from '@/lib/pointer-kind.ts';
+import { hasFinePointer, usesTouchControls } from '@/lib/pointer-kind.ts';
 import { useCapture } from '@/state/capture.ts';
 import { shotPlan } from './shot-plan.ts';
 
@@ -67,7 +67,9 @@ export async function recordShot(): Promise<void> {
     if (controller.signal.aborted) capture.setNotice('Recording stopped.');
     else if (error instanceof RecordingUnsupportedError) {
       capture.setNotice(
-        `${error.message} Record the screen instead (⇧⌘5), or try Chrome or Safari.`,
+        usesTouchControls()
+          ? `${error.message} Record the screen instead, or try another browser.`
+          : `${error.message} Record the screen instead (⇧⌘5), or try Chrome or Safari.`,
       );
     } else {
       capture.setNotice(

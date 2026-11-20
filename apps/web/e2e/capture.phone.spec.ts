@@ -86,6 +86,39 @@ test('More enters capture mode, and its buttons set, play and leave the move', a
   await expect(page.getByRole('button', { name: 'More', exact: true })).toBeVisible();
 });
 
+test('Record with no end set says what to tap, and the filled button leads the way', async ({
+  page,
+}) => {
+  await openAt(page, 'capture=9x16');
+  const step = () => controls(page).locator('[aria-current="step"]');
+  const status = controls(page).getByRole('status');
+
+  // Nothing set: the first step is the start. Record can't run yet, and says why in taps.
+  await expect(step()).toHaveText('Start here');
+  await expect(controls(page)).toContainText('First: frame where the clip starts');
+  await button(page, 'Record').tap();
+  await expect(status).toContainText('tap End here');
+  await expect(status).not.toContainText('Press B');
+  await expect(button(page, 'Stop recording')).toHaveCount(0);
+
+  await button(page, 'Start here').tap();
+  await expect(step()).toHaveText('End here');
+  await expect(controls(page)).toContainText('Next: move the camera');
+  await page.keyboard.press('-');
+  await waitForIdle(page, 300);
+  await button(page, 'End here').tap();
+  await expect(step()).toHaveText('Record');
+  await expect(controls(page)).toContainText('Ready.');
+
+  // Two rows: setting the move up, then playing, recording and leaving. Nothing wraps.
+  const top = async (name: string) => (await button(page, name).boundingBox())?.y ?? -1;
+  const setRow = await top('Start here');
+  const doRow = await top('Record');
+  expect(doRow).toBeGreaterThan(setRow + 40);
+  for (const name of ['End here', 'Shorter', 'Longer']) expect(await top(name)).toBe(setRow);
+  for (const name of ['Play', 'Leave']) expect(await top(name)).toBe(doRow);
+});
+
 test('a tap on the frame stops a move', async ({ page }) => {
   await openAt(page, `capture=9x16&cam=${asParam(START)}&secs=30&spin=360`);
   await button(page, 'Play').tap();
