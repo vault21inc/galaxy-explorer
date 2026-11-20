@@ -7,6 +7,7 @@
   "scripts": {
     "milky-way": "node milky-way/cli.ts",
     "star-wars": "node star-wars/cli.ts",
+    "star-trek": "node star-trek/cli.ts",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit"
   },

@@ -16,6 +16,13 @@
       "url": "http://localhost:5173"
     },
     {
+      "name": "mcp-http",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["mcp:http"],
+      "port": 3110,
+      "url": "http://127.0.0.1:3110"
+    },
+    {
       "name": "web-preview",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@ge/web", "preview", "--port", "4173", "--strictPort"],

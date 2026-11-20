@@ -59,3 +59,22 @@ GE_API_URL=https://galaxyexplorer.perturbatory.com GE_API_TOKEN_FILE=~/.config/g
 - **Positions come from the standard galaxy grid,** letters west to east along +X, numbers north to south along +Z, 6,000 ly a square, with the centre where L/M meets 9/10, beside Coruscant (L-9). The sources give nothing finer, so worlds sharing a square are spread inside it by a hash of their slug, the same on every build. Exegol has no square: it's placed deep in the west.
 - **Regions are facts, not outlines.** Group outlines are convex hulls, and a hull around the Outer Rim covers the whole disc. Rings would fix that ([ring-shaped groups](../../docs/plan/later/ring-shaped-groups.md)). The two sectors with more than one world on the map are groups.
 - **Summaries are this map's own words**, and links go to Wookieepedia (each checked when added). The universe's description says it's a fan map, not affiliated with Lucasfilm.
+
+## Star Trek
+
+A fan reference map of the Milky Way in the 24th century: the four quadrants, 34 systems of the Federation, the Klingon, Romulan and Cardassian empires, Bajor, the Ferengi, the Dominion and the Delta Quadrant, with their planets, moons and stations (Spacedock, Deep Space 9, Farpoint); the great powers as outlines; the Romulan Neutral Zone, the Badlands and other nebulae; the Bajoran wormhole, Voyager's journey and the transwarp conduit home; the galactic barrier around the rim and the Great Barrier at the core; and 14 events (Common Era years) with the 14 people in them. Spoilers are marked.
+
+```bash
+GE_API_URL=https://galaxyexplorer.perturbatory.com GE_API_TOKEN_FILE=~/.config/galaxy-explorer/prod-token \
+  pnpm --filter @ge/content star-trek build
+```
+
+| File | Holds |
+|---|---|
+| `catalog.ts` | the worlds (position, quadrant, power, stars, bodies), the powers, regions, Borg sites, routes, people and events |
+| `plan.ts` | the universe, the map's background, the settings, and the batch's operations |
+
+- **The quadrants** are cut by two lines through the core, with Sol on the Alpha–Beta line, 26,000 ly out along +Z. Alpha is −X (left in the top view), Beta +X; Gamma and Delta are beyond them, on the far side of the core. Each quadrant is a faint disc inside its quarter, there for its label.
+- **The Alpha and Beta powers are schematic.** Canon gives few positions, so their worlds sit a few thousand light-years around Sol (`nearSol`), keeping who borders whom and each world's quadrant as Memory Alpha gives it. Real stars' true distances are in the "Real star" fact. The far quadrants keep the stated distances: Idran, at the wormhole's Gamma end, and Ocampa are each about 70,000 ly from Bajor and Earth.
+- **Powers are groups** (hull outlines). The galactic barrier is a ring group pinned to the rim with no members (D-53); the Neutral Zone is a rift.
+- **Summaries are this map's own words**, and links go to Memory Alpha (each checked against its API when added). The universe's description says it's a fan map, not affiliated with Paramount or CBS Studios.
