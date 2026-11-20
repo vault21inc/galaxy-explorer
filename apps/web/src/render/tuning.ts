@@ -96,6 +96,14 @@ export const CAMERA_START_DISTANCE = 30;
 export const CAMERA_SMOOTH_TIME_S = 0.2;
 export const CAMERA_DRAGGING_SMOOTH_TIME_S = 0.1;
 
+/**
+ * How long the picture takes to slide when the details panel opens over the map or closes, in
+ * milliseconds (rendering.md §12, "The view shift"). The details sheet takes the same time to
+ * move between its heights (`SHEET_MOVE_MS` in components/ui/sheet-drag.ts), so the two arrive
+ * together.
+ */
+export const VIEW_SHIFT_MS = 200;
+
 // ---------------------------------------------------------------------------------------------
 // Sky (rendering.md §6): the distant starfield behind every view
 // ---------------------------------------------------------------------------------------------

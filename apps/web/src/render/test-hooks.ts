@@ -58,6 +58,12 @@ export interface GeTestHooks {
   /** Where the camera is and what it looks at, in scene units. */
   cameraPose(): { position: [number, number, number]; target: [number, number, number] } | null;
   /**
+   * How far the picture is moved from the canvas's center now, left and up, in CSS pixels
+   * (rendering.md §12, "The view shift"): read from the camera's view offset, so it's what's
+   * drawn, not what was asked for.
+   */
+  viewShift(): { xPx: number; yPx: number };
+  /**
    * Where an object's center is on the page, in CSS pixels (for real mouse events), or null if
    * it isn't drawn or is off screen or behind the camera.
    */
@@ -279,6 +285,10 @@ export function installTestHooks(): void {
       frameTimeline.reset(performance.now());
     },
     cameraPose,
+    viewShift: () => {
+      const view = canvasState()?.camera.view;
+      return view?.enabled ? { xPx: view.offsetX, yPx: view.offsetY } : { xPx: 0, yPx: 0 };
+    },
     screenPositionOf,
     screenRadiusOf,
     drawnObject: (id) => drawnObject(id) ?? null,

@@ -5,6 +5,7 @@ import { InputBindings } from '@/input/input-bindings.tsx';
 import { useCapture } from '@/state/capture.ts';
 import { useEditor } from '@/state/editor.ts';
 import { useQuality, useQualityPreset } from '@/state/quality.ts';
+import { ViewShiftDriver } from './camera/view-shift-driver.tsx';
 import { CaptureMoveDriver } from './capture-move-driver.tsx';
 import { CaptureRecorderRig } from './capture/capture-recorder-rig.tsx';
 import { attachCanvas, DIAGNOSTICS_ENABLED, loadTestHooks } from './diagnostics.ts';
@@ -87,6 +88,8 @@ export function Stage() {
       <Sky />
       {/* The current view, which sets its own camera limits (rendering.md §4–5). */}
       <ViewHost />
+      {/* Centres the picture in what the details panel leaves uncovered (rendering.md §12). */}
+      <ViewShiftDriver />
       {/* Places the DOM labels (labels/label-layer.tsx) after every rendered frame. */}
       <LabelDriver />
       {/* Tells the guided tours where a step's object is, after frames drawn anyway (M8-T10). */}

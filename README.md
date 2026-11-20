@@ -4,7 +4,7 @@ A browser app for building and exploring galaxies from any fictional universe. I
 
 It's live at **https://galaxyexplorer.perturbatory.com**, where signed-out visitors start in the real Milky Way's Solar System. Accounts are by invitation.
 
-**Status (19 November 2026):** the proof of concept (M0–M6) and the content tools and LLM access (M7) are complete. M8, going public, is done but for nightly backups (M8-T7), which wait on a storage bucket. The live site runs `v0.12.0`, which brought a usability pass for phones and narrow windows (L3-T1 to L3-T5). Since then, on `main` and unreleased: on a phone a tap shows a card, not half a screen of details (L3-T8, D-58). Next is centring the view above opened details (L3-T9); the owner's checks on an iPhone and the phone performance measurements remain ([the phone plan](docs/plan/later/phone-usability.md)). Every change is listed, task by task, in the [plan's status section](docs/plan/README.md#status).
+**Status (19 November 2026):** the proof of concept (M0–M6) and the content tools and LLM access (M7) are complete. M8, going public, is done but for nightly backups (M8-T7), which wait on a storage bucket. The live site runs `v0.12.0`, which brought a usability pass for phones and narrow windows (L3-T1 to L3-T5). Since then, on `main` and unreleased: on a phone a tap shows a card, not half a screen of details (L3-T8), and when the details are opened the view centres itself in the space above them (L3-T9, D-58). The owner's checks on an iPhone and the phone performance measurements remain ([the phone plan](docs/plan/later/phone-usability.md)). Every change is listed, task by task, in the [plan's status section](docs/plan/README.md#status).
 
 ## What you can do today
 
@@ -18,7 +18,7 @@ It's live at **https://galaxyexplorer.perturbatory.com**, where signed-out visit
 - **Several eras:** a universe has maps, one per period, and each object can switch to its copies on the others.
 - **Learn it:** the Help menu has every key and gesture, and guided tours for readers and editors.
 - **Record a clip:** capture mode frames the map for Reels, Stories or feed posts, plays a camera move between two points, and records it to an MP4 at Instagram's exact size.
-- **On a phone:** a slim top bar (where you are, Search, More), panels as sheets, touch gestures (one finger turns, two slide, pinch zooms, tap selects, double-tap enters), and capture mode by buttons. A tap shows the object's card along the bottom; pull it up to read its details. Editing needs a mouse or trackpad, on any size of screen.
+- **On a phone:** a slim top bar (where you are, Search, More), panels as sheets, touch gestures (one finger turns, two slide, pinch zooms, tap selects, double-tap enters), and capture mode by buttons. A tap shows the object's card along the bottom; pull it up to read its details, and the map re-centres above them. Editing needs a mouse or trackpad, on any size of screen.
 
 **Building one** (edit mode, E or the Edit button, for a universe's owner and editors)
 

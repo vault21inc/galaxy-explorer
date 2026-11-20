@@ -335,6 +335,19 @@ Input mapping comes from the bindings table (ux.md §3). camera-controls has no 
   - Safari's `gesturechange` pinch events become the same wheel events.
 - **Target bounds:** zooming toward the cursor moves the target, so each view bounds it (`setBoundary`). The galaxy view keeps it within ±0.05 radii of the plane, so it can't sink through the disc (M2-T4).
 
+### The view shift
+
+On a phone, an object's opened details cover half the screen (ux.md §1, D-58), and the object with it. So while they're open, the picture's center is moved to the middle of what's left uncovered (`camera/view-shift-driver.tsx`, L3-T9).
+
+- **A lens shift, not a camera move.** `PerspectiveCamera.setViewOffset(fullWidth, fullHeight, x, y, width, height)` makes the camera draw a window of a larger picture. With the window the size of the whole picture and only moved, by `x` to the right and `y` down, everything appears `x` further left and `y` further up, and nothing is scaled. Only `camera.projectionMatrix` changes. The camera's position and target are what they were, so a camera link (D-52) copied with the details open holds the same pose as one copied with them closed, and the zoom limits and every distance rule are untouched.
+- **How far.** The details panel reports what it covers, in CSS pixels, to `state/view-insets.ts`: the top bar's bottom edge and the sheet's height (at most half the window: at its full height the map is hidden anyway), or the side panel's width on a phone held on its side. `camera/view-shift.ts` turns that into the shift: up by half of (sheet height − bar height), never down; left by half the side panel. All zero at the card, when collapsed, in wider windows and in capture mode, whose frame is the picture.
+- **What follows by itself:** everything that projects with the camera's matrix. Picking rebuilds its grid when the view-projection matrix changes (§10), the label layer places labels after each frame (§11), and the shaders, the tour's anchors, the globe's hit test and the editor's work plane all use `projectionMatrix`, `.project()` or `.unproject()`.
+- **What had to be told:**
+  - **camera-controls' zoom toward the pointer** (`dollyToCursor`, and a pinch's midpoint) finds the pointer from the element's rectangle and takes the picture's center for the rectangle's. `controls.setViewport(-x, y, width, height)` gives it the moved rectangle (its y runs up from the bottom, as a WebGL viewport's does). Zooming in with something selected is the app's own move toward it (§4, `zoom-gate.ts`), which goes by direction and needs no telling.
+  - **A resize:** R3F rebuilds the projection with the offset's old full size, so the driver applies it again whenever the canvas's size changes.
+  - **Framing** (`fitToSphere` in `camera/fly-to.ts`: F, and a double-tap on a body that opens no view) fits the sphere to the whole canvas. The sphere is treated as larger, by the canvas's smaller side over the uncovered band's (`fitScale`), so it fits the band.
+- **Cost.** It eases over `VIEW_SHIFT_MS` (200 ms, the time the sheet takes to move), asking for a frame only while it moves: about a dozen frames, then none. It jumps under `prefers-reduced-motion`. While the sheet is dragged nothing shifts; the shift follows the stop it lands on. No draw calls are added.
+
 ## 13. Resource lifecycle and quality settings
 
 - **Lifecycle:**
@@ -371,6 +384,7 @@ interface GeTestHooks {
   hoveredId(): string | null;
   visibleLabels(): { id: string; text: string }[];
   screenPositionOf(id: string): { x: number; y: number } | null;   // CSS px, for clicking in tests
+  viewShift(): { xPx: number; yPx: number };           // how far the picture is moved left and up (§12)
   screenRadiusOf(id: string): number | null;                       // CSS px, with the renderer's clamp (M2-T3)
   drawnObject(id: string): { renderer: string; state: 'normal' | 'redacted' | 'draft'; color: string; … } | null;
   cameraPose(): { position: [number, number, number]; target: [number, number, number] };

@@ -8,6 +8,7 @@ import { matches, useLayoutTier, useShort } from '@/lib/layout-tier.ts';
 import { cn } from '@/lib/utils.ts';
 import { labelText } from '@/render/labels/label-text.ts';
 import { SpoilerProvider } from '@/richtext/spoiler-context.tsx';
+import { useCapture } from '@/state/capture.ts';
 import { shownStop, useDetailsSheet, type DetailsStop } from '@/state/details-sheet.ts';
 import { useNavigation } from '@/state/navigation.ts';
 import { useSelection } from '@/state/selection.ts';
@@ -18,6 +19,7 @@ import { DetailsStrip } from './details-strip.tsx';
 import { EntityPanel } from './entity-panel.tsx';
 import { usePeople } from './outliner/outliner-slot.tsx';
 import { useDetailsDrag } from './use-details-drag.ts';
+import { useReportInsets } from './use-report-insets.ts';
 
 /**
  * Moves the sheet from the height it had to the height it has now, hung from the bottom. A
@@ -116,6 +118,15 @@ export default function InfoPanel({
       fromHeightPx.current = heightPx;
       useDetailsSheet.getState().setStop(rest);
     },
+  });
+  // The view makes room for the details once they're opened on a phone (L3-T9). Before the
+  // effect below, which starts the move between stops: this one measures the height it ends at.
+  const capture = useCapture((state) => state.aspect !== null);
+  useReportInsets(panel, {
+    active: slim && stop !== 'card' && !sheetOpen && !capture && selectedIds.length > 0,
+    sheet,
+    dragging,
+    stop,
   });
   useLayoutEffect(() => {
     const element = panel.current;
