@@ -899,6 +899,13 @@ export const CAPTURE_MOVE_SECONDS = 10;
 export const CAPTURE_MOVE_SECONDS_STEPS = [3, 5, 8, 10, 12, 15, 20, 30, 45, 60] as const;
 /** `spin` is bounded to this many degrees either way: ten turns. */
 export const CAPTURE_SPIN_LIMIT_DEG = 3_600;
+/**
+ * How fast the camera turns around what it's looking at when a clip is asked for with no end
+ * set, by capture mode's buttons (a phone), in degrees a second: the one-tap clip. Slow enough
+ * to read as a drift, and a whole turn at the longest move, 60 s. The turn grows with the
+ * move's length, so Longer shows more of the way round, not the same turn more slowly.
+ */
+export const CAPTURE_TURN_DEG_PER_S = 6;
 
 /**
  * Pressing P jumps to the move's start and holds it this long before moving, so a recording

@@ -147,6 +147,7 @@ function runCaptureKey(action: CaptureKeyAction, update: UpdateSearch): void {
       capture.stop();
       const start = action === 'mark-start';
       update((params) => withPose(params, start ? 'cam' : MOVE_END_PARAM, pose));
+      if (start) capture.setStartMarked(true);
       capture.setNotice(start ? 'The move starts here.' : 'The move ends here.');
       return;
     }

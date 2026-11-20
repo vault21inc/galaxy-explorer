@@ -25,6 +25,13 @@ interface CaptureState {
   move: PlayingMove | null;
   /** A line for the keys' card: what just happened, or why P did nothing. */
   notice: string | null;
+  /**
+   * The reader marked the move's start in this visit to capture mode (A, or Start here). The
+   * address's `cam` alone can't say so: a camera link (D-52) has one too. A marked start is
+   * where a one-tap clip turns from; a link's isn't, since the reader has moved on since.
+   */
+  startMarked: boolean;
+  setStartMarked: (marked: boolean) => void;
   /** A clip being recorded (D-56): how much is done, 0 to 1; null when none is. */
   recording: number | null;
   /**
@@ -51,6 +58,10 @@ export const useCapture = create<CaptureState>()((set) => ({
   aspect: null,
   move: null,
   notice: null,
+  startMarked: false,
+  setStartMarked: (startMarked) => {
+    set({ startMarked });
+  },
   recording: null,
   recordDpr: null,
   shareable: null,
@@ -61,7 +72,12 @@ export const useCapture = create<CaptureState>()((set) => ({
     set((state) =>
       state.aspect?.id === aspect?.id
         ? state
-        : { aspect, ...(aspect === null ? { move: null, notice: null, shareable: null } : {}) },
+        : {
+            aspect,
+            ...(aspect === null
+              ? { move: null, notice: null, shareable: null, startMarked: false }
+              : {}),
+          },
     );
   },
   play: (move) => {

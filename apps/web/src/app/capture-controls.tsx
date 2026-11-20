@@ -1,8 +1,9 @@
 import { useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/button.tsx';
 import { CAPTURE_ACTION_DESCRIPTIONS, type CaptureKeyAction } from '@/input/bindings.ts';
-import { parseCaptureShot } from '@/lib/capture-params.ts';
+import { parseCaptureShot, type CaptureShot } from '@/lib/capture-params.ts';
 import { shareClip } from '@/pages/record-shot.ts';
+import { hasMove } from '@/pages/shot-plan.ts';
 import { useCaptureActions } from '@/pages/use-capture-mode.ts';
 import { useCapture } from '@/state/capture.ts';
 
@@ -38,27 +39,39 @@ const ACTIONS = Object.keys(BUTTON_TEXT) as CaptureKeyAction[];
 const ROWS = (['set', 'do'] as const).map((row) => ACTIONS.filter((action) => ROW[action] === row));
 
 /**
- * What to do next, and which button does it. A move needs an end before it can play or
- * record, and a start that isn't the end: with neither set, the reader frames the start; with
- * a start, the end; then it's ready. The owner's first try on a phone was Record with no end
- * set, and nothing on screen said why it did nothing.
+ * What to do next, and which button does it. Record is ready from the start: with no end set
+ * it makes a slow turn around the view (pages/shot-plan.ts), so one tap makes a clip. Once the
+ * reader has marked a start, they're making a move of their own, and the next step is its end.
  */
-function nextStep(shot: { start: unknown; end: unknown; spinDeg: number }): {
-  action: CaptureKeyAction;
-  hint: string;
-} {
-  if (shot.end || shot.spinDeg !== 0) {
+function nextStep(
+  shot: CaptureShot,
+  startMarked: boolean,
+): { action: CaptureKeyAction; hint: string } {
+  if (hasMove(shot)) {
     return {
       action: 'record-move',
       hint: 'Ready. Play previews the move; Record saves it as a video.',
     };
   }
-  return shot.start
+  return startMarked
     ? {
         action: 'mark-end',
         hint: 'Next: move the camera to where the clip ends, then tap End here.',
       }
-    : { action: 'mark-start', hint: 'First: frame where the clip starts, then tap Start here.' };
+    : {
+        action: 'record-move',
+        hint: 'Record makes a slow turn around this view. For a move of your own, tap Start here, then End here.',
+      };
+}
+
+/** What's set, in a line: the move the address describes, or the slow turn in its place. */
+function summary(shot: CaptureShot, startMarked: boolean): string {
+  const seconds = `${String(shot.durationS)} s`;
+  if (!hasMove(shot)) {
+    return `A slow turn ${startMarked ? 'from your start' : 'around this view'}, ${seconds}.`;
+  }
+  const from = shot.start ? 'From your start' : 'From here';
+  return `${from}, ${shot.end ? 'to your end' : 'turning in place'}, ${seconds}.`;
 }
 
 /**
@@ -79,7 +92,8 @@ export function CaptureControls() {
   const notice = useCapture((state) => state.notice);
   const shareable = useCapture((state) => state.shareable);
   const shot = parseCaptureShot(searchParams);
-  const next = nextStep(shot);
+  const startMarked = useCapture((state) => state.startMarked);
+  const next = nextStep(shot, startMarked);
 
   if (playing) {
     return (
@@ -97,8 +111,7 @@ export function CaptureControls() {
   const line =
     recording !== null
       ? `Recording: ${String(Math.floor(recording * 100))} %.`
-      : (notice ??
-        `${shot.start ? 'From your start' : 'From here'}, ${shot.end ? 'to your end' : 'no end set'}, ${String(shot.durationS)} s.`);
+      : (notice ?? summary(shot, startMarked));
 
   return (
     <aside

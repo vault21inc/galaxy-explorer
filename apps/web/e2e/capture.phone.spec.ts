@@ -86,21 +86,45 @@ test('More enters capture mode, and its buttons set, play and leave the move', a
   await expect(page.getByRole('button', { name: 'More', exact: true })).toBeVisible();
 });
 
-test('Record with no end set says what to tap, and the filled button leads the way', async ({
+test('with nothing set, one tap plays a slow turn, and Start here begins a move of your own', async ({
   page,
 }) => {
-  await openAt(page, 'capture=9x16');
+  await openAt(page, 'capture=9x16&secs=3');
   const step = () => controls(page).locator('[aria-current="step"]');
   const status = controls(page).getByRole('status');
+  const pose = () => page.evaluate(() => window.__GE_TEST__?.cameraPose() ?? null);
 
-  // Nothing set: the first step is the start. Record can't run yet, and says why in taps.
-  await expect(step()).toHaveText('Start here');
-  await expect(controls(page)).toContainText('First: frame where the clip starts');
-  await button(page, 'Record').tap();
-  await expect(status).toContainText('tap End here');
+  // Record is ready from the start, and the strip says what it will do.
+  await expect(step()).toHaveText('Record');
+  await expect(status).toContainText('A slow turn around this view, 3 s.');
+  await expect(controls(page)).toContainText('Record makes a slow turn');
+
+  // Play previews it: the camera goes round what it was looking at, and the address is as it was.
+  const before = await pose();
+  if (!before) throw new Error('No camera');
+  await button(page, 'Play').tap();
+  await expect(controls(page)).toBeHidden();
+  await expect(controls(page)).toBeVisible({ timeout: 15_000 });
   await expect(status).not.toContainText('Press B');
-  await expect(button(page, 'Stop recording')).toHaveCount(0);
+  await waitForIdle(page, 300);
+  const after = await pose();
+  if (!after) throw new Error('No camera');
+  const far = (a: number[], b: number[]) =>
+    Math.hypot(...a.map((value, axis) => value - (b[axis] ?? 0)));
+  const range = far(before.position, before.target);
+  // Which way the camera is from its target, round the vertical axis, in degrees.
+  const bearing = (at: typeof before) =>
+    (Math.atan2(at.position[0] - at.target[0], at.position[2] - at.target[2]) * 180) / Math.PI;
+  const turned = Math.abs(bearing(after) - bearing(before));
+  // 3 s at 6° a second is 18° round,
+  expect(Math.abs(Math.min(turned, 360 - turned) - 18)).toBeLessThan(0.5);
+  // still as far from the same point, and as high above it.
+  expect(far(after.target, before.target)).toBeLessThan(range * 0.001);
+  expect(Math.abs(far(after.position, after.target) - range)).toBeLessThan(range * 0.001);
+  expect(Math.abs(after.position[1] - before.position[1])).toBeLessThan(range * 0.001);
+  await expect(page).not.toHaveURL(/[?&](to|spin)=/);
 
+  // A marked start makes it a move of the reader's own: the next step is its end.
   await button(page, 'Start here').tap();
   await expect(step()).toHaveText('End here');
   await expect(controls(page)).toContainText('Next: move the camera');
@@ -128,14 +152,15 @@ test('a tap on the frame stops a move', async ({ page }) => {
   await expect(controls(page)).toBeVisible();
 });
 
-test('Record saves an MP4 of exactly 1080 × 1920 where the share sheet can’t take it', async ({
+test('one tap on Record saves an MP4 of exactly 1080 × 1920 where the share sheet can’t take it', async ({
   page,
 }) => {
   test.slow();
   await page.addInitScript(() => {
     Object.defineProperty(navigator, 'canShare', { value: () => false, configurable: true });
   });
-  await openAt(page, `capture=9x16&cam=${asParam(START)}&secs=3&fps=24&spin=90`);
+  // Nothing set but the clip's length and rate: Record alone makes the slow turn.
+  await openAt(page, 'capture=9x16&secs=3&fps=24');
   if (!(await canEncodeClips(page))) {
     await button(page, 'Record').tap();
     await expect(controls(page).getByRole('status')).toContainText('can’t encode H.264');

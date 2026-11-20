@@ -18,7 +18,7 @@ It's live at **https://galaxyexplorer.perturbatory.com**, where signed-out visit
 - **Several eras:** a universe has maps, one per period, and each object can switch to its copies on the others.
 - **Learn it:** the Help menu has every key and gesture, and guided tours for readers and editors.
 - **Record a clip:** capture mode frames the map for Reels, Stories or feed posts, plays a camera move between two points, and records it to an MP4 at Instagram's exact size.
-- **On a phone:** a slim top bar (where you are, Search, More), panels as sheets, touch gestures (one finger turns, two slide, pinch zooms, tap selects, double-tap enters), and capture mode by buttons. A tap shows the object's card along the bottom; pull it up to read its details, and the map re-centres above them. Editing needs a mouse or trackpad, on any size of screen.
+- **On a phone:** a slim top bar (where you are, Search, More), panels as sheets, touch gestures (one finger turns, two slide, pinch zooms, tap selects, double-tap enters), and capture mode by buttons, where one tap on Record makes a clip of a slow turn around the view. A tap shows the object's card along the bottom; pull it up to read its details, and the map re-centres above them. Editing needs a mouse or trackpad, on any size of screen.
 
 **Building one** (edit mode, E or the Edit button, for a universe's owner and editors)
 
