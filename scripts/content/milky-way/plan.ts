@@ -264,6 +264,18 @@ export function armPath(arm: ArmFit, points = 40) {
  */
 export const moonDrawRadii = (realRadii: number) => round(1.3 + 0.6 * Math.log(realRadii), 2);
 
+/**
+ * A moon's drawn distance. The rings keep their real radii while moon distances are squeezed,
+ * so a moon really outside the rings (Enceladus, 4.09 Saturn radii) would be drawn inside
+ * them: such a moon stays just beyond the rings' outer edge instead.
+ */
+function moonDistance(planet: { planet: Record<string, unknown> }, realRadii: number): number {
+  const rings = planet.planet.rings as { enabled?: boolean; outerRadius?: number } | undefined;
+  const outer = rings?.enabled ? (rings.outerRadius ?? 0) : 0;
+  const drawn = moonDrawRadii(realRadii);
+  return realRadii > outer && drawn < outer + 0.2 ? round(outer + 0.2, 2) : drawn;
+}
+
 function need(map: Record<string, string>, key: string, what: string): string {
   const id = map[key];
   if (id === undefined) throw new Error(`No ${what} "${key}"`);
@@ -470,7 +482,7 @@ export function buildOperations(ids: SettingIds): Operation[] {
         parentId: id,
         explorable: true,
         // Spread around the planet by the golden angle, so neighbours don't line up.
-        ...inPlane(moonDrawRadii(m.distanceRadii), i * 137.5 + 20, 2),
+        ...inPlane(moonDistance(p, m.distanceRadii), i * 137.5 + 20, 2),
         appearance: { scale: { orbit: m.scale }, planet: m.planet },
       });
       facts(moon, {
@@ -514,6 +526,7 @@ export function buildOperations(ids: SettingIds): Operation[] {
       baseType: 'station',
       parentId: sol,
       ...inPlane(st.distanceRadii, earthLongitude, 3),
+      ...(st.scale ? { appearance: { scale: { system: st.scale } } } : {}),
     });
     link(id, st.wiki);
   }

@@ -495,8 +495,19 @@ export const SOLAR_BELTS = [
   },
 ];
 
-/** Parent key 'solar-system' puts a station in the system view, at `distanceRadii` AU along Earth's direction. */
-export const SOLAR_STATIONS = [
+/**
+ * Parent key 'solar-system' puts a station in the system view, at `distanceRadii` AU along
+ * Earth's direction, drawn at `scale` × the station size.
+ */
+export const SOLAR_STATIONS: {
+  key: string;
+  name: string;
+  parent: string;
+  distanceRadii: number;
+  scale?: number;
+  summary: string;
+  wiki: string;
+}[] = [
   {
     key: 'iss',
     name: 'International Space Station',
@@ -517,7 +528,11 @@ export const SOLAR_STATIONS = [
     key: 'jwst',
     name: 'James Webb Space Telescope',
     parent: 'solar-system',
-    distanceRadii: 1.01,
+    // L2 is 0.01 AU beyond Earth, but Earth is drawn 0.125 su across, so at its real place the
+    // telescope would sit inside the globe. Drawn just past Earth on the Sun–Earth line instead,
+    // and small, since a station's default system size (0.08 su) is bigger than drawn Mercury.
+    distanceRadii: 1.21,
+    scale: 0.3,
     summary:
       'An infrared observatory at the Sun–Earth L2 point, 1.5 million km beyond Earth, since 2022.',
     wiki: 'James_Webb_Space_Telescope',

@@ -44,6 +44,8 @@ export interface World {
   priority?: number;
   stars: { slug: string; name: string; tempK: number; at?: [number, number] }[];
   bodies: Body[];
+  /** Stations out in the system, not beside a planet: `at` is [x, z] in schematic AU. */
+  stations?: { slug: string; name: string; summary: string; wiki?: string; at: [number, number] }[];
 }
 
 /**
@@ -757,15 +759,18 @@ export const WORLDS: World[] = [
             wiki: 'Jeraddo',
           },
         ],
-        stations: [
-          {
-            slug: 'deep-space-9',
-            name: 'Deep Space 9',
-            summary:
-              'A Cardassian-built ore station, Terok Nor, run by Starfleet and Bajor after the occupation, and moved to the mouth of the wormhole.',
-            wiki: 'Deep_Space_9',
-          },
-        ],
+      },
+    ],
+    // Out by the wormhole's mouth in the Denorios Belt, where the station was moved in 2369,
+    // not in orbit of Bajor.
+    stations: [
+      {
+        slug: 'deep-space-9',
+        name: 'Deep Space 9',
+        summary:
+          'A Cardassian-built ore station, Terok Nor, run by Starfleet and Bajor after the occupation, and moved to the mouth of the wormhole.',
+        wiki: 'Deep_Space_9',
+        at: [2.0, -1.0],
       },
     ],
   },

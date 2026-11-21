@@ -372,6 +372,18 @@ export function buildOperations(ids: BuiltIds): Record<string, unknown>[] {
         link(id, station.wiki);
       });
     }
+    for (const station of world.stations ?? []) {
+      const id = create('celestial_object', station.slug, {
+        name: plain(station.name),
+        summary: plain(station.summary),
+        baseType: 'station',
+        parentId: system,
+        x: station.at[0],
+        y: 0,
+        z: station.at[1],
+      });
+      link(id, station.wiki);
+    }
   }
 
   // The Borg's structures, straight on the galaxy: they belong to no star system.
