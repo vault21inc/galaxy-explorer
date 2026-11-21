@@ -877,8 +877,8 @@ export const WORLDS: World[] = [
     priority: 8,
     stars: [
       { slug: 'idran-star', name: 'Idran', tempK: 9_000 },
-      { slug: 'idran-b', name: 'Idran B', tempK: 32_000, at: [0.6, 0.2] },
-      { slug: 'idran-c', name: 'Idran C', tempK: 30_000, at: [-0.5, -0.4] },
+      { slug: 'idran-b', name: 'Idran B', tempK: 32_000, at: [1.4, 0.4] },
+      { slug: 'idran-c', name: 'Idran C', tempK: 30_000, at: [-1.2, -0.8] },
     ],
     bodies: [],
   },

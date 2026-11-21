@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { callTool, describeTarget, field, listOf, rest } from './client.ts';
+import { overlappingStars } from './star-spacing.ts';
 
 /**
  * Builds one universe the way an outside agent would (README.md): the universe and its map
@@ -41,8 +42,23 @@ export interface UniversePlan extends UniverseSettings {
 
 const OUT = new URL('./out/', import.meta.url);
 
+/** Every settings lookup answers with its own name: enough to lay the plan out before sending. */
+const anyName = new Proxy({}, { get: (_target, key) => String(key) }) as Record<string, string>;
+
 export async function buildUniverse(plan: UniversePlan): Promise<BuiltIds> {
   console.log(`Building ${plan.title}: ${describeTarget()}`);
+  // Checked before anything is made, with placeholder ids, so a bad layout costs nothing.
+  const overlaps = overlappingStars(
+    plan.operations({
+      universeId: 'check',
+      mapId: 'check',
+      subtypes: anyName,
+      fields: anyName,
+      categories: anyName,
+      groupTypes: anyName,
+    }),
+  );
+  if (overlaps.length > 0) throw new Error(`Stars drawn overlapping:\n${overlaps.join('\n')}`);
   const existing = listOf(await callTool('universes_list', { limit: 1000 }));
   if (existing.some((u) => u.slug === plan.universe.slug)) {
     throw new Error(

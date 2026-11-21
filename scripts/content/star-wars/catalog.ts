@@ -340,8 +340,8 @@ export const WORLDS: World[] = [
     wiki: 'Tatooine',
     priority: 10,
     stars: [
-      { slug: 'tatoo-i', name: 'Tatoo I', tempK: 5_800, at: [-0.5, 0] },
-      { slug: 'tatoo-ii', name: 'Tatoo II', tempK: 4_900, at: [0.6, 0] },
+      { slug: 'tatoo-i', name: 'Tatoo I', tempK: 5_800, at: [-0.8, 0] },
+      { slug: 'tatoo-ii', name: 'Tatoo II', tempK: 4_900, at: [0.8, 0] },
     ],
     bodies: [
       {
