@@ -41,6 +41,16 @@ describe('workPlanePoint', () => {
     expect(point?.[0]).toBeGreaterThan(0);
   });
 
+  it('tilts with the orbit view’s planet, landing on its equator (D-60)', () => {
+    const tiltRad = (30 * Math.PI) / 180;
+    const point = workPlanePoint(camera, new Vector2(0.2, 0.1), 0, Infinity, tiltRad);
+    expect(point).not.toBeNull();
+    const [x, y, z] = point ?? [0, 0, 0];
+    // On the plane through the center whose normal is the tilted pole (0, cos, sin).
+    expect(y * Math.cos(tiltRad) + z * Math.sin(tiltRad)).toBeCloseTo(0, 9);
+    expect(Math.abs(x) + Math.abs(y)).toBeGreaterThan(0);
+  });
+
   it('finds nothing farther out than the limit, as near the horizon', () => {
     // Pointing just below the horizon: the crossing is far away.
     const low = new PerspectiveCamera(45, 1.6, 1, 1e9);

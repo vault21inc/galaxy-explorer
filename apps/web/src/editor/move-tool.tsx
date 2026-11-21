@@ -23,7 +23,8 @@ import { gizmoBusy, setGizmo } from './gizmo-state.ts';
 import { moveDescription, withOrbiters } from './orbiters.ts';
 import { moveDelta } from './snap.ts';
 import { useSaveMove, type Move } from './use-save-move.ts';
-import { toNdc, workPlanePoint } from './work-plane.ts';
+import { equatorToView, viewToEquator } from '@/render/orbits/equator-frame.ts';
+import { heightAbovePlane, toNdc, workPlanePoint } from './work-plane.ts';
 
 /** The gizmo's size relative to its default, chosen to sit comfortably next to a body. */
 export const GIZMO_SIZE = 0.8;
@@ -38,6 +39,10 @@ const ndc = new Vector2();
  * - **Height:** a gizmo with only its vertical arrow, at the selection's center
  *   (drei `<TransformControls>`).
  *
+ * In the orbit view the plane is the planet's equator, tilted with it (D-60): the drag, the
+ * grid and the gizmo's arrow all follow the tilt, and positions are turned back into the
+ * planet's own frame before they're saved (orbits/equator-frame.ts).
+ *
  * A star carries the objects that orbit it (D-29), in the same preview and the same batch.
  *
  * During a drag only the move preview changes (scene-index.ts); releasing saves one batch.
@@ -49,10 +54,13 @@ export function MoveTool({ view }: { view: EditView }) {
   const limit = view.payload ? view.edit.workPlaneLimit(view.payload) : 0;
   const limitRef = useRef(limit);
   const levelRef = useRef(level);
+  const { tiltRad } = view;
+  const tiltRef = useRef(tiltRad);
   useEffect(() => {
     limitRef.current = limit;
     levelRef.current = level;
-  }, [limit, level]);
+    tiltRef.current = tiltRad;
+  }, [limit, level, tiltRad]);
   const editing = useEditor((state) => state.editing);
   // Placing an object or drawing a route (M4-T7) owns the canvas: no drags, no gizmo.
   const placing = useEditor((state) => state.placing !== null || state.routing);
@@ -84,9 +92,9 @@ export function MoveTool({ view }: { view: EditView }) {
       const saved = savedObject(id);
       if (!object || !saved) return [];
       const [x, y, z] = saved.center;
-      return [
-        { id, version: object.version, position: [x + delta[0], y + delta[1], z + delta[2]] },
-      ];
+      // Drawn positions are in the view; saved ones in the planet's frame (D-60).
+      const position = viewToEquator([x + delta[0], y + delta[1], z + delta[2]], tiltRad);
+      return [{ id, version: object.version, position }];
     });
   };
   const commit = () => {
@@ -146,12 +154,13 @@ export function MoveTool({ view }: { view: EditView }) {
         platform,
       );
       if (action !== 'move') return;
-      const heightY = hit.center[1];
+      const heightY = heightAbovePlane(hit.center, tiltRef.current);
       const from = workPlanePoint(
         get().camera,
         toNdc(event.clientX, event.clientY, canvas, ndc),
         heightY,
         limitRef.current,
+        tiltRef.current,
       );
       if (!from) return;
       drag = {
@@ -173,19 +182,25 @@ export function MoveTool({ view }: { view: EditView }) {
         drag.ids = carriedRef.current(useSelection.getState().selectedIds);
       }
       // Past the limit, the preview stays where it last was.
+      const tilt = tiltRef.current;
       const to = workPlanePoint(
         get().camera,
         toNdc(event.clientX, event.clientY, canvas, ndc),
         drag.heightY,
         limitRef.current,
+        tilt,
       );
       const grabbed = savedObject(drag.grabbedId);
       if (!to || !grabbed) return;
       const gridSize = event.shiftKey ? gridSizeIn(levelRef.current) : null;
-      setMovePreview({
-        ids: new Set(drag.ids),
-        delta: moveDelta(grabbed.center, drag.from, to, gridSize),
-      });
+      // Snapped in the plane's own frame, so the grid lines up with the (tilted) equator.
+      const delta = moveDelta(
+        viewToEquator(grabbed.center, tilt),
+        viewToEquator(drag.from, tilt),
+        viewToEquator(to, tilt),
+        gridSize,
+      );
+      setMovePreview({ ids: new Set(drag.ids), delta: equatorToView(delta, tilt) });
     };
     const onPointerUp = (event: PointerEvent) => {
       const current = drag;
@@ -207,7 +222,10 @@ export function MoveTool({ view }: { view: EditView }) {
   // ---- the height gizmo -----------------------------------------------------------------
   const anchor = useRef<Group>(null);
   const gizmo = useRef<{ axis: string | null; dragging: boolean } | null>(null);
-  const gizmoDrag = useRef<{ startY: number; ids: readonly string[] } | null>(null);
+  const gizmoDrag = useRef<{
+    start: [number, number, number];
+    ids: readonly string[];
+  } | null>(null);
   const shiftHeld = useRef(false);
   const showGizmo = editing && !placing && selectedIds.length > 0;
 
@@ -254,18 +272,21 @@ export function MoveTool({ view }: { view: EditView }) {
   if (!showGizmo) return null;
   return (
     <>
-      <group ref={anchor} />
+      {/* Turned like the planet in a tilted orbit view, so the arrow in its own frame points
+          along the pole (D-60); in the other views the turn is 0 and it's the world's y. */}
+      <group ref={anchor} rotation-x={tiltRad} />
       <TransformControls
         ref={gizmo as never}
         object={anchor as never}
         mode="translate"
-        space="world"
+        space="local"
         size={GIZMO_SIZE}
         showX={false}
         showZ={false}
         onMouseDown={() => {
+          const at = anchor.current?.position;
           gizmoDrag.current = {
-            startY: anchor.current?.position.y ?? 0,
+            start: at ? [at.x, at.y, at.z] : [0, 0, 0],
             ids: carriedRef.current(selectedIds),
           };
         }}
@@ -274,14 +295,15 @@ export function MoveTool({ view }: { view: EditView }) {
           const group = anchor.current;
           if (!drag || !group) return;
           const gridSize = shiftHeld.current ? gridSizeIn(level) : null;
-          const [, dy] = moveDelta(
-            [0, drag.startY, 0],
-            [0, drag.startY, 0],
-            [0, group.position.y, 0],
-            gridSize,
+          // Heights are along the plane's normal: y, or the orbit view's planet's pole (D-60).
+          const startY = heightAbovePlane(drag.start, tiltRad);
+          const nowY = heightAbovePlane(
+            [group.position.x, group.position.y, group.position.z],
+            tiltRad,
           );
-          // Only height: the gizmo shows just its vertical arrow, but keep x and z exact.
-          setMovePreview({ ids: new Set(drag.ids), delta: [0, dy, 0] });
+          const [, dy] = moveDelta([0, startY, 0], [0, startY, 0], [0, nowY, 0], gridSize);
+          // Only height: the gizmo shows just its vertical arrow, but keep the rest exact.
+          setMovePreview({ ids: new Set(drag.ids), delta: equatorToView([0, dy, 0], tiltRad) });
         }}
         onMouseUp={() => {
           gizmoDrag.current = null;

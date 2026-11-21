@@ -77,6 +77,12 @@ export function useViewPayload<L extends ViewLevel>(
   level: L,
   subjectId: string | undefined,
   options: ReadOptions = {},
+  /**
+   * Turns the cached payload into what a reader needs, such as the orbit view's moons in the
+   * planet's tilted frame (levels/registry.ts `inView`). The cache keeps the payload as saved.
+   * Pass a function defined once, not inline, or it runs on every render.
+   */
+  select?: (payload: ViewPayload<L>) => ViewPayload<L>,
 ) {
   return useQuery({
     queryKey: queryKeys.view(level, subjectId ?? '', options),
@@ -90,6 +96,7 @@ export function useViewPayload<L extends ViewLevel>(
     // payload must never stand in.
     placeholderData: (previous, previousQuery) =>
       previousQuery?.queryKey[2] === subjectId ? previous : undefined,
+    select,
   });
 }
 

@@ -19,8 +19,15 @@ export interface EditView {
   edit: LevelEdit;
   /** The TanStack Query key of the view's payload, for optimistic updates. */
   viewKey: ReturnType<typeof queryKeys.view>;
+  /** As the view draws it (levels/registry.ts `inView`): the orbit view's moons tilted. */
   payload: ViewPayload<ViewLevel> | undefined;
   objects: readonly ViewObject[];
+  /**
+   * The work plane's tilt in radians: the orbit view's planet's axial tilt (D-60), else 0.
+   * Points on it are turned back into the planet's frame before they're saved
+   * (orbits/equator-frame.ts `viewToEquator`).
+   */
+  tiltRad: number;
 }
 
 /** The view being edited, or null where there's none, or it can't be edited (the orbit view). */
@@ -28,9 +35,10 @@ export function useEditView(): EditView | null {
   const top = useNavigation(topView);
   const mapId = useNavigation((state) => state.stack[0]?.subjectId);
   const readOptions = useReadOptions();
-  const view = useViewPayload(top?.level ?? 'galaxy', top?.subjectId, readOptions);
+  const level = levels[top?.level ?? 'galaxy'];
+  const view = useViewPayload(top?.level ?? 'galaxy', top?.subjectId, readOptions, level.inView);
   if (!top || mapId === undefined) return null;
-  const edit = levels[top.level].edit;
+  const edit = level.edit;
   if (!edit) return null;
   return {
     mapId,
@@ -40,6 +48,7 @@ export function useEditView(): EditView | null {
     viewKey: queryKeys.view(top.level, top.subjectId, readOptions),
     payload: view.data,
     objects: view.data ? objectsIn(view.data) : [],
+    tiltRad: view.data ? (level.workPlaneTiltRad?.(view.data) ?? 0) : 0,
   };
 }
 

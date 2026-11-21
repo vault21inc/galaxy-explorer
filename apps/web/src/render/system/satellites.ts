@@ -1,4 +1,5 @@
 import type { Satellite, ViewObject } from '@ge/domain';
+import { axialTiltRad, equatorToView } from '../orbits/equator-frame.ts';
 import { SYSTEM_SATELLITE_SPREAD } from '../tuning.ts';
 
 /**
@@ -7,7 +8,8 @@ import { SYSTEM_SATELLITE_SPREAD } from '../tuning.ts';
  * satellite's position and size are in its planet's radii; here one planet radius is the
  * planet's system-view radius (`size`, in su), so a moon 3 radii out sits 3 drawn radii from
  * its planet, as in the orbit view, only smaller. SYSTEM_SATELLITE_SPREAD stretches that if
- * moons crowd their planet.
+ * moons crowd their planet. Their offsets turn with the planet's axial tilt, so they circle in
+ * the plane of its equator and rings, as in the orbit view (orbits/equator-frame.ts, D-60).
  *
  * Their positions belong to their planet's frame, so the system view never moves them: they
  * aren't among the view's objects for editing (levels/registry.ts `objectsIn`).
@@ -23,7 +25,7 @@ export function placeSatellites(
     if (!planet || radiusSu === null || radiusSu === undefined) return [];
     const scale = radiusSu * SYSTEM_SATELLITE_SPREAD;
     const [px, py, pz] = planet.position;
-    const [x, y, z] = satellite.position;
+    const [x, y, z] = equatorToView(satellite.position, axialTiltRad(planet.appearance));
     return [
       {
         ...satellite,

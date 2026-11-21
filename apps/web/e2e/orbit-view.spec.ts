@@ -215,12 +215,13 @@ test.describe('the orbit view (M6-T3)', () => {
     expect(luna?.renderer).toBe('planet-bodies');
     expect((await drawn(dock))?.renderer).toBe('icon-sprites');
     // Luna is 3 radii out and 1 across in Terra's orbit view: the same in Terra's system-view
-    // radii here.
+    // radii here, turned by Terra's 20° tilt into the plane of its equator (D-60).
     const radius = terra?.radius ?? 0;
     const [tx = 0, ty = 0, tz = 0] = terra?.center ?? [];
-    expect(luna?.center[0]).toBeCloseTo(tx + 3 * radius, 6);
-    expect(luna?.center[1]).toBeCloseTo(ty, 6);
-    expect(luna?.center[2]).toBeCloseTo(tz + 1 * radius, 6);
+    const [ex, ey, ez] = tiltedBy(20, [3, 0, 1]);
+    expect(luna?.center[0]).toBeCloseTo(tx + ex * radius, 6);
+    expect(luna?.center[1]).toBeCloseTo(ty + ey * radius, 6);
+    expect(luna?.center[2]).toBeCloseTo(tz + ez * radius, 6);
 
     // It can be selected, but a drag in edit mode doesn't move it: its position is Terra's.
     await page.keyboard.press('e');
@@ -238,6 +239,53 @@ test.describe('the orbit view (M6-T3)', () => {
       data: { x: number; z: number };
     };
     expect([saved.data.x, saved.data.z]).toEqual([3, 1]);
+  });
+
+  test('moons circle in the plane of a tilted planet’s equator, and a drag keeps them on it (D-60)', async ({
+    page,
+  }) => {
+    const s = await setUp(page.request);
+    await page.goto(`${s.url}/view/${s.terra}`);
+    await waitForFirstFrame(page);
+    await settled(page);
+    // Luna is saved at (3, 0, 1) in Terra's frame, and drawn turned by Terra's 20° tilt.
+    const drawn = () =>
+      page.evaluate((id) => window.__GE_TEST__?.drawnObject(id)?.center ?? null, s.luna);
+    const expected = tiltedBy(20, [3, 0, 1]);
+    const center = await drawn();
+    expected.forEach((value, axis) => {
+      expect(center?.[axis]).toBeCloseTo(value, 6);
+    });
+    // Its ring is the circle through it in the equator's plane, built in Terra's own frame.
+    const ring = await page.evaluate((id) => window.__GE_TEST__?.orbitRing(id) ?? null, s.luna);
+    expect(ring?.center).toEqual([0, 0, 0]);
+    expect(ring?.radius).toBeCloseTo(Math.hypot(3, 1), 6);
+
+    // Dragged in edit mode, it slides across the tilted equator and is saved on it, y = 0.
+    await page.keyboard.press('e');
+    const at = await page.evaluate((id) => window.__GE_TEST__?.screenPositionOf(id), s.luna);
+    if (!at) throw new Error('Luna is off screen');
+    await page.mouse.move(at.x, at.y);
+    await page.mouse.down();
+    await page.mouse.move(at.x - 60, at.y + 30, { steps: 8 });
+    await page.mouse.up();
+    await expect
+      .poll(async () => {
+        const response = await page.request.get(`/api/v1/objects/${s.luna}`);
+        const { data } = (await response.json()) as { data: { x: number; y: number; z: number } };
+        return Math.hypot(data.x - 3, data.z - 1) > 0.05 ? data : null;
+      })
+      .not.toBeNull();
+    const { data } = (await (await page.request.get(`/api/v1/objects/${s.luna}`)).json()) as {
+      data: { x: number; y: number; z: number };
+    };
+    expect(Math.abs(data.y)).toBeLessThan(1e-6);
+    // And it's drawn where it was saved, turned by the tilt again.
+    await settled(page);
+    const moved = await drawn();
+    tiltedBy(20, [data.x, data.y, data.z]).forEach((value, axis) => {
+      expect(moved?.[axis]).toBeCloseTo(value, 4);
+    });
   });
 
   test('the orbit view starts with its moons in view, and flies to one without entering the globe', async ({
@@ -260,9 +308,12 @@ test.describe('the orbit view (M6-T3)', () => {
     await page.mouse.dblclick(at.x, at.y);
     await expect.poll(() => page.evaluate(() => window.__GE_TEST__?.selectedIds())).toEqual([dock]);
     await settled(page);
+    // The station is saved at (−2, 0, 1.5) in Terra's frame and drawn turned by its tilt.
     const pose = await cameraPose(page);
-    expect(pose?.target[0]).toBeCloseTo(-2, 1);
-    expect(pose?.target[2]).toBeCloseTo(1.5, 1);
+    const [dx, dy, dz] = tiltedBy(20, [-2, 0, 1.5]);
+    expect(pose?.target[0]).toBeCloseTo(dx, 1);
+    expect(pose?.target[1]).toBeCloseTo(dy, 1);
+    expect(pose?.target[2]).toBeCloseTo(dz, 1);
     expect(Math.hypot(...(pose?.position ?? [0, 0, 0]))).toBeGreaterThanOrEqual(1.15 - 1e-3);
   });
 });
@@ -366,6 +417,19 @@ test.describe('the view’s own subject', () => {
     await expect(details.getByLabel('Name', { exact: true })).toHaveValue('Helios');
   });
 });
+
+/**
+ * A point in a planet's frame as the views draw it, turned by its axial tilt about x (D-60,
+ * render/orbits/equator-frame.ts): y′ = y cos θ − z sin θ, z′ = y sin θ + z cos θ.
+ */
+function tiltedBy(tiltDeg: number, [x, y, z]: number[]): [number, number, number] {
+  const t = (tiltDeg * Math.PI) / 180;
+  return [
+    x ?? 0,
+    (y ?? 0) * Math.cos(t) - (z ?? 0) * Math.sin(t),
+    (y ?? 0) * Math.sin(t) + (z ?? 0) * Math.cos(t),
+  ];
+}
 
 /** The station around a planet, from its orbit view. */
 async function stationId(request: APIRequestContext, planetId: string): Promise<string> {

@@ -7,10 +7,14 @@ import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeome
 import { useSelection } from '@/state/selection.ts';
 import { useSpoilerPolicy } from '@/state/spoilers.ts';
 import { movePreview, onMovePreview } from '../scene-index.ts';
+import { viewToEquator } from './equator-frame.ts';
 import { ORBIT_RING_SEGMENTS, ORBIT_RING_WIDTH_PX } from '../tuning.ts';
 import { orbitRings, starCenters, writeOrbitRings, type RingShape } from './orbit-shapes.ts';
 
-/** The rings drawn now, for the test hooks: each body's ring center and radius. */
+/**
+ * The rings drawn now, for the test hooks: each body's ring center and radius, in the frame the
+ * rings are built in (the planet's own, in a tilted orbit view).
+ */
 let drawnRings = new Map<string, RingShape>();
 export function orbitRingOf(id: string): RingShape | null {
   return drawnRings.get(id) ?? null;
@@ -24,11 +28,32 @@ export function orbitRingOf(id: string): RingShape | null {
  * and a dragged body's ring follows it, or its star, all by rewriting the buffers in place: no
  * React render, no new GPU buffer.
  */
-export function OrbitRings({ objects }: { objects: readonly ViewObject[] }) {
+export function OrbitRings({
+  objects,
+  tiltRad = 0,
+}: {
+  objects: readonly ViewObject[];
+  /**
+   * The orbit view's planet's axial tilt (D-60): `objects` are drawn turned by it, and each
+   * ring lies in the plane of the equator. The rings are built in the planet's own frame, flat
+   * as in the system view, and the group they're drawn in turns them into place.
+   */
+  tiltRad?: number;
+}) {
   const invalidate = useThree((state) => state.invalidate);
   const policy = useSpoilerPolicy();
-  const rings = useMemo(() => orbitRings(objects, policy), [objects, policy]);
-  const centers = useMemo(() => starCenters(objects), [objects]);
+  const flat = useMemo(
+    () =>
+      tiltRad === 0
+        ? objects
+        : objects.map((object) => ({
+            ...object,
+            position: viewToEquator(object.position, tiltRad),
+          })),
+    [objects, tiltRad],
+  );
+  const rings = useMemo(() => orbitRings(flat, policy), [flat, policy]);
+  const centers = useMemo(() => starCenters(flat), [flat]);
 
   const line = useMemo(() => {
     if (rings.length === 0) return null;
@@ -61,7 +86,13 @@ export function OrbitRings({ objects }: { objects: readonly ViewObject[] }) {
     const colorStart = line.geometry.getAttribute('instanceColorStart');
     const apply = () => {
       const selected = new Set(useSelection.getState().selectedIds);
-      drawnRings = writeOrbitRings(rings, centers, positions, colors, selected, movePreview());
+      // A drag's shift is in the view; the rings are built in the planet's frame.
+      const preview = movePreview();
+      const shift =
+        preview && tiltRad !== 0
+          ? { ...preview, delta: viewToEquator(preview.delta, tiltRad) }
+          : preview;
+      drawnRings = writeOrbitRings(rings, centers, positions, colors, selected, shift);
       // Both attributes view one interleaved buffer each; flag the buffers for upload.
       if ('data' in start) start.data.needsUpdate = true;
       if ('data' in colorStart) colorStart.data.needsUpdate = true;
@@ -75,7 +106,7 @@ export function OrbitRings({ objects }: { objects: readonly ViewObject[] }) {
       stopSelection();
       drawnRings = new Map();
     };
-  }, [line, rings, centers, invalidate]);
+  }, [line, rings, centers, tiltRad, invalidate]);
 
   useEffect(
     () => () => {
@@ -90,5 +121,12 @@ export function OrbitRings({ objects }: { objects: readonly ViewObject[] }) {
     line?.material.resolution.set(size.width, size.height);
   });
 
-  return line ? <primitive object={line} /> : null;
+  if (!line) return null;
+  return tiltRad === 0 ? (
+    <primitive object={line} />
+  ) : (
+    <group rotation-x={tiltRad}>
+      <primitive object={line} />
+    </group>
+  );
 }

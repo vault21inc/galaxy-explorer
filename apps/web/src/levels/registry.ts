@@ -6,6 +6,7 @@ import {
 } from '@ge/domain';
 import { lazy, type ComponentType } from 'react';
 import type { LocatedKind } from '@/state/editor.ts';
+import { axialTiltRad, orbitPayloadInView } from '@/render/orbits/equator-frame.ts';
 import { systemExtentSu } from '@/render/system/system-camera.ts';
 import {
   GALAXY_BODY_MAX_PX,
@@ -60,6 +61,14 @@ export interface LevelDef {
    */
   placeholder?: string;
   edit?: LevelEdit;
+  /**
+   * The payload as this view draws it, when that differs from how it's saved: the orbit view
+   * turns its moons and stations by the planet's axial tilt (D-60). Readers that draw or edit
+   * pass it to `useViewPayload`.
+   */
+  inView?: (payload: AnyPayload) => AnyPayload;
+  /** The tilt of the plane this view's objects are placed and dragged on, in radians. */
+  workPlaneTiltRad?: (payload: AnyPayload) => number;
 }
 
 /**
@@ -104,7 +113,7 @@ export const levels: Record<ViewLevel, LevelDef> = {
     },
   },
   // The globe and what orbits it (M6-T3): moons, stations and markers are placed and moved
-  // with the same tools, on the equator's plane. Pins on the surface arrive in M6-T4.
+  // with the same tools, on the plane of the planet's equator, tilted with it (D-60).
   orbit: {
     component: lazy(() => import('./orbit-level.tsx')),
     edit: {
@@ -120,6 +129,10 @@ export const levels: Record<ViewLevel, LevelDef> = {
       emptyTitle: 'Nothing orbits this world',
       located: { kinds: ['place', 'event'], mode: 'surface' },
     },
+    // Moons circle in the plane of the planet's equator, tilted with it (D-60).
+    inView: (payload) => ('pins' in payload ? orbitPayloadInView(payload) : payload),
+    workPlaneTiltRad: (payload) =>
+      'pins' in payload ? axialTiltRad(payload.subject.appearance) : 0,
   },
 };
 

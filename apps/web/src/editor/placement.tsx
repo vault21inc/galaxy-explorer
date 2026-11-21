@@ -11,6 +11,7 @@ import { useConfigList } from '@/api/hooks.ts';
 import { useEditor } from '@/state/editor.ts';
 import { optimisticObject, useCreateObject } from './use-create-object.ts';
 import { toNdc, workPlanePoint } from './work-plane.ts';
+import { viewToEquator } from '@/render/orbits/equator-frame.ts';
 
 /** Renderers that can draw a ghost of their own look (D-28); others get a plain sphere. */
 const GHOST_RENDERERS = new Set(['system-glyphs', 'black-holes', 'icon-sprites']);
@@ -26,7 +27,8 @@ const scratch = new Vector3();
 
 /**
  * Placing a new object (M3-T2, ux.md §5): a see-through ghost of the chosen type follows the
- * pointer on the work plane (y = 0); a click creates the object there; Esc or a right-click
+ * pointer on the work plane (y = 0, or the tilted equator of the orbit view's planet, D-60); a
+ * click creates the object there; Esc or a right-click
  * cancels. Lives inside the view being edited (galaxy or system) while a type is being placed;
  * the new object goes where the levels registry says (in the system, or at the top level).
  */
@@ -49,9 +51,12 @@ export function Placement({ view }: { view: EditView }) {
   // How far a placement may reach (work-plane.ts); past it the ghost hides.
   const limit = view.payload ? edit.workPlaneLimit(view.payload) : 0;
   const limitRef = useRef(limit);
+  // The orbit view's plane tilts with the planet's equator (D-60).
+  const tiltRef = useRef(view.tiltRad);
   useEffect(() => {
     limitRef.current = limit;
-  }, [limit]);
+    tiltRef.current = view.tiltRad;
+  }, [limit, view.tiltRad]);
 
   useEffect(() => {
     if (!placing) return;
@@ -64,6 +69,7 @@ export function Placement({ view }: { view: EditView }) {
         toNdc(event.clientX, event.clientY, canvas, ndc),
         0,
         limitRef.current,
+        tiltRef.current,
       );
 
     const onPointerMove = (event: PointerEvent) => {
@@ -90,7 +96,12 @@ export function Placement({ view }: { view: EditView }) {
       const at = pointAt(event);
       if (!at) return;
       useEditor.getState().cancelPlacing();
-      create.mutate({ baseType: placing, subtype: subtypeRef.current, position: at });
+      // Saved in the planet's own frame in a tilted orbit view: on its equator, y = 0.
+      create.mutate({
+        baseType: placing,
+        subtype: subtypeRef.current,
+        position: viewToEquator(at, tiltRef.current),
+      });
     };
 
     canvas.addEventListener('pointermove', onPointerMove);

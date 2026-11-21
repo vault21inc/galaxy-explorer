@@ -1,4 +1,5 @@
 import { Plane, Ray, Vector2, Vector3, type Camera } from 'three';
+import { equatorToView, poleInView, viewToEquator } from '@/render/orbits/equator-frame.ts';
 
 /**
  * Where the pointer meets the work plane (rendering.md §10): the galactic plane, y = 0, or the
@@ -12,6 +13,11 @@ import { Plane, Ray, Vector2, Vector3, type Camera } from 'three';
  * 90 galaxy radii out. Beyond the limit the drag simply stops following.
  *
  * `ndc` is the pointer in normalized device coordinates: −1 to 1 across the canvas, y up.
+ *
+ * `tiltRad` tilts the plane: in the orbit view it's the plane of the planet's equator, turned
+ * by its axial tilt (D-60, orbits/equator-frame.ts). The plane's normal is then the planet's
+ * pole, the height is measured along it, and so is the limit: the distance from the pole's
+ * axis. The point returned is in the view, where it's drawn.
  */
 const WORK_PLANE = new Plane(new Vector3(0, 1, 0), 0);
 const ray = new Ray();
@@ -22,8 +28,10 @@ export function workPlanePoint(
   ndc: Vector2,
   heightY = 0,
   maxRadiusLy = Infinity,
+  tiltRad = 0,
 ): [number, number, number] | null {
-  // A plane is stored as normal · p + constant = 0, so y = h is constant −h.
+  // A plane is stored as normal · p + constant = 0, so height h along the normal is constant −h.
+  WORK_PLANE.normal.set(...poleInView(tiltRad));
   WORK_PLANE.constant = -heightY;
   // Unprojecting the pointer at the near plane (z = −1) and the far plane (z = 1) gives two
   // points on the ray; for a perspective camera the first is effectively the camera position.
@@ -31,8 +39,17 @@ export function workPlanePoint(
   scratch.set(ndc.x, ndc.y, 0.5).unproject(camera);
   ray.direction.copy(scratch).sub(ray.origin).normalize();
   const hit = ray.intersectPlane(WORK_PLANE, scratch);
-  if (!hit || Math.hypot(hit.x, hit.z) > maxRadiusLy) return null;
-  return [hit.x, heightY, hit.z];
+  if (!hit) return null;
+  // In the plane's own frame the hit is (x, height, z): the limit is on x and z, and the height
+  // is set exactly, so rounding never lifts a dragged object off the plane.
+  const [x, , z] = viewToEquator([hit.x, hit.y, hit.z], tiltRad);
+  if (Math.hypot(x, z) > maxRadiusLy) return null;
+  return equatorToView([x, heightY, z], tiltRad);
+}
+
+/** A point's height above the work plane (along its normal), as `workPlanePoint` measures it. */
+export function heightAbovePlane(point: readonly [number, number, number], tiltRad = 0): number {
+  return viewToEquator(point, tiltRad)[1];
 }
 
 /** Page coordinates to normalized device coordinates over an element. */

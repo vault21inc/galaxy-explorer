@@ -6,6 +6,7 @@ import { useViewCamera } from '@/render/camera/use-view-camera.ts';
 import { Globe } from '@/render/globe/globe.tsx';
 import { globeSun } from '@/render/globe/globe-sun.ts';
 import { orbitCamera } from '@/render/globe/orbit-camera.ts';
+import { axialTiltRad, orbitPayloadInView } from '@/render/orbits/equator-frame.ts';
 import { OrbitRings } from '@/render/orbits/orbit-rings.tsx';
 import { SelectionRings } from '@/render/picking/selection-rings.tsx';
 import { partitionByRenderer } from '@/render/registry.ts';
@@ -18,7 +19,9 @@ import { GalaxyBand } from '@/render/system/galaxy-band.tsx';
  * tools. A moon that's explorable opens its own orbit view (O4).
  */
 export default function OrbitLevel({ subjectId }: { subjectId: string }) {
-  const view = useViewPayload('orbit', subjectId, useReadOptions());
+  // What orbits the globe, turned by its axial tilt, so moons circle in the plane of its
+  // equator and rings (D-60, render/orbits/equator-frame.ts).
+  const view = useViewPayload('orbit', subjectId, useReadOptions(), orbitPayloadInView);
   const partitions = useMemo(
     () => (view.data ? partitionByRenderer('orbit', view.data.children) : []),
     [view.data],
@@ -38,7 +41,10 @@ export default function OrbitLevel({ subjectId }: { subjectId: string }) {
         pins={view.data.pins}
         universeId={view.data.map.universeId}
       />
-      <OrbitRings objects={view.data.children} />
+      <OrbitRings
+        objects={view.data.children}
+        tiltRad={axialTiltRad(view.data.subject.appearance)}
+      />
       {partitions.map(({ renderer, objects }) => (
         <renderer.component key={renderer.name} objects={objects} />
       ))}

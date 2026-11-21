@@ -225,8 +225,15 @@ export interface GeTestHooks {
    * texture and the bake key (everything that shapes its pixels), or null if it isn't drawn.
    */
   planetSurface(id: string): { layer: number; key: string } | null;
-  /** Where a page point meets the work plane (y = 0), as placing an object computes it. */
-  workPlanePointAt(clientX: number, clientY: number): [number, number, number] | null;
+  /**
+   * Where a page point meets the work plane (y = 0), as placing an object computes it; with
+   * `tiltDeg`, the orbit view's plane tilted with its planet's equator (D-60).
+   */
+  workPlanePointAt(
+    clientX: number,
+    clientY: number,
+    tiltDeg?: number,
+  ): [number, number, number] | null;
   /** The placement ghost: its type and position, or null when nothing is being placed. */
   placement(): { baseType: string; position: [number, number, number] } | null;
   /**
@@ -342,10 +349,11 @@ export function installTestHooks(): void {
     projectPoint: (point) => pageProjection(point),
     stormTexture: (id) => stormTextureOf(id),
     hoveredId: () => hoverStore.getState().hoveredId,
-    workPlanePointAt: (clientX, clientY) => {
+    workPlanePointAt: (clientX, clientY, tiltDeg = 0) => {
       const state = canvasState();
       if (!state) return null;
-      return workPlanePoint(state.camera, toNdc(clientX, clientY, state.gl.domElement));
+      const ndc = toNdc(clientX, clientY, state.gl.domElement);
+      return workPlanePoint(state.camera, ndc, 0, Infinity, (tiltDeg * Math.PI) / 180);
     },
     placement: () => placementGhost(),
     gizmoHandleAt,
@@ -518,8 +526,9 @@ function gizmoHandleAt(): { x: number; y: number } | null {
   const distance = anchor.position.distanceTo(camera.position);
   const factor =
     distance * Math.min((1.9 * Math.tan((Math.PI * (camera.fov ?? 45)) / 360)) / camera.zoom, 7);
-  scratch.copy(anchor.position);
-  scratch.y += 0.6 * ((factor * GIZMO_SIZE) / 7);
+  // Along the anchor's own y: the world's, or the orbit view's planet's pole (D-60).
+  scratch.set(0, 1, 0).applyQuaternion(anchor.quaternion);
+  scratch.multiplyScalar(0.6 * ((factor * GIZMO_SIZE) / 7)).add(anchor.position);
   scratch.project(state.camera);
   const rect = state.gl.domElement.getBoundingClientRect();
   return {

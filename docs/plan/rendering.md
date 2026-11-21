@@ -237,7 +237,7 @@ void main() {
 - **Asteroid belts:** one instanced draw per belt, at most 2,000 seeded rocks in a torus band.
 - **Stations and markers:** instanced icon billboards from the icon atlas (§8, pins).
 - **Background:** the sky points, plus a dim band of the galaxy disc texture.
-- **Children of planets** (moons, stations, markers) are shown beside their planet: the system view's payload carries them as `satellites`, in their planet's orbit frame, and the client places them at their orbit-view distance counted in the planet's system-view radii (`SYSTEM_SATELLITE_SPREAD`), drawn by the same renderers in the same draw calls. They can be selected and entered, but not moved here: their positions belong to their planet's frame, so they're moved in its orbit view. (Before the owner's review of M6-T3 they weren't shown here at all.)
+- **Children of planets** (moons, stations, markers) are shown beside their planet: the system view's payload carries them as `satellites`, in their planet's orbit frame, and the client places them at their orbit-view distance counted in the planet's system-view radii (`SYSTEM_SATELLITE_SPREAD`), turned by the planet's axial tilt as in the orbit view (D-60), drawn by the same renderers in the same draw calls. They can be selected and entered, but not moved here: their positions belong to their planet's frame, so they're moved in its orbit view. (Before the owner's review of M6-T3 they weren't shown here at all.)
 - **As built (M5-T3):**
   - Star colors come from the blackbody table in `resolveAppearance`.
   - The stars' lights are uniforms of the planet and belt shaders, not `PointLight`s.
@@ -257,6 +257,7 @@ void main() {
 - **Clouds:** a sphere at 1.01 radii with a baked alpha texture. It's static unless ambient motion is on.
 - **Rings:** `RingGeometry` with a baked radial gradient, tilted with the body.
 - **Moons and stations:** drawn with the system-view renderers at orbit scale. A moon is clickable, and if it's explorable it opens its own orbit view (O4).
+- **The equator's plane** (D-60): what orbits the globe is saved in the planet's frame (y = 0 is its equator) and drawn turned by its axial tilt, like the globe and its rings, so moons circle in the plane of the rings. The turn is applied once, when the view reads its payload (`orbitPayloadInView` in `render/orbits/equator-frame.ts`), so the renderers, picking, labels and camera all see where things are drawn. Orbit rings are built flat in the planet's frame and drawn inside a group turned by the tilt. Editing places and drags on the tilted plane (`workPlanePoint`'s tilt), measures height along the pole, and turns positions back before saving.
 - **Pins** (`Pins`) for places and events located on this body:
   - one instanced draw of camera-facing quads;
   - icons from an **icon atlas**: category icons rasterized once at startup into a 1,024² canvas texture, 64 px cells;
@@ -296,7 +297,7 @@ Procedural looks are generated once on the GPU and reused (D-10):
 - **Box selection** tests projected centers against the rectangle.
 - **Group outlines** are picked through their label (a DOM hit area) or through the outliner. Clicks inside an outline select objects, not the group.
 - **Object labels** are pick targets too: pointing at a label is pointing at its object, for hover, click, double-click and drag (`label-hits.ts`). The hit area reaches back across the gap to the body, so the pointer can move from a body to its label without the hover ending. A body under the pointer whose pick circle is at most 30 px across wins over a label drawn across it; over anything wider (a belt's band, a rift, a route) the label wins. Zooming targets bodies only (zoom-gate.ts): a wheel turned over some system's label would otherwise push into that system.
-- **Placing objects:** a ray–plane intersection with the work plane (y = 0, or the height of the selection being moved). **Placing pins:** a ray–sphere intersection (§8).
+- **Placing objects:** a ray–plane intersection with the work plane (y = 0, or the height of the selection being moved; in the orbit view, the plane of the planet's tilted equator, D-60). **Placing pins:** a ray–sphere intersection (§8).
 - **The orbit view's globe** isn't a pickable: it would take hover, drag, box selection and zooming. A click that picks nothing but whose ray meets the globe (the same ray–sphere test, `globeSubjectAt`) selects the world itself, so a drag across the globe still turns the camera.
 
 ## 11. Labels

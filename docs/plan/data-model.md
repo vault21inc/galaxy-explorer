@@ -589,7 +589,7 @@ const FieldValue = z.discriminatedUnion('type', [
 |---|---|---|---|---|
 | Galaxy | galactic center | X/Z = galactic plane, +Y = galactic north | light-years (the label comes from universe settings) | top-level objects, deep-space locations |
 | System | system center (the primary star at the origin by default) | X/Z = ecliptic plane, +Y up | "system units" (su): schematic, roughly AU; the author spaces planets for readability | children of a system, locations inside a system |
-| Orbit | body center | +Y = north pole before axial tilt | body radii (the globe's radius = 1) | moons and stations of a body |
+| Orbit | body center | +Y = north pole before axial tilt, X/Z = the equator's plane; drawn turned by the tilt (D-60) | body radii (the globe's radius = 1) | moons and stations of a body |
 | Surface | — | `lat_deg` ∈ [−90, 90], `lon_deg` ∈ [−180, 180) | degrees | places and events on a body |
 
 - An object's `x, y, z` are in **its parent's frame**. Top-level objects use the galaxy frame.
