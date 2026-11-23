@@ -2,9 +2,7 @@ import { unwrap, type components, type paths } from '@ge/api-client';
 import { entityKinds, rt, type EntityKind, type RelationType } from '@ge/domain';
 import type { QueryClient } from '@tanstack/react-query';
 import { api } from '@/api/client.ts';
-import { refreshAfterWrite } from '@/api/refresh.ts';
-import { errorMessage } from '@/app/route-states.tsx';
-import { useToasts } from '@/state/toasts.ts';
+import { describedAs, throwIfRefused, writeAspect } from '../aspect-writes.ts';
 
 export type RelationRead = components['schemas']['RelationRead'];
 /** What a relation's edit may change: the PATCH body, as the generated client has it. */
@@ -12,35 +10,7 @@ type RelationPatch = NonNullable<
   paths['/api/v1/entities/{entityId}/relations/{relationId}']['patch']['requestBody']
 >['content']['application/json'];
 
-/**
- * The writes of the relation sections (M6-T6): each one change in the history, named for what
- * it did, then a refresh of both ends' panels (their kinds' queries). A failure is a toast;
- * each resolves whether it worked.
- */
-
-const header = (description: string) => ({
-  'X-GE-Batch-Description': encodeURIComponent(description),
-});
-
-async function attempt(
-  queryClient: QueryClient,
-  kinds: readonly EntityKind[],
-  what: string,
-  write: () => Promise<unknown>,
-): Promise<boolean> {
-  try {
-    await write();
-    await refreshAfterWrite(
-      queryClient,
-      [...new Set(kinds)].map((kind) => [kind]),
-    );
-    return true;
-  } catch (failure) {
-    const error = failure instanceof Error ? failure : new Error(String(failure));
-    useToasts.getState().show(`Couldn't ${what}: ${errorMessage(error)}`, 'error');
-    return false;
-  }
-}
+/** The writes of the relation sections (M6-T6), through aspect-writes.ts. */
 
 export interface Endpoints {
   type: RelationType;
@@ -53,12 +23,12 @@ export interface Endpoints {
 
 /** Relates two existing entities: "Add “Eisenhorn” to “Siege of Calyx”". */
 export function addRelation(queryClient: QueryClient, ends: Endpoints, description: string) {
-  return attempt(queryClient, ends.kinds, 'add them', () =>
+  return writeAspect(queryClient, ends.kinds, 'add them', () =>
     unwrap(
       api.POST('/api/v1/entities/{entityId}/relations', {
         params: { path: { entityId: ends.fromId } },
         body: { relationType: ends.type, toEntityId: ends.toId },
-        headers: header(description),
+        headers: describedAs(description),
       }),
     ),
   );
@@ -82,7 +52,7 @@ export function createAndRelate(
 ) {
   const { type, kind, name, scope, newEnd, otherId, otherKind } = args;
   const label = entityKinds[kind].label.one.toLowerCase();
-  return attempt(queryClient, [kind, otherKind], `create the ${label}`, () =>
+  return writeAspect(queryClient, [kind, otherKind], `create the ${label}`, () =>
     unwrap(
       api.POST('/api/v1/batch', {
         body: {
@@ -115,12 +85,12 @@ export function updateRelation(
   patch: RelationPatch,
   description: string,
 ) {
-  return attempt(queryClient, kinds, 'save it', () =>
+  return writeAspect(queryClient, kinds, 'save it', () =>
     unwrap(
       api.PATCH('/api/v1/entities/{entityId}/relations/{relationId}', {
         params: { path: { entityId: relation.fromEntityId, relationId: relation.id } },
         body: patch,
-        headers: header(description),
+        headers: describedAs(description),
       }),
     ),
   );
@@ -133,11 +103,11 @@ export function removeRelation(
   kinds: readonly EntityKind[],
   description: string,
 ) {
-  return attempt(queryClient, kinds, 'remove it', async () => {
+  return writeAspect(queryClient, kinds, 'remove it', async () => {
     const { error } = await api.DELETE('/api/v1/entities/{entityId}/relations/{relationId}', {
       params: { path: { entityId: relation.fromEntityId, relationId: relation.id } },
-      headers: header(description),
+      headers: describedAs(description),
     });
-    if (error) throw new Error((error as { detail?: string }).detail ?? 'the server refused');
+    throwIfRefused(error);
   });
 }

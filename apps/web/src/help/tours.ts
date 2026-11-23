@@ -157,7 +157,7 @@ const EDITOR: TourDef = {
     {
       id: 'object-form',
       title: 'Its details',
-      text: 'The panel is its form: name, description, color, size and more. Each field saves as you leave it.',
+      text: 'The panel is its form: name, description, color, size and more. Each field saves as you leave it. Further down, Links holds web pages about it, and Related to links it to anything else: a person, an event, a route.',
       target: { kind: 'control', name: 'info-panel' },
       completes: 'next',
       needs: ['editing', 'selection'],

@@ -133,6 +133,9 @@ Shortcuts are ignored while focus is in a text field. `?` opens this list as an 
   - One drag is one change batch, so undo restores the whole drag.
 - **Edit form:**
   - Generated from the entity kind's registry entry: name, summary, description, subtype, explorable, status, appearance, then aspect sections (facts, images, links, relations, location, members).
+  - **Links:** each link's address and label (saved on blur), its spoiler switch and a remove button, then an address and optional label to add one; only http(s) addresses are accepted.
+  - **Related to:** the entry's untyped (`related`) relations, either way round, each with a role, a spoiler switch and a remove button; the picker searches the whole universe (every kind, every map, drafts and spoilers included) and offers no "Create", since there's no one kind to make. Typed relations (an event's people) keep their own sections.
+  - Both sections show in edit mode even when empty; reading, they show only when there's something in them.
   - Inherited appearance values appear greyed out with "reset to default".
   - Each field saves on blur. A 409 conflict shows "Changed elsewhere: reload or overwrite", with a diff.
 - **Grouping:**

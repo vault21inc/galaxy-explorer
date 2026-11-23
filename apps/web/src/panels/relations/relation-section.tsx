@@ -1,23 +1,9 @@
-import {
-  entityKinds,
-  relationTypes,
-  rt,
-  spoilerKeys,
-  toPlainText,
-  type EntityKind,
-  type RelationType,
-} from '@ge/domain';
+import { entityKinds, relationTypes, rt, type EntityKind, type RelationType } from '@ge/domain';
 import { useQueryClient } from '@tanstack/react-query';
-import { X } from 'lucide-react';
 import type { ComponentType } from 'react';
-import { Button } from '@/components/ui/button.tsx';
-import { Switch } from '@/components/ui/switch.tsx';
-import { Redactable } from '@/richtext/redactable.tsx';
-import { RichTextView } from '@/richtext/rich-text-view.tsx';
 import { useEditor } from '@/state/editor.ts';
 import { useNavigation } from '@/state/navigation.ts';
 import { useSelection } from '@/state/selection.ts';
-import { INPUT_CLASS } from '../entity-form/fields/field-row.tsx';
 import { EntityPicker, type PickerScope } from '../people-picker/entity-picker.tsx';
 import { SectionHeading } from '../sections/section-heading.tsx';
 import type { PanelEntity, SectionProps } from '../types.ts';
@@ -28,6 +14,7 @@ import {
   updateRelation,
   type RelationRead,
 } from './relation-writes.ts';
+import { RelationItem, type RelationWording } from './relation-item.tsx';
 import { goToLocated } from './shown-where.ts';
 
 /** Which end of the relation the panel's entity is. */
@@ -88,6 +75,11 @@ export function relationSection(
               key={relation.id}
               relation={relation}
               editing={editing}
+              wording={WORDING}
+              detail={editing ? undefined : relation.other.dateText}
+              onOpen={() => {
+                open(relation);
+              }}
               onRole={(text) =>
                 void updateRelation(
                   queryClient,
@@ -155,6 +147,13 @@ export function relationSection(
   return RelationSection;
 }
 
+/** A typed relation's rows: a person's part in an event. */
+const WORDING: RelationWording = {
+  rolePlaceholder: 'Role, such as “Inquisitor leading the hunt”',
+  spoilerText: 'Their part is a spoiler',
+  spoilerLabel: (name) => `${name}’s part is a spoiler`,
+};
+
 /** By the other end's date (undated last), then the relation's own order. */
 function byDate(a: RelationRead, b: RelationRead): number {
   const da = a.other.dateSort ?? Number.POSITIVE_INFINITY;
@@ -175,92 +174,4 @@ function open(relation: RelationRead) {
     return;
   }
   useSelection.getState().select([other.id]);
-}
-
-function RelationItem({
-  relation,
-  editing,
-  onRole,
-  onSpoiler,
-  onRemove,
-}: {
-  relation: RelationRead;
-  editing: boolean;
-  onRole: (text: string) => void;
-  onSpoiler: (isSpoiler: boolean) => void;
-  onRemove: () => void;
-}) {
-  const key = spoilerKeys.relation(relation.id);
-  const { other } = relation;
-  const roleText = relation.role ? toPlainText(relation.role) : '';
-  const nameButton = (
-    <button
-      type="button"
-      className="text-left font-medium hover:text-primary hover:underline"
-      onClick={() => {
-        open(relation);
-      }}
-    >
-      <Redactable
-        flagged={other.isSpoiler || other.nameSpoiler}
-        revealKey={spoilerKeys.record(other.id)}
-        hiddenText={other.namePlain}
-      >
-        <span>{other.namePlain}</span>
-      </Redactable>
-    </button>
-  );
-  if (editing) {
-    return (
-      <li className="flex flex-col gap-1 rounded border p-2">
-        <div className="flex items-center justify-between gap-2">
-          {nameButton}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={`Remove ${other.namePlain}`}
-            onClick={onRemove}
-          >
-            <X aria-hidden />
-          </Button>
-        </div>
-        <input
-          // Remounted with each saved role, which replaces what's typed.
-          key={roleText}
-          aria-label={`Role of ${other.namePlain}`}
-          placeholder="Role, such as “Inquisitor leading the hunt”"
-          defaultValue={roleText}
-          className={INPUT_CLASS}
-          onBlur={(event) => {
-            const next = event.currentTarget.value.trim();
-            if (next !== roleText) onRole(next);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') event.currentTarget.blur();
-          }}
-        />
-        <label className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Switch
-            checked={relation.isSpoiler}
-            aria-label={`${other.namePlain}’s part is a spoiler`}
-            onCheckedChange={onSpoiler}
-          />
-          Their part is a spoiler
-        </label>
-      </li>
-    );
-  }
-  return (
-    <li>
-      <Redactable flagged={relation.isSpoiler} revealKey={key} hiddenText={other.namePlain}>
-        {nameButton}
-        {other.dateText && <span className="text-muted-foreground"> · {other.dateText}</span>}
-        {relation.role && (
-          <span className="block text-muted-foreground">
-            <RichTextView value={relation.role} fieldKey={`${key}/role`} inline />
-          </span>
-        )}
-      </Redactable>
-    </li>
-  );
 }
