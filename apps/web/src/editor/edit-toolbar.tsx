@@ -1,4 +1,5 @@
 import {
+  Check,
   Group,
   History,
   Map as MapIcon,
@@ -166,13 +167,29 @@ export function EditToolbar() {
         />
       </label>
       {routing && (
-        <p role="status" className="px-2 text-xs whitespace-nowrap text-muted-foreground">
-          {stops === 0
-            ? 'Click objects in order'
-            : `${stops.toString()} ${stops === 1 ? 'stop' : 'stops'}`}
-          {' · ⌫ removes last · '}
-          {stops >= 2 ? 'Enter finishes · ' : ''}Esc cancels
-        </p>
+        <>
+          <p role="status" className="px-2 text-xs whitespace-nowrap text-muted-foreground">
+            {stops === 0
+              ? 'Click objects in order'
+              : `${stops.toString()} ${stops === 1 ? 'stop' : 'stops'}`}
+            {' · ⌫ removes last · Esc cancels'}
+          </p>
+          {/* Shown while the tool is on, disabled until there are two stops, so it doesn't
+              jump in. It does what Enter does, which is easy to miss (and Enter goes to the
+              filter box or the grid field when they have focus). */}
+          <Button
+            size="sm"
+            className="gap-1.5"
+            disabled={stops < 2}
+            title={stops < 2 ? 'Click two objects at least' : 'Create the route (Enter)'}
+            onClick={() => {
+              useRouteDraft.getState().finish?.();
+            }}
+          >
+            <Check aria-hidden />
+            Finish
+          </Button>
+        </>
       )}
       {placing && (
         <p role="status" className="px-2 text-xs text-muted-foreground">

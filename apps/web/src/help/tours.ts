@@ -196,7 +196,7 @@ const EDITOR: TourDef = {
     {
       id: 'regions-routes',
       title: 'Regions and routes',
-      text: 'Add ▸ Region makes a nebula, a storm or a rift. The Route tool joins systems, one click at a time.',
+      text: 'Add ▸ Region makes a nebula, a storm or a rift. The Route tool joins systems, one click at a time; Finish saves the route.',
       target: { kind: 'control', name: 'tool-route' },
       completes: 'next',
       needs: ['editing'],

@@ -141,7 +141,7 @@ Shortcuts are ignored while focus is in a text field. `?` opens this list as an 
   3. An object already in a group of that type triggers "Move N objects from Helican to Ophidian?"
   4. The new group is selected. Adding objects to it later works by drag-select, then "Add to group ▸" in the context menu.
 - **Routes** (M4-T7):
-  - The **Route tool** in the toolbar: click objects in order; ⌫ removes the last, Enter creates the route (two waypoints at least), Esc leaves the tool. The waypoints so far are selected, joined by a white line.
+  - The **Route tool** in the toolbar: click objects in order; ⌫ removes the last, Enter or the toolbar's **Finish** button creates the route (two waypoints at least), Esc leaves the tool (the button is there from the start, disabled until the second waypoint, because Enter alone proved easy to miss). The waypoints so far are selected, joined by a white line.
   - **Create route** in the context menu runs a route through the selected objects, in the order they were selected.
   - The new route is named after its ends ("Aster to Corvid"), selected, and its name field takes focus.
   - Its panel lists the waypoints; in edit mode, drag a handle (or Arrow Up and Down on it) to reorder, and Remove takes one out. The style (color, width, dashed) is in its form.

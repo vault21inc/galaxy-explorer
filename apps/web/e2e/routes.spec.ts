@@ -153,6 +153,33 @@ test.describe('routes (M4-T7)', () => {
       .toBe(true);
   });
 
+  test('the toolbar’s Finish button creates the route, as Enter does', async ({ page }) => {
+    const s = await setUp(page.request);
+    await open(page, s);
+    const tools = page.getByRole('toolbar', { name: 'Edit tools' });
+    await tools.getByRole('button', { name: 'Route' }).click();
+    const finish = tools.getByRole('button', { name: 'Finish' });
+    await expect(finish).toBeDisabled();
+    await clickObject(page, s.ids.Alpha);
+    await expect(finish).toBeDisabled();
+    await clickObject(page, s.ids.Bravo);
+    await finish.click();
+
+    await expect
+      .poll(() => routes(page, s))
+      .toEqual([
+        expect.objectContaining({
+          namePlain: 'Alpha to Bravo',
+          waypoints: [s.ids.Alpha, s.ids.Bravo],
+        }),
+      ]);
+    await expect(tools.getByRole('button', { name: 'Route' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    await expect(finish).toBeHidden();
+  });
+
   test('Create route follows the selection order; the panel reorders and removes waypoints', async ({
     page,
   }) => {

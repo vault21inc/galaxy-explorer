@@ -22,8 +22,8 @@ import { useCreateRoute } from './actions/use-create-route.ts';
 
 /**
  * The Route tool (M4-T7, ux.md §5): while it's on, a click on an object adds it as the next
- * waypoint, Backspace removes the last one, Enter creates the route (two waypoints at least) and
- * Esc leaves the tool. The waypoints so far are selected, so they're ringed and labelled, and a
+ * waypoint, Backspace removes the last one, Enter or the toolbar's Finish button creates the route
+ * (two waypoints at least) and Esc leaves the tool. The waypoints so far are selected, so they're ringed and labelled, and a
  * white line joins them. Turning the tool off, or leaving edit mode, drops an unfinished route.
  */
 export function RouteTool({ mapId, objects }: { mapId: string; objects: readonly ViewObject[] }) {
@@ -63,16 +63,23 @@ function ActiveRouteTool({ mapId, objects }: { mapId: string; objects: readonly 
     };
     // In the capture phase, so these keys are the tool's: Backspace removes a waypoint rather
     // than deleting the selection, and Esc leaves the tool rather than clearing the selection.
+    // Enter and the toolbar's Finish button both end here.
+    const finishDraft = () => {
+      const waypoints = [...useRouteDraft.getState().waypoints];
+      if (waypoints.length < 2) return;
+      useEditor.getState().stopRouting();
+      void finish.current(waypoints);
+    };
+    useRouteDraft.setState({ finish: finishDraft });
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (ignoresCameraKeys(event.target)) return;
       const state = useRouteDraft.getState();
       if (event.key === 'Backspace' || event.key === 'Delete') {
         state.removeLast();
       } else if (event.key === 'Enter') {
-        const waypoints = [...state.waypoints];
-        if (waypoints.length < 2) return;
-        useEditor.getState().stopRouting();
-        void finish.current(waypoints);
+        if (state.waypoints.length < 2) return;
+        finishDraft();
       } else if (event.key === 'Escape') {
         useEditor.getState().stopRouting();
       } else {
@@ -92,6 +99,7 @@ function ActiveRouteTool({ mapId, objects }: { mapId: string; objects: readonly 
       window.removeEventListener('keydown', onKeyDown, { capture: true });
       canvas.style.cursor = '';
       stopSync();
+      useRouteDraft.setState({ finish: null });
       useRouteDraft.getState().clear();
     };
   }, [get]);
