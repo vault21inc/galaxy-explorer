@@ -10,6 +10,7 @@ import {
   type MouseEvent,
 } from 'react';
 import { Button } from '@/components/ui/button.tsx';
+import { enterOrFlyTo } from '@/input/activate.ts';
 import { isPrimaryModifier } from '@/input/bindings.ts';
 import { detectPlatform } from '@/input/platform.ts';
 import { cn } from '@/lib/utils.ts';
@@ -181,6 +182,9 @@ export function Outliner({
         return id ? [id] : [];
       });
       useSelection.getState().select(ids, options);
+      // Plain Enter goes on to do what it does on the canvas (ux.md §10): enter the row's
+      // system or planet, or fly to anything else, a group by its members (D-61).
+      if (event.key === 'Enter' && !options.add && !options.toggle) enterOrFlyTo(ids);
     }
   };
 
@@ -272,6 +276,10 @@ export function Outliner({
                   style={{ paddingLeft: `${(0.25 + (row.level - 1) * 0.75).toString()}rem` }}
                   onClick={(event) => {
                     onClick(event, row);
+                  }}
+                  // As on the canvas: a double-click enters it or flies to it.
+                  onDoubleClick={() => {
+                    if (row.id !== null) enterOrFlyTo([row.id]);
                   }}
                   onFocus={() => {
                     setFocused(row.key);

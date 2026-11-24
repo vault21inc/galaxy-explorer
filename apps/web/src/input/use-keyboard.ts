@@ -2,8 +2,8 @@ import { CameraControlsImpl } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { useEffect } from 'react';
 import { flyTo } from '@/render/camera/fly-to.ts';
+import { frameTargets } from '@/render/camera/fly-request.ts';
 import { resetViewCamera } from '@/render/camera/use-view-camera.ts';
-import { drawnObject, type DrawnObject } from '@/render/scene-index.ts';
 import { toolOwnsClicks, useEditor } from '@/state/editor.ts';
 import { useHelp } from '@/state/help.ts';
 import { useLabels } from '@/state/labels.ts';
@@ -11,6 +11,7 @@ import { useSpoilers } from '@/state/spoilers.ts';
 import { useSelection } from '@/state/selection.ts';
 import { viewNavigation } from '@/state/view-navigator.ts';
 import { KEY_PAN_FRACTION, KEY_ZOOM_FACTOR } from '@/render/tuning.ts';
+import { enterOrFlyTo } from './activate.ts';
 import { KEY_BINDINGS, type KeyAction } from './bindings.ts';
 
 /**
@@ -48,27 +49,14 @@ export function useKeyboard(): void {
         case 'reset-view':
           resetViewCamera(camera);
           return;
-        case 'frame-selection': {
-          const selected = useSelection
-            .getState()
-            .selectedIds.map((id) => drawnObject(id))
-            .filter((object): object is DrawnObject => object !== undefined);
-          return flyTo(camera, selected);
-        }
-        case 'enter-selection': {
+        case 'frame-selection':
+          // A selected group frames its members (fly-request.ts, D-61).
+          return flyTo(camera, frameTargets(useSelection.getState().selectedIds));
+        case 'enter-selection':
           // While placing or drawing a route, Enter belongs to that tool.
           if (toolOwnsClicks()) return;
-          const selected = useSelection
-            .getState()
-            .selectedIds.map((id) => drawnObject(id))
-            .filter((object): object is DrawnObject => object !== undefined);
-          const only = selected.length === 1 ? selected[0] : undefined;
-          if (only?.opensView) {
-            viewNavigation.enter(only.id);
-            return;
-          }
-          return flyTo(camera, selected);
-        }
+          enterOrFlyTo(useSelection.getState().selectedIds);
+          return;
         case 'clear-selection':
           if (useEditor.getState().placing) useEditor.getState().cancelPlacing();
           else if (useSelection.getState().selectedIds.length > 0) useSelection.getState().clear();

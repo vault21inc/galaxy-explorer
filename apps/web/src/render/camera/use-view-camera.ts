@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { Box3, PerspectiveCamera, Vector3 } from 'three';
 import { CAMERA_PARAM, parseCameraParam } from '@/lib/camera-param.ts';
 import { useNavigation, type CameraPose } from '@/state/navigation.ts';
+import type { NeighborhoodRules } from './neighborhood.ts';
 import { arrivalStart } from '../transition/transition-plan.ts';
 import { levelArrived } from '../transition/transition-controller.ts';
 
@@ -33,8 +34,15 @@ export interface ViewCameraConfig {
   /** The view's default pose: where it starts, and where H or Home returns. */
   position: readonly [number, number, number];
   target: readonly [number, number, number];
-  /** Flying to an object (F, double-click) frames at least this radius around it. */
+  /** Flying to something (F, double-click) frames at least this radius around it. */
   frameMinRadius: number;
+  /**
+   * Where bodies are dots spaced unevenly (the galaxy view, D-61): flying to one object frames
+   * it out to its nearest few neighbors (neighborhood.ts); several are framed by where they are, times `padding`, their drawn radii
+   * left out (fly-to.ts `frameSphere`). Without it, what's flown to is framed at its own size,
+   * or `frameMinRadius`.
+   */
+  frameNeighbors?: NeighborhoodRules;
   /**
    * A pose looking at one of the view's objects, or null if it isn't in the view. Used when the
    * reader leaves that object's view without a saved pose to return to (opened from a link).
@@ -57,9 +65,12 @@ export function viewCameraConfig(): ViewCameraConfig | null {
   return currentConfig;
 }
 
-/** The smallest radius flying to an object frames in the current view (fly-to.ts). */
-export function frameMinRadius(): number {
-  return currentConfig?.frameMinRadius ?? 0;
+/** How the current view frames what the camera flies to (fly-to.ts). */
+export function frameRules(): Pick<ViewCameraConfig, 'frameMinRadius' | 'frameNeighbors'> {
+  return {
+    frameMinRadius: currentConfig?.frameMinRadius ?? 0,
+    frameNeighbors: currentConfig?.frameNeighbors,
+  };
 }
 
 /** Eases the camera back to the current view's starting pose (ux.md §4, H or Home). */

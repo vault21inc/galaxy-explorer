@@ -21,6 +21,8 @@ pnpm --filter @ge/content milky-way plot     # out/plot.svg: a top-down check pi
 pnpm --filter @ge/content milky-way fit      # refit the generated background to the measured arms
 GE_API_URL=https://galaxyexplorer.perturbatory.com GE_API_TOKEN_FILE=~/.config/galaxy-explorer/prod-token \
   pnpm --filter @ge/content milky-way build  # make the universe (private), its settings and content
+GE_API_URL=… GE_API_TOKEN_FILE=… \
+  pnpm --filter @ge/content milky-way neighbourhoods  # add the neighbourhood groups to one built before them
 ```
 
 | File | Holds |
@@ -29,7 +31,8 @@ GE_API_URL=https://galaxyexplorer.perturbatory.com GE_API_TOKEN_FILE=~/.config/g
 | `catalog.ts` | the stars, regions and the arm fits (Reid et al. 2019, ApJ 885, 131, table 2) |
 | `solar.ts` | the Solar System: real AU and mean longitudes at J2000, moons, belts, stations |
 | `events.ts` | events (Common Era dates) and people |
-| `plan.ts` | the universe, the map's background, the settings, and the batch's operations |
+| `plan.ts` | the universe, the map's background, the settings, the neighbourhoods, and the batch's operations |
+| `neighbourhoods.ts` | the step that adds the neighbourhood groups to a universe already built |
 | `check.ts` | the background fit and the check plot |
 
 ### Choices to know
@@ -40,6 +43,7 @@ GE_API_URL=https://galaxyexplorer.perturbatory.com GE_API_TOKEN_FILE=~/.config/g
 - **Spiral arms are nebulae of shape `rift`**, drawn only along the measured stretch.
 - **Moons are drawn closer than they are.** The system view spaces moons by their planet's drawn size, so real distances (the Moon at 60 radii) would scatter them across other orbits. `moonDrawRadii` compresses them logarithmically. The real orbit is a fact.
 - **Compact systems** (Alpha Centauri, TRAPPIST-1 and others) are drawn wider than they are, and their descriptions say so.
+- **Neighbourhoods are groups** (D-61): "Solar neighbourhood" is the Sun and the catalogue's systems within 40 ly. Choosing it in Search or the List flies the camera to them, which is the quick way from a 100,000 ly galaxy to a 40 ly place. `build` makes them; `neighbourhoods` adds them to a universe built earlier (production's), finding its members by name, and changes nothing if they're there.
 - Every Wikipedia link was checked against Wikipedia's API when it was added.
 
 ## Star Wars

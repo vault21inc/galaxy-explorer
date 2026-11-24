@@ -52,7 +52,7 @@ const READER: TourDef = {
     {
       id: 'list',
       title: 'The List',
-      text: 'Everything on the map, as a list you can search and move through with the keyboard. Open it.',
+      text: 'Everything on the map, as a list you can search and move through with the keyboard. Enter or a double-click on a row flies to it. Open it.',
       touchText: 'Everything on the map, as a list you can search. Open it from More.',
       target: { kind: 'control', name: 'list' },
       completes: 'list-opened',
@@ -60,7 +60,9 @@ const READER: TourDef = {
     {
       id: 'layers',
       title: 'Groups and layers',
-      text: 'Sectors and other groups are drawn as outlines. Layers turns groups, routes and regions on and off, with a legend.',
+      text: 'Sectors and other groups are drawn as outlines. Double-click a group’s name, or find it in Search, to fly to its members. Layers turns groups, routes and regions on and off, with a legend.',
+      touchText:
+        'Sectors and other groups are drawn as outlines. Find one in Search to fly to its members. Layers turns groups, routes and regions on and off, with a legend.',
       target: { kind: 'control', name: 'layers' },
       completes: 'next',
     },

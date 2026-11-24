@@ -14,8 +14,8 @@ import { SOLAR, SOLAR_BELTS, SOLAR_STATIONS } from './solar.ts';
 
 /**
  * The Milky Way as Galaxy Explorer content: the universe, its map's generated background, its
- * settings (subtypes, facts, event categories), and one batch of operations for the MCP `batch`
- * tool that creates everything in it.
+ * settings (subtypes, facts, event categories, group types), and one batch of operations for the
+ * MCP `batch` tool that creates everything in it.
  */
 
 export const UNIVERSE = {
@@ -227,12 +227,52 @@ export const CATEGORIES = [
   { name: 'Observation', icon: 'eye', color: '#b48cff' },
 ];
 
+/**
+ * Neighbourhoods: named sets of systems close enough together to be looked at as one place. The
+ * Galaxy is 100,000 ly across and these are tens, so each is a way there by name: choosing one
+ * in Search or the List flies the camera to its members (D-61).
+ */
+export const NEIGHBOURHOOD = 'Neighbourhood';
+export const GROUP_TYPES = [
+  { name: NEIGHBOURHOOD, layer: 'Neighbourhoods', defaultColor: '#7fd4ff' },
+];
+
+export interface Neighbourhood {
+  key: string;
+  name: string;
+  summary: string;
+  color: string;
+  /** The Solar System and every catalogue system within this many light-years of it. */
+  withinLy: number;
+}
+export const NEIGHBOURHOODS: Neighbourhood[] = [
+  {
+    key: 'solar-neighbourhood',
+    name: 'Solar neighbourhood',
+    summary:
+      'The Sun and the catalogue’s stars within 40 light-years of it, from Alpha Centauri (4.4 ly) out to Arcturus (37 ly). The real neighbourhood holds a few hundred more stars, most of them faint red dwarfs.',
+    color: '#7fd4ff',
+    withinLy: 40,
+  },
+];
+
+/** A neighbourhood's members: the keys the systems were created under, nearest first. */
+export function neighbourhoodMembers(n: Neighbourhood): { key: string; name: string }[] {
+  return [
+    { key: 'solar-system', name: 'Solar System' },
+    ...SYSTEMS.filter((sys) => sys.pos.d <= n.withinLy)
+      .sort((a, b) => a.pos.d - b.pos.d)
+      .map(({ key, name }) => ({ key, name })),
+  ];
+}
+
 export interface SettingIds {
   universeId: string;
   mapId: string;
   subtypes: Record<string, string>;
   fields: Record<string, string>;
   categories: Record<string, string>;
+  groupTypes: Record<string, string>;
 }
 
 export type Operation = Record<string, unknown>;
@@ -662,6 +702,21 @@ export function buildOperations(ids: SettingIds): Operation[] {
       diameter_ly: round(r.radiusLy * 2, 1),
     });
     link(id, r.wiki);
+  }
+
+  // ---- neighbourhoods: groups of nearby systems ---------------------------------------------
+  for (const n of NEIGHBOURHOODS) {
+    const id = create('group', n.key, {
+      name: plain(n.name),
+      summary: plain(n.summary),
+      groupTypeId: need(ids.groupTypes, NEIGHBOURHOOD, 'group type'),
+      outlineColor: n.color,
+    });
+    aspects.push({
+      op: 'addMembers',
+      id,
+      data: neighbourhoodMembers(n).map((member) => ({ objectId: ref(member.key) })),
+    });
   }
 
   // ---- people and events -----------------------------------------------------------------

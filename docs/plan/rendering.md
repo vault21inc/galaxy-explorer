@@ -127,6 +127,19 @@ export const renderers = {
 
 Data is stored in the same frames (data-model.md §5), so no conversion happens between the database and the GPU.
 
+### Flying to
+
+F, Enter, a double-click, a search result and Enter on a row of the List all end in `flyTo` (`camera/fly-to.ts`): it works out a sphere to frame (`frameSphere`) and camera-controls' `fitToSphere` moves the camera, at its present angle, to the distance where that sphere just fills the view (radius ÷ sin of half the field of view, `neighborhood.ts` `distanceToFit`).
+
+- **In the system and orbit views** the sphere is what's flown to, at its drawn size, and at least the view's `frameMinRadius` (0.6 su; a quarter of a body radius).
+- **In the galaxy view the sphere comes from the neighbors** (D-61), because spacing differs by orders of magnitude between maps and within one: 4 to 12 ly around the Sun, hundreds in a 40k sector.
+  - **One object:** out to its 8 nearest neighbors (`FLY_TO_NEIGHBOR_COUNT`), a quarter wider (`FLY_TO_NEIGHBORHOOD_PADDING`), so it arrives among them. Once 3 are in, the reach stops before a neighbor more than 4 times farther than the last (`FLY_TO_NEIGHBOR_GAP`): a tight cluster is framed as itself, not out across the gap around it. Never under 8 ly (what the camera sees at its closest, 20 ly away) nor over 1,500 ly (a lone object). Bodies and regions are neighbors; routes and event markers aren't.
+  - **Bodies are points.** A system's world radius is some 120 ly, but it's drawn as a dot clamped to 20 px, so its radius is left out of the frame. A region (a nebula, a rift along its whole line) keeps its size.
+  - **Several objects,** a selection or a group's members, are framed by where they are, a quarter wider.
+  - **A group** isn't a drawn object: `camera/fly-request.ts` `frameTargets` turns it into its members, own and nested, as its outline has them, or a ring's disc (D-53). A group hidden by Layers frames nothing.
+  - **Leaving a system with no saved pose** (it was opened from a link) frames the same neighborhood, looking down at the start tilt (`galaxy-camera.ts` `focusPose`).
+- **From outside the canvas** (the palette, the List, a label), `fly-request.ts` reaches the controls through the transition controller. `flyToWhenShown` is for a search result: at once in the galaxy view, otherwise once the galaxy view has opened and placed its camera (`onLevelArrived`), so the arrival pose doesn't undo it. It gives up after 5 s if its target is never drawn.
+
 ## 6. Galaxy view
 
 **Background** (`render/galaxy/`): generated from `map.galaxySettings` (G1). The owner shapes it in the Map settings panel, from named presets and sliders, including an optional central bar (M3-T8, D-24).
@@ -329,7 +342,7 @@ drei's `<CameraControls>` (the camera-controls library) is configured per view:
 
 Input mapping comes from the bindings table (ux.md §3). camera-controls has no modifier-key support, so **`useInputBindings` reassigns `controls.mouseButtons` and `controls.touches`** whenever the view/edit mode or the held modifiers change. For example, while Option/Alt is held, `left` becomes `ROTATE`. In edit mode, `left` becomes `NONE` (the editor's pointer handlers own it) unless a modifier says otherwise.
 
-- **Keyboard:** arrow keys pan (`truck`), `+`/`−` zoom (`dolly`), Home or H resets the view, and F frames the selection (`fitToSphere`).
+- **Keyboard:** arrow keys pan (`truck`), `+`/`−` zoom (`dolly`), Home or H resets the view, and F frames the selection (`fitToSphere`; what it frames is §5, "Flying to").
 - **Pivot:** selecting an object sets the orbit point to it (`setOrbitPoint`); otherwise zoom-to-cursor moves the target.
 - **Wheel input:** `deltaMode` values (lines or pages) are converted to pixels before reaching the controls, and ctrl+wheel (pinch) is scaled so pinch and wheel feel alike. Test this in Safari specifically.
   - The app intercepts every wheel event and re-sends it in pixels without `ctrlKey`, because camera-controls turns ctrl+wheel into a field-of-view zoom (M2-T4).

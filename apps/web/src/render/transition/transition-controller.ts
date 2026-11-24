@@ -40,6 +40,11 @@ export function attachTransitionControls(next: CameraControlsImpl | null): void 
   controls = next;
 }
 
+/** The camera controls, for moving the camera from outside the canvas (fly-request.ts). */
+export function viewControls(): CameraControlsImpl | null {
+  return controls;
+}
+
 /** Asks for a chain of views; resolves when what's shown matches what was last asked for. */
 export function requestView(chain: readonly ViewTarget[]): Promise<void> {
   wanted = chain.map(({ level, subjectId }) => ({ level, subjectId }));
@@ -59,6 +64,21 @@ export function clearView(): void {
 export function levelArrived(): void {
   arrived?.();
   arrived = null;
+  for (const listener of arrivalListeners) listener();
+}
+
+const arrivalListeners = new Set<() => void>();
+
+/**
+ * Calls `listener` each time a view has placed its camera, after its own arrival pose is set:
+ * the moment a camera move meant for the new view can start (fly-request.ts). Returns the
+ * unsubscribe.
+ */
+export function onLevelArrived(listener: () => void): () => void {
+  arrivalListeners.add(listener);
+  return () => {
+    arrivalListeners.delete(listener);
+  };
 }
 
 /** The view sync (use-view-sync.ts) is resolving a URL into a chain of views. */

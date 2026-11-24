@@ -392,10 +392,41 @@ export const SELECTION_RING_OPACITY = 1;
 export const MEMBER_RING_OPACITY = 0.7;
 
 /**
- * Flying to an object (double-click, F) frames a sphere of at least this radius around it,
- * so a 120 ly system arrives with its neighborhood in view instead of filling the screen.
+ * Flying to something in the galaxy view (double-click, F, Enter, a search result) frames a
+ * sphere of at least this radius around it, in light-years: about what the camera sees at its
+ * closest (GALAXY_MIN_DISTANCE_LY × sin(CAMERA_FOV_DEG / 2) ≈ 7.7 ly), so no frame asks for
+ * a distance the camera can't reach.
  */
-export const FLY_TO_MIN_RADIUS_LY = 1_500;
+export const FLY_TO_MIN_RADIUS_LY = 8;
+/**
+ * Flying to one object frames its neighborhood (D-61): a sphere out to this many of its
+ * nearest neighbors, so it arrives among them at whatever the map's spacing is there. Eight
+ * around the Sun is 11.5 ly (out to Procyon); around a lone sector capital it may be 800 ly.
+ */
+export const FLY_TO_NEIGHBOR_COUNT = 8;
+/**
+ * A neighborhood ends at a gap: once this many neighbors are in, it stops before one more than
+ * FLY_TO_NEIGHBOR_GAP times farther than the last. A cluster of five with nothing else for
+ * thousands of light-years is framed as those five, not out to the eighth across the gap.
+ */
+export const FLY_TO_NEIGHBOR_MIN_COUNT = 3;
+export const FLY_TO_NEIGHBOR_GAP = 4;
+/**
+ * That sphere is this much wider than the distance to the farthest of those neighbors, so it
+ * and its label sit inside the frame and not on its edge.
+ */
+export const FLY_TO_NEIGHBORHOOD_PADDING = 1.25;
+/**
+ * The widest neighborhood framed, in light-years, for an object with nothing near it: enough
+ * to see where it is, as every fly-to framed before D-61.
+ */
+export const FLY_TO_MAX_NEIGHBORHOOD_LY = 1_500;
+/**
+ * How long a fly asked for by name (a search result) waits for its target to be drawn, in
+ * milliseconds. Past this it's dropped: a group on a hidden layer never is, and the camera
+ * mustn't leap there minutes later when the reader turns the layer on.
+ */
+export const FLY_REQUEST_WAIT_MS = 5_000;
 
 // ---------------------------------------------------------------------------------------------
 // Labels (rendering.md §11, ux.md §7)
@@ -521,12 +552,9 @@ export const RIFT_RIBBON_OPACITY = 0.45;
 // Galaxy view: arriving from a system without a saved pose (M5-T1)
 // ---------------------------------------------------------------------------------------------
 
-/**
- * Leaving a system that was opened from a link has no saved galaxy pose to return to, so the
- * galaxy camera looks at that system from this many galaxy radii away, at the start tilt:
- * close enough to see its neighbors, far enough to see where it is.
- */
-export const GALAXY_FOCUS_DISTANCE_RADII = 0.12;
+// Leaving a system that was opened from a link has no saved galaxy pose to return to, so the
+// galaxy camera looks at that system at the start tilt, framing its neighborhood as flying to
+// it does (FLY_TO_NEIGHBOR_COUNT above, D-61): close enough to see its neighbors.
 
 // ---------------------------------------------------------------------------------------------
 // System view camera (rendering.md §5, §7). Distances in system units (su, about an AU), or in

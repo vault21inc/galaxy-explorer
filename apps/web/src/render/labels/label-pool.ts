@@ -8,6 +8,7 @@ import {
   OBJECT_LABEL_COLOR,
   OBJECT_LABEL_HEIGHT_PX,
 } from '../tuning.ts';
+import { flyToShown } from '../camera/fly-request.ts';
 import { isPrimaryModifier } from '@/input/bindings.ts';
 import { detectPlatform } from '@/input/platform.ts';
 import { useSelection } from '@/state/selection.ts';
@@ -82,8 +83,10 @@ export function mountLabelPool(container: HTMLElement): () => void {
     };
   });
   container.addEventListener('click', onLabelClick);
+  container.addEventListener('dblclick', onLabelDoubleClick);
   return () => {
     container.removeEventListener('click', onLabelClick);
+    container.removeEventListener('dblclick', onLabelDoubleClick);
     for (const slot of slots) slot.element.remove();
     slots = [];
   };
@@ -102,6 +105,16 @@ function onLabelClick(event: MouseEvent): void {
   useSelection
     .getState()
     .select([id], primary ? { toggle: true } : event.shiftKey ? { add: true } : {});
+}
+
+/**
+ * A double-click on a group label flies to the group: its members, framed (fly-request.ts,
+ * D-61), as a double-click on an object flies to it. The two clicks before it selected it.
+ */
+function onLabelDoubleClick(event: MouseEvent): void {
+  const target = event.target instanceof Element ? event.target.closest('[data-label-id]') : null;
+  if (!(target instanceof HTMLElement) || target.dataset.labelKind !== 'group') return;
+  if (target.dataset.labelId) flyToShown([target.dataset.labelId]);
 }
 
 /**

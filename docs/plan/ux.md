@@ -96,8 +96,8 @@ Shortcuts are ignored while focus is in a text field. `?` opens this list as an 
 | Keys | Action | Mode |
 |---|---|---|
 | Esc | Clear the selection; if nothing is selected, go up one view | both |
-| Enter | Enter the selected explorable object; with anything else selected, fly to it | both |
-| F | Frame the selection | both |
+| Enter | Enter the selected explorable object; with anything else selected, fly to it (a group: to its members) | both |
+| F | Frame the selection: one object among its nearest neighbors, a group by its members (D-61) | both |
 | H or Home | Reset the camera for this view | both |
 | Arrow keys | Pan | both |
 | `+` / `−` | Zoom | both |
@@ -213,10 +213,11 @@ How hidden content looks (P2, black out rather than remove):
 - **Leaving:** zoom out past the threshold, press Esc, use a breadcrumb, or go Back. The camera returns to where it was. After entering, Esc and the parent breadcrumb go back through history, as Back does. In a view opened from a link, they open the parent view with the view just left selected.
 - **Links to objects that open no view** (a station, a nebula, a system not marked explorable) open the view they're in, with the object selected.
 - **Following a link** (from search, events or an outliner of another view) chains the transitions: galaxy → system → orbit, each shortened to 250 ms.
+- **Choosing something in the galaxy view by name** (a search result, "On other maps", a related entry) also flies to it (D-61, rendering.md §5 "Flying to"): a system arrives among its nearest neighbors, a group around its members. Among thousands of dots, selecting alone doesn't show where it is. A group made of nearby systems is therefore a named way to a neighborhood (the Milky Way's "Solar neighbourhood").
 
 ## 10. Accessibility
 
-- **Outliner:** an ARIA tree of the current view's items, navigable with the arrow keys. Enter enters, Space selects. It mirrors canvas selection both ways, so every canvas action has a keyboard path.
+- **Outliner:** an ARIA tree of the current view's items, navigable with the arrow keys. Space selects. Enter selects, then enters a system or planet that opens a view or flies to anything else, a group by its members; a double-click on a row does the same (D-61). A click only selects, so the map stays put while editing from the List. It mirrors canvas selection both ways, so every canvas action has a keyboard path.
 - **Controls:** all menus, dialogs and toolbars use shadcn/ui (Radix) components, which handle keyboard and screen readers. Focus is always visible.
 - **Canvas:** `role="application"` with an `aria-label` that names the view and points to the outliner. Selection changes are announced through an `aria-live="polite"` region ("Selected Gudrun, planet, Gudrun System").
 - **Motion:** `prefers-reduced-motion` turns camera flights into a quick fade, turns off ambient motion and stops the progress-ring animation.

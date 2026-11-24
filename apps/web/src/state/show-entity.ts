@@ -1,4 +1,5 @@
 import type { EntityKind } from '@ge/domain';
+import { flyToWhenShown } from '@/render/camera/fly-request.ts';
 import { goToLocated } from '@/panels/relations/shown-where.ts';
 import { useDetailsSheet } from './details-sheet.ts';
 import { useSelection } from './selection.ts';
@@ -17,7 +18,8 @@ export interface EntityPlace {
 /**
  * Opens the view that shows an entry, with it selected, chaining the transitions (ux.md §9):
  * an object in its parent's view (a planet in its system's, a moon in its planet's), a place
- * or event wherever it's located (M6-T6), a group or route in the galaxy view. A character
+ * or event wherever it's located (M6-T6), a group or route in the galaxy view. What's in the
+ * galaxy view is flown to as well. A character
  * has no place on a map: it's selected where the reader is, so its panel opens.
  *
  * Used by search results (M7-T6) and "On other maps" (M7-T5). Only a map page can move
@@ -37,4 +39,7 @@ export function showEntity(entity: EntityPlace): void {
   }
   const subject = entity.kind === 'celestial_object' ? entity.parentId : null;
   viewNavigation.show(subject, { select: entity.id, mapId: entity.mapId });
+  // In the galaxy view, where a selected dot can be one of thousands or far off screen, the
+  // camera goes to it too: a system among its neighbors, a group around its members (D-61).
+  if (subject === null) flyToWhenShown(entity.id, entity.mapId);
 }
