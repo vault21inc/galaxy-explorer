@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { LINK_PREVIEW_ROUTE, wantsLinkPreview } from '@ge/domain/link-preview';
+import { CRAWLER_FILES, LINK_PREVIEW_ROUTE, wantsLinkPreview } from '@ge/domain/link-preview';
 import { WEB_APP_HEADERS } from '@ge/domain/security';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
@@ -11,14 +11,18 @@ const repoRoot = resolve(import.meta.dirname, '../..');
  * Link previews (M8-T9) under `vite preview`, as Caddy has them on the site
  * (ops/caddy/link-previews.caddy, from the same lists): a chat app's or search engine's fetcher
  * asking for a universe's, map's or view's address gets the API's page of tags, through the
- * `/api` proxy. Added before Vite's own middleware, so the proxy sees the rewritten address.
+ * `/api` proxy, and anyone asking for robots.txt or the sitemap gets the API's (D-62). Added
+ * before Vite's own middleware, so the proxy sees the rewritten address.
  */
 const linkPreviews = {
   name: 'ge-link-previews',
   configurePreviewServer(server) {
     server.middlewares.use((request, _response, next) => {
       const url = new URL(request.url ?? '/', 'http://preview');
-      if (wantsLinkPreview(url.pathname, request.headers['user-agent'])) {
+      // robots.txt and the sitemap (D-62), which the API writes, for everyone.
+      const file = CRAWLER_FILES.find(({ path }) => path === url.pathname);
+      if (file) request.url = file.route;
+      else if (wantsLinkPreview(url.pathname, request.headers['user-agent'])) {
         // Less a share link's key, as on the site: a preview never uses it.
         url.searchParams.delete('k');
         const query = url.search.slice(1);

@@ -18,6 +18,21 @@
 export const LINK_PREVIEW_ROUTE = '/api/v1/link-preview';
 
 /**
+ * The search engines' crawlers (D-62). They get the same pages as a chat app, with more on
+ * them: the whole text, links to the pages below, and a 404 for an address with nothing a
+ * stranger may see, where a chat app gets the site's own card (a 404 would show it no card).
+ * Google's URL Inspection tool in Search Console fetches as `Google-InspectionTool`.
+ */
+export const SEARCH_ENGINE_AGENTS = [
+  'googlebot',
+  'google-inspectiontool',
+  'bingbot',
+  'applebot',
+  'duckduckbot',
+  'yandexbot',
+] as const;
+
+/**
  * The programs that fetch link previews and search results, by a word in their User-Agent,
  * matched without regard to case. Named one by one rather than any "bot", so that no person's
  * browser is mistaken for one: a phone called the CUBOT X30 puts "CUBOT" in its User-Agent.
@@ -44,12 +59,7 @@ export const LINK_PREVIEW_AGENTS = [
   'embedly',
   'iframely',
   // Search engines, which then index the page's title and text.
-  'googlebot',
-  'google-inspectiontool',
-  'bingbot',
-  'applebot',
-  'duckduckbot',
-  'yandexbot',
+  ...SEARCH_ENGINE_AGENTS,
 ] as const;
 
 /** The agents as one regular expression's source, for `new RegExp(…, 'i')` and Caddy's `(?i)`. */
@@ -83,6 +93,25 @@ export const SITE_CARD_IMAGE = {
 
 const AGENT = new RegExp(LINK_PREVIEW_AGENT_PATTERN, 'i');
 const PATH = new RegExp(LINK_PREVIEW_PATH_PATTERN);
+
+// The names are letters and hyphens, which mean nothing special outside brackets.
+const SEARCH_ENGINE = new RegExp(`(?:${SEARCH_ENGINE_AGENTS.join('|')})`, 'i');
+
+/** Whether `userAgent` is a search engine's crawler (D-62). */
+export function isSearchEngine(userAgent: string | undefined): boolean {
+  return userAgent !== undefined && SEARCH_ENGINE.test(userAgent);
+}
+
+/**
+ * The site's files for crawlers (D-62), served to everyone at `path` from the API's `route`,
+ * because each names the site's address, which the web app's build doesn't know: robots.txt
+ * points to the sitemap, and the sitemap lists every public universe, map and view. Caddy
+ * (`ops/caddy/link-previews.caddy`) and `vite preview` rewrite one to the other.
+ */
+export const CRAWLER_FILES = [
+  { path: '/robots.txt', route: '/api/v1/robots.txt' },
+  { path: '/sitemap.xml', route: '/api/v1/sitemap.xml' },
+] as const;
 
 /** Whether a request for `path` from `userAgent` should get the preview page. */
 export function wantsLinkPreview(path: string, userAgent: string | undefined): boolean {

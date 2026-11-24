@@ -71,13 +71,22 @@ async function object(api: Api, mapId: string, body: Json) {
   return (await api.expect(201, 'POST', `/maps/${mapId}/objects`, body)).body.data as Json;
 }
 
-async function preview(api: Api, path: string, select?: string) {
+const GOOGLEBOT =
+  'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html) Chrome/120.0 Safari/537.36';
+
+async function preview(
+  api: Api,
+  path: string,
+  select?: string,
+  options: { userAgent?: string; status?: number } = {},
+) {
   const query = new URLSearchParams({ path, ...(select ? { select } : {}) });
   const response = await api.app.inject({
     method: 'GET',
     url: `/api/v1/link-preview?${query.toString()}`,
+    headers: options.userAgent ? { 'user-agent': options.userAgent } : {},
   });
-  expect(response.statusCode).toBe(200);
+  expect(response.statusCode).toBe(options.status ?? 200);
   expect(response.headers['content-type']).toBe('text/html; charset=utf-8');
   return { html: response.body, robots: response.headers['x-robots-tag'] };
 }
@@ -86,6 +95,20 @@ async function preview(api: Api, path: string, select?: string) {
 function tag(html: string, key: string): string | undefined {
   const match = new RegExp(`<meta (?:name|property)="${key}" content="([^"]*)">`).exec(html);
   return match?.[1];
+}
+
+/** The page's links under its list's heading, as [text, address]. */
+function links(html: string): string[][] {
+  return [...html.matchAll(/<li><a href="([^"]*)">([^<]*)<\/a>/g)].map((match) => [
+    match[2] ?? '',
+    match[1] ?? '',
+  ]);
+}
+
+async function get(api: Api, url: string) {
+  const response = await api.app.inject({ method: 'GET', url });
+  expect(response.statusCode).toBe(200);
+  return response;
 }
 
 async function setVisibility(api: Api, universeId: string, visibility: string) {
@@ -210,6 +233,155 @@ describe('link previews', () => {
         expect(tag(html, 'og:title')).toBe('Galaxy Explorer');
         expect(robots).toBe('noindex');
       }
+    }));
+});
+
+describe('pages for search engines (D-62)', () => {
+  it('give the whole text, a breadcrumb and links down to every view and world', () =>
+    run(async (api, _db, { mapId, gudrun }) => {
+      const system = await object(api, mapId, {
+        name: rt.plain('Scarus'),
+        baseType: 'system',
+        explorable: true,
+        summary: rt.plain('A sector capital.'),
+        description: rt.md('First paragraph.\n\nSecond ||secret|| paragraph.'),
+      });
+      const planet = await object(api, mapId, {
+        name: rt.plain('Scarus Prime'),
+        baseType: 'planet',
+        parentId: system.id,
+      });
+      await object(api, mapId, {
+        name: rt.plain('Hidden'),
+        baseType: 'planet',
+        parentId: system.id,
+        status: 'draft',
+      });
+      const root = `${SITE}/u/contract/main`;
+
+      const home = await preview(api, '/');
+      expect(links(home.html)).toEqual([['Contract', `${SITE}/u/contract`]]);
+      expect(home.html).toContain('<h2>Universes</h2>');
+      expect(home.html).not.toContain('<nav>');
+
+      const universe = await preview(api, '/u/contract');
+      expect(links(universe.html)).toEqual([['Main', root]]);
+      expect(universe.html).toContain(`<nav><a href="${SITE}/">Galaxy Explorer</a></nav>`);
+
+      // The galaxy view's objects: a system opens its view, anything else is selected.
+      const map = await preview(api, '/u/contract/main');
+      expect(links(map.html)).toEqual([
+        ['Gudrun', `${root}?select=${gudrun.id}`],
+        ['Scarus', `${root}/view/${String(system.id)}`],
+      ]);
+
+      const view = await preview(api, `/u/contract/main/view/${String(system.id)}`, undefined, {
+        userAgent: GOOGLEBOT,
+      });
+      expect(view.html).toContain('<p>A sector capital.</p>');
+      expect(view.html).toContain('<p>First paragraph.</p>');
+      expect(view.html).toContain('<p>Second … paragraph.</p>');
+      expect(view.html).not.toContain('secret');
+      expect(view.html).toContain('<h2>In this view</h2>');
+      // A world in a view is selected there; a draft isn't listed.
+      expect(links(view.html)).toEqual([
+        ['Scarus Prime', `${root}/view/${String(system.id)}?select=${String(planet.id)}`],
+      ]);
+      const ld = JSON.parse(
+        /<script type="application\/ld\+json">(.*)<\/script>/.exec(view.html)?.[1] ?? '{}',
+      ) as Json;
+      expect(ld.breadcrumb.itemListElement.map((item: Json) => item.name)).toEqual([
+        'Galaxy Explorer',
+        'Contract',
+        'Main',
+        'Scarus',
+      ]);
+    }));
+
+  it('get a 404 for an address with nothing a stranger may see; chat apps still get a card', () =>
+    run(async (api, _db, { universeId, gudrun }) => {
+      const missing = [
+        '/u/nowhere',
+        '/u/contract/nowhere',
+        '/u/contract/main/view/00000000-0000-7000-8000-000000000999',
+        '/u/contract/main/view/abc-123',
+        '/about',
+      ];
+      for (const path of missing) {
+        await preview(api, path, undefined, { userAgent: GOOGLEBOT, status: 404 });
+        await preview(api, path, undefined, { userAgent: 'Slackbot-LinkExpanding 1.0' });
+      }
+      for (const path of [
+        '/',
+        '/u/contract',
+        '/u/contract/main',
+        `/u/contract/main/view/${gudrun.id}`,
+      ]) {
+        await preview(api, path, undefined, { userAgent: GOOGLEBOT });
+      }
+      // A hidden universe answers as a missing one does.
+      await setVisibility(api, universeId, 'link');
+      const hidden = await preview(api, `/u/contract/main/view/${gudrun.id}`, undefined, {
+        userAgent: GOOGLEBOT,
+        status: 404,
+      });
+      expect(hidden.robots).toBe('noindex');
+      expect(hidden.html).not.toMatch(/Gudrun|Contract/);
+      const home = await preview(api, '/', undefined, { userAgent: GOOGLEBOT });
+      expect(links(home.html)).toEqual([]);
+    }));
+
+  it('have a robots.txt that names the sitemap', () =>
+    run(async (api) => {
+      const response = await get(api, '/api/v1/robots.txt');
+      expect(response.headers['content-type']).toBe('text/plain; charset=utf-8');
+      expect(response.body).toContain('User-agent: *\n');
+      expect(response.body).toContain('Disallow: /link/\n');
+      expect(response.body).toContain('Disallow: /u/*/settings\n');
+      expect(response.body).not.toContain('Disallow: /api');
+      expect(response.body).toContain(`Sitemap: ${SITE}/sitemap.xml\n`);
+    }));
+
+  it('have a sitemap of every public universe, map and view, and nothing else', () =>
+    run(async (api, _db, { universeId, mapId }) => {
+      const system = await object(api, mapId, {
+        name: rt.plain('Scarus'),
+        baseType: 'system',
+        explorable: true,
+      });
+      await object(api, mapId, {
+        name: rt.plain('Draft'),
+        baseType: 'system',
+        explorable: true,
+        status: 'draft',
+      });
+      await object(api, mapId, {
+        name: rt.plain('Secret'),
+        baseType: 'system',
+        explorable: true,
+        isSpoiler: true,
+      });
+      await api.expect(201, 'POST', `/universes/${universeId}/maps`, {
+        slug: 'hidden',
+        name: rt.plain('Hidden'),
+        isSpoiler: true,
+      });
+      const other = await api.expect(201, 'POST', '/universes', {
+        slug: 'other',
+        name: rt.plain('Other'),
+      });
+      await setVisibility(api, other.body.data.id as string, 'private');
+
+      const response = await get(api, '/api/v1/sitemap.xml');
+      expect(response.headers['content-type']).toBe('application/xml; charset=utf-8');
+      const urls = [...response.body.matchAll(/<loc>([^<]*)<\/loc>/g)].map((match) => match[1]);
+      expect(urls).toEqual([
+        `${SITE}/`,
+        `${SITE}/u/contract`,
+        `${SITE}/u/contract/main`,
+        `${SITE}/u/contract/main/view/${String(system.id)}`,
+      ]);
+      expect(response.body).toMatch(/^<\?xml version="1.0" encoding="UTF-8"\?>\n<urlset /);
     }));
 });
 

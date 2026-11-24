@@ -1,4 +1,5 @@
 import {
+  CRAWLER_FILES,
   LINK_PREVIEW_AGENT_PATTERN,
   LINK_PREVIEW_PATH_PATTERN,
   LINK_PREVIEW_ROUTE,
@@ -22,6 +23,7 @@ function bare(token: string): string {
  * The path is safe to put in a query as it is: the matcher lets through only slugs, ids and
  * slashes. The request's own query (`select=`) follows it, less a share link's key (`k=`):
  * a preview reads as a stranger and never uses it, and it would only end up in the API's log.
+ * robots.txt and the sitemap go to the API for everyone (D-62).
  */
 export function linkPreviewSnippet(): string {
   const lines = [
@@ -43,6 +45,14 @@ export function linkPreviewSnippet(): string {
     '\t\turi query -k',
     '\t\treverse_proxy api:3000',
     '\t}',
+    '\t# robots.txt and the sitemap (D-62), for everyone. The API writes them: both name the',
+    '\t# site’s address, which the web app’s build doesn’t know.',
+    ...CRAWLER_FILES.flatMap(({ path, route }) => [
+      `\thandle ${bare(path)} {`,
+      `\t\trewrite * ${bare(route)}`,
+      '\t\treverse_proxy api:3000',
+      '\t}',
+    ]),
     '}',
     '',
   ];

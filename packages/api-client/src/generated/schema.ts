@@ -2335,9 +2335,49 @@ export interface paths {
         };
         /**
          * The page a link-preview fetcher gets
-         * @description An HTML page of Open Graph and Twitter card tags for a site address: the home page (`/`, the home universe’s card), a universe (`/u/{slug}`), a map (`/u/{slug}/{map}`) or an object’s view (`…/view/{id}`), with `select` for a selected object. Caddy sends chat apps’ and search engines’ fetchers here (`@ge/domain/link-preview`), and people to the app. It reads as an anonymous visitor: a universe that isn’t public, or an address with nothing there, gets the site’s own card with `noindex`; drafts are never read; spoilers are left out. A card with no picture of its own gets the site’s.
+         * @description An HTML page of Open Graph and Twitter card tags for a site address: the home page (`/`, the home universe’s card), a universe (`/u/{slug}`), a map (`/u/{slug}/{map}`) or an object’s view (`…/view/{id}`), with `select` for a selected object. Caddy sends chat apps’ and search engines’ fetchers here (`@ge/domain/link-preview`), and people to the app. It reads as an anonymous visitor: a universe that isn’t public, or an address with nothing there, gets the site’s own card with `noindex`; drafts are never read; spoilers are left out. A card with no picture of its own gets the site’s. Search engines read the same page (D-62): its body has the whole text, a breadcrumb, links to the pages below (the universes, a universe’s maps, a map’s or view’s objects) and JSON-LD; and for an address with nothing a stranger may see, they get it with a 404, where a chat app gets the site’s card with a 200.
          */
         get: operations["site.linkPreview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/robots.txt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The site’s robots.txt
+         * @description What search engines may crawl (D-62), served at `/robots.txt` through Caddy: everything but the pages for someone signed in and the invite and reset links, with the sitemap’s address.
+         */
+        get: operations["site.robots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sitemap.xml": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The site’s sitemap
+         * @description Every address a stranger may see with a page of its own (D-62), served at `/sitemap.xml` through Caddy: the home page, each public universe, its published maps that aren’t spoilers, and every object on them that opens a view, as an anonymous visitor sees them (no drafts, no spoilers).
+         */
+        get: operations["site.sitemap"];
         put?: never;
         post?: never;
         delete?: never;
@@ -18692,6 +18732,42 @@ export interface operations {
                 /** @description The selected object’s id, if any. */
                 select?: string;
             };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "site.robots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "site.sitemap": {
+        parameters: {
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;

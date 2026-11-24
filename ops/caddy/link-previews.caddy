@@ -16,4 +16,14 @@
 		uri query -k
 		reverse_proxy api:3000
 	}
+	# robots.txt and the sitemap (D-62), for everyone. The API writes them: both name the
+	# site’s address, which the web app’s build doesn’t know.
+	handle /robots.txt {
+		rewrite * /api/v1/robots.txt
+		reverse_proxy api:3000
+	}
+	handle /sitemap.xml {
+		rewrite * /api/v1/sitemap.xml
+		reverse_proxy api:3000
+	}
 }

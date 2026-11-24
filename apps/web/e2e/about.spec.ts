@@ -9,6 +9,7 @@ import { expect, test, type APIRequestContext, type Page } from './test.ts';
  */
 
 const SLACK = 'Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)';
+const GOOGLEBOT = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
 const plain = (source: string) => ({ format: 'plain', source, spoiler: false });
 
 async function post(request: APIRequestContext, url: string, data: object) {
@@ -81,6 +82,41 @@ test.describe('public polish (M8-T9)', () => {
     }
     // A person's browser (Playwright's own User-Agent) gets the app.
     expect(await (await request.get(path)).text()).toContain('<div id="root"></div>');
+  });
+
+  test('a search engine finds robots.txt, the sitemap and links to each view (D-62)', async ({
+    playwright,
+    request,
+    baseURL,
+  }) => {
+    const robots = await request.get('/robots.txt');
+    expect(robots.headers()['content-type']).toBe('text/plain; charset=utf-8');
+    expect(await robots.text()).toMatch(/\nSitemap: https?:\/\/[^/]+\/sitemap\.xml\n/);
+    const sitemap = await (await request.get('/sitemap.xml')).text();
+    const primus = await primusId(request);
+    expect(sitemap).toMatch(
+      new RegExp(`<loc>https?://[^/]+/u/example-universe/main/view/${primus}</loc>`),
+    );
+
+    const crawler = await playwright.request.newContext({
+      ...(baseURL ? { baseURL } : {}),
+      extraHTTPHeaders: { 'user-agent': GOOGLEBOT },
+    });
+    try {
+      const home = await (await crawler.get('/')).text();
+      expect(home).toMatch(/<li><a href="https?:\/\/[^/]+\/u\/example-universe">/);
+      expect(home).toContain('<script type="application/ld+json">');
+      // Nothing there: a 404 for the search engine, which a chat app doesn't get.
+      expect((await crawler.get('/u/no-such-universe')).status()).toBe(404);
+    } finally {
+      await crawler.dispose();
+    }
+  });
+
+  test('a page that isn’t there asks search engines not to keep it (D-62)', async ({ page }) => {
+    await page.goto('/nowhere');
+    await expect(page).toHaveTitle('Page not found · Galaxy Explorer');
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
   });
 
   test('the attributions page credits a filled-in page and the demo’s images', async ({ page }) => {
