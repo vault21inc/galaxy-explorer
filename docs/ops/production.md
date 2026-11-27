@@ -11,8 +11,9 @@ The public site runs as one Docker Compose stack on one machine (M8-T4, [archite
 | `mcp` | the API's image | remote MCP (`pnpm mcp:http`); on the internal network, every request needs a token |
 | `migrate` | the API's image | the database migrations, once, before the API starts |
 | `postgres` | `postgres:18.6` | the database, in the `pgdata` volume, on the internal network only |
+| `backup` | `docker/backup.Dockerfile`: Postgres's client tools and rclone | the database and the media volume to a bucket, nightly, kept 30 days ([restore.md](restore.md)) |
 
-The API and the MCP server run as the `node` user, on read-only filesystems: the API writes only to the media volume and `/tmp`. Postgres has no published port, and its network has no way out. The nightly backups join in M8-T7.
+The API and the MCP server run as the `node` user, on read-only filesystems: the API writes only to the media volume and `/tmp`. Postgres has no published port, and its network has no way out. The backup container reads the media volume, read-only, and reaches Postgres and the bucket; without `GE_BACKUP_S3_BUCKET` it does nothing ([restore.md](restore.md)).
 
 The project is `galaxy-explorer-prod`, apart from the development databases (`galaxy-explorer`, docker/compose.dev.yml), so neither stack takes the other's containers for leftovers.
 

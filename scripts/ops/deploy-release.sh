@@ -71,15 +71,20 @@ PREVIOUS=$(cat "$CURRENT_FILE" 2>/dev/null || true)
 echo "== Release $TAG (live now: ${PREVIOUS:-none})"
 
 # A release already here (a rollback by hand, a second try) needs no registry login.
-if docker image inspect "$GE_IMAGE_PREFIX-api:$TAG" "$GE_IMAGE_PREFIX-web:$TAG" >/dev/null 2>&1; then
+if docker image inspect "$GE_IMAGE_PREFIX-api:$TAG" "$GE_IMAGE_PREFIX-web:$TAG" \
+  "$GE_IMAGE_PREFIX-backup:$TAG" >/dev/null 2>&1; then
   echo "   Its images are here already."
 else
-  compose "$TAG" pull api caddy
+  compose "$TAG" pull api caddy backup
 fi
 if compose "$TAG" up -d --wait --remove-orphans && healthy "$TAG"; then
   echo "$TAG" >"$CURRENT_FILE"
   prune
   echo "== Live: $TAG"
+  # The backup container checks its bucket as it starts (M8-T7): say what it found, so a
+  # wrong key shows in the deploy's output rather than as a missing backup weeks later.
+  sleep 5
+  compose "$TAG" logs --no-log-prefix --tail 3 backup || true
   exit 0
 fi
 

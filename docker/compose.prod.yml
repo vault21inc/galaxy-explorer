@@ -3,13 +3,14 @@
 #   caddy ──443──▶ the web app, /media (after asking the API), /mcp ─▶ mcp, /api ─▶ api
 #   api ─▶ postgres (internal network only), the media volume
 #   migrate: a one-off run of the database migrations before the API starts
+#   backup ─▶ postgres and the media volume, nightly, to a bucket (M8-T7)
 #
 # Settings come from an env file (docker/production.env.example lists them):
 #
 #   docker compose -f docker/compose.prod.yml --env-file .env.production up -d
 #
 # Images are built here (`--build`), or pulled by tag once the deploy pipeline pushes them
-# (M8-T6): GE_IMAGE_PREFIX and GE_IMAGE_TAG name them. The nightly backups join in M8-T7.
+# (M8-T6): GE_IMAGE_PREFIX and GE_IMAGE_TAG name them.
 #
 # Its own project name: docker/compose.dev.yml is `galaxy-explorer`, and sharing it would make
 # each stack's containers the other's "orphans".
@@ -125,6 +126,41 @@ services:
       timeout: 5s
       retries: 3
 
+  # The nightly backup to a bucket (M8-T7, docs/ops/restore.md): the database and the media
+  # volume, kept 30 days. Without GE_BACKUP_S3_BUCKET it says backups are off and waits.
+  backup:
+    image: ${GE_IMAGE_PREFIX:-galaxy-explorer}-backup:${GE_IMAGE_TAG:-local}
+    build:
+      context: ..
+      dockerfile: docker/backup.Dockerfile
+    restart: unless-stopped
+    # tini as PID 1, so `docker stop` ends the night's wait at once.
+    init: true
+    environment:
+      PGHOST: postgres
+      PGUSER: ge
+      PGPASSWORD: ${GE_DB_PASSWORD:?set GE_DB_PASSWORD}
+      PGDATABASE: ge
+      GE_RELEASE: ${GE_IMAGE_TAG:-local}
+      GE_BACKUP_S3_ENDPOINT: ${GE_BACKUP_S3_ENDPOINT:-}
+      GE_BACKUP_S3_REGION: ${GE_BACKUP_S3_REGION:-}
+      GE_BACKUP_S3_BUCKET: ${GE_BACKUP_S3_BUCKET:-}
+      GE_BACKUP_S3_ACCESS_KEY_ID: ${GE_BACKUP_S3_ACCESS_KEY_ID:-}
+      GE_BACKUP_S3_SECRET_ACCESS_KEY: ${GE_BACKUP_S3_SECRET_ACCESS_KEY:-}
+      GE_BACKUP_AT: ${GE_BACKUP_AT:-03:30}
+      GE_BACKUP_KEEP_DAYS: ${GE_BACKUP_KEEP_DAYS:-30}
+      GE_BACKUP_PING_URL: ${GE_BACKUP_PING_URL:-}
+    volumes:
+      - media:/media:ro
+      - backup_work:/work
+    read_only: true
+    tmpfs: [/tmp]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # The internal network for Postgres; the edge network to reach the bucket.
+    networks: [internal, edge]
+
   caddy:
     image: ${GE_IMAGE_PREFIX:-galaxy-explorer}-web:${GE_IMAGE_TAG:-local}
     build:
@@ -170,3 +206,5 @@ volumes:
   media:
   caddy_data:
   caddy_config:
+  # Where a backup is put together before it's uploaded, and a drill's download: emptied each time.
+  backup_work:

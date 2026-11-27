@@ -378,13 +378,13 @@ Internet ──443──▶ Caddy (auto HTTPS, security headers)
                    ├── /mcp         → mcp:3110 (remote MCP, M8-T2) ──▶ api, with the agent's token
                    └── /api/*       → api:3000 (Fastify) ──▶ postgres:5432 (volume: pgdata)
                                            └── writes media volume
-backup (cron container): nightly pg_dump + media archive ──▶ DigitalOcean Spaces (30-day retention)
+backup (container, M8-T7): nightly pg_dump + media archive ──▶ a bucket (Spaces, SFO3; 30 days)
 ```
 
 All services run under one `docker/compose.prod.yml` on one droplet (project `galaxy-explorer-prod`; [docs/ops/production.md](../ops/production.md)). Migrations run as a one-off container before the API starts.
 
 **As built (M8-T4, D-44):**
-- **Two images.** `docker/api.Dockerfile` serves the API, the MCP server (`apps/mcp/src/http-main.ts`) and the migrations (`packages/db/src/cli.ts migrate`): the workspace's layout with the production dependencies of those two apps, since Node strips types only outside `node_modules` (D-21). `docker/web.Dockerfile` is Caddy with the web app's build, `ops/caddy/Caddyfile` and the security headers.
+- **Three images.** `docker/api.Dockerfile` serves the API, the MCP server (`apps/mcp/src/http-main.ts`) and the migrations (`packages/db/src/cli.ts migrate`): the workspace's layout with the production dependencies of those two apps, since Node strips types only outside `node_modules` (D-21). `docker/web.Dockerfile` is Caddy with the web app's build, `ops/caddy/Caddyfile` and the security headers. `docker/backup.Dockerfile` is Postgres's own image (for `pg_dump` of the server's version) with rclone's binary and `scripts/ops/backup/` (M8-T7, [restore.md](../ops/restore.md)).
 - **Two networks.** `internal` has no way in or out: Postgres sits only there, with the migrations, the API, the MCP server and Caddy. `edge` holds Caddy's published ports and the API's way out to the wikis (M7-T3).
 - **The API** listens on `api:3000` with accounts, runs as `node` on a read-only filesystem (the media volume and `/tmp` aside), and believes `X-Forwarded-For` from private addresses (`GE_TRUST_PROXY=uniquelocal`), which only Caddy and the MCP server have.
 - **Caddy** serves `/media/*` from the media volume, mounted read-only, after `forward_auth` to `/api/v1/media-access`: the API's `Cache-Control` and `X-Robots-Tag` come back onto the response, with `Content-Disposition: inline`. A request the API refuses gets its 404.
