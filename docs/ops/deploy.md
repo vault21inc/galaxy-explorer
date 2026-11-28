@@ -44,11 +44,13 @@ On the droplet, as `deploy`, with the live release's compose file:
 
 ```bash
 cd /srv/galaxy-explorer
-stack() { docker compose -f "releases/$(cat current)/compose.prod.yml" --env-file .env.production "$@"; }
+stack() { GE_IMAGE_PREFIX=ghcr.io/vault21inc/galaxy-explorer GE_IMAGE_TAG="$(cat current)" docker compose -f "releases/$(cat current)/compose.prod.yml" --env-file .env.production "$@"; }
 stack ps
 stack logs -f api          # or caddy, mcp, postgres, migrate
 stack logs --since 1h api
 ```
+
+The image names matter for `run` and `up`, which start containers: without them Compose looks for images built on the machine (`galaxy-explorer-*:local`), which the droplet hasn't got. `ps`, `logs` and `exec` only look at what's running.
 
 The workflow's own output is in the Actions tab: each run shows the release, the health checks and, if it rolled back, why.
 
