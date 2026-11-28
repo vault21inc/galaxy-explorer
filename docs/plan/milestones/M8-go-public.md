@@ -398,10 +398,10 @@
   - both uploaded to DigitalOcean Spaces with a dated prefix, keeping 30 days, using a scoped key stored in `.env.production`.
 - `docs/ops/restore.md` gives the restore steps, and `scripts/ops/restore-drill.sh` restores the latest backup into a scratch database and checks row counts against the backup's manifest.
 
-**As built (2026-11-27, D-63):** `docker/backup.Dockerfile` (Postgres 18.6's image with rclone 1.76.0) runs `scripts/ops/backup/`: `backup.sh` (nightly at 03:30 UTC, or `now`), `restore-drill.sh`, `restore.sh` and `list.sh`. The bucket is Spaces `galaxy-explorer-backups` in SFO3, away from the droplet's NYC3. Each night is a folder `nightly/<UTC time>/` with the dump, the media archive, the row counts (`rows.tsv`, read in the dump's own snapshot), a manifest and `SHA256SUMS`, written last. Tested against a fake S3 on the owner's Mac (restore.md's record); the drill against the real bucket waits for the settings on the droplet and a release.
+**As built (2026-11-27, D-63):** `docker/backup.Dockerfile` (Postgres 18.6's image with rclone 1.76.0) runs `scripts/ops/backup/`: `backup.sh` (nightly at 03:30 UTC, or `now`), `restore-drill.sh`, `restore.sh` and `list.sh`. The bucket is Spaces `galaxy-explorer-backups` in SFO3, away from the droplet's NYC3. Each night is a folder `nightly/<UTC time>/` with the dump, the media archive, the row counts (`rows.tsv`, read in the dump's own snapshot), a manifest and `SHA256SUMS`, written last. Tested against a fake S3 on the owner's Mac (restore.md's record); released in `v0.20.0`, and the first drill against the real bucket passed the same day.
 
 **Done when:**
-- [ ] The restore drill has run successfully once against a real backup, and the date is recorded in `docs/ops/restore.md`.
+- [x] The restore drill has run successfully once against a real backup, and the date is recorded in `docs/ops/restore.md`. (2026-11-28, on production: 29 tables, 6,385 rows, 59 media files.)
 
 ### M8-T8 Moving local content to production
 
